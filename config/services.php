@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'casso' => [
+        'webhook_secret' => env('CASSO_WEBHOOK_SECRET'),
+    ],
+
+    'sepay' => [
+        'webhook_secret' => env('SEPAY_WEBHOOK_SECRET'),
+    ],
+
 ];
