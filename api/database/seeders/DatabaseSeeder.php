@@ -15,11 +15,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            ModulePermissionSeeder::class,  // 1. modules + permissions (system data)
+            SuperAdminSeeder::class,         // 2. superadmin user + system role
+            ClubAndManagerSeeder::class,     // 3. demo club + manager user
         ]);
     }
 }

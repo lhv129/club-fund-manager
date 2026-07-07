@@ -9,15 +9,19 @@ use Illuminate\Http\Request;
 
 class CassoWebhookController extends BaseController
 {
+    protected object $service;
+    
     public function __construct(
-        protected CassoWebhookService $cassoWebhookService
-    ) {}
+        CassoWebhookService $service
+    ) {
+        $this->service = $service;
+    }
 
     public function receive(Request $request): JsonResponse
     {
         try {
 
-            $this->cassoWebhookService->handleWebhook($request);
+            $this->service->handleWebhook($request);
 
             return response()->json([
                 'success' => true,

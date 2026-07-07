@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('permission_id')->constrained('permissions')->cascadeOnDelete();
             $table->string('locale', 5);
-            $table->string('label');
+            $table->string('name', 255);
             $table->timestamps();
             $table->unique(['permission_id', 'locale']);
         });

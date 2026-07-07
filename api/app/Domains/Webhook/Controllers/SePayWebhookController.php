@@ -11,19 +11,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SePayWebhookController extends BaseController
 {
-    protected object $sePayWebhookService;
+    protected object $service;
 
     public function __construct(
-        SePayWebhookService $sePayWebhookService
+        SePayWebhookService $service
     ) {
-        $this->sePayWebhookService = $sePayWebhookService;
+        $this->service = $service;
     }
 
     public function receive(Request $request): JsonResponse
     {
         try {
 
-            $this->sePayWebhookService->handleWebhook($request);
+            $this->service->handleWebhook($request);
 
             return response()->json([
                 'success' => true,

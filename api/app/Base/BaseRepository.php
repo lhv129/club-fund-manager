@@ -2,8 +2,9 @@
 
 namespace App\Base;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * -------------------------------------------------------------
@@ -449,5 +450,27 @@ abstract class BaseRepository
             ->where('sort_order', '>', $deletedOrder)
             ->when($id, fn($q) => $q->where('id', '!=', $id))
             ->decrement('sort_order');
+    }
+
+    public function createWithTranslations(array $data, array $translations): Model
+    {
+        return DB::transaction(function () use ($data, $translations) {
+            $model = $this->model->create($data);
+            $model->translations()->createMany($translations);
+            return $model->load('translations');
+        });
+    }
+    public function updateWithTranslations(Model $model, array $data, array $translations): Model
+    {
+        return DB::transaction(function () use ($model, $data, $translations) {
+            $model->update($data);
+            foreach ($translations as $translation) {
+                $model->translations()->updateOrCreate(
+                    ['locale' => $translation['locale']],
+                    $translation
+                );
+            }
+            return $model->fresh('translations');
+        });
     }
 }
