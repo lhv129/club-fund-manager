@@ -26,7 +26,7 @@ class SuperAdminSeeder extends Seeder
             'username' => 'superadmin',
             'email'      => 'superadmin@gmail.com',
             'phone'      => '0983669129',
-            'password'   => Hash::make('Anhkhi04!@'),
+            'password'   => Hash::make('123456'),
             'status' => 'active',
             'email_verified_at' => $now,
             'created_at' => $now,
@@ -58,6 +58,6 @@ class SuperAdminSeeder extends Seeder
             'updated_at' => $now,
         ]);
 
-        $this->command->info("SuperAdmin created → email: superadmin@gmail.com / password: Anhkhi04!@");
+        $this->command->info("SuperAdmin created → email: superadmin@gmail.com / password: 123456");
     }
 }

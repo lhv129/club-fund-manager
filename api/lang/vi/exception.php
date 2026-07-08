@@ -18,6 +18,7 @@ return [
     'forbidden'         => 'Bạn không có quyền truy cập.',
     'not_found'         => 'Không tìm thấy dữ liệu.',
     'server_error'      => 'Lỗi hệ thống, vui lòng thử lại sau.',
+    'forbidden_action' => 'Bạn không có quyền thực hiện hành động này.',
 
     // app/Middleware/JwtAuthenticate.php
     'token_not_provided'       => 'Vui lòng cung cấp access token trong header Authorization.',

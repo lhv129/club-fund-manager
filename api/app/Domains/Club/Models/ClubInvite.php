@@ -15,7 +15,7 @@ class ClubInvite extends Model
         'club_id',
         'created_by',   // user_id tạo link (admin hoặc member)
         'code',         // unique token
-        'max_uses',     // null = không giới hạn
+        'max_members',     // null = không giới hạn
         'used_count',
         'status',       // 'active' | 'expired' | 'disabled'
         'expires_at',
@@ -77,7 +77,7 @@ class ClubInvite extends Model
 
     public function isFull(): bool
     {
-        return $this->max_uses !== null && $this->used_count >= $this->max_uses;
+        return $this->max_members !== null && $this->used_count >= $this->max_members;
     }
 
     public function isUsable(): bool

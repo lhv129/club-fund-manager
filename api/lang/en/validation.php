@@ -53,4 +53,7 @@ return [
             'other'  => 'Other',
         ],
     ],
+
+    'required_locales' => 'Missing translations for locales: :locales.',
+    'translation_name_taken' => 'The :locale translation for :attribute has already been taken.',
 ];

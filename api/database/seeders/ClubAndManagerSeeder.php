@@ -52,7 +52,6 @@ class ClubAndManagerSeeder extends Seeder
 
         // ── 2. Club ───────────────────────────────────────────────────────────
         $clubId = DB::table('clubs')->insertGetId([
-            'slug'       => 'clb-demo',
             'logo'       => null,
             'sort_order' => 1,
             'is_active'  => 1,
@@ -61,8 +60,8 @@ class ClubAndManagerSeeder extends Seeder
         ]);
 
         DB::table('club_translations')->insert([
-            ['club_id' => $clubId, 'locale' => 'vi', 'name' => 'CLB Demo', 'description' => 'Câu lạc bộ cầu lông demo'],
-            ['club_id' => $clubId, 'locale' => 'en', 'name' => 'Demo Club', 'description' => 'Demo badminton club'],
+            ['club_id' => $clubId, 'locale' => 'vi', 'name' => 'CLB Demo', 'description' => 'Câu lạc bộ cầu lông demo', 'slug' => 'clb-demo'],
+            ['club_id' => $clubId, 'locale' => 'en', 'name' => 'Demo Club', 'description' => 'Demo badminton club', 'slug' => 'demo-club'],
         ]);
 
         // ── 3. Club role 'manager' ────────────────────────────────────────────

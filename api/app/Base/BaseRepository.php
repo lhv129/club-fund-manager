@@ -5,6 +5,8 @@ namespace App\Base;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Base\Traits\HasTranslationSlug;
+
 
 /**
  * -------------------------------------------------------------
@@ -27,6 +29,9 @@ abstract class BaseRepository
     /** Số bản ghi mặc định mỗi trang */
     protected int $defaultLimit = 15;
     protected int $defaultPage = 1;
+
+    use HasTranslationSlug;
+
 
     public function __construct(Model $model)
     {
@@ -140,6 +145,23 @@ abstract class BaseRepository
     public function findBySlug(string $slug, array $columns = ['*'], array $conditions = []): ?Model
     {
         $query = $this->model->select($columns)->where('slug', $slug);
+
+        foreach ($conditions as $key => $value) {
+            $query->where($key, $value);
+        }
+
+        return $query->first();
+    }
+
+    public function findByTranslationSlug(
+        string $slug,
+        array  $columns    = ['*'],
+        array  $conditions = [],
+    ): ?Model {
+        $query = $this->model
+            ->select($columns)
+            ->whereHas('translations', fn($q) => $q->where('slug', $slug))
+            ->with('translations');
 
         foreach ($conditions as $key => $value) {
             $query->where($key, $value);
@@ -452,24 +474,35 @@ abstract class BaseRepository
             ->decrement('sort_order');
     }
 
+    // -------------------------------------------------------------------------
+    // Translation helpers
+    // -------------------------------------------------------------------------
+
     public function createWithTranslations(array $data, array $translations): Model
     {
         return DB::transaction(function () use ($data, $translations) {
             $model = $this->model->create($data);
+            $translations = $this->prepareTranslationSlugs($translations, $model->getTable());
+
             $model->translations()->createMany($translations);
+
             return $model->load('translations');
         });
     }
+
     public function updateWithTranslations(Model $model, array $data, array $translations): Model
     {
         return DB::transaction(function () use ($model, $data, $translations) {
             $model->update($data);
+            $translations = $this->prepareTranslationSlugs($translations, $model->getTable(), $model->getKey());
+
             foreach ($translations as $translation) {
                 $model->translations()->updateOrCreate(
                     ['locale' => $translation['locale']],
                     $translation
                 );
             }
+
             return $model->fresh('translations');
         });
     }

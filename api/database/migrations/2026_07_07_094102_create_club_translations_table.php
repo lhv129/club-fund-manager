@@ -17,8 +17,11 @@ return new class extends Migration
             $table->string('locale', 5);
             $table->string('name');
             $table->text('description')->nullable();
+            $table->string('slug')->nullable();
             $table->timestamps();
-            $table->unique(['club_id', 'locale']);
+
+            $table->unique(['club_id', 'locale']); // 1 club / 1 locale
+            $table->unique(['locale', 'slug']);    // slug không trùng trong locale
         });
     }
 

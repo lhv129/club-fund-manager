@@ -13,6 +13,7 @@ return [
     'forbidden'         => 'You do not have permission.',
     'not_found'         => 'Resource not found.',
     'server_error'      => 'Internal server error.',
+    'forbidden_action' => 'You do not have permission to perform this action.',
 
     // app/Middleware/JwtAuthenticate.php
     'token_not_provided'       => 'Access token is required in Authorization header.',

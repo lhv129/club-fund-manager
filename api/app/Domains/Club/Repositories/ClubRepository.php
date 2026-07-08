@@ -7,13 +7,16 @@ use App\Domains\Club\Models\Club;
 
 class ClubRepository extends BaseRepository
 {
+    protected string $defaultOrderBy        = 'sort_order';
+    protected string $defaultOrderDirection = 'asc';
+
     public function __construct(Club $model)
     {
         parent::__construct($model);
     }
 
     /**
-     * Superadmin: toàn bộ danh sách clubs
+     * Superadmin: toàn bộ danh sách clubs (phân trang)
      */
     public function getAll(array $filters = [])
     {
@@ -30,15 +33,19 @@ class ClubRepository extends BaseRepository
             });
         }
 
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
+            $query->where('is_active', $filters['is_active']);
+        }
+
         $query->orderBy('sort_order')->orderByDesc('id');
 
-        $limit = $filters['limit'] ?? 15;
+        $limit = $filters['limit'] ?? $this->defaultLimit;
 
         return $query->paginate($limit);
     }
 
     /**
-     * Manager/Member: clubs mình được approved
+     * Manager/Member: clubs mình được approved (phân trang)
      */
     public function getByUser(int $userId, array $filters = [])
     {
@@ -62,7 +69,7 @@ class ClubRepository extends BaseRepository
 
         $query->orderBy('clubs.sort_order')->orderByDesc('clubs.id');
 
-        $limit = $filters['limit'] ?? 15;
+        $limit = $filters['limit'] ?? $this->defaultLimit;
 
         return $query->paginate($limit);
     }

@@ -31,7 +31,7 @@ class ProfileResource extends JsonResource
 
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
-            'display_name' => $user->display_name,
+            'fullname' => $user->fullname,
             'username' => $user->username,
 
             'gender' => $user->gender,

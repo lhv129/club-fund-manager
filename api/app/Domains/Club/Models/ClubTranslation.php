@@ -11,6 +11,7 @@ class ClubTranslation extends Model
         'club_id',
         'locale',
         'name',
+        'slug',
         'description',
     ];
 

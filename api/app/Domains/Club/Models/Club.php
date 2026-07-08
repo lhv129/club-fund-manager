@@ -10,7 +10,7 @@ class Club extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['slug', 'logo', 'sort_order', 'is_active'];
+    protected $fillable = ['logo', 'max_memberss','sort_order', 'is_active'];
 
     protected function casts(): array
     {

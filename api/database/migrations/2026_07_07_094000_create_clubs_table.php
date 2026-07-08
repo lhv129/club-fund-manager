@@ -14,8 +14,7 @@ return new class extends Migration
         Schema::create('clubs', function (Blueprint $table) {
             $table->id();
             // null = không hết hạn
-            $table->unsignedInteger('max_uses')->nullable();
-            $table->string('slug')->unique();
+            $table->unsignedInteger('max_members')->nullable();
             $table->string('logo')->nullable();
             $table->integer('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
