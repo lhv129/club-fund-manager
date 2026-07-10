@@ -135,7 +135,6 @@ class ClubService extends BaseService
      * Tạo club kèm translations.
      *
      * $data = [
-     *   'slug'       => 'clb-bong-da',
      *   'logo'       => 'path/logo.png',
      *   'is_active'  => 1,
      *   'sort_order' => 1,          // optional — tự sinh nếu thiếu

@@ -7,7 +7,7 @@ use App\Domains\Club\Models\Club;
 
 class ClubRepository extends BaseRepository
 {
-    protected string $defaultOrderBy        = 'sort_order';
+    protected string $defaultOrderBy = 'sort_order';
     protected string $defaultOrderDirection = 'asc';
 
     public function __construct(Club $model)
@@ -21,7 +21,7 @@ class ClubRepository extends BaseRepository
     public function getAll(array $filters = [])
     {
         $query = $this->model
-            ->select(['id', 'slug', 'logo', 'is_active', 'sort_order', 'created_at'])
+            ->select(['id','logo', 'is_active', 'sort_order', 'created_at'])
             ->with(['translations'])
             ->withCount(['members as total_members' => function ($q) {
                 $q->where('status', 'approved')->where('is_active', 1);
