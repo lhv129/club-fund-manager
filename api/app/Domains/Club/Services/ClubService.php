@@ -209,4 +209,16 @@ class ClubService extends BaseService
 
         return $this->repository->count($where);
     }
+
+    /**
+     * Gán hoặc thay đổi chủ sở hữu của club.
+     * - Cập nhật owner_id trên bảng clubs.
+     * - Đảm bảo owner có một bản ghi approved trong club_members.
+     */
+    public function updateOwner(int $clubId, int $newOwnerId): Club
+    {
+        $club = $this->find($clubId);
+
+        return $this->repository->updateOwner($club, $newOwnerId);
+    }
 }

@@ -21,7 +21,7 @@ class ClubRepository extends BaseRepository
     public function getAll(array $filters = [])
     {
         $query = $this->model
-            ->select(['id','logo', 'is_active', 'sort_order', 'created_at'])
+            ->select(['id', 'logo', 'is_active', 'sort_order', 'created_at'])
             ->with(['translations'])
             ->withCount(['members as total_members' => function ($q) {
                 $q->where('status', 'approved')->where('is_active', 1);
@@ -72,5 +72,24 @@ class ClubRepository extends BaseRepository
         $limit = $filters['limit'] ?? $this->defaultLimit;
 
         return $query->paginate($limit);
+    }
+
+    /**
+     * Cập nhật user_id của club, đồng thời upsert club_member
+     * để owner luôn có trạng thái approved & is_active = 1.
+     */
+    public function updateOwner(Club $club, int $newOwnerId): Club
+    {
+        $club->user_id = $newOwnerId;
+        $club->save();
+        // Đảm bảo owner có mặt trong club_members với trạng thái approved
+        $club->members()->updateOrCreate(
+            ['user_id' => $newOwnerId],
+            [
+                'status'    => 'approved',
+                'is_active' => 1,
+            ]
+        );
+        return $club->fresh(['translations']);
     }
 }

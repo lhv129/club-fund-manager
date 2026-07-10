@@ -5,6 +5,7 @@ namespace App\Domains\Club\Controllers;
 use App\Base\BaseController;
 use App\Domains\Club\Requests\FilterClubRequest;
 use App\Domains\Club\Requests\StoreClubRequest;
+use App\Domains\Club\Requests\UpdateClubOwnerRequest;
 use App\Domains\Club\Requests\UpdateClubRequest;
 use App\Domains\Club\Resources\ClubResource;
 use App\Domains\Club\Services\ClubService;
@@ -13,9 +14,12 @@ use Illuminate\Http\Request;
 
 class ClubController extends BaseController
 {
+    protected object $service;
     public function __construct(
-        protected ClubService $clubService
-    ) {}
+        ClubService $service
+    ) {
+        $this->service = $service;
+    }
 
     /**
      * GET /api/v1/clubs
@@ -24,7 +28,7 @@ class ClubController extends BaseController
      */
     public function index(FilterClubRequest $request): JsonResponse
     {
-        $clubs = $this->clubService->index(
+        $clubs = $this->service->index(
             $request->user(),
             $request->validated()
         );
@@ -41,7 +45,7 @@ class ClubController extends BaseController
     public function cursorIndex(Request $request): JsonResponse
     {
         $params    = $request->only(['limit', 'search', 'is_active']);
-        $paginator = $this->clubService->cursorPaginate($params);
+        $paginator = $this->service->cursorPaginate($params);
 
         return $this->cursorResponse($paginator, __('domains/club.list'));
     }
@@ -52,7 +56,7 @@ class ClubController extends BaseController
     public function select(Request $request): JsonResponse
     {
         $params = $request->only(['search', 'is_active', 'limit']);
-        $data   = $this->clubService->getForSelect($params);
+        $data   = $this->service->getForSelect($params);
 
         return $this->responseCommon(true, __('domains/club.select'), $data);
     }
@@ -62,7 +66,7 @@ class ClubController extends BaseController
      */
     public function show(int $id): JsonResponse
     {
-        $club = $this->clubService->find($id);
+        $club = $this->service->find($id);
 
         return $this->responseCommon(true, __('domains/club.detail'), new ClubResource($club));
     }
@@ -72,7 +76,7 @@ class ClubController extends BaseController
      */
     public function showBySlug(string $slug): JsonResponse
     {
-        $club = $this->clubService->findBySlug($slug);
+        $club = $this->service->findBySlug($slug);
 
         return $this->responseCommon(true, __('domains/club.detail'), new ClubResource($club));
     }
@@ -82,7 +86,7 @@ class ClubController extends BaseController
      */
     public function store(StoreClubRequest $request): JsonResponse
     {
-        $club = $this->clubService->create($request->validated());
+        $club = $this->service->create($request->validated());
 
         return $this->responseCommon(true, __('domains/club.created'), new ClubResource($club), 201);
     }
@@ -92,7 +96,7 @@ class ClubController extends BaseController
      */
     public function update(UpdateClubRequest $request, int $id): JsonResponse
     {
-        $club = $this->clubService->update($id, $request->validated());
+        $club = $this->service->update($id, $request->validated());
 
         return $this->responseCommon(true, __('domains/club.updated'), new ClubResource($club));
     }
@@ -102,7 +106,7 @@ class ClubController extends BaseController
      */
     public function destroy(int $id): JsonResponse
     {
-        $this->clubService->delete($id);
+        $this->service->delete($id);
 
         return $this->responseCommon(true, __('domains/club.deleted'));
     }
@@ -112,8 +116,18 @@ class ClubController extends BaseController
      */
     public function toggleStatus(int $id): JsonResponse
     {
-        $club = $this->clubService->toggleStatus($id);
+        $club = $this->service->toggleStatus($id);
 
         return $this->responseCommon(true, __('domains/club.status_toggled'), new ClubResource($club));
+    }
+
+    /**
+     * PUT /api/v1/clubs/{id}/owner
+     * Superadmin gán chủ sở hữu cho club.
+     */
+    public function updateOwner(UpdateClubOwnerRequest $request, int $id): JsonResponse
+    {
+        $club = $this->service->updateOwner($id, $request->validated('user_id'));
+        return $this->responseCommon(true, __('domains/club.owner_updated'), new ClubResource($club));
     }
 }

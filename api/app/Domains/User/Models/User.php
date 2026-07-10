@@ -125,7 +125,6 @@ class User extends Authenticatable implements JWTSubject
             ->where('club_member_roles.user_id', $this->id)
             ->where('club_member_roles.is_active', 1)
             ->where('roles.slug', 'superadmin')
-            ->whereNull('roles.club_id')
             ->where('roles.is_active', 1)
             ->exists();
     }

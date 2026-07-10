@@ -16,4 +16,5 @@ Route::middleware('auth.jwt')->prefix('clubs')->group(function () {
     Route::put('/{id}', [ClubController::class, 'update'])->middleware('permission:club,update');
     Route::delete('/{id}', [ClubController::class, 'destroy'])->middleware('permission:club,delete');
     Route::post('/{id}/toggle-status', [ClubController::class, 'toggleStatus'])->middleware('permission:club,update');
+    Route::put('/{id}/owner', [ClubController::class, 'updateOwner'])->middleware('permission:club,update');
 });

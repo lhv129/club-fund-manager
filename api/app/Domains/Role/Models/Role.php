@@ -11,7 +11,6 @@ class Role extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = [
-        'club_id',    // null = system role (vd: superadmin)
         'slug',
         'sort_order',
         'is_active',
