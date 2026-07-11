@@ -41,7 +41,7 @@ class ModuleService extends BaseService
         return $this->repository->paginate(
             where: $where,
             orderBy: $orderBy,
-            select: ['id', 'slug', 'icon', 'sort_order', 'is_active', 'created_at'],
+            select: ['id', 'slug', 'sort_order', 'is_active', 'created_at'],
             with: ['translations'],
             limit: (int) ($params['limit'] ?? 0),
             page: (int) ($params['page'] ?? 1),

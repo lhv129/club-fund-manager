@@ -29,7 +29,7 @@ class RoleService extends BaseService
      */
     public function paginate(array $params = []): LengthAwarePaginator
     {
-        $where   = $this->buildWhere($params, ['club_id', 'is_active']);
+        $where   = $this->buildWhere($params, ['is_active']);
         $orderBy = $this->buildOrderBy($params, ['id', 'sort_order', 'created_at']);
 
         if (!empty($params['search'])) {
@@ -39,7 +39,7 @@ class RoleService extends BaseService
         return $this->repository->paginate(
             where: $where,
             orderBy: $orderBy,
-            select: ['id', 'club_id', 'slug', 'sort_order', 'is_active', 'created_at'],
+            select: ['id','slug', 'sort_order', 'is_active', 'created_at'],
             with: ['translations'],
             limit: (int) ($params['limit'] ?? 0),
             page: (int) ($params['page'] ?? 1),

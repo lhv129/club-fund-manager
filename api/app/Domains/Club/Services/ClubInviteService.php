@@ -75,9 +75,9 @@ class ClubInviteService extends BaseService
      */
     public function createClubInvite(int $clubId, array $data): ClubInvite
     {
-        $data['club_id']    = $clubId;
+        $data['club_id'] = $clubId;
         $data['created_by'] = Auth::id();
-        $data['token']      = $this->generateUniqueToken();
+        $data['token'] = $this->generateUniqueToken();
 
         if (!isset($data['sort_order'])) {
             $data['sort_order'] = $this->repository->getNextSortOrder();

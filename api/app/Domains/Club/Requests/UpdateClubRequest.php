@@ -10,7 +10,7 @@ class UpdateClubRequest extends BaseRequest
 {
     public function rules(): array
     {
-        $clubId = (int) $this->route('club'); // hoặc $this->route('id')
+        $clubId = (int) $this->route('id');
 
         return [
             'logo'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],

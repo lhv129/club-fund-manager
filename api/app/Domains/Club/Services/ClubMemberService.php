@@ -43,7 +43,7 @@ class ClubMemberService extends BaseService
             where:   $where,
             orderBy: $orderBy,
             select:  ['id', 'club_id', 'user_id', 'join_type', 'status', 'is_active', 'joined_at', 'created_at'],
-            with:    ['user', 'reviewer', 'roles.translations'],
+            with:    ['user'],
             limit:   (int) ($params['limit'] ?? 0),
             page:    (int) ($params['page'] ?? 1),
         );

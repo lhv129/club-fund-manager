@@ -50,7 +50,7 @@ class ClubRepository extends BaseRepository
     public function getByUser(int $userId, array $filters = [])
     {
         $query = $this->model
-            ->select(['clubs.id', 'clubs.slug', 'clubs.logo', 'clubs.is_active', 'clubs.sort_order', 'clubs.created_at'])
+            ->select(['clubs.id', 'clubs.logo', 'clubs.is_active', 'clubs.sort_order', 'clubs.created_at'])
             ->join('club_members', 'club_members.club_id', '=', 'clubs.id')
             ->where('club_members.user_id', $userId)
             ->where('club_members.status', 'approved')

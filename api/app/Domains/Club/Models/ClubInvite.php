@@ -14,11 +14,11 @@ class ClubInvite extends Model
     protected $fillable = [
         'club_id',
         'created_by',   // user_id tạo link (admin hoặc member)
-        'code',         // unique token
-        'max_members',     // null = không giới hạn
+        'token',         // unique token
+        'expires_at',     // null = không giới hạn
         'used_count',
+        'sort_order',
         'status',       // 'active' | 'expired' | 'disabled'
-        'expires_at',
         'is_active',
     ];
 
