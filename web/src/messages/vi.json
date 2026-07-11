@@ -1,0 +1,87 @@
+{
+  "common": {
+    "loading": "Đang tải...",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "create": "Tạo mới",
+    "search": "Tìm kiếm",
+    "actions": "Hành động",
+    "status": "Trạng thái",
+    "active": "Hoạt động",
+    "inactive": "Không hoạt động",
+    "confirm": "Xác nhận",
+    "back": "Quay lại",
+    "noData": "Không có dữ liệu",
+    "comingSoon": "Sắp ra mắt",
+    "page": "Trang",
+    "of": "trên",
+    "total": "Tổng",
+    "logout": "Đăng xuất",
+    "profile": "Hồ sơ"
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập",
+      "subtitle": "Đăng nhập vào tài khoản của bạn",
+      "loginField": "Email hoặc tên đăng nhập",
+      "loginFieldPlaceholder": "Nhập email hoặc tên đăng nhập",
+      "password": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "submit": "Đăng nhập",
+      "submitting": "Đang đăng nhập...",
+      "noAccount": "Chưa có tài khoản?",
+      "registerLink": "Đăng ký ngay",
+      "success": "Đăng nhập thành công",
+      "failed": "Đăng nhập thất bại"
+    },
+    "register": {
+      "title": "Đăng ký",
+      "subtitle": "Tạo tài khoản mới",
+      "firstName": "Họ",
+      "lastName": "Tên",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "submit": "Đăng ký",
+      "submitting": "Đang đăng ký...",
+      "hasAccount": "Đã có tài khoản?",
+      "loginLink": "Đăng nhập",
+      "success": "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản."
+    }
+  },
+  "validation": {
+    "required": "Trường này là bắt buộc",
+    "email": "Email không hợp lệ",
+    "minPassword": "Mật khẩu phải có ít nhất 6 ký tự",
+    "passwordMismatch": "Mật khẩu xác nhận không khớp",
+    "minField": "Phải có ít nhất {min} ký tự"
+  },
+  "menu": {
+    "dashboard": "Bảng điều khiển",
+    "users": "Người dùng",
+    "roles": "Vai trò",
+    "permissions": "Quyền hạn",
+    "clubs": "Câu lạc bộ",
+    "clubMembers": "Thành viên CLB",
+    "clubInvites": "Lời mời CLB",
+    "modules": "Module",
+    "settings": "Cài đặt"
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển",
+    "welcome": "Chào mừng trở lại, {name}!",
+    "totalUsers": "Tổng người dùng",
+    "totalClubs": "Tổng câu lạc bộ",
+    "totalRoles": "Tổng vai trò",
+    "activeClubs": "CLB đang hoạt động"
+  },
+  "error": {
+    "unauthorized": "Bạn không có quyền truy cập",
+    "tokenExpired": "Phiên đăng nhập đã hết hạn",
+    "tokenInvalid": "Token không hợp lệ",
+    "serverError": "Lỗi hệ thống, vui lòng thử lại sau",
+    "notFound": "Không tìm thấy trang"
+  }
+}
