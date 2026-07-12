@@ -61,9 +61,12 @@
   "menu": {
     "dashboard": "Bảng điều khiển",
     "users": "Người dùng",
+    "usersList": "Danh sách",
     "roles": "Vai trò",
     "permissions": "Quyền hạn",
     "clubs": "Câu lạc bộ",
+    "clubsList": "Danh sách CLB",
+    "clubCreate": "Thêm mới",
     "clubMembers": "Thành viên CLB",
     "clubInvites": "Lời mời CLB",
     "modules": "Module",

@@ -1,6 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { Card } from "@/components/ui/Card";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
+
 
 export default async function ClubsPage({
   params,
@@ -14,6 +16,7 @@ export default async function ClubsPage({
 
   return (
     <div className="space-y-6">
+      <Breadcrumb />
       <h1 className="text-2xl font-bold text-zinc-900">{t("clubs")}</h1>
       <Card>
         <div className="flex flex-col items-center justify-center py-16 text-center">

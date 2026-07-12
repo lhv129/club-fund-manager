@@ -61,9 +61,12 @@
   "menu": {
     "dashboard": "Dashboard",
     "users": "Users",
+    "usersList": "List",
     "roles": "Roles",
     "permissions": "Permissions",
     "clubs": "Clubs",
+    "clubsList": "List",
+    "clubCreate": "Create",
     "clubMembers": "Club Members",
     "clubInvites": "Club Invites",
     "modules": "Modules",
