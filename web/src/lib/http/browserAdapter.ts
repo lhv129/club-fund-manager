@@ -22,21 +22,46 @@ async function request<T>(
     const isGet = method === "GET";
     const locale = getClientLocale();
 
+    /**
+     * PHP KHÔNG parse multipart/form-data cho PUT / PATCH request.
+     * Laravel hỗ trợ _method spoofing: gửi POST + field _method=PUT/PATCH
+     * thì Laravel tự route đúng vào controller update().
+     *
+     * Quy tắc:
+     *   - FormData + PUT  → gửi POST, append _method=PUT  vào FormData
+     *   - FormData + PATCH → gửi POST, append _method=PATCH vào FormData
+     *   - JSON (không phải FormData) → gửi PUT/PATCH như bình thường (Laravel đọc được)
+     */
+    let actualMethod = method;
+    let actualPayload: unknown = payload;
+
+    if (isFormData && (method === "PUT" || method === "PATCH")) {
+        // Clone FormData để không mutate object gốc của caller
+        const fd = new FormData();
+        for (const [key, val] of (payload as FormData).entries()) {
+            fd.append(key, val);
+        }
+        fd.append("_method", method); // Laravel đọc _method để route đúng
+        actualMethod = "POST";
+        actualPayload = fd;
+    }
+
     const url = `/api/proxy${path}${isGet ? buildQueryString(payload as Record<string, unknown>) : ""}`;
 
     const res = await fetch(url, {
-        method,
+        method: actualMethod,
         credentials: "include",
         headers: {
-            ...(isGet || isFormData ? {} : { "Content-Type": "application/json" }),
+            // Không set Content-Type cho FormData — browser tự set boundary
+            ...(isGet || actualPayload instanceof FormData ? {} : { "Content-Type": "application/json" }),
             "Accept-Language": locale,
         },
         body:
             isGet || method === "DELETE"
                 ? undefined
-                : isFormData
-                    ? (payload as FormData)
-                    : JSON.stringify(payload ?? {}),
+                : actualPayload instanceof FormData
+                    ? (actualPayload as FormData)
+                    : JSON.stringify(actualPayload ?? {}),
     });
 
     return (await res.json().catch(() => null)) as T;
@@ -58,8 +83,6 @@ export const browserAdapter: HttpAdapter = {
     delete<T>(path: string) {
         return request<T>("DELETE", path);
     },
-    // Toggle trạng thái — PATCH không kèm body, BE tự đảo giá trị hiện tại
-    // (VD: POST/PATCH /clubs/1/toggle-status).
     toggleStatus<T>(path: string) {
         return request<T>("POST", path);
     },
