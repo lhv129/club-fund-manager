@@ -478,32 +478,54 @@ abstract class BaseRepository
     // Translation helpers
     // -------------------------------------------------------------------------
 
+    // -------------------------------------------------------------------------
+    // Translation helpers
+    // -------------------------------------------------------------------------
     public function createWithTranslations(array $data, array $translations): Model
     {
         return DB::transaction(function () use ($data, $translations) {
             $model = $this->model->create($data);
-            $translations = $this->prepareTranslationSlugs($translations, $model->getTable());
-
-            $model->translations()->createMany($translations);
-
+            // Chuẩn hoá: ['vi' => ['name' => ...]] → [['locale' => 'vi', 'name' => ...]]
+            $rows = $this->normalizeTranslations($translations);
+            $rows = $this->prepareTranslationSlugs($rows, $model->getTable());
+            $model->translations()->createMany($rows);
             return $model->load('translations');
         });
     }
-
     public function updateWithTranslations(Model $model, array $data, array $translations): Model
     {
         return DB::transaction(function () use ($model, $data, $translations) {
             $model->update($data);
-            $translations = $this->prepareTranslationSlugs($translations, $model->getTable(), $model->getKey());
-
-            foreach ($translations as $translation) {
+            // Chuẩn hoá: ['vi' => ['name' => ...]] → [['locale' => 'vi', 'name' => ...]]
+            $rows = $this->normalizeTranslations($translations);
+            $rows = $this->prepareTranslationSlugs($rows, $model->getTable(), $model->getKey());
+            foreach ($rows as $row) {
                 $model->translations()->updateOrCreate(
-                    ['locale' => $translation['locale']],
-                    $translation
+                    ['locale' => $row['locale']],
+                    $row
                 );
             }
-
             return $model->fresh('translations');
         });
+    }
+    /**
+     * Chuẩn hoá mảng translations về dạng indexed với 'locale' key.
+     *
+     * Chấp nhận cả hai format:
+     *   - Mới (locale làm key): ['vi' => ['name' => 'Abc'], 'en' => ['name' => 'Def']]
+     *   - Cũ (indexed array) : [['locale' => 'vi', 'name' => 'Abc'], ...]
+     */
+    protected function normalizeTranslations(array $translations): array
+    {
+        // Nếu key đầu tiên là string → format mới
+        if (!empty($translations) && is_string(array_key_first($translations))) {
+            $rows = [];
+            foreach ($translations as $locale => $fields) {
+                $rows[] = array_merge(['locale' => $locale], $fields);
+            }
+            return $rows;
+        }
+        // Format cũ — giữ nguyên
+        return $translations;
     }
 }

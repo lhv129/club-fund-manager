@@ -20,5 +20,8 @@ return [
     'deleted'        => 'Club deleted successfully.',
     'status_toggled' => 'Club status toggled successfully.',
     'not_found'      => 'Club not found.',
-
+    'attributes' => [
+        'name'        => 'Club name',
+        'description' => 'Club description',
+    ],
 ];

@@ -30,7 +30,8 @@ class RequiredLocales implements ValidationRule
             return;
         }
 
-        $provided = array_column($value, 'locale');
+        // Locale code là key của array, không phải field bên trong
+        $provided = array_keys($value);            // ← đổi từ array_column($value, 'locale')
         $missing  = array_diff($this->required, $provided);
 
         if (!empty($missing)) {

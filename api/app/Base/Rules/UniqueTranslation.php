@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Kiểm tra name (hoặc title) unique per locale trong bảng translation.
  *
- * Dùng ValidatorAwareRule để gắn lỗi đúng field (translations.0.name),
+ * Dùng ValidatorAwareRule để gắn lỗi đúng field (translations.{locale}.name),
  * đi qua failedValidation() của BaseRequest → response 422 chuẩn.
  *
  * Store:
@@ -44,9 +44,9 @@ class UniqueTranslation implements ValidationRule, ValidatorAwareRule
 
         $hasError = false;
 
-        foreach ($value as $index => $translation) {
-            $locale = $translation['locale']         ?? null;
-            $name   = $translation[$this->nameField] ?? null;
+        foreach ($value as $locale => $translation) {
+            // $locale bây giờ = "vi" | "en" — lấy trực tiếp từ key
+            $name = $translation[$this->nameField] ?? null;
 
             if (!$locale || !$name) {
                 continue;
@@ -62,9 +62,9 @@ class UniqueTranslation implements ValidationRule, ValidatorAwareRule
                 ->exists();
 
             if ($exists) {
-                // Gắn lỗi đúng field user nhập: translations.0.name
+                // Error key: translations.vi.name ← locale code, không phải index
                 $this->validator->errors()->add(
-                    "translations.{$index}.{$this->nameField}",
+                    "translations.{$locale}.{$this->nameField}",
                     __('validation.translation_name_taken', ['locale' => $locale]),
                 );
                 $hasError = true;

@@ -1,13 +1,26 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "hviet/club-fund-manager",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Club Fund Manager - Club income and expense management system",
+    "keywords": [
+        "laravel",
+        "club",
+        "fund",
+        "finance"
+    ],
     "license": "MIT",
+    "authors": [
+        {
+            "name": "Lưu Việt",
+            "email": "vietlh.hn@gmail.com",
+            "homepage": "https://github.com/lhv129",
+            "role": "Developer"
+        }
+    ],
     "require": {
         "php": "^8.3",
-        "intervention/image": "^4.1",
+        "intervention/image": "^4.2",
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0",
         "tymon/jwt-auth": "^2.3"

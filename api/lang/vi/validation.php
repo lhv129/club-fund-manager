@@ -62,4 +62,5 @@ return [
 
     'required_locales' => 'Thiếu bản dịch cho các ngôn ngữ: :locales.',
     'translation_name_taken' => 'Tên này đã tồn tại cho ngôn ngữ :locale, vui lòng dùng tên khác.',
+    'unsupported_locales' => 'Locale không hợp lệ: :locales.',
 ];

@@ -54,4 +54,19 @@ abstract class BaseRequest extends FormRequest
 
         );
     }
+
+    /**
+     * Build wildcard attribute map cho các field translations.*.{field}
+     * dựa theo lang key riêng của từng domain, ví dụ:
+     *   lang/vi/club.php => ['attributes' => ['name' => 'tên câu lạc bộ']]
+     *   lang/en/club.php => ['attributes' => ['name' => 'club name']]
+     */
+    protected function translationAttributes(string $langGroup, array $fields): array
+    {
+        $attrs = [];
+        foreach ($fields as $field) {
+            $attrs["translations.*.$field"] = __("domains/$langGroup.attributes.$field");
+        }
+        return $attrs;
+    }
 }

@@ -4,24 +4,18 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
 
 class SetLocale
 {
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
-        $locale =
-            $request->header('locale')
-            ?? $request->header('Accept-Language')
-            ?? config('app.locale');
-
-        $supported = ['vi', 'en'];
-
-        if (!in_array($locale, $supported)) {
-            $locale = config('app.locale');
+        $locale = $request->header('Accept-Language');
+        $supported = config('app.supported_locales', [config('app.locale')]);
+        if ($locale && in_array($locale, $supported, true)) {
+            app()->setLocale($locale);
         }
-
-        app()->setLocale($locale);
-
         return $next($request);
     }
 }

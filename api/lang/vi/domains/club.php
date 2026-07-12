@@ -19,4 +19,9 @@ return [
     'deleted'        => 'Xoá câu lạc bộ thành công.',
     'status_toggled' => 'Cập nhật trạng thái câu lạc bộ thành công.',
     'not_found'      => 'Không tìm thấy câu lạc bộ.',
+
+    'attributes' => [
+        'name'        => 'Tên câu lạc bộ',
+        'description' => 'Mô tả câu lạc bộ',
+    ],
 ];
