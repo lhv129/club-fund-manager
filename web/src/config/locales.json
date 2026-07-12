@@ -1,0 +1,15 @@
+{
+    "defaultLocale": "vi",
+    "locales": [
+        {
+            "code": "vi",
+            "label": "Tiếng Việt",
+            "flag": "/icon/flag-for-flag-vietnam.svg"
+        },
+        {
+            "code": "en",
+            "label": "English",
+            "flag": "/icon/flag-for-flag-united-kingdom.svg"
+        }
+    ]
+}

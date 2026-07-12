@@ -7,7 +7,7 @@
  * ⚠️ This file imports `next/headers` — do NOT import from Client Components.
  * Only import from Server Components, Route Handlers, or apiClient (server-only).
  */
-
+import "server-only";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { COOKIE_NAMES, COOKIE_MAX_AGE } from "@/constants";

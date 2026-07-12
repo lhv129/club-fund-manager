@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useLayoutEffect } from "react";
 import { useAuthStore } from "../stores/authStore";
 import { authService } from "../services/authService";
 import type { LoginPayload, RegisterPayload, Profile } from "../types";
@@ -84,11 +84,17 @@ export function useAuth() {
 
       // Superadmin bypass
       if (user.is_superadmin) return true;
-      if (
-        Array.isArray(user.permissions) &&
-        user.permissions.includes("*")
-      ) {
+      if (Array.isArray(user.permissions) && user.permissions.includes("*")) {
         return true;
+      }
+
+      // permissions không tồn tại hoặc không phải object dạng { [clubId]: { [module]: string[] } }
+      if (
+        !user.permissions ||
+        typeof user.permissions !== "object" ||
+        Array.isArray(user.permissions)
+      ) {
+        return false;
       }
 
       const permissions = user.permissions as Record<
@@ -105,7 +111,7 @@ export function useAuth() {
 
       // Check across all clubs
       return Object.values(permissions).some(
-        (modules) => modules[module]?.includes(action) ?? false,
+        (modules) => modules?.[module]?.includes(action) ?? false,
       );
     },
     [user],
@@ -128,28 +134,26 @@ export function useAuth() {
 }
 
 /**
- * Hydrate auth store from a server-fetched profile — SYNCHRONOUSLY.
+ * Hydrate auth store from a server-fetched profile.
  *
- * Sets the profile into zustand store on first render (not in useEffect)
- * to avoid nav flash where user=null on first paint.
- * Uses useState initializer pattern to run exactly once.
+ * Chạy trong useLayoutEffect (không phải trong thân render) để:
+ *  - Không còn cảnh báo "Cannot update a component while rendering another".
+ *  - Vẫn không bị flash user=null, vì useLayoutEffect chạy trước khi
+ *    browser paint — tất cả component subscribe store re-render xong
+ *    rồi mới vẽ lên màn hình.
  */
 export function useHydrateAuth(profile: Profile | null) {
   const setUser = useAuthStore((s) => s.setUser);
   const reset = useAuthStore((s) => s.reset);
-  const [hydrated] = useState(false);
-
-  // useState initializer runs synchronously during first render
-  // Empty deps via useRef guard — runs exactly once
-  const ref = useRef(false);
-  if (!ref.current) {
-    ref.current = true;
+  const hydratedRef = useRef(false);
+  useLayoutEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
     if (profile) {
       setUser(profile);
     } else {
       reset();
     }
-  }
+  }, [profile, setUser, reset]);
 
-  return hydrated;
 }

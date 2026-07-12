@@ -1,3 +1,16 @@
+import {
+    Building2,
+    FolderOpen,
+    LayoutDashboard,
+    Mail,
+    CirclePlus,
+    Settings,
+    ShieldCheck,
+    KeyRound,
+    Users,
+    LucideIcon,
+} from "lucide-react";
+
 import { APP_ROUTES, MODULE_SLUGS, PERMISSION_ACTIONS } from "@/constants";
 
 export interface NavItem {
@@ -5,7 +18,7 @@ export interface NavItem {
     labelKey: string;
     module?: string;
     action?: string;
-    icon: string;
+    icon: LucideIcon;
     children?: NavItem[];
 }
 
@@ -13,68 +26,53 @@ export const NAV_ITEMS: NavItem[] = [
     {
         href: APP_ROUTES.dashboard,
         labelKey: "dashboard",
-        icon: "📊",
+        icon: LayoutDashboard,
     },
     {
+        href: APP_ROUTES.clubs,
         labelKey: "clubs",
-        icon: "🏛️",
+        icon: Building2,
         module: MODULE_SLUGS.club,
         action: PERMISSION_ACTIONS.view,
-        children: [
-            {
-                href: APP_ROUTES.clubs,
-                labelKey: "clubsList",
-                icon: "📋",
-                module: MODULE_SLUGS.club,
-                action: PERMISSION_ACTIONS.view,
-            },
-            {
-                href: "/clubs/create",
-                labelKey: "clubCreate",
-                icon: "➕",
-                module: MODULE_SLUGS.club,
-                action: PERMISSION_ACTIONS.create,
-            },
-        ],
     },
     {
         href: APP_ROUTES.clubMembers,
         labelKey: "clubMembers",
-        icon: "👥",
+        icon: Users,
         module: MODULE_SLUGS.club,
         action: PERMISSION_ACTIONS.view,
     },
     {
         href: APP_ROUTES.clubInvites,
         labelKey: "clubInvites",
-        icon: "✉️",
+        icon: Mail,
         module: MODULE_SLUGS.club,
         action: PERMISSION_ACTIONS.view,
     },
     {
         labelKey: "users",
-        icon: "👤",
+        icon: ShieldCheck,
         module: MODULE_SLUGS.user,
         action: PERMISSION_ACTIONS.view,
         children: [
             {
                 href: APP_ROUTES.users,
                 labelKey: "usersList",
-                icon: "📋",
+                icon: Users,
                 module: MODULE_SLUGS.user,
                 action: PERMISSION_ACTIONS.view,
             },
             {
                 href: APP_ROUTES.roles,
                 labelKey: "roles",
-                icon: "🔑",
+                icon: ShieldCheck,
                 module: MODULE_SLUGS.role,
                 action: PERMISSION_ACTIONS.view,
             },
             {
                 href: APP_ROUTES.permissions,
                 labelKey: "permissions",
-                icon: "🛡️",
+                icon: KeyRound,
                 module: MODULE_SLUGS.permission,
                 action: PERMISSION_ACTIONS.view,
             },
@@ -83,11 +81,11 @@ export const NAV_ITEMS: NavItem[] = [
     {
         href: APP_ROUTES.settings,
         labelKey: "settings",
-        icon: "⚙️",
+        icon: Settings,
     },
 ];
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── helpers (không đổi) ────────────────────────────────────────────────────
 
 /** Recursively filter items the user has permission to see. */
 export function filterNav(
@@ -108,8 +106,12 @@ export function filterNav(
                 check(item.module, item.action);
 
             if (allowed || (children && children.length > 0)) {
-                return { ...item, children: children?.length ? children : undefined };
+                return {
+                    ...item,
+                    children: children?.length ? children : undefined,
+                };
             }
+
             return null;
         })
         .filter(Boolean) as NavItem[];
@@ -133,5 +135,6 @@ export function findNavTrail(
             if (found) return found;
         }
     }
+
     return null;
 }

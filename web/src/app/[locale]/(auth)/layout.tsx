@@ -1,4 +1,4 @@
-import { LocaleSwitcher } from "@/components/layout/LocaleSwitcher";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 
 export default function AuthLayout({
   children,

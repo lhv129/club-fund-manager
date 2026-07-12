@@ -1,17 +1,18 @@
-import { BaseService } from "@/lib/baseService";
-import type { ApiResponse } from "@/types/api";
+"use client";
+
+import { BaseRepository } from "@/lib/baseRepository";
+import { browserAdapter } from "@/lib/http/browserAdapter";
 import type { Club } from "../types";
+import type { ApiResponse } from "@/types/api";
 
-class ClubService extends BaseService<Club> {
+class ClubServiceClient extends BaseRepository<Club> {
   protected resource = "clubs";
+  protected adapter = browserAdapter;
 
-  /**
-   * PUT /clubs/{id}/owner — assign club owner.
-   * Backend updates owner_id + ensures approved club_member record.
-   */
-  updateOwner(id: number, userId: number) {
+  updateOwner(id: number, userId: number): Promise<ApiResponse<Club>> {
     return this.put<ApiResponse<Club>>(`/clubs/${id}/owner`, { user_id: userId });
   }
+
 }
 
-export const clubService = new ClubService();
+export const clubServiceClient = new ClubServiceClient();

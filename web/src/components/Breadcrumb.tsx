@@ -3,7 +3,7 @@
 import { Link, usePathname } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { Home, ChevronRight } from "lucide-react";
-import { NAV_ITEMS, findNavTrail } from "./nav-config";
+import { NAV_ITEMS, findNavTrail } from "./layout/nav-config";
 
 export function Breadcrumb() {
     const t = useTranslations("menu") as (key: string) => string;

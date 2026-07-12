@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getRefreshToken, setAuthCookies, clearAuthCookies } from "@/lib/cookies";
-import { API_URL, FALLBACK_LOCALE } from "@/lib/config";
+import { API_URL } from "@/lib/config";
+import { FALLBACK_LOCALE } from "@/lib/locales";
+
 
 /**
  * POST /api/auth/refresh

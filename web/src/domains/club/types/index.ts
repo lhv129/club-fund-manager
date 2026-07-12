@@ -17,6 +17,7 @@ export interface Club {
   sort_order: number;
   total_members?: number | null;
   translations?: Translation[];
+  translation?: Translation;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -62,4 +63,12 @@ export interface ClubListParams {
   sort_dir?: "asc" | "desc";
   limit?: number;
   page?: number;
+}
+
+export interface ClubPayload {
+  max_members: number | null;
+  is_active: boolean;
+  sort_order: number;
+  logo?: File | null;
+  translations: Translation[];
 }

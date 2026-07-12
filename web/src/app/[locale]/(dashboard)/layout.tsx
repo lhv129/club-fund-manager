@@ -18,7 +18,7 @@ export default async function DashboardLayout({
   // Server-side auth check — redirect to login if no token
   const token = await getAccessToken();
   if (!token) {
-    redirect(`/${locale}/dang-nhap`);
+    redirect(`/${locale}/login`);
   }
 
   // Fetch profile server-side — hydrate client store
@@ -28,7 +28,7 @@ export default async function DashboardLayout({
     profile = response.data;
   } catch {
     // Token invalid — redirect to login
-    redirect(`/${locale}/dang-nhap`);
+    redirect(`/${locale}/login`);
   }
 
   return <DashboardShell profile={profile}>{children}</DashboardShell>;

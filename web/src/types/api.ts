@@ -8,10 +8,11 @@
  */
 
 /** Standard success response. */
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T> {
   success: boolean;
-  message: string;
-  data: T;
+  data?: T;
+  message?: string;
+  errors?: Record<string, string[]>;
 }
 
 /** Offset pagination meta (from paginateResponse). */

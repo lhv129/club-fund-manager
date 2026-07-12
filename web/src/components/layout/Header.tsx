@@ -2,10 +2,10 @@
 
 import { useRouter } from "@/i18n/routing";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
-import { LocaleSwitcher } from "./LocaleSwitcher";
+import { LocaleSwitcher } from "../LocaleSwitcher";
 import { APP_ROUTES } from "@/constants";
 import { Menu } from "lucide-react";
-import { AvatarDropdown } from "./AvatarDropdown";
+import { AvatarDropdown } from "../AvatarDropdown";
 
 interface HeaderProps {
   onMenuToggle: () => void;

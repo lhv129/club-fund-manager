@@ -1,16 +1,12 @@
 import "server-only";
-import { BaseService } from "@/lib/baseService";
+import { BaseRepository } from "@/lib/baseRepository";
+import { serverAdapter } from "@/lib/http/serverAdapter";
 import type { ApiResponse } from "@/types/api";
 import type { Profile } from "../types";
 
-/**
- * Auth service — SERVER-ONLY.
- *
- * Used by Server Components (e.g. dashboard layout) to fetch profile.
- * Login/register/refresh/logout go through Route Handlers via authService (client-safe).
- */
-class AuthServiceServer extends BaseService<Profile> {
+class AuthServiceServer extends BaseRepository<Profile> {
   protected resource = "auth";
+  protected adapter = serverAdapter;
 
   /** GET /auth/profile — current user profile. */
   getProfile(): Promise<ApiResponse<Profile>> {
