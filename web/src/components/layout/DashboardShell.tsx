@@ -7,12 +7,12 @@ import { useHydrateAuth } from "@/domains/auth/hooks/useAuth";
 import type { Profile } from "@/domains/auth/types";
 
 /**
- * AdminShell — client wrapper cho Admin workspace (system pages).
+ * DashboardShell — client wrapper cho Dashboard workspace (system pages).
  *
  * Hydrate auth store với profile do Server Component fetch,
  * render Sidebar (system nav) + Header + content.
  */
-export function AdminShell({
+export function DashboardShell({
   profile,
   children,
 }: {

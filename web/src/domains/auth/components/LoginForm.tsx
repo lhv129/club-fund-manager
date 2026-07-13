@@ -61,12 +61,12 @@ export function LoginForm() {
     if (!success) return;
 
     // ── Quyết định redirect sau login ──────────────────────────────────────
-    //  - Superadmin                 → /admin
+    //  - Superadmin                 → /dashboard
     //  - Đúng 1 club truy cập được → /club/{slug}/dashboard
-    //  - 2+ clubs                   → /admin/clubs (trang chọn club)
-    //  - 0 club / lỗi fetch         → /admin/no-club (trang xin vào CLB)
+    //  - 2+ clubs                   → /dashboard/clubs (trang chọn club)
+    //  - 0 club / lỗi fetch         → /dashboard/no-club (trang xin vào CLB)
     if (user?.is_superadmin) {
-      router.push(APP_ROUTES.admin);
+      router.push(APP_ROUTES.dashboard);
       router.refresh();
       return;
     }
@@ -97,7 +97,7 @@ export function LoginForm() {
       router.push(APP_ROUTES.noClub);
       router.refresh();
     } catch {
-      // Lỗi fetch clubs → fallback về /admin/no-club (xem như chưa có club)
+      // Lỗi fetch clubs → fallback về /dashboard/no-club (xem như chưa có club)
       router.push(APP_ROUTES.noClub);
       router.refresh();
     }

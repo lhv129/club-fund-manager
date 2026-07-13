@@ -13,7 +13,7 @@ import { MODULE_SLUGS, PERMISSION_ACTIONS, CLUB_SUBROUTES } from "@/constants";
 /**
  * Nav item cho Club workspace.
  *
- * Khác với admin nav (href tuyệt đối), club nav dùng `sub` —
+ * Khác với dashboard nav (href tuyệt đối), club nav dùng `sub` —
  * sub-route key trong CLUB_SUBROUTES. ClubSidebar sẽ ghép với
  * slug của CLB hiện tại thành: `/club/{slug}/{sub}`.
  *

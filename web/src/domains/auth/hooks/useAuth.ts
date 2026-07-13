@@ -117,14 +117,14 @@ export function useAuth() {
     [user],
   );
 
-  const isSuperAdmin = user?.is_superadmin ?? false;
+  const isSuperDashboard = user?.is_superadmin ?? false;
 
   return {
     user,
     isAuthenticated,
     isLoading,
     error,
-    isSuperAdmin,
+    isSuperDashboard,
     login,
     register,
     logout,

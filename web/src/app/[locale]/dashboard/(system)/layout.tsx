@@ -50,9 +50,9 @@ function canAccessSystem(profile: Profile): boolean {
  * (system) layout — permission gate cho system pages.
  *
  * Chỉ superadmin hoặc user có permission view trên user/role/permission
- * mới vào được /admin (dashboard), /admin/users, /admin/roles,
- * /admin/permissions, /admin/settings. Manager (chỉ có quyền trên club)
- * bị redirect về /admin/clubs để chọn club.
+ * mới vào được /dashboard (dashboard), /dashboard/users, /dashboard/roles,
+ * /dashboard/permissions, /dashboard/settings. Manager (chỉ có quyền trên club)
+ * bị redirect về /dashboard/clubs để chọn club.
  */
 export default async function SystemLayout({
   children,

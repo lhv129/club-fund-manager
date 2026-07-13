@@ -11,7 +11,7 @@ export interface ColumnDef<T> {
     renderActions?: (row: T) => React.ReactNode;
 }
 
-interface AdminTableProps<T> {
+interface DashboardTableProps<T> {
     columns: ColumnDef<T>[];
     data: T[];
     loading?: boolean;
@@ -42,7 +42,7 @@ function SkeletonRow({ cols }: { cols: number }) {
     );
 }
 
-export function AdminTable<T extends object>({
+export function DashboardTable<T extends object>({
     columns,
     data = [],
     loading = false,
@@ -59,7 +59,7 @@ export function AdminTable<T extends object>({
     selectable = false,
     selectedIds = [],
     onSelectionChange,
-}: AdminTableProps<T>) {
+}: DashboardTableProps<T>) {
     const t = useTranslations("common");
 
     const resolvedAddLabel = addLabel ?? t("add");

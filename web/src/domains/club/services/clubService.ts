@@ -21,7 +21,7 @@ class ClubServiceClient extends BaseRepository<Club> {
    *  - Theo invite token: { token, join_type: "invite" }
    *  - Theo club_id (sau khi search): { club_id, join_type: "request", reason? }
    *
-   * BE tạo ClubMember với status = pending → admin duyệt → approved/rejected.
+   * BE tạo ClubMember với status = pending → dashboard duyệt → approved/rejected.
    */
   join(payload: {
     token?: string;

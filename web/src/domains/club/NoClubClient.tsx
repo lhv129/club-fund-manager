@@ -74,7 +74,7 @@ export function NoClubClient() {
       });
       if (res.success) {
         toast.success(t("joinRequested", { name: tr(club.translations)?.name ?? "" }));
-        // Không tự vào workspace — chờ admin duyệt (status = pending)
+        // Không tự vào workspace — chờ dashboard duyệt (status = pending)
       } else {
         toast.error(res.message || t("joinFailed"));
       }
@@ -104,11 +104,11 @@ export function NoClubClient() {
         const member = res.data;
         if (member?.club_id) {
           // Cần fetch club để lấy slug — hoặc BE trả kèm. Fallback: refresh để
-          // LoginForm-redirect logic chạy lại. Đơn giản: push về /admin/clubs.
-          router.push("/admin/clubs");
+          // LoginForm-redirect logic chạy lại. Đơn giản: push về /dashboard/clubs.
+          router.push("/dashboard/clubs");
           router.refresh();
         } else {
-          router.push("/admin/clubs");
+          router.push("/dashboard/clubs");
           router.refresh();
         }
       } else {

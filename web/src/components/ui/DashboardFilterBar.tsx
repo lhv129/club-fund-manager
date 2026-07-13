@@ -17,7 +17,7 @@ export interface AppliedFilters {
     sort_dir?: "asc" | "desc";
 }
 
-interface AdminFilterBarProps {
+interface DashboardFilterBarProps {
     /** Giá trị ĐÃ ÁP DỤNG (đang thật sự dùng để gọi API) — chỉ dùng để khởi tạo/đồng bộ lại draft, không bind trực tiếp vào input. */
     search: string;
     isActive?: 0 | 1;
@@ -43,7 +43,7 @@ interface AdminFilterBarProps {
     className?: string;
 }
 
-export function AdminFilterBar({
+export function DashboardFilterBar({
     search,
     isActive,
     sortBy,
@@ -56,7 +56,7 @@ export function AdminFilterBar({
     onReset,
     extraFilters,
     className = "",
-}: AdminFilterBarProps) {
+}: DashboardFilterBarProps) {
     const t = useTranslations("common");
 
     // ── Draft — thay đổi ở đây KHÔNG gọi API, chỉ khi bấm "Tìm kiếm" mới apply ──

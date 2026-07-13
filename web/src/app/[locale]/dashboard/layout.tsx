@@ -3,17 +3,17 @@ import { setRequestLocale } from "next-intl/server";
 import { getAccessToken } from "@/lib/cookies";
 import { authServiceServer } from "@/domains/auth/services/authServiceServer";
 import type { Profile } from "@/domains/auth/types";
-import { AdminShell } from "@/components/layout/AdminShell";
+import { DashboardShell } from "@/components/layout/DashboardShell";
 
 /**
- * Admin workspace layout — auth guard + profile hydration.
+ * Dashboard workspace layout — auth guard + profile hydration.
  *
- * KHÔNG check permission system ở đây — vì /admin/clubs (chọn club) và
- * /admin/no-club (xin vào CLB) phải truy cập được bởi mọi user đã login.
+ * KHÔNG check permission system ở đây — vì /dashboard/clubs (chọn club) và
+ * /dashboard/no-club (xin vào CLB) phải truy cập được bởi mọi user đã login.
  * Permission gate cho system pages (users/roles/permissions/settings/dashboard)
  * nằm ở (system)/layout.tsx.
  */
-export default async function AdminLayout({
+export default async function DashboardLayout({
   children,
   params,
 }: {
@@ -33,7 +33,7 @@ export default async function AdminLayout({
   let profile: Profile | null = null;
   try {
     const response = await authServiceServer.getProfile();
-    profile = response.data;
+    profile = response.data || null;
   } catch {
     // Token invalid — redirect to login
     redirect(`/${locale}/login`);
@@ -43,5 +43,5 @@ export default async function AdminLayout({
     redirect(`/${locale}/login`);
   }
 
-  return <AdminShell profile={profile}>{children}</AdminShell>;
+  return <DashboardShell profile={profile}>{children}</DashboardShell>;
 }

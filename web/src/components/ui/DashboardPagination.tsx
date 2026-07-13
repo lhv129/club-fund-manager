@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface AdminPaginationProps {
+interface DashboardPaginationProps {
     page: number;
     limit: number;
     total: number;
@@ -28,7 +28,7 @@ function getPageNumbers(current: number, total: number): (number | "…")[] {
     return range;
 }
 
-export function AdminPagination({
+export function DashboardPagination({
     page,
     limit,
     total,
@@ -36,7 +36,7 @@ export function AdminPagination({
     onLimitChange,
     limitOptions = [10, 20, 50, 100],
     className = "",
-}: AdminPaginationProps) {
+}: DashboardPaginationProps) {
     const t = useTranslations("common");
 
     const totalPages = Math.max(1, Math.ceil(total / limit));

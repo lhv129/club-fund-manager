@@ -139,13 +139,13 @@ function NavGroup({
 export function Sidebar({ open, onClose }: SidebarProps) {
   const t = useTranslations("menu") as (key: string) => string;
   const pathname = usePathname() as string;
-  const { hasPermission, isSuperAdmin } = useAuth();
+  const { hasPermission, isSuperDashboard } = useAuth();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   const filtered = filterNav(
     ADMIN_NAV_ITEMS,
     (module, action) => hasPermission(module!, action!),
-    isSuperAdmin
+    isSuperDashboard
   );
 
   useEffect(() => {

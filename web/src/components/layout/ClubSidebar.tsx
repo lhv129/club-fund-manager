@@ -78,7 +78,7 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
   const t = useTranslations("menu") as (key: string) => string;
   const tWorkspace = useTranslations("clubWorkspace") as (key: string) => string;
   const pathname = usePathname() as string;
-  const { isSuperAdmin, hasPermission } = useAuth();
+  const { isSuperDashboard, hasPermission } = useAuth();
   const { club } = useClub();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -102,7 +102,7 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
   // Superadmin luôn thấy. Manager (không phải superadmin) cũng thấy để đổi club
   // nếu có permission view club ở bất kỳ club nào.
   const showBackToClubs =
-    isSuperAdmin ||
+    isSuperDashboard ||
     hasPermission("club", "view"); // không truyền clubId → check any club
 
   useEffect(() => {
@@ -175,10 +175,10 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
             <p className="text-sm font-semibold text-foreground truncate">
               {clubName ?? "—"}
             </p>
-            {isSuperAdmin && (
+            {isSuperDashboard && (
               <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
                 <ShieldCheck className="h-3 w-3" />
-                {tWorkspace("viewingAsSuperAdmin")}
+                {tWorkspace("viewingAsSuperDashboard")}
               </span>
             )}
           </div>

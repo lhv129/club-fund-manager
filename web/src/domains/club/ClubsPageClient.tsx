@@ -5,9 +5,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { ImageOff, Pencil, Plus, Trash2, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
-import { AdminTable, ColumnDef } from "@/components/ui/AdminTable";
-import { AdminFilterBar } from "@/components/ui/AdminFilterBar";
-import { AdminPagination } from "@/components/ui/AdminPagination";
+import { DashboardTable, ColumnDef } from "@/components/ui/DashboardTable";
+import { DashboardFilterBar } from "@/components/ui/DashboardFilterBar";
+import { DashboardPagination } from "@/components/ui/DashboardPagination";
 import {
     FormModalWithMedia,
     toInitialTranslations,
@@ -18,7 +18,7 @@ import { TableActions } from "@/components/ui/TableActions";
 import { TableActionItem } from "@/components/ui/TableActionItem";
 import CustomImage from "@/components/CustomImage";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
-import { useAdminListParams } from "@/hooks/useAdminListParams";
+import { useDashboardListParams } from "@/hooks/useDashboardListParams";
 import { clubServiceClient } from "@/domains/club/services/clubService";
 import { clubDashboardRoute } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
@@ -39,15 +39,15 @@ export function ClubsPageClient() {
     const tr = (translations?: Translation[]) =>
         translations?.find((item) => item.locale === locale) ?? translations?.[0];
 
-    const { isSuperAdmin, hasPermission } = useAuth();
+    const { isSuperDashboard, hasPermission } = useAuth();
     // Manager (không phải superadmin) cần permission create/update/delete trên club
     // để thấy nút Thêm/Sửa/Xoá. Superadmin bypass.
-    const canCreate = isSuperAdmin || hasPermission("club", "create");
-    const canUpdate = isSuperAdmin || hasPermission("club", "update");
-    const canDelete = isSuperAdmin || hasPermission("club", "delete");
+    const canCreate = isSuperDashboard || hasPermission("club", "create");
+    const canUpdate = isSuperDashboard || hasPermission("club", "update");
+    const canDelete = isSuperDashboard || hasPermission("club", "delete");
 
     const { params, setPage, setLimit, updateMany, reset } =
-        useAdminListParams<ClubFilters>({
+        useDashboardListParams<ClubFilters>({
             defaultFilters: { search: "", is_active: undefined },
             defaultSortBy: "created_at",
             defaultSortDir: "desc",
@@ -309,7 +309,7 @@ export function ClubsPageClient() {
             </div>
 
             <div className="space-y-4">
-                <AdminFilterBar
+                <DashboardFilterBar
                     search={params.search}
                     isActive={params.is_active}
                     sortBy={params.sort_by}
@@ -320,7 +320,7 @@ export function ClubsPageClient() {
                     onReset={reset}
                 />
 
-                <AdminTable
+                <DashboardTable
                     columns={columns}
                     data={data}
                     loading={loading}
@@ -329,7 +329,7 @@ export function ClubsPageClient() {
                     emptyText={tc("notFound")}
                 />
 
-                <AdminPagination
+                <DashboardPagination
                     page={params.page}
                     limit={params.limit}
                     total={total}

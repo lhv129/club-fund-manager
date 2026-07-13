@@ -14,13 +14,13 @@ src/
 │   │   │   ├── login/page.tsx
 │   │   │   └── register/page.tsx
 │   │   │
-│   │   ├── admin/                  # ⬅ Admin workspace (system) — URL: /{locale}/admin/...
-│   │   │   ├── layout.tsx          # Auth guard + fetch profile + AdminShell (KHÔNG permission gate)
+│   │   ├── dashboard/                  # ⬅ Dashboard workspace (system) — URL: /{locale}/dashboard/...
+│   │   │   ├── layout.tsx          # Auth guard + fetch profile + DashboardShell (KHÔNG permission gate)
 │   │   │   ├── clubs/page.tsx      # Danh sách CLB (chọn CLB để vào workspace) — mọi user đã login
 │   │   │   ├── no-club/page.tsx    # Trang "Chưa có CLB" — tìm CLB / nhập token để xin vào
 │   │   │   └── (system)/           # Route group — system pages (CÓ permission gate)
 │   │   │       ├── layout.tsx      # Gate: superadmin hoặc có view user/role/permission
-│   │   │       ├── page.tsx        # /admin — dashboard hệ thống (stats)
+│   │   │       ├── page.tsx        # /dashboard — dashboard hệ thống (stats)
 │   │   │       ├── users/page.tsx
 │   │   │       ├── roles/page.tsx
 │   │   │       ├── permissions/page.tsx
@@ -48,16 +48,16 @@ src/
 │   │   ├── services/               # clubService (client), clubServiceServer, clubMemberService, clubInviteService
 │   │   ├── stores/clubStore.ts     # zustand — club workspace hiện tại
 │   │   ├── hooks/useClub.ts       # useClub() + useHydrateClub()
-│   │   ├── ClubsPageClient.tsx    # Danh sách CLB (admin) + nút "Mở workspace"
+│   │   ├── ClubsPageClient.tsx    # Danh sách CLB (dashboard) + nút "Mở workspace"
 │   │   └── NoClubClient.tsx       # Trang "Chưa có CLB" — search/token join
 │   ├── role/
 │   ├── permission/
 │   └── module/
 │
 ├── components/
-│   ├── ui/                         # Button, Input, Card, AdminTable, AdminFilterBar, AdminPagination
+│   ├── ui/                         # Button, Input, Card, DashboardTable, DashboardFilterBar, DashboardPagination
 │   ├── layout/
-│   │   ├── AdminShell.tsx          # Wrap Sidebar (system) + Header + main
+│   │   ├── DashboardShell.tsx          # Wrap Sidebar (system) + Header + main
 │   │   ├── ClubShell.tsx           # Wrap ClubSidebar + Header + main
 │   │   ├── Sidebar.tsx             # System sidebar (dùng ADMIN_NAV_ITEMS)
 │   │   ├── ClubSidebar.tsx         # Club sidebar (dùng CLUB_NAV_ITEMS, scope theo club.id)
@@ -70,7 +70,7 @@ src/
 │   └── LocaleSwitcher.tsx          # Đổi locale — tự dịch slug nếu đang ở club route
 │
 ├── hooks/
-│   └── useAdminListParams.ts       # Hook quản lý filter/sort/page/limit — generic theo module
+│   └── useDashboardListParams.ts       # Hook quản lý filter/sort/page/limit — generic theo module
 │
 ├── lib/
 │   ├── http/
@@ -103,11 +103,11 @@ src/
 
 2. Hai workspace — chia theo role
 ┌─────────────────┬────────────────────────────────────────────────────────────┐
-│ Super Admin     │ /admin (system: clubs, users, roles, permissions, settings) │
+│ Super Dashboard     │ /dashboard (system: clubs, users, roles, permissions, settings) │
 │                 │     ↓ chọn CLB                                              │
 │                 │ /club/{slug}/dashboard (workspace CLB: members, invites...) │
 ├─────────────────┼────────────────────────────────────────────────────────────┤
-│ Club Manager    │ /admin/clubs (chọn CLB của mình)                             │
+│ Club Manager    │ /dashboard/clubs (chọn CLB của mình)                             │
 │                 │     ↓ chọn CLB                                              │
 │                 │ /club/{slug}/dashboard                                     │
 │                 │ Không thấy system pages (users/roles/permissions) — ẩn theo │
@@ -116,7 +116,7 @@ src/
 │ Member          │ /club/{slug}/dashboard (vào thẳng nếu chỉ 1 CLB)             │
 │                 │ Sidebar ít hơn (dashboard, members, events...)              │
 ├─────────────────┼────────────────────────────────────────────────────────────┤
-│ Chưa có CLB     │ /admin/no-club — tìm CLB hoặc nhập invite token              │
+│ Chưa có CLB     │ /dashboard/no-club — tìm CLB hoặc nhập invite token              │
 └─────────────────┴────────────────────────────────────────────────────────────┘
 
 3. Data flow
@@ -161,7 +161,7 @@ CLIENT (Client Component — "use client")
 
 6. Login redirect
 Sau login thành công:
-  - is_superadmin                   → /admin
+  - is_superadmin                   → /dashboard
   - 1 club truy cập được            → /club/{slug}/dashboard
-  - 2+ clubs                        → /admin/clubs
-  - 0 club / lỗi fetch              → /admin/no-club
+  - 2+ clubs                        → /dashboard/clubs
+  - 0 club / lỗi fetch              → /dashboard/no-club

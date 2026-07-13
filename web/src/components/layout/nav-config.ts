@@ -20,7 +20,7 @@ export interface NavItem {
 }
 
 /**
- * Admin workspace nav — system pages dưới /admin/...
+ * Dashboard workspace nav — system pages dưới /dashboard/...
  * (clubs, users, roles, permissions, settings).
  *
  * Club-scoped pages (members, invites, funds, ...) KHÔNG nằm đây —
@@ -81,16 +81,16 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 export function filterNav(
     items: NavItem[],
     check: (module?: string, action?: string) => boolean,
-    isSuperAdmin: boolean
+    isSuperDashboard: boolean
 ): NavItem[] {
     return items
         .map((item) => {
             const children = item.children
-                ? filterNav(item.children, check, isSuperAdmin)
+                ? filterNav(item.children, check, isSuperDashboard)
                 : undefined;
 
             const allowed =
-                isSuperAdmin ||
+                isSuperDashboard ||
                 !item.module ||
                 !item.action ||
                 check(item.module, item.action);

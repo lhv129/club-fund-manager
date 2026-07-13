@@ -2,7 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ClubsPageClient } from "@/domains/club/ClubsPageClient";
 
-export default async function AdminClubsPage({
+export default async function DashboardClubsPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
