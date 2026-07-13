@@ -54,7 +54,8 @@
     "saveSuccess": "Thêm mới thành công",
     "deleteSuccess": "Đã xóa thành công",
     "updateSuccess": "Cập nhật thành công",
-    "loadError": "Không thể tải dữ liệu"
+    "loadError": "Không thể tải dữ liệu",
+    "openWorkspace": "Mở workspace"
   },
   "auth": {
     "login": {
@@ -103,7 +104,12 @@
     "clubMembers": "Thành viên CLB",
     "clubInvites": "Lời mời CLB",
     "modules": "Module",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "members": "Thành viên",
+    "invites": "Lời mời",
+    "funds": "Quỹ CLB",
+    "events": "Sự kiện",
+    "clubSettings": "Cài đặt CLB"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
@@ -127,5 +133,33 @@
     "notFound": "Không tìm thấy câu lạc bộ nào",
     "totalCount": "{count} câu lạc bộ",
     "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa câu lạc bộ {name}?"
+  },
+  "clubWorkspace": {
+    "backToClubs": "Quay lại danh sách CLB",
+    "currentClub": "CLB hiện tại",
+    "viewingAsSuperAdmin": "Đang xem với quyền Super Admin",
+    "dashboard": "Bảng điều khiển CLB",
+    "totalMembers": "Tổng thành viên",
+    "totalFunds": "Tổng quỹ",
+    "activeEvents": "Sự kiện đang diễn ra",
+    "monthlyIncome": "Thu tháng này"
+  },
+  "noClub": {
+    "title": "Bạn chưa tham gia câu lạc bộ nào",
+    "subtitle": "Tìm và xin vào một câu lạc bộ, hoặc nhập mã lời mời để tham gia ngay.",
+    "searchTab": "Tìm CLB",
+    "tokenTab": "Mã lời mời",
+    "searchPlaceholder": "Nhập tên câu lạc bộ...",
+    "noResults": "Không tìm thấy câu lạc bộ nào",
+    "join": "Xin vào",
+    "joinRequested": "Đã gửi yêu cầu tham gia \"{name}\". Vui lòng chờ quản trị viên duyệt.",
+    "joinFailed": "Không thể gửi yêu cầu tham gia",
+    "searchHint": "Sau khi gửi, yêu cầu sẽ ở trạng thái chờ duyệt. Quản trị viên CLB sẽ phê duyệt.",
+    "tokenLabel": "Mã lời mời",
+    "tokenPlaceholder": "Dán mã lời mời vào đây...",
+    "tokenHint": "Mã lời mời lấy từ link chia sẻ do CLB cấp (ví dụ: /join?token=...).",
+    "tokenSubmit": "Tham gia bằng mã",
+    "tokenAccepted": "Tham gia thành công!",
+    "tokenInvalid": "Mã lời mời không hợp lệ hoặc đã hết hạn"
   }
 }

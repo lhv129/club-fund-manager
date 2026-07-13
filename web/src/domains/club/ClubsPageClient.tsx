@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Eye, ImageOff, Pencil, Plus, Trash2 } from "lucide-react";
+import { ImageOff, Pencil, Plus, Trash2, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { AdminTable, ColumnDef } from "@/components/ui/AdminTable";
 import { AdminFilterBar } from "@/components/ui/AdminFilterBar";
@@ -20,6 +20,8 @@ import CustomImage from "@/components/CustomImage";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
 import { useAdminListParams } from "@/hooks/useAdminListParams";
 import { clubServiceClient } from "@/domains/club/services/clubService";
+import { clubDashboardRoute } from "@/constants";
+import { useAuth } from "@/domains/auth/hooks/useAuth";
 import type { Club, Translation } from "@/domains/club/types";
 import type { ApiResponse } from "@/types/api";
 
@@ -36,6 +38,13 @@ export function ClubsPageClient() {
 
     const tr = (translations?: Translation[]) =>
         translations?.find((item) => item.locale === locale) ?? translations?.[0];
+
+    const { isSuperAdmin, hasPermission } = useAuth();
+    // Manager (không phải superadmin) cần permission create/update/delete trên club
+    // để thấy nút Thêm/Sửa/Xoá. Superadmin bypass.
+    const canCreate = isSuperAdmin || hasPermission("club", "create");
+    const canUpdate = isSuperAdmin || hasPermission("club", "update");
+    const canDelete = isSuperAdmin || hasPermission("club", "delete");
 
     const { params, setPage, setLimit, updateMany, reset } =
         useAdminListParams<ClubFilters>({
@@ -86,7 +95,9 @@ export function ClubsPageClient() {
     // ─── Navigation ──────────────────────────────────────────────────────────────
 
     const handleDetail = (row: Club) => {
-        router.push(`/admin/clubs/${row.id}` as any);
+        // Mở club workspace theo slug của locale hiện tại.
+        const slug = tr(row.translations)?.slug ?? String(row.id);
+        router.push(clubDashboardRoute(slug) as never);
     };
 
     // ─── Modal handlers ───────────────────────────────────────────────────────────
@@ -248,21 +259,25 @@ export function ClubsPageClient() {
     const renderRowActions = (row: Club) => (
         <TableActions>
             <TableActionItem
-                icon={<Eye className="w-4 h-4" />}
-                label={t("view")}
+                icon={<ArrowRight className="w-4 h-4" />}
+                label={t("openWorkspace")}
                 onClick={() => handleDetail(row)}
             />
-            <TableActionItem
-                icon={<Pencil className="w-4 h-4" />}
-                label={t("edit")}
-                onClick={() => openEdit(row)}
-            />
-            <TableActionItem
-                icon={<Trash2 className="w-4 h-4" />}
-                label={t("delete")}
-                variant="danger"
-                onClick={() => setDeleteTarget(row)}
-            />
+            {canUpdate && (
+                <TableActionItem
+                    icon={<Pencil className="w-4 h-4" />}
+                    label={t("edit")}
+                    onClick={() => openEdit(row)}
+                />
+            )}
+            {canDelete && (
+                <TableActionItem
+                    icon={<Trash2 className="w-4 h-4" />}
+                    label={t("delete")}
+                    variant="danger"
+                    onClick={() => setDeleteTarget(row)}
+                />
+            )}
         </TableActions>
     );
 
@@ -281,14 +296,16 @@ export function ClubsPageClient() {
                     </p>
                 </div>
 
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600
-                        hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    {tc("create")}
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600
+                            hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        {tc("create")}
+                    </button>
+                )}
             </div>
 
             <div className="space-y-4">

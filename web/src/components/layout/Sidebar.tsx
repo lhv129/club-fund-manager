@@ -6,7 +6,7 @@ import { Link, usePathname } from "@/i18n/routing";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { cn } from "@/utils";
 import { X, ChevronDown } from "lucide-react";
-import { NAV_ITEMS, NavItem, filterNav } from "./nav-config";
+import { ADMIN_NAV_ITEMS, NavItem, filterNav } from "./nav-config";
 
 interface SidebarProps {
   open: boolean;
@@ -143,7 +143,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   const filtered = filterNav(
-    NAV_ITEMS,
+    ADMIN_NAV_ITEMS,
     (module, action) => hasPermission(module!, action!),
     isSuperAdmin
   );

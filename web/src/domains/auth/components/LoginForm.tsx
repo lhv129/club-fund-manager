@@ -1,18 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useRouter, Link } from "@/i18n/routing";
 import { useAuth } from "../hooks/useAuth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import type { LoginPayload } from "../types";
+import { clubServiceClient } from "@/domains/club/services/clubService";
+import { APP_ROUTES, clubDashboardRoute } from "@/constants";
+import type { LoginPayload, Profile } from "../types";
+import type { Club, Translation } from "@/domains/club/types";
+
+/** Kiểm user có truy cập club này không (mirror canAccessClub ở layout). */
+function clubAccessible(permissions: Profile["permissions"], clubId: number): boolean {
+  if (Array.isArray(permissions) && permissions.includes("*")) return true;
+  if (!permissions || typeof permissions !== "object" || Array.isArray(permissions)) {
+    return false;
+  }
+  const clubPerms = (permissions as Record<string, Record<string, string[]>>)[
+    String(clubId)
+  ];
+  if (!clubPerms) return false;
+  return Object.values(clubPerms).some(
+    (actions) => Array.isArray(actions) && actions.length > 0,
+  );
+}
 
 export function LoginForm() {
   const t = useTranslations("auth.login");
   const tValidation = useTranslations("validation");
   const router = useRouter();
-  const { login, isLoading, error, clearError } = useAuth();
+  const locale = useLocale();
+  const { login, user, isLoading, error, clearError } = useAuth();
 
   const [form, setForm] = useState<LoginPayload>({
     login: "",
@@ -28,14 +47,58 @@ export function LoginForm() {
     return Object.keys(newErrors).length === 0;
   };
 
+  /** Lấy slug theo locale hiện tại từ club.translations. */
+  const slugForLocale = (club: Club): string | undefined =>
+    club.translations?.find((tr: Translation) => tr.locale === locale)?.slug ??
+    club.translations?.[0]?.slug;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
     if (!validate()) return;
 
     const success = await login(form);
-    if (success) {
-      router.push("/");
+    if (!success) return;
+
+    // ── Quyết định redirect sau login ──────────────────────────────────────
+    //  - Superadmin                 → /admin
+    //  - Đúng 1 club truy cập được → /club/{slug}/dashboard
+    //  - 2+ clubs                   → /admin/clubs (trang chọn club)
+    //  - 0 club / lỗi fetch         → /admin/no-club (trang xin vào CLB)
+    if (user?.is_superadmin) {
+      router.push(APP_ROUTES.admin);
+      router.refresh();
+      return;
+    }
+
+    try {
+      const res = await clubServiceClient.list({ limit: 100 });
+      const clubs = (res.data ?? []).filter((c) =>
+        user?.permissions ? clubAccessible(user.permissions, c.id) : false,
+      );
+
+      if (clubs.length === 1) {
+        const slug = slugForLocale(clubs[0]);
+        if (slug) {
+          router.push(clubDashboardRoute(slug));
+          router.refresh();
+          return;
+        }
+      }
+
+      if (clubs.length >= 2) {
+        // 2+ clubs → trang chọn club
+        router.push(APP_ROUTES.adminClubs);
+        router.refresh();
+        return;
+      }
+
+      // 0 club → trang xin vào CLB
+      router.push(APP_ROUTES.noClub);
+      router.refresh();
+    } catch {
+      // Lỗi fetch clubs → fallback về /admin/no-club (xem như chưa có club)
+      router.push(APP_ROUTES.noClub);
       router.refresh();
     }
   };

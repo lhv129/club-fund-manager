@@ -54,7 +54,8 @@
     "saveSuccess": "Saved successfully",
     "deleteSuccess": "Deleted successfully",
     "updateSuccess": "Updated successfully",
-    "loadError": "Failed to load data"
+    "loadError": "Failed to load data",
+    "openWorkspace": "Open workspace"
   },
   "auth": {
     "login": {
@@ -103,7 +104,12 @@
     "clubMembers": "Club Members",
     "clubInvites": "Club Invites",
     "modules": "Modules",
-    "settings": "Settings"
+    "settings": "Settings",
+    "members": "Members",
+    "invites": "Invites",
+    "funds": "Funds",
+    "events": "Events",
+    "clubSettings": "Club Settings"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -127,5 +133,33 @@
     "notFound": "No clubs found",
     "totalCount": "{count} clubs",
     "deleteConfirmMsg": "Are you sure you want to delete club {name}?"
+  },
+  "clubWorkspace": {
+    "backToClubs": "Back to clubs",
+    "currentClub": "Current club",
+    "viewingAsSuperAdmin": "Viewing as Super Admin",
+    "dashboard": "Club dashboard",
+    "totalMembers": "Total members",
+    "totalFunds": "Total funds",
+    "activeEvents": "Active events",
+    "monthlyIncome": "Monthly income"
+  },
+  "noClub": {
+    "title": "You haven't joined any club yet",
+    "subtitle": "Find and request to join a club, or enter an invite code to join instantly.",
+    "searchTab": "Find club",
+    "tokenTab": "Invite code",
+    "searchPlaceholder": "Enter club name...",
+    "noResults": "No clubs found",
+    "join": "Request to join",
+    "joinRequested": "Join request sent for \"{name}\". Please wait for admin approval.",
+    "joinFailed": "Could not send join request",
+    "searchHint": "After sending, the request will be pending. The club admin will review it.",
+    "tokenLabel": "Invite code",
+    "tokenPlaceholder": "Paste the invite code here...",
+    "tokenHint": "The invite code comes from a share link provided by the club (e.g. /join?token=...).",
+    "tokenSubmit": "Join with code",
+    "tokenAccepted": "Joined successfully!",
+    "tokenInvalid": "Invite code is invalid or expired"
   }
 }

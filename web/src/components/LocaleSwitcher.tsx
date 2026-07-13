@@ -7,14 +7,28 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { ChevronDown, Check } from "lucide-react";
 import { LOCALES } from "@/lib/locales";
+import { useClub } from "@/domains/club/hooks/useClub";
+import type { Translation } from "@/domains/club/types";
 
 const DROPDOWN_WIDTH = 176; // = w-44
 const VIEWPORT_PADDING = 8;
+
+/** Lấy slug của CLB theo locale đích từ club.translations. */
+function resolveClubSlug(
+  translations: Translation[] | undefined,
+  nextLocale: string,
+  currentSlug: string,
+): string {
+  return (
+    translations?.find((t) => t.locale === nextLocale)?.slug ?? currentSlug
+  );
+}
 
 export function LocaleSwitcher() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
+  const { club } = useClub();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
@@ -66,11 +80,38 @@ export function LocaleSwitcher() {
     };
   }, [open, updatePosition]);
 
+  /**
+   * Đổi locale — nếu đang ở club workspace (/club/{slug}/...), dịch slug
+   * sang locale mới bằng club.translations (không gọi API).
+   * Các route khác: giữ nguyên pathname, chỉ đổi locale prefix.
+   */
   const handleChange = (nextLocale: string) => {
     if (nextLocale === locale) return;
     setOpen(false);
     startTransition(() => {
-      router.replace(pathname, { locale: nextLocale });
+      // pathname từ next-intl đã loại bỏ locale prefix.
+      // Club route dạng: /club/{slug}/dashboard
+      const segments = pathname.split("/").filter(Boolean); // ["club", "{slug}", "dashboard"?]
+      const isClubRoute = segments[0] === "club" && segments.length >= 2;
+
+      if (isClubRoute) {
+        const currentSlug = segments[1];
+        const rest = segments.slice(2).join("/"); // "dashboard" | "members" | ...
+        const nextSlug = resolveClubSlug(
+          club?.translations,
+          nextLocale,
+          currentSlug,
+        );
+        const nextPath = [
+          "",
+          "club",
+          nextSlug,
+          ...(rest ? [rest] : []),
+        ].join("/");
+        router.replace(nextPath, { locale: nextLocale });
+      } else {
+        router.replace(pathname, { locale: nextLocale });
+      }
     });
   };
 

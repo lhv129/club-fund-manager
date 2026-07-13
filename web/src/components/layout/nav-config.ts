@@ -1,9 +1,6 @@
 import {
     Building2,
-    FolderOpen,
     LayoutDashboard,
-    Mail,
-    CirclePlus,
     Settings,
     ShieldCheck,
     KeyRound,
@@ -22,30 +19,23 @@ export interface NavItem {
     children?: NavItem[];
 }
 
-export const NAV_ITEMS: NavItem[] = [
+/**
+ * Admin workspace nav — system pages dưới /admin/...
+ * (clubs, users, roles, permissions, settings).
+ *
+ * Club-scoped pages (members, invites, funds, ...) KHÔNG nằm đây —
+ * chúng thuộc club workspace (xem club-nav-config.ts).
+ */
+export const ADMIN_NAV_ITEMS: NavItem[] = [
     {
-        href: APP_ROUTES.dashboard,
+        href: APP_ROUTES.adminDashboard,
         labelKey: "dashboard",
         icon: LayoutDashboard,
     },
     {
-        href: APP_ROUTES.clubs,
+        href: APP_ROUTES.adminClubs,
         labelKey: "clubs",
         icon: Building2,
-        module: MODULE_SLUGS.club,
-        action: PERMISSION_ACTIONS.view,
-    },
-    {
-        href: APP_ROUTES.clubMembers,
-        labelKey: "clubMembers",
-        icon: Users,
-        module: MODULE_SLUGS.club,
-        action: PERMISSION_ACTIONS.view,
-    },
-    {
-        href: APP_ROUTES.clubInvites,
-        labelKey: "clubInvites",
-        icon: Mail,
         module: MODULE_SLUGS.club,
         action: PERMISSION_ACTIONS.view,
     },
@@ -56,21 +46,21 @@ export const NAV_ITEMS: NavItem[] = [
         action: PERMISSION_ACTIONS.view,
         children: [
             {
-                href: APP_ROUTES.users,
+                href: APP_ROUTES.adminUsers,
                 labelKey: "usersList",
                 icon: Users,
                 module: MODULE_SLUGS.user,
                 action: PERMISSION_ACTIONS.view,
             },
             {
-                href: APP_ROUTES.roles,
+                href: APP_ROUTES.adminRoles,
                 labelKey: "roles",
                 icon: ShieldCheck,
                 module: MODULE_SLUGS.role,
                 action: PERMISSION_ACTIONS.view,
             },
             {
-                href: APP_ROUTES.permissions,
+                href: APP_ROUTES.adminPermissions,
                 labelKey: "permissions",
                 icon: KeyRound,
                 module: MODULE_SLUGS.permission,
@@ -79,7 +69,7 @@ export const NAV_ITEMS: NavItem[] = [
         ],
     },
     {
-        href: APP_ROUTES.settings,
+        href: APP_ROUTES.adminSettings,
         labelKey: "settings",
         icon: Settings,
     },

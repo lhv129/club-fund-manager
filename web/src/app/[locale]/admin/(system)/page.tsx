@@ -2,7 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { Card } from "@/components/ui/Card";
 
-export default async function DashboardPage({
+export default async function AdminDashboardPage({
   params,
 }: {
   params: Promise<{ locale: string }>;

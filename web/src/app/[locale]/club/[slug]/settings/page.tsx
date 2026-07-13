@@ -2,10 +2,10 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { Card } from "@/components/ui/Card";
 
-export default async function RolesPage({
+export default async function ClubSettingsPage({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -14,7 +14,7 @@ export default async function RolesPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-zinc-900">{t("roles")}</h1>
+      <h1 className="text-2xl font-bold text-zinc-900">{t("clubSettings")}</h1>
       <Card>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-lg text-zinc-400">{tCommon("comingSoon")}</p>

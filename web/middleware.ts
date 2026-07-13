@@ -51,7 +51,7 @@ export default async function middleware(request: NextRequest) {
   );
 
   if (isAuthRoute && accessToken) {
-    const dashboardUrl = new URL(`/${locale}${APP_ROUTES.dashboard}`, request.url);
+    const dashboardUrl = new URL(`/${locale}${APP_ROUTES.admin}`, request.url);
     return NextResponse.redirect(dashboardUrl);
   }
 
