@@ -79,6 +79,16 @@ class ModulePermissionSeeder extends Seeder
             ],
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
+        [
+            'slug'       => 'user',
+            'sort_order' => 8,
+            'translations' => [
+                'vi' => ['name' => 'Người dùng'],
+                'en' => ['name' => 'User'],
+            ],
+            // Module hệ thống — chỉ superadmin/admin (system scope) được cấp.
+            'actions' => ['view', 'create', 'update', 'delete'],
+        ],
     ];
 
     private array $actionLabels = [

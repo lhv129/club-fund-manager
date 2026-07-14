@@ -8,6 +8,14 @@ use Illuminate\Support\Facades\DB;
 /**
  * Tạo tất cả role templates (global) + gán permissions.
  * Không có club_id — scope nằm ở club_member_roles.club_id.
+ *
+ * Thứ bậc 5 role:
+ *   0. superadmin  — bypass mọi quyền (isSuperAdmin() → true)
+ *   1. admin       — system scope (club_id = NULL), quyền configurable do SA cấp
+ *   2. owner       — club scope, chủ sở hữu CLB
+ *   3. manager     — club scope, quản lý CLB
+ *   4. member      — club scope, thành viên thường
+ *
  * Chạy sau ModulePermissionSeeder.
  */
 class RoleSeeder extends Seeder
@@ -20,8 +28,17 @@ class RoleSeeder extends Seeder
             'permissions' => [],
         ],
         [
-            'slug'       => 'owner',
+            'slug'       => 'admin',
             'sort_order' => 1,
+            'translations' => ['vi' => 'Quản trị viên', 'en' => 'Admin'],
+            // Quyền rỗng mặc định — SA gán sau qua POST /roles/{id}/permissions
+            // (vd: user.view, user.create, role.view, club.view, ...).
+            // Phân biệt với owner/manager/member: admin ở SYSTEM SCOPE (club_id = NULL).
+            'permissions' => [],
+        ],
+        [
+            'slug'       => 'owner',
+            'sort_order' => 2,
             'translations' => ['vi' => 'Chủ CLB', 'en' => 'Owner'],
             'permissions' => [
                 'club'             => ['view', 'update', 'delete'],
@@ -34,7 +51,7 @@ class RoleSeeder extends Seeder
         ],
         [
             'slug'       => 'manager',
-            'sort_order' => 2,
+            'sort_order' => 3,
             'translations' => ['vi' => 'Quản lý', 'en' => 'Manager'],
             'permissions' => [
                 'club'             => ['view'],
@@ -47,7 +64,7 @@ class RoleSeeder extends Seeder
         ],
         [
             'slug'       => 'member',
-            'sort_order' => 3,
+            'sort_order' => 4,
             'translations' => ['vi' => 'Thành viên', 'en' => 'Member'],
             'permissions' => [
                 'club'             => ['view'],

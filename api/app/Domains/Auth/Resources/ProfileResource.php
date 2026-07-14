@@ -14,12 +14,16 @@ class ProfileResource extends JsonResource
             'email'        => $this->email,
             'phone'        => $this->phone,
             'avatar'       => $this->avatar,
-            'is_superadmin' => $this->isSuperAdmin(),
+            'is_superadmin'  => $this->isSuperAdmin(),
+            'is_system_admin'=> $this->isSystemAdmin(),
             'is_active'    => $this->is_active,
 
             /*
-             * SuperAdmin  → ['*']
-             * User thường → [club_id => [module => [actions]]]
+             * SuperAdmin           → ['*']
+             * Admin (system)       → { "club": [...], "member": [...], "user": [...] }  (FLAT, key = module slug)
+             * Owner/Manager/Member → { "club_1": {...}, "club_2": {...} }                  (nested "club_{id}")
+             * User vừa admin vừa   → merge cả 2 dạng trên (KHÔNG collide)
+             * member của club X
              *
              * Frontend dùng để render menu, ẩn/hiện nút dựa theo club context.
              */

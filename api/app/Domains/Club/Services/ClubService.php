@@ -26,12 +26,12 @@ class ClubService extends BaseService
     // -------------------------------------------------------------------------
 
     /**
-     * Superadmin -> tất cả clubs
-     * Manager/Member -> chỉ clubs mình được approved
+     * Superadmin/Admin (system) -> tất cả clubs
+     * Owner/Manager/Member       -> chỉ clubs mình được approved
      */
     public function index(User $user, array $filters): mixed
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isSuperAdmin() || $user->isSystemAdmin()) {
             return $this->repository->getAll($filters);
         }
 
