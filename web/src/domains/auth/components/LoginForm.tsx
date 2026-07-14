@@ -7,24 +7,10 @@ import { useAuth } from "../hooks/useAuth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { clubServiceClient } from "@/domains/club/services/clubService";
+import { canAccessClub } from "@/lib/permissions";
 import { APP_ROUTES, clubDashboardRoute } from "@/constants";
-import type { LoginPayload, Profile } from "../types";
+import type { LoginPayload } from "../types";
 import type { Club, Translation } from "@/domains/club/types";
-
-/** Kiểm user có truy cập club này không (mirror canAccessClub ở layout). */
-function clubAccessible(permissions: Profile["permissions"], clubId: number): boolean {
-  if (Array.isArray(permissions) && permissions.includes("*")) return true;
-  if (!permissions || typeof permissions !== "object" || Array.isArray(permissions)) {
-    return false;
-  }
-  const clubPerms = (permissions as Record<string, Record<string, string[]>>)[
-    String(clubId)
-  ];
-  if (!clubPerms) return false;
-  return Object.values(clubPerms).some(
-    (actions) => Array.isArray(actions) && actions.length > 0,
-  );
-}
 
 export function LoginForm() {
   const t = useTranslations("auth.login");
@@ -61,12 +47,13 @@ export function LoginForm() {
     if (!success) return;
 
     // ── Quyết định redirect sau login ──────────────────────────────────────
-    //  - Superadmin                 → /dashboard
-    //  - Đúng 1 club truy cập được → /club/{slug}/dashboard
-    //  - 2+ clubs                   → /dashboard/clubs (trang chọn club)
-    //  - 0 club / lỗi fetch         → /dashboard/no-club (trang xin vào CLB)
-    if (user?.is_superadmin) {
-      router.push(APP_ROUTES.dashboard);
+    //  1. Superadmin                → /admin
+    //  2. Admin (system, no club)   → /admin
+    //  3. Đúng 1 club truy cập được → /club/{slug}/dashboard
+    //  4. 2+ clubs                  → /admin/clubs (trang chọn club)
+    //  5. 0 club / lỗi fetch         → /admin/no-club (trang xin vào CLB)
+    if (user?.is_superadmin || user?.is_system_admin) {
+      router.push(APP_ROUTES.admin);
       router.refresh();
       return;
     }
@@ -74,7 +61,7 @@ export function LoginForm() {
     try {
       const res = await clubServiceClient.list({ limit: 100 });
       const clubs = (res.data ?? []).filter((c) =>
-        user?.permissions ? clubAccessible(user.permissions, c.id) : false,
+        user ? canAccessClub(user.permissions, user.is_superadmin, c.id) : false,
       );
 
       if (clubs.length === 1) {
@@ -97,7 +84,7 @@ export function LoginForm() {
       router.push(APP_ROUTES.noClub);
       router.refresh();
     } catch {
-      // Lỗi fetch clubs → fallback về /dashboard/no-club (xem như chưa có club)
+      // Lỗi fetch clubs → fallback về /admin/no-club (xem như chưa có club)
       router.push(APP_ROUTES.noClub);
       router.refresh();
     }

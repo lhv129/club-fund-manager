@@ -78,7 +78,7 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
   const t = useTranslations("menu") as (key: string) => string;
   const tWorkspace = useTranslations("clubWorkspace") as (key: string) => string;
   const pathname = usePathname() as string;
-  const { isSuperDashboard, hasPermission } = useAuth();
+  const { isSuperAdmin, hasPermission, hasAnyClubPermission } = useAuth();
   const { club } = useClub();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -91,19 +91,15 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
     // fallback: parse slug từ pathname /club/{slug}/...
     (pathname.split("/")[2] ?? String(club?.id ?? ""));
 
-  // Lọc nav items theo permission scoped theo club.id
+  // Lọc nav items theo CLUB SCOPE — truyền club.id.
   const filtered = club
     ? CLUB_NAV_ITEMS.filter((item) =>
         hasPermission(item.module, item.action, club.id),
       )
     : [];
 
-  // Có hiển thị nút "← Quay lại danh sách CLB" không?
-  // Superadmin luôn thấy. Manager (không phải superadmin) cũng thấy để đổi club
-  // nếu có permission view club ở bất kỳ club nào.
-  const showBackToClubs =
-    isSuperDashboard ||
-    hasPermission("club", "view"); // không truyền clubId → check any club
+  // Nút "← Quay lại danh sách CLB" — superadmin hoặc có quyền ở bất kỳ club nào.
+  const showBackToClubs = isSuperAdmin || hasAnyClubPermission();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

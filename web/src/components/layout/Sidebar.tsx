@@ -139,13 +139,15 @@ function NavGroup({
 export function Sidebar({ open, onClose }: SidebarProps) {
   const t = useTranslations("menu") as (key: string) => string;
   const pathname = usePathname() as string;
-  const { hasPermission, isSuperDashboard } = useAuth();
+  const { hasPermission, isSuperAdmin, isSystemAdmin } = useAuth();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
+  // System sidebar dùng SYSTEM SCOPE — không truyền clubId.
+  // isSuperAdmin || isSystemAdmin cho phép admin thấy nav (bypass filterNav).
   const filtered = filterNav(
     ADMIN_NAV_ITEMS,
-    (module, action) => hasPermission(module!, action!),
-    isSuperDashboard
+    (module, action) => hasPermission(module!, action!), // clubId undefined → system
+    isSuperAdmin || isSystemAdmin,
   );
 
   useEffect(() => {

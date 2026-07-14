@@ -3,12 +3,19 @@
  */
 
 /**
- * Permission map from backend.
+ * Permission map từ backend — 4 shape (xem docs/permission-guide.md §2).
  *
- * Superadmin: ['*']
- * Regular user: { [clubId]: { [moduleSlug]: ['view', 'create', ...] } }
+ * ["*"]                                   → superadmin (bypass)
+ * { [module]: string[] }                  → admin (system scope, flat)
+ * { [clubId: `club_${number}`]: {...} }  → owner/manager/member (club scope, nested)
+ * { ...merge... }                         → hybrid (admin + club member)
+ *
+ * Lưu ý: key top-level có thể là module slug (string) HOẶC `club_{id}`.
+ * Phân biệt bằng helper isClubKey() / scopeKey() trong lib/permissions.ts.
  */
-export type PermissionMap = ["*"] | Record<string, Record<string, string[]>>;
+export type PermissionMap =
+  | ["*"]
+  | Record<string, string[] | Record<string, string[]>>;
 
 /** User profile — matches Auth/Resources/ProfileResource. */
 export interface Profile {
@@ -18,7 +25,9 @@ export interface Profile {
   phone: string | null;
   avatar: string | null;
   is_superadmin: boolean;
-  is_active: boolean;
+  /** admin (system scope) — true nếu user có role `admin` do superadmin cấp. */
+  is_system_admin: boolean;
+  is_active: boolean | null;
   permissions: PermissionMap;
 }
 

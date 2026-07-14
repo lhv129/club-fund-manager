@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getAccessToken } from "@/lib/cookies";
 import { authServiceServer } from "@/domains/auth/services/authServiceServer";
 import { clubServiceServer } from "@/domains/club/services/clubServiceServer";
+import { canAccessClub } from "@/lib/permissions";
 import type { Profile } from "@/domains/auth/types";
 import type { Club } from "@/domains/club/types";
 import { ClubShell } from "@/components/layout/ClubShell";
@@ -14,8 +15,10 @@ import { ClubShell } from "@/components/layout/ClubShell";
  *  1. Auth guard — redirect login nếu không token.
  *  2. Fetch profile.
  *  3. Fetch club theo slug (BE resolve qua club_translations.slug + locale).
- *  4. Permission gate — superadmin bypass; còn lại kiểm user có bất kỳ
- *     permission nào trong club.id không. Không có → 404.
+ *  4. Permission gate — superadmin bypass; admin không có club scope → 404;
+ *     owner/manager/member kiểm `canAccessClub(permissions, club.id)`.
+ *
+ * Xem docs/permission-guide.md §6.
  */
 export default async function ClubLayout({
   children,
@@ -58,9 +61,8 @@ export default async function ClubLayout({
 
   if (!club) notFound();
 
-  // 4. Permission gate
-  const canAccess = canAccessClub(profile, club.id);
-  if (!canAccess) {
+  // 4. Permission gate — dùng helper canAccessClub.
+  if (!canAccessClub(profile.permissions, profile.is_superadmin, club.id)) {
     notFound();
   }
 
@@ -68,32 +70,5 @@ export default async function ClubLayout({
     <ClubShell profile={profile} club={club}>
       {children}
     </ClubShell>
-  );
-}
-
-/**
- * Kiểm user có quyền truy cập workspace của club này không.
- * - Superadmin / permissions ['*'] → luôn true.
- * - Còn lại: có bất kỳ entry permissions[clubId] nào không rỗng.
- */
-function canAccessClub(profile: Profile, clubId: number): boolean {
-  if (profile.is_superadmin) return true;
-
-  const perms = profile.permissions;
-  // ['*'] → full quyền
-  if (Array.isArray(perms) && perms.includes("*")) return true;
-
-  if (!perms || typeof perms !== "object" || Array.isArray(perms)) {
-    return false;
-  }
-
-  const clubPerms = (perms as Record<string, Record<string, string[]>>)[
-    String(clubId)
-  ];
-  if (!clubPerms) return false;
-
-  // Có ít nhất một module với action nào đó
-  return Object.values(clubPerms).some(
-    (actions) => Array.isArray(actions) && actions.length > 0,
   );
 }

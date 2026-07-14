@@ -3,7 +3,8 @@ import { setRequestLocale } from "next-intl/server";
 import { cache } from "react";
 import { getAccessToken } from "@/lib/cookies";
 import { authServiceServer } from "@/domains/auth/services/authServiceServer";
-import { MODULE_SLUGS, PERMISSION_ACTIONS, APP_ROUTES } from "@/constants";
+import { systemPermissions } from "@/lib/permissions";
+import { APP_ROUTES } from "@/constants";
 import type { Profile } from "@/domains/auth/types";
 
 /**
@@ -22,37 +23,14 @@ const getProfile = cache(async (): Promise<Profile | null> => {
 });
 
 /**
- * Kiểm user có permission truy cập system pages không.
- * - Superadmin → true.
- * - permissions ['*'] → true.
- * - Có view trên user/role/permission → true.
- */
-function canAccessSystem(profile: Profile): boolean {
-  if (profile.is_superadmin) return true;
-  const perms = profile.permissions;
-  if (Array.isArray(perms) && perms.includes("*")) return true;
-  if (!perms || typeof perms !== "object" || Array.isArray(perms)) return false;
-
-  const systemModules = [
-    MODULE_SLUGS.user,
-    MODULE_SLUGS.role,
-    MODULE_SLUGS.permission,
-  ];
-  return Object.values(perms as Record<string, Record<string, string[]>>).some(
-    (modules) =>
-      systemModules.some((m) =>
-        modules?.[m]?.includes(PERMISSION_ACTIONS.view),
-      ),
-  );
-}
-
-/**
  * (system) layout — permission gate cho system pages.
  *
- * Chỉ superadmin hoặc user có permission view trên user/role/permission
- * mới vào được /dashboard (dashboard), /dashboard/users, /dashboard/roles,
- * /dashboard/permissions, /dashboard/settings. Manager (chỉ có quyền trên club)
- * bị redirect về /dashboard/clubs để chọn club.
+ * Chỉ superadmin hoặc user có system permission (admin) mới vào được
+ * /admin (dashboard), /admin/users, /admin/roles, /admin/permissions,
+ * /admin/settings. Club user (owner/manager/member) không có system
+ * permission → redirect /admin/clubs để chọn club.
+ *
+ * Xem docs/permission-guide.md §6.
  */
 export default async function SystemLayout({
   children,
@@ -69,7 +47,14 @@ export default async function SystemLayout({
     redirect(`/${locale}/login`);
   }
 
-  if (!canAccessSystem(profile)) {
+  // Superadmin → qua. Admin (is_system_admin) → có system permission → qua.
+  // Club user (không có system scope) → redirect trang chọn club.
+  const isSystemUser =
+    profile.is_superadmin ||
+    profile.is_system_admin ||
+    systemPermissions(profile.permissions) !== null;
+
+  if (!isSystemUser) {
     redirect(`/${locale}${APP_ROUTES.adminClubs}`);
   }
 

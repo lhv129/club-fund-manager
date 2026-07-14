@@ -82,9 +82,17 @@ export const PERMISSION_ACTIONS = {
 
 /** Module slugs — match backend modules.slug. */
 export const MODULE_SLUGS = {
+  // ── System modules (scope = system) ──────────────────────────────────────
   user: "user",
   role: "role",
   permission: "permission",
   module: "module",
+  // ── Shared module (cả system + club scope) ───────────────────────────────
   club: "club",
+  // ── Club-scoped modules ───────────────────────────────────────────────────
+  member: "member",
+  fund: "fund",
+  transaction: "transaction",
+  exchangeSession: "exchange_session",
+  webhook: "webhook",
 } as const;
