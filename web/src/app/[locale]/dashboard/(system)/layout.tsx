@@ -16,7 +16,7 @@ const getProfile = cache(async (): Promise<Profile | null> => {
   if (!token) return null;
   try {
     const res = await authServiceServer.getProfile();
-    return res.data;
+    return res.data || null;
   } catch {
     return null;
   }
@@ -55,7 +55,7 @@ export default async function SystemLayout({
     systemPermissions(profile.permissions) !== null;
 
   if (!isSystemUser) {
-    redirect(`/${locale}${APP_ROUTES.adminClubs}`);
+    redirect(`/${locale}${APP_ROUTES.dashboardClubs}`);
   }
 
   return <>{children}</>;

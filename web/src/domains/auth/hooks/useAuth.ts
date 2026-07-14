@@ -33,17 +33,17 @@ export function useAuth() {
   } = useAuthStore();
 
   const login = useCallback(
-    async (payload: LoginPayload): Promise<boolean> => {
+    async (payload: LoginPayload): Promise<Profile | null> => {
       setLoading(true);
       setError(null);
       try {
         const profile = await authService.login(payload);
         setUser(profile);
-        return true;
+        return profile; 
       } catch (err) {
         const message = err instanceof Error ? err.message : "Login failed";
         setError(message);
-        return false;
+        return null;
       } finally {
         setLoading(false);
       }
@@ -54,7 +54,7 @@ export function useAuth() {
   const register = useCallback(
     async (
       payload: RegisterPayload,
-    ): Promise<{ success: boolean; message: string }> => {
+    ): Promise<{ success: boolean; message: string | undefined }> => {
       setLoading(true);
       setError(null);
       try {

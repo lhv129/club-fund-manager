@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { ImageOff, Pencil, Plus, Trash2, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { DashboardTable, ColumnDef } from "@/components/ui/DashboardTable";

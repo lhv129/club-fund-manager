@@ -17,7 +17,7 @@ export function LoginForm() {
   const tValidation = useTranslations("validation");
   const router = useRouter();
   const locale = useLocale();
-  const { login, user, isLoading, error, clearError } = useAuth();
+  const { login, isLoading, error, clearError } = useAuth();
 
   const [form, setForm] = useState<LoginPayload>({
     login: "",
@@ -43,17 +43,18 @@ export function LoginForm() {
     clearError();
     if (!validate()) return;
 
-    const success = await login(form);
-    if (!success) return;
+    // login() trả về Profile | null — dùng trực tiếp, không dùng user từ store
+    // (store cập nhật async, user chưa re-render kịp tại đây → race condition → no-club)
+    const profile = await login(form);
+    if (!profile) return;
 
     // ── Quyết định redirect sau login ──────────────────────────────────────
-    //  1. Superadmin                → /admin
-    //  2. Admin (system, no club)   → /admin
-    //  3. Đúng 1 club truy cập được → /club/{slug}/dashboard
-    //  4. 2+ clubs                  → /admin/clubs (trang chọn club)
-    //  5. 0 club / lỗi fetch         → /admin/no-club (trang xin vào CLB)
-    if (user?.is_superadmin || user?.is_system_admin) {
-      router.push(APP_ROUTES.admin);
+    //  1. Superadmin / Admin (system) → /dashboard
+    //  2. Đúng 1 club truy cập được  → /club/{slug}/dashboard
+    //  3. 2+ clubs                    → /dashboard/clubs (trang chọn club)
+    //  4. 0 club / lỗi fetch          → /dashboard/no-club (trang xin vào CLB)
+    if (profile.is_superadmin || profile.is_system_admin) {
+      router.push(APP_ROUTES.dashboard);
       router.refresh();
       return;
     }
@@ -61,7 +62,7 @@ export function LoginForm() {
     try {
       const res = await clubServiceClient.list({ limit: 100 });
       const clubs = (res.data ?? []).filter((c) =>
-        user ? canAccessClub(user.permissions, user.is_superadmin, c.id) : false,
+        canAccessClub(profile.permissions, profile.is_superadmin, c.id),
       );
 
       if (clubs.length === 1) {
@@ -74,8 +75,7 @@ export function LoginForm() {
       }
 
       if (clubs.length >= 2) {
-        // 2+ clubs → trang chọn club
-        router.push(APP_ROUTES.adminClubs);
+        router.push(APP_ROUTES.dashboardClubs);
         router.refresh();
         return;
       }
@@ -84,7 +84,7 @@ export function LoginForm() {
       router.push(APP_ROUTES.noClub);
       router.refresh();
     } catch {
-      // Lỗi fetch clubs → fallback về /admin/no-club (xem như chưa có club)
+      // Lỗi fetch clubs → fallback về no-club
       router.push(APP_ROUTES.noClub);
       router.refresh();
     }
