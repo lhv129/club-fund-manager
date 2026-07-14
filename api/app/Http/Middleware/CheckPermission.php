@@ -8,27 +8,27 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
+/**
+ * Middleware kiểm tra SYSTEM SCOPE permission.
+ *
+ * Dùng cho các route hệ thống (create/update/delete club, quản lý user, role, ...).
+ * clubId luôn null → check flat module key (superadmin hoặc admin).
+ *
+ * Cú pháp: ->middleware('permission:club,create')
+ */
 class CheckPermission
 {
-    /**
-     * Dùng trên route: ->middleware('permission:club,view')
-     * Hoặc club-scoped: ->middleware('permission:fund,create')
-     * + club_id lấy từ route parameter {clubId} hoặc request body
-     */
     public function handle(Request $request, Closure $next, string $module, string $action): Response
     {
         $user = JWTAuth::parseToken()->authenticate();
 
         if (!$user) {
-            return throw new ApiException(__('exception.unauthorized'), 401);
+            throw new ApiException(__('exception.unauthorized'), 401);
         }
 
-        // Lấy club_id từ route param hoặc request (nếu có)
-        $clubId = $request->route('clubId') ?? $request->input('club_id');
-        $clubId = $clubId ? (int) $clubId : null;
-
-        if (!$user->hasPermission($module, $action, $clubId)) {
-            return throw new ApiException(__('exception.forbidden_action'), 403);
+        // System scope — clubId luôn null, check flat permission key
+        if (!$user->hasPermission($module, $action, null)) {
+            throw new ApiException(__('exception.forbidden_action'), 403);
         }
 
         return $next($request);

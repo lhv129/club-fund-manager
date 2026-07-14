@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.jwt' => \App\Http\Middleware\JwtAuthenticate::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            'permission.club' => \App\Http\Middleware\CheckClubPermission::class,
         ]);
     })
 
