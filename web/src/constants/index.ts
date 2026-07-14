@@ -7,7 +7,7 @@
  *
  * Hai khu vực:
  *  - Dashboard workspace  →  /dashboard/...   (system: clubs, users, roles, ...)
- *  - Club workspace   →  /club/[slug]/...   (một CLB cụ thể)
+ *  - Club workspace       →  /club/[slug]/...   (một CLB cụ thể)
  */
 export const APP_ROUTES = {
   // ── Auth ─────────────────────────────────────────────────────────────────
@@ -16,12 +16,11 @@ export const APP_ROUTES = {
 
   // ── Dashboard workspace (system) ────────────────────────────────────────────
   dashboard: "/dashboard",
-  adminDashboard: "/dashboard",
-  adminClubs: "/dashboard/clubs",
-  adminUsers: "/dashboard/users",
-  adminRoles: "/dashboard/roles",
-  adminPermissions: "/dashboard/permissions",
-  adminSettings: "/dashboard/settings",
+  dashboardClubs: "/dashboard/clubs",
+  dashboardUsers: "/dashboard/users",
+  dashboardRoles: "/dashboard/roles",
+  dashboardPermissions: "/dashboard/permissions",
+  dashboardSettings: "/dashboard/settings",
   noClub: "/dashboard/no-club",
 
   // ── Club workspace (route prefix; slug được ghép bằng clubRoute()) ────────

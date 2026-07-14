@@ -6,7 +6,7 @@ import { Link, usePathname } from "@/i18n/routing";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { cn } from "@/utils";
 import { X, ChevronDown } from "lucide-react";
-import { ADMIN_NAV_ITEMS, NavItem, filterNav } from "./nav-config";
+import { DASHBOARD_NAV_ITEMS, NavItem, filterNav } from "./nav-config";
 
 interface SidebarProps {
   open: boolean;
@@ -145,7 +145,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   // System sidebar dùng SYSTEM SCOPE — không truyền clubId.
   // isSuperAdmin || isSystemAdmin cho phép admin thấy nav (bypass filterNav).
   const filtered = filterNav(
-    ADMIN_NAV_ITEMS,
+    DASHBOARD_NAV_ITEMS,
     (module, action) => hasPermission(module!, action!), // clubId undefined → system
     isSuperAdmin || isSystemAdmin,
   );

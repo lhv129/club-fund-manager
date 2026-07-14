@@ -336,7 +336,7 @@ export const MODULE_SLUGS = {
 //   examples: "examples",
 
 Bước 7: Thêm nav item
-System module → src/components/layout/nav-config.ts (ADMIN_NAV_ITEMS)
+System module → src/components/layout/nav-config.ts (DASHBOARD_NAV_ITEMS)
 {
     href: APP_ROUTES.adminExamples,
     labelKey: "examples",
@@ -364,7 +364,7 @@ domains/example/services/exampleService.ts    Client — "use client", browserAd
 app/[locale]/dashboard/(system)/examples/...      System module — page.tsx + ExamplesPageClient.tsx
 app/[locale]/club/[slug]/examples/...         Club module — page.tsx + ExamplesPageClient.tsx
 constants/index.ts                            Thêm MODULE_SLUGS (+ APP_ROUTES hoặc CLUB_SUBROUTES)
-components/layout/nav-config.ts               Thêm vào ADMIN_NAV_ITEMS (system module)
+components/layout/nav-config.ts               Thêm vào DASHBOARD_NAV_ITEMS (system module)
 components/layout/club-nav-config.ts          Thêm vào CLUB_NAV_ITEMS (club module)
 messages/vi.json + messages/en.json           Thêm keys cho module mới
 

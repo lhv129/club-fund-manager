@@ -26,14 +26,14 @@ export interface NavItem {
  * Club-scoped pages (members, invites, funds, ...) KHÔNG nằm đây —
  * chúng thuộc club workspace (xem club-nav-config.ts).
  */
-export const ADMIN_NAV_ITEMS: NavItem[] = [
+export const DASHBOARD_NAV_ITEMS: NavItem[] = [
     {
-        href: APP_ROUTES.adminDashboard,
+        href: APP_ROUTES.dashboard,
         labelKey: "dashboard",
         icon: LayoutDashboard,
     },
     {
-        href: APP_ROUTES.adminClubs,
+        href: APP_ROUTES.dashboardClubs,
         labelKey: "clubs",
         icon: Building2,
         module: MODULE_SLUGS.club,
@@ -46,21 +46,21 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
         action: PERMISSION_ACTIONS.view,
         children: [
             {
-                href: APP_ROUTES.adminUsers,
+                href: APP_ROUTES.dashboardUsers,
                 labelKey: "usersList",
                 icon: Users,
                 module: MODULE_SLUGS.user,
                 action: PERMISSION_ACTIONS.view,
             },
             {
-                href: APP_ROUTES.adminRoles,
+                href: APP_ROUTES.dashboardRoles,
                 labelKey: "roles",
                 icon: ShieldCheck,
                 module: MODULE_SLUGS.role,
                 action: PERMISSION_ACTIONS.view,
             },
             {
-                href: APP_ROUTES.adminPermissions,
+                href: APP_ROUTES.dashboardPermissions,
                 labelKey: "permissions",
                 icon: KeyRound,
                 module: MODULE_SLUGS.permission,
@@ -69,7 +69,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
         ],
     },
     {
-        href: APP_ROUTES.adminSettings,
+        href: APP_ROUTES.dashboardSettings,
         labelKey: "settings",
         icon: Settings,
     },
@@ -81,16 +81,16 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 export function filterNav(
     items: NavItem[],
     check: (module?: string, action?: string) => boolean,
-    isSuperDashboard: boolean
+    showAll: boolean
 ): NavItem[] {
     return items
         .map((item) => {
             const children = item.children
-                ? filterNav(item.children, check, isSuperDashboard)
+                ? filterNav(item.children, check, showAll)
                 : undefined;
 
             const allowed =
-                isSuperDashboard ||
+                showAll ||
                 !item.module ||
                 !item.action ||
                 check(item.module, item.action);

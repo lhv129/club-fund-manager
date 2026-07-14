@@ -536,7 +536,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   // System sidebar dùng SYSTEM SCOPE — không truyền clubId.
   const filtered = filterNav(
-    ADMIN_NAV_ITEMS,
+    DASHBOARD_NAV_ITEMS,
     (module, action) => hasPermission(module!, action!),   // clubId undefined → system
     isSuperAdmin || isSystemAdmin,                          // ← cho phép admin thấy nav
   );

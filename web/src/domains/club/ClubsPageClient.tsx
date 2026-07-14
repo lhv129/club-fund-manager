@@ -39,12 +39,12 @@ export function ClubsPageClient() {
     const tr = (translations?: Translation[]) =>
         translations?.find((item) => item.locale === locale) ?? translations?.[0];
 
-    const { isSuperDashboard, hasPermission } = useAuth();
+    const { isSuperAdmin, hasPermission } = useAuth();
     // Manager (không phải superadmin) cần permission create/update/delete trên club
     // để thấy nút Thêm/Sửa/Xoá. Superadmin bypass.
-    const canCreate = isSuperDashboard || hasPermission("club", "create");
-    const canUpdate = isSuperDashboard || hasPermission("club", "update");
-    const canDelete = isSuperDashboard || hasPermission("club", "delete");
+    const canCreate = isSuperAdmin || hasPermission("club", "create");
+    const canUpdate = isSuperAdmin || hasPermission("club", "update");
+    const canDelete = isSuperAdmin || hasPermission("club", "delete");
 
     const { params, setPage, setLimit, updateMany, reset } =
         useDashboardListParams<ClubFilters>({

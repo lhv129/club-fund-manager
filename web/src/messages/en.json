@@ -124,7 +124,8 @@
     "tokenExpired": "Your session has expired",
     "tokenInvalid": "Invalid token",
     "serverError": "Server error, please try again later",
-    "notFound": "Page not found"
+    "notFound": "Page not found",
+    "backHome": "Back to Home"
   },
   "club": {
     "title": "Club list",
@@ -137,7 +138,7 @@
   "clubWorkspace": {
     "backToClubs": "Back to clubs",
     "currentClub": "Current club",
-    "viewingAsSuperDashboard": "Viewing as Super Dashboard",
+    "viewingAsSuperAdmin": "Viewing as Super Admin",
     "dashboard": "Club dashboard",
     "totalMembers": "Total members",
     "totalFunds": "Total funds",

@@ -156,7 +156,7 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
         <div className="border-b border-zinc-200 dark:border-gray-800 px-3 py-3 space-y-2 shrink-0">
           {showBackToClubs && (
             <Link
-              href={APP_ROUTES.adminClubs as never}
+              href={APP_ROUTES.dashboardClubs as never}
               onClick={onClose}
               className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
@@ -171,10 +171,10 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
             <p className="text-sm font-semibold text-foreground truncate">
               {clubName ?? "—"}
             </p>
-            {isSuperDashboard && (
+            {isSuperAdmin && (
               <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
                 <ShieldCheck className="h-3 w-3" />
-                {tWorkspace("viewingAsSuperDashboard")}
+                {tWorkspace("viewingAsSuperAdmin")}
               </span>
             )}
           </div>

@@ -63,10 +63,10 @@ src/
 │   ├── layout/
 │   │   ├── AdminShell.tsx          # Wrap Sidebar (system) + Header + main
 │   │   ├── ClubShell.tsx           # Wrap ClubSidebar + Header + main
-│   │   ├── Sidebar.tsx             # System sidebar — ADMIN_NAV_ITEMS, isSuperAdmin||isSystemAdmin
+│   │   ├── Sidebar.tsx             # System sidebar — DASHBOARD_NAV_ITEMS, isSuperAdmin||isSystemAdmin
 │   │   ├── ClubSidebar.tsx         # Club sidebar — CLUB_NAV_ITEMS, scope theo club.id
 │   │   ├── Header.tsx              # Menu toggle + LocaleSwitcher + AvatarDropdown
-│   │   ├── nav-config.ts          # ADMIN_NAV_ITEMS + filterNav + findNavTrail
+│   │   ├── nav-config.ts          # DASHBOARD_NAV_ITEMS + filterNav + findNavTrail
 │   │   └── club-nav-config.ts     # CLUB_NAV_ITEMS (sub-route + module/action)
 │   ├── FormModal.tsx               # Modal form JSON — hỗ trợ translatableFields
 │   ├── FormModalWithMedia.tsx      # Modal form FormData (có ảnh/media)
@@ -149,7 +149,7 @@ Tầng 1 — Layout gate (Server Component):
   - club/[slug]/layout.tsx     → canAccessClub(permissions, isSuperAdmin, club.id)
 
 Tầng 2 — Nav filter (Client Component):
-  - Sidebar.tsx       → filterNav(ADMIN_NAV_ITEMS, (m,a) => hasPermission(m, a), isSuperAdmin||isSystemAdmin)
+  - Sidebar.tsx       → filterNav(DASHBOARD_NAV_ITEMS, (m,a) => hasPermission(m, a), isSuperAdmin||isSystemAdmin)
                         (clubId undefined → SYSTEM SCOPE)
   - ClubSidebar.tsx   → CLUB_NAV_ITEMS.filter(item => hasPermission(item.module, item.action, club.id))
                         (clubId = club.id → CLUB SCOPE)

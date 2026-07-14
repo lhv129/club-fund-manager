@@ -3,12 +3,12 @@
 import { Link, usePathname } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { Home, ChevronRight } from "lucide-react";
-import { ADMIN_NAV_ITEMS, findNavTrail } from "./layout/nav-config";
+import { DASHBOARD_NAV_ITEMS, findNavTrail } from "./layout/nav-config";
 
 export function Breadcrumb() {
     const t = useTranslations("menu") as (key: string) => string;
     const pathname = usePathname() as string;
-    const trail = findNavTrail(ADMIN_NAV_ITEMS, pathname) ?? [];
+    const trail = findNavTrail(DASHBOARD_NAV_ITEMS, pathname) ?? [];
 
     return (
         <nav aria-label="breadcrumb" className="flex items-center gap-1 text-sm">

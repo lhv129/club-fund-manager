@@ -124,7 +124,8 @@
     "tokenExpired": "Phiên đăng nhập đã hết hạn",
     "tokenInvalid": "Token không hợp lệ",
     "serverError": "Lỗi hệ thống, vui lòng thử lại sau",
-    "notFound": "Không tìm thấy trang"
+    "notFound": "Trang bạn tìm không tồn tại.",
+    "backHome": "Về trang chủ"
   },
   "club": {
     "title": "Danh sách câu lạc bộ",
@@ -137,7 +138,7 @@
   "clubWorkspace": {
     "backToClubs": "Quay lại danh sách CLB",
     "currentClub": "CLB hiện tại",
-    "viewingAsSuperDashboard": "Đang xem với quyền Super Dashboard",
+    "viewingAsSuperAdmin": "Đang xem với quyền Super Admin",
     "dashboard": "Bảng điều khiển CLB",
     "totalMembers": "Tổng thành viên",
     "totalFunds": "Tổng quỹ",
