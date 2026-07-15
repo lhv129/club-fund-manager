@@ -68,11 +68,11 @@ destroy(id)      DELETE /examples/:id → ApiResponse<null>
 toggleStatus(id) POST /examples/:id/toggle-status — BE tự đảo trạng thái
 
 Bước 3: Tạo page (Server Component)
-System module → src/app/[locale]/dashboard/(system)/examples/page.tsx
+System module → src/app/[locale]/admin/(system)/examples/page.tsx
 
 import { setRequestLocale } from "next-intl/server";
 import { ExamplesPageClient } from "./ExamplesPageClient";
-export default async function ExamplesPage({
+export default async function AdminExamplesPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -89,12 +89,12 @@ Club-scoped module (nếu module thuộc workspace CLB) → src/app/[locale]/clu
 Server Component chỉ set locale. Toàn bộ UI/logic nằm trong Client Component.
 
 Bước 4: Tạo Client Component
-src/app/[locale]/dashboard/(system)/examples/ExamplesPageClient.tsx
+src/app/[locale]/admin/(system)/examples/ExamplesPageClient.tsx
 
 "use client";
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { Eye, ImageOff, Pencil, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { DashboardTable, ColumnDef } from "@/components/ui/DashboardTable";
@@ -331,12 +331,12 @@ export const MODULE_SLUGS = {
   example: "example",
 } as const;
 // Nếu module có route riêng (system): thêm vào APP_ROUTES
-//   adminExamples: "/dashboard/examples",
+//   adminExamples: "/admin/examples",
 // Nếu module thuộc club workspace: thêm vào CLUB_SUBROUTES
 //   examples: "examples",
 
 Bước 7: Thêm nav item
-System module → src/components/layout/nav-config.ts (DASHBOARD_NAV_ITEMS)
+System module → src/components/layout/nav-config.ts (ADMIN_NAV_ITEMS)
 {
     href: APP_ROUTES.adminExamples,
     labelKey: "examples",
@@ -361,10 +361,10 @@ File                                          Việc cần làm
 domains/example/types/index.ts                Interface + ExampleFilters type
 domains/example/services/exampleServiceServer.ts  Server — serverAdapter, import "server-only"
 domains/example/services/exampleService.ts    Client — "use client", browserAdapter
-app/[locale]/dashboard/(system)/examples/...      System module — page.tsx + ExamplesPageClient.tsx
+app/[locale]/admin/(system)/examples/...          System module — page.tsx + ExamplesPageClient.tsx
 app/[locale]/club/[slug]/examples/...         Club module — page.tsx + ExamplesPageClient.tsx
 constants/index.ts                            Thêm MODULE_SLUGS (+ APP_ROUTES hoặc CLUB_SUBROUTES)
-components/layout/nav-config.ts               Thêm vào DASHBOARD_NAV_ITEMS (system module)
+components/layout/nav-config.ts               Thêm vào ADMIN_NAV_ITEMS (system module)
 components/layout/club-nav-config.ts          Thêm vào CLUB_NAV_ITEMS (club module)
 messages/vi.json + messages/en.json           Thêm keys cho module mới
 

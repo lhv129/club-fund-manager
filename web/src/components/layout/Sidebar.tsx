@@ -6,14 +6,14 @@ import { Link, usePathname } from "@/i18n/routing";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { cn } from "@/utils";
 import { X, ChevronDown } from "lucide-react";
-import { DASHBOARD_NAV_ITEMS, NavItem, filterNav } from "./nav-config";
+import { ADMIN_NAV_ITEMS, NavItem, filterNav } from "./nav-config";
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
 }
 
-// ─── Leaf item (no children) ────────────────────────────────────────────────
+// ─── Leaf item ────────────────────────────────────────────────────────────────
 function NavLeaf({
   item,
   pathname,
@@ -28,37 +28,39 @@ function NavLeaf({
   depth?: number;
 }) {
   const Icon = item.icon;
-
   const isActive =
     !!item.href &&
-    (item.href === "/" ? pathname === "/" : pathname.startsWith(item.href));
+    (item.href === "/"
+      ? pathname === "/"
+      : item.exact
+        ? pathname === item.href
+        : pathname === item.href || pathname.startsWith(`${item.href}/`));
 
   return (
     <Link
       href={(item.href ?? "/") as never}
       onClick={onClose}
       className={cn(
-        "group relative flex items-center gap-3 rounded-xl py-2.5 text-sm font-medium",
-        "transition-all duration-200 ease-out",
-        depth === 0 ? "px-3" : "px-3 ml-2",
+        "w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200",
+        depth === 0 ? "px-3.5" : "px-3 ml-4",
         isActive
-          ? "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-0.5"
+          ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
       )}
     >
       <Icon
         className={cn(
-          "h-5 w-5 shrink-0 transition-transform duration-200",
-          !isActive && "group-hover:scale-110"
+          "w-5 h-5 shrink-0",
+          isActive ? "text-white" : "text-zinc-400"
         )}
-        strokeWidth={1.75}
+        strokeWidth={isActive ? 2.5 : 2}
       />
       <span className="truncate">{t(item.labelKey)}</span>
     </Link>
   );
 }
 
-// ─── Group item (has children) ───────────────────────────────────────────────
+// ─── Group item ───────────────────────────────────────────────────────────────
 function NavGroup({
   item,
   pathname,
@@ -71,11 +73,9 @@ function NavGroup({
   t: (key: string) => string;
 }) {
   const Icon = item.icon;
-
   const isChildActive = item.children?.some(
     (c) => c.href && pathname.startsWith(c.href)
   );
-
   const [expanded, setExpanded] = useState(!!isChildActive);
 
   return (
@@ -83,33 +83,25 @@ function NavGroup({
       <button
         onClick={() => setExpanded((v) => !v)}
         className={cn(
-          "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
-          "transition-all duration-200 ease-out",
+          "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200",
           isChildActive
-            ? "text-blue-700 dark:text-blue-400"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            ? "text-blue-600 dark:text-blue-400"
+            : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         )}
       >
-        <Icon
-          className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110"
-          strokeWidth={1.75}
-        />
-
+        <Icon className="w-5 h-5 shrink-0 text-zinc-400" strokeWidth={2} />
         <span className="flex-1 text-left truncate">{t(item.labelKey)}</span>
-
         {isChildActive && (
-          <span className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-fade-in" />
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />
         )}
-
         <ChevronDown
           className={cn(
-            "h-4 w-4 shrink-0 transition-transform duration-300 ease-out",
+            "h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-300 ease-out",
             expanded && "rotate-180"
           )}
         />
       </button>
 
-      {/* Expand/collapse mượt bằng CSS grid, không cần đo chiều cao bằng JS */}
       <div
         className={cn(
           "grid transition-[grid-template-rows] duration-300 ease-in-out",
@@ -117,7 +109,7 @@ function NavGroup({
         )}
       >
         <div className="overflow-hidden">
-          <div className="mt-0.5 space-y-0.5 border-l-2 border-zinc-100 dark:border-gray-800 ml-[1.15rem] pl-2 py-0.5">
+          <div className="mt-1 space-y-0.5 border-l-2 border-zinc-100 dark:border-gray-800 ml-5 pl-2 py-0.5">
             {item.children?.map((child) => (
               <NavLeaf
                 key={child.href ?? child.labelKey}
@@ -135,27 +127,23 @@ function NavGroup({
   );
 }
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────────
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
 export function Sidebar({ open, onClose }: SidebarProps) {
   const t = useTranslations("menu") as (key: string) => string;
   const pathname = usePathname() as string;
   const { hasPermission, isSuperAdmin, isSystemAdmin } = useAuth();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // System sidebar dùng SYSTEM SCOPE — không truyền clubId.
-  // isSuperAdmin || isSystemAdmin cho phép admin thấy nav (bypass filterNav).
+  // Admin sidebar dùng SYSTEM SCOPE — không truyền clubId.
   const filtered = filterNav(
-    DASHBOARD_NAV_ITEMS,
-    (module, action) => hasPermission(module!, action!), // clubId undefined → system
+    ADMIN_NAV_ITEMS,
+    (module, action) => hasPermission(module!, action!),
     isSuperAdmin || isSystemAdmin,
   );
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (
-        sidebarRef.current &&
-        !sidebarRef.current.contains(e.target as Node)
-      ) {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
         onClose();
       }
     }
@@ -169,69 +157,68 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <div
         className={cn(
           "fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 lg:hidden",
-          open
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
       />
 
-      {/* Sidebar panel */}
       <aside
         ref={sidebarRef}
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-64 flex flex-col shadow-2xl",
+          "fixed top-0 left-0 z-50 h-full w-[260px] flex flex-col",
           "bg-white dark:bg-gray-900 border-r border-zinc-200 dark:border-gray-800",
           "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           "lg:relative lg:translate-x-0 lg:z-auto lg:shadow-none",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-zinc-200 dark:border-gray-800 px-5 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold transition-transform duration-200 hover:scale-105">
+        {/* ── Logo ── */}
+        <div className="h-16 flex items-center justify-between px-6 border-b border-zinc-100 dark:border-gray-800 shrink-0">
+          <div className="flex items-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-lg mr-3 shadow-[0_2px_10px_-2px_rgba(37,99,235,0.6)]">
               C
-            </span>
-            <span className="text-lg font-bold text-foreground tracking-tight">
+            </div>
+            <span className="font-extrabold text-zinc-900 dark:text-white text-xl tracking-tight">
               Club Fund
             </span>
           </div>
           <button
-            className="lg:hidden rounded-lg p-1.5 text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground hover:rotate-90"
+            className="lg:hidden rounded-lg p-1.5 text-zinc-400 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-900 hover:rotate-90"
             onClick={onClose}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="scrollbar-thin flex-1 space-y-0.5 overflow-y-auto p-3">
-          {filtered.map((item) =>
-            item.children ? (
-              <NavGroup
-                key={item.labelKey}
-                item={item}
-                pathname={pathname}
-                onClose={onClose}
-                t={t}
-              />
-            ) : (
-              <NavLeaf
-                key={item.href ?? item.labelKey}
-                item={item}
-                pathname={pathname}
-                onClose={onClose}
-                t={t}
-              />
-            )
-          )}
-        </nav>
+        {/* ── Nav ── */}
+        <div className="pt-4 pb-4 flex-1 flex flex-col overflow-y-auto">
+          <div className="px-3 flex-1 flex flex-col gap-1.5">
+            {filtered.map((item) =>
+              item.children ? (
+                <NavGroup
+                  key={item.labelKey}
+                  item={item}
+                  pathname={pathname}
+                  onClose={onClose}
+                  t={t}
+                />
+              ) : (
+                <NavLeaf
+                  key={item.href ?? item.labelKey}
+                  item={item}
+                  pathname={pathname}
+                  onClose={onClose}
+                  t={t}
+                />
+              )
+            )}
+          </div>
+        </div>
 
-        {/* Footer */}
-        <div className="shrink-0 border-t border-zinc-200 dark:border-gray-800 px-5 py-4">
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Club Fund. All rights reserved.
+        {/* ── Footer ── */}
+        <div className="p-5 border-t border-zinc-100 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/50 shrink-0">
+          <p className="text-[11px] font-bold text-zinc-400 text-center uppercase tracking-wider">
+            © {new Date().getFullYear()} Club Fund
           </p>
         </div>
       </aside>

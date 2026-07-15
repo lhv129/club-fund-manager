@@ -9,7 +9,7 @@ const intlMiddleware = createMiddleware(routing);
  * Combined middleware: i18n + auth guard.
  *
  * - API routes (/api/*): skip entirely
- * - Auth routes (login, register): redirect to dashboard if already logged in
+ * - Auth routes (login, register): redirect to root if already logged in
  * - Protected routes: redirect to login if no access_token cookie
  * - Everything else: pass to next-intl for locale handling
  */
@@ -45,14 +45,14 @@ export default async function middleware(request: NextRequest) {
   const pathAfterLocale = "/" + pathnameSegments.slice(1).join("/");
   const accessToken = request.cookies.get(COOKIE_NAMES.accessToken)?.value;
 
-  // Auth routes — redirect to dashboard if already logged in
+  // Auth routes — redirect to root if already logged in (root dispatches by role)
   const isAuthRoute = AUTH_ROUTES.some(
     (route) => pathAfterLocale === route || pathAfterLocale === route + "/",
   );
 
   if (isAuthRoute && accessToken) {
-    const dashboardUrl = new URL(`/${locale}${APP_ROUTES.dashboard}`, request.url);
-    return NextResponse.redirect(dashboardUrl);
+    const homeUrl = new URL(`/${locale}${APP_ROUTES.home}`, request.url);
+    return NextResponse.redirect(homeUrl);
   }
 
   // Protected routes — redirect to login if not authenticated

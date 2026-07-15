@@ -1,5 +1,4 @@
 import {
-    Building2,
     LayoutDashboard,
     Settings,
     ShieldCheck,
@@ -17,27 +16,23 @@ export interface NavItem {
     action?: string;
     icon: LucideIcon;
     children?: NavItem[];
+    exact?: boolean;
 }
 
 /**
- * Dashboard workspace nav — system pages dưới /dashboard/...
- * (clubs, users, roles, permissions, settings).
+ * Admin workspace nav — system pages dưới /admin/...
+ * (users, roles, permissions, settings, dashboard stats).
  *
- * Club-scoped pages (members, invites, funds, ...) KHÔNG nằm đây —
- * chúng thuộc club workspace (xem club-nav-config.ts).
+ * Club list / no-club KHÔNG nằm đây — chúng thuộc root "/" (landing).
+ * Club-scoped pages (members, invites, funds, ...) thuộc club workspace
+ * (xem club-nav-config.ts).
  */
-export const DASHBOARD_NAV_ITEMS: NavItem[] = [
+export const ADMIN_NAV_ITEMS: NavItem[] = [
     {
-        href: APP_ROUTES.dashboard,
+        href: APP_ROUTES.admin,
         labelKey: "dashboard",
         icon: LayoutDashboard,
-    },
-    {
-        href: APP_ROUTES.dashboardClubs,
-        labelKey: "clubs",
-        icon: Building2,
-        module: MODULE_SLUGS.club,
-        action: PERMISSION_ACTIONS.view,
+        exact: true,
     },
     {
         labelKey: "users",
@@ -46,21 +41,21 @@ export const DASHBOARD_NAV_ITEMS: NavItem[] = [
         action: PERMISSION_ACTIONS.view,
         children: [
             {
-                href: APP_ROUTES.dashboardUsers,
+                href: APP_ROUTES.adminUsers,
                 labelKey: "usersList",
                 icon: Users,
                 module: MODULE_SLUGS.user,
                 action: PERMISSION_ACTIONS.view,
             },
             {
-                href: APP_ROUTES.dashboardRoles,
+                href: APP_ROUTES.adminRoles,
                 labelKey: "roles",
                 icon: ShieldCheck,
                 module: MODULE_SLUGS.role,
                 action: PERMISSION_ACTIONS.view,
             },
             {
-                href: APP_ROUTES.dashboardPermissions,
+                href: APP_ROUTES.adminPermissions,
                 labelKey: "permissions",
                 icon: KeyRound,
                 module: MODULE_SLUGS.permission,
@@ -69,7 +64,7 @@ export const DASHBOARD_NAV_ITEMS: NavItem[] = [
         ],
     },
     {
-        href: APP_ROUTES.dashboardSettings,
+        href: APP_ROUTES.adminSettings,
         labelKey: "settings",
         icon: Settings,
     },

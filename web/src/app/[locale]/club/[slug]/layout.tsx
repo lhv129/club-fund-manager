@@ -40,7 +40,7 @@ export default async function ClubLayout({
   let profile: Profile | null = null;
   try {
     const response = await authServiceServer.getProfile();
-    profile = response.data;
+    profile = response.data || null;
   } catch {
     redirect(`/${locale}/login`);
   }
@@ -53,7 +53,7 @@ export default async function ClubLayout({
   let club: Club | null = null;
   try {
     const res = await clubServiceServer.showBySlug(slug);
-    if (res.success) club = res.data;
+    if (res.success) club = res.data || null;
   } catch {
     // slug không tồn tại / lỗi → 404
     notFound();

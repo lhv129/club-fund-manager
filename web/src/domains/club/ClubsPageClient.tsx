@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { ImageOff, Pencil, Plus, Trash2, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { DashboardTable, ColumnDef } from "@/components/ui/DashboardTable";
-import { DashboardFilterBar } from "@/components/ui/DashboardFilterBar";
-import { DashboardPagination } from "@/components/ui/DashboardPagination";
 import {
     FormModalWithMedia,
     toInitialTranslations,
@@ -18,19 +16,18 @@ import { TableActions } from "@/components/ui/TableActions";
 import { TableActionItem } from "@/components/ui/TableActionItem";
 import CustomImage from "@/components/CustomImage";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
-import { useDashboardListParams } from "@/hooks/useDashboardListParams";
 import { clubServiceClient } from "@/domains/club/services/clubService";
 import { clubDashboardRoute } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import type { Club, Translation } from "@/domains/club/types";
 import type { ApiResponse } from "@/types/api";
 
-type ClubFilters = {
-    search: string;
-    is_active: 0 | 1 | undefined;
-};
+interface ClubsPageClientProps {
+    /** Danh sách CLB của user (đã lọc theo permission ở Server Component). */
+    clubs: Club[];
+}
 
-export function ClubsPageClient() {
+export function ClubsPageClient({ clubs }: ClubsPageClientProps) {
     const router = useRouter();
     const locale = useLocale();
     const t = useTranslations("common");
@@ -46,16 +43,7 @@ export function ClubsPageClient() {
     const canUpdate = isSuperAdmin || hasPermission("club", "update");
     const canDelete = isSuperAdmin || hasPermission("club", "delete");
 
-    const { params, setPage, setLimit, updateMany, reset } =
-        useDashboardListParams<ClubFilters>({
-            defaultFilters: { search: "", is_active: undefined },
-            defaultSortBy: "created_at",
-            defaultSortDir: "desc",
-        });
-
-    const [data, setData] = useState<Club[]>([]);
-    const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState<Club[]>(clubs);
 
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState<Club | null>(null);
@@ -65,32 +53,6 @@ export function ClubsPageClient() {
     const [deleting, setDeleting] = useState(false);
 
     const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
-
-    const sortOptions = [
-        { value: "created_at", label: t("createdAt") },
-        { value: "id", label: "ID" },
-    ];
-
-    // ─── Fetch — pattern giống Project 1 ─────────────────────────────────────────
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const res = await clubServiceClient.list(params);
-            if (res.success) {
-                setData(res.data ?? []);
-                setTotal(res.meta?.total ?? 0);
-            }
-        } catch (error: any) {
-            toast.error(error?.message || t("loadError"));
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ─── Navigation ──────────────────────────────────────────────────────────────
 
@@ -125,10 +87,7 @@ export function ClubsPageClient() {
                     setData((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
                 } else {
                     setData((prev) => [saved, ...prev]);
-                    setTotal((prev) => prev + 1);
                 }
-            } else {
-                await fetchData();
             }
 
             toast.success(res.message || t("saveSuccess"));
@@ -141,7 +100,7 @@ export function ClubsPageClient() {
         }
     };
 
-    // ─── Toggle is_active — pattern giống Project 1 ───────────────────────────────
+    // ─── Toggle is_active ─────────────────────────────────────────────────────────
 
     const handleToggle = async (row: Club) => {
         if (togglingIds.has(row.id)) return;
@@ -173,7 +132,7 @@ export function ClubsPageClient() {
         }
     };
 
-    // ─── Delete — pattern giống Project 1 ────────────────────────────────────────
+    // ─── Delete ────────────────────────────────────────────────────────────────────
 
     const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
@@ -185,7 +144,6 @@ export function ClubsPageClient() {
 
             if (res.success) {
                 setData((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-                setTotal((prev) => Math.max(0, prev - 1));
                 toast.success(res.message || t("deleteSuccess"));
                 setDeleteTarget(null);
             }
@@ -205,7 +163,7 @@ export function ClubsPageClient() {
             className: "w-12",
             render: (_row, index) => (
                 <span className="text-gray-400 text-xs">
-                    {(params.page - 1) * params.limit + index + 1}
+                    {index + 1}
                 </span>
             ),
         },
@@ -240,7 +198,6 @@ export function ClubsPageClient() {
             label: t("members"),
             render: (row) => row.total_members ?? 0,
         },
-        // cột sort_order đã bỏ theo yêu cầu
         {
             key: "is_active",
             label: t("status"),
@@ -254,7 +211,7 @@ export function ClubsPageClient() {
         },
     ];
 
-    // ─── Action buttons — giống Project 1 ────────────────────────────────────────
+    // ─── Action buttons ────────────────────────────────────────────────────────────
 
     const renderRowActions = (row: Club) => (
         <TableActions>
@@ -292,7 +249,7 @@ export function ClubsPageClient() {
                         {tc("title")}
                     </h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                        {tc("totalCount", { count: total.toLocaleString() })}
+                        {tc("totalCount", { count: data.length.toLocaleString() })}
                     </p>
                 </div>
 
@@ -308,35 +265,13 @@ export function ClubsPageClient() {
                 )}
             </div>
 
-            <div className="space-y-4">
-                <DashboardFilterBar
-                    search={params.search}
-                    isActive={params.is_active}
-                    sortBy={params.sort_by}
-                    sortDir={params.sort_dir}
-                    sortOptions={sortOptions}
-                    loading={loading}
-                    onApply={(filters) => updateMany(filters as Partial<typeof params>)}
-                    onReset={reset}
-                />
-
-                <DashboardTable
-                    columns={columns}
-                    data={data}
-                    loading={loading}
-                    keyExtractor={(row) => row.id}
-                    renderActions={renderRowActions}
-                    emptyText={tc("notFound")}
-                />
-
-                <DashboardPagination
-                    page={params.page}
-                    limit={params.limit}
-                    total={total}
-                    onPageChange={setPage}
-                    onLimitChange={setLimit}
-                />
-            </div>
+            <DashboardTable
+                columns={columns}
+                data={data}
+                keyExtractor={(row) => row.id}
+                renderActions={renderRowActions}
+                emptyText={tc("notFound")}
+            />
 
             {/* Form modal */}
             <FormModalWithMedia
@@ -348,11 +283,9 @@ export function ClubsPageClient() {
                 submitting={submitting}
                 fields={[
                     { name: "is_active", label: t("active"), type: "checkbox" },
-                    // { name: "sort_order", label: t("sortOrder"), type: "number" },
                 ]}
                 initialValues={{
                     is_active: editing?.is_active ?? true,
-                    // sort_order: editing?.sort_order ?? 0,
                 }}
                 imageFields={[
                     { name: "logo", label: t("logo"), initialUrl: editing?.logo ?? null },

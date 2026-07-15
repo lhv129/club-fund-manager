@@ -12,16 +12,16 @@ interface NotFoundViewProps {
  *
  * @example
  * // not-found.tsx của [locale]
- * <NotFoundView title="404" description={t("notFound")} href="/dashboard" linkLabel={t("backHome")} />
+ * <NotFoundView title="404" description={t("notFound")} href="/" linkLabel={t("backHome")} />
  *
  * @example
  * // not-found.tsx của admin/(system)
- * <NotFoundView title="404" description="Trang không tồn tại." href="/admin" linkLabel="Về Dashboard" />
+ * <NotFoundView title="404" description="Trang không tồn tại." href="/admin" linkLabel="Về Admin" />
  */
 export default function NotFoundView({
     title = "404",
     description = "Trang không tồn tại.",
-    href = "/dashboard",
+    href = "/",
     linkLabel = "Về trang chủ",
 }: NotFoundViewProps) {
     return (

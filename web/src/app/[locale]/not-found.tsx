@@ -7,7 +7,7 @@ export default function NotFound() {
     <NotFoundView
       title="404"
       description={t("notFound")}
-      href="/dashboard"
+      href="/"
       linkLabel={t("backHome")}
     />
   );

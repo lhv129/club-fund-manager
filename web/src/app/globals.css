@@ -4,6 +4,17 @@
   --background: #ffffff;
   --foreground: #171717;
 
+  /* ─── Primary color — thay đổi 2 dòng này để đổi màu toàn site ─── */
+  --primary: #2563eb;
+  /* blue-600 */
+  --primary-hover: #1d4ed8;
+  /* blue-700 */
+  --primary-foreground: #ffffff;
+  /* Tints — dùng cho background nhẹ, badge, highlight */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-700: #1d4ed8;
+
   @layer base {
 
     button:not(:disabled),
@@ -13,11 +24,26 @@
   }
 }
 
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --primary: #3b82f6;
+  /* blue-500 — sáng hơn chút cho dark mode */
+  --primary-foreground: #ffffff;
+  --primary-50: #1e3a5f;
+  --primary-100: #1e40af33;
+  --primary-700: #60a5fa;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Map primary vào Tailwind → bg-primary, text-primary, border-primary, bg-primary/10 ... */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
 }
 
 body {

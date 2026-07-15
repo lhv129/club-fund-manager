@@ -6,22 +6,24 @@
  * Route paths used in sidebar + middleware (locale-prefixed paths).
  *
  * Hai khu vực:
- *  - Dashboard workspace  →  /dashboard/...   (system: clubs, users, roles, ...)
- *  - Club workspace       →  /club/[slug]/...   (một CLB cụ thể)
+ *  - Admin workspace   →  /admin/...   (system: users, roles, permissions, settings)
+ *  - Club workspace    →  /club/[slug]/...   (một CLB cụ thể)
+ *  - Root ("/")        →  landing phân luồng theo role (admin / club / no-club)
  */
 export const APP_ROUTES = {
   // ── Auth ─────────────────────────────────────────────────────────────────
   login: "/login",
   register: "/register",
 
-  // ── Dashboard workspace (system) ────────────────────────────────────────────
-  dashboard: "/dashboard",
-  dashboardClubs: "/dashboard/clubs",
-  dashboardUsers: "/dashboard/users",
-  dashboardRoles: "/dashboard/roles",
-  dashboardPermissions: "/dashboard/permissions",
-  dashboardSettings: "/dashboard/settings",
-  noClub: "/dashboard/no-club",
+  // ── Root landing — phân luồng theo role ───────────────────────────────────
+  home: "/",
+
+  // ── Admin workspace (system) — URL: /admin/... ────────────────────────────
+  admin: "/admin",
+  adminUsers: "/admin/users",
+  adminRoles: "/admin/roles",
+  adminPermissions: "/admin/permissions",
+  adminSettings: "/admin/settings",
 
   // ── Club workspace (route prefix; slug được ghép bằng clubRoute()) ────────
   club: "/club",

@@ -1,9 +1,12 @@
-import { BaseService } from "@/lib/baseService";
+import { BaseRepository } from "@/lib/baseRepository";
+import { browserAdapter } from "@/lib/http/browserAdapter";
 import type { ApiResponse } from "@/types/api";
 import type { Role } from "../types";
 
-class RoleService extends BaseService<Role> {
+class RoleService extends BaseRepository<Role> {
   protected resource = "roles";
+  protected adapter = browserAdapter;
+
 
   /**
    * POST /roles/{id}/permissions — sync permissions to a role.

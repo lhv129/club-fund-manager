@@ -55,7 +55,7 @@ export function RegisterForm() {
 
     const result = await register(form);
     if (result.success) {
-      setSuccessMsg(result.message);
+      setSuccessMsg(result.message || '');
       setTimeout(() => router.push("/login"), 3000);
     }
   };

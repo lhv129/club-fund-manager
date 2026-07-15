@@ -100,17 +100,11 @@ export function NoClubClient() {
       });
       if (res.success) {
         toast.success(t("tokenAccepted"));
-        // Nếu BE trả về club → vào workspace luôn (invite thường auto-approve)
-        const member = res.data;
-        if (member?.club_id) {
-          // Cần fetch club để lấy slug — hoặc BE trả kèm. Fallback: refresh để
-          // LoginForm-redirect logic chạy lại. Đơn giản: push về /dashboard/clubs.
-          router.push("/dashboard/clubs");
-          router.refresh();
-        } else {
-          router.push("/dashboard/clubs");
-          router.refresh();
-        }
+        // Nếu BE trả về club → vào workspace luôn (invite thường auto-approve).
+        // Redirect về root để root page phân luồng lại (có thể vào thẳng club
+        // nếu giờ user có đúng 1 club, hoặc render danh sách nếu 2+).
+        router.push("/");
+        router.refresh();
       } else {
         toast.error(res.message || t("tokenInvalid"));
       }

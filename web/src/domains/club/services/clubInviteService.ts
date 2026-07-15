@@ -1,12 +1,14 @@
-import { BaseService } from "@/lib/baseService";
+import { BaseRepository } from "@/lib/baseRepository";
+import { browserAdapter } from "@/lib/http/browserAdapter";
 import type { ApiResponse } from "@/types/api";
 import type { ClubInvite } from "../types";
 
 /**
  * ClubInviteService — endpoints under /clubs/{clubId}/invites.
  */
-class ClubInviteService extends BaseService<ClubInvite> {
+class ClubInviteService extends BaseRepository<ClubInvite> {
   protected resource = "clubs";
+  protected adapter = browserAdapter;
 
   /** GET /clubs/{clubId}/invites — list invites. */
   listByClub(clubId: number, params?: Record<string, unknown>) {
