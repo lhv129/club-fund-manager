@@ -25,19 +25,7 @@ class ClubInviteService extends BaseService
 
     public function paginateClubInvites(int $clubId, array $params = []): LengthAwarePaginator
     {
-        $where   = $this->buildWhere($params, ['is_active']);
-        $where['club_id'] = $clubId;
-
-        $orderBy = $this->buildOrderBy($params, ['id', 'sort_order', 'created_at', 'expires_at']);
-
-        return $this->repository->paginate(
-            where:   $where,
-            orderBy: $orderBy,
-            select:  ['id', 'club_id', 'created_by', 'token', 'expires_at', 'used_count', 'sort_order', 'is_active', 'created_at'],
-            with:    ['creator'],
-            limit:   (int) ($params['limit'] ?? 0),
-            page:    (int) ($params['page'] ?? 1),
-        );
+        return $this->repository->paginateClubInvites($clubId, $params);
     }
 
     // -------------------------------------------------------------------------

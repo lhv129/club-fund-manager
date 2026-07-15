@@ -29,24 +29,7 @@ class ClubMemberService extends BaseService
 
     public function paginateClubMembers(int $clubId, array $params = []): LengthAwarePaginator
     {
-        $where = $this->buildWhere($params, ['status', 'join_type', 'is_active']);
-        $where['club_id'] = $clubId;
-
-        // Tìm theo tên / email user
-        if (!empty($params['search'])) {
-            $where['whereHas'] = [['user', ['name' => ['name', 'like', $params['search']]]]];
-        }
-
-        $orderBy = $this->buildOrderBy($params, ['id', 'joined_at', 'created_at']);
-
-        return $this->repository->paginate(
-            where:   $where,
-            orderBy: $orderBy,
-            select:  ['id', 'club_id', 'user_id', 'join_type', 'status', 'is_active', 'joined_at', 'created_at'],
-            with:    ['user'],
-            limit:   (int) ($params['limit'] ?? 0),
-            page:    (int) ($params['page'] ?? 1),
-        );
+        return $this->repository->paginateClubMembers($clubId, $params);
     }
 
     // -------------------------------------------------------------------------

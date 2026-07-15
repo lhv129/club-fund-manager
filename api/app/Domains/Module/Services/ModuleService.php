@@ -29,23 +29,7 @@ class ModuleService extends BaseService
      */
     public function paginate(array $params = []): LengthAwarePaginator
     {
-        $where   = $this->buildWhere($params, ['is_active']);
-        $orderBy = $this->buildOrderBy($params, ['id', 'sort_order', 'created_at']);
-
-        if (!empty($params['search'])) {
-            $where += $this->buildSearchWhere($params, ['slug']);
-            // tìm thêm theo tên translation
-            $where['whereHas'][] = ['translations', ['name' => ['name', 'like', $params['search']]]];
-        }
-
-        return $this->repository->paginate(
-            where: $where,
-            orderBy: $orderBy,
-            select: ['id', 'slug', 'sort_order', 'is_active', 'created_at'],
-            with: ['translations'],
-            limit: (int) ($params['limit'] ?? 0),
-            page: (int) ($params['page'] ?? 1),
-        );
+        return $this->repository->paginateModule($params);
     }
 
     /**
@@ -53,19 +37,7 @@ class ModuleService extends BaseService
      */
     public function getForSelect(array $params = []): Collection
     {
-        $where = $this->buildWhere($params, ['is_active']);
-
-        if (!empty($params['search'])) {
-            $where['whereHas'] = [['translations', ['name' => ['name', 'like', $params['search']]]]];
-        }
-
-        return $this->repository->get(
-            where: $where,
-            orderBy: ['sort_order' => 'asc', 'id' => 'asc'],
-            select: ['id', 'slug', 'icon'],
-            with: ['translations'],
-            limit: min((int) ($params['limit'] ?? 50), 100),
-        );
+        return $this->repository->getForSelect($params);
     }
 
     // -------------------------------------------------------------------------

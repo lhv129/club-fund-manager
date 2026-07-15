@@ -18,25 +18,57 @@ abstract class BaseService
         $this->repository = $repository;
     }
 
+    // -------------------------------------------------------------------------
+    // List — default delegate xuống Repository, override nếu cần phân quyền
+    // -------------------------------------------------------------------------
+
     /**
-     * Domain Service phải override method này.
-     * Base không tự build where/orderBy vì không biết schema từng domain.
+     * Offset pagination — delegate xuống repository->getList().
+     * Domain Service override nếu cần phân quyền (vd: admin vs user).
      */
-    public function paginate(array $params = [])
+    public function paginate(array $filters = [])
     {
-        throw new \LogicException(static::class . '::paginate() phải được override ở domain Service.');
+        return $this->repository->getList($filters);
     }
 
-    public function cursorPaginate(array $params = [])
+    /**
+     * Cursor pagination — delegate xuống repository->getCursorList().
+     * Domain Service override nếu cần logic đặc thù.
+     */
+    public function cursorPaginate(array $filters = [])
     {
-        throw new \LogicException(static::class . '::cursorPaginate() phải được override ở domain Service.');
+        return $this->repository->getCursorList($filters);
     }
+
+    /**
+     * Dropdown / select list — delegate xuống repository->getForSelect().
+     * Domain Service override nếu cần lọc thêm quyền.
+     */
+    public function getForSelect(array $filters = [])
+    {
+        return $this->repository->getForSelect($filters);
+    }
+
+    /**
+     * Đếm theo filter — delegate xuống repository->countFiltered().
+     */
+    public function count(array $filters = []): int
+    {
+        return $this->repository->countFiltered($filters);
+    }
+
+    // -------------------------------------------------------------------------
+    // Read
+    // -------------------------------------------------------------------------
 
     public function getActive()
     {
         return $this->repository->getActive();
     }
 
+    /**
+     * Tìm 1 bản ghi theo ID, throw 404 nếu không tìm thấy.
+     */
     public function find($id)
     {
         $data = $this->repository->find($id);
@@ -49,11 +81,11 @@ abstract class BaseService
     }
 
     /**
-     * Tìm 1 bản ghi theo điều kiện bất kỳ
+     * Tìm 1 bản ghi theo điều kiện bất kỳ.
      *
-     * @param array $conditions  dùng được mọi cú pháp applyConditions()
-     * @param array $select      mặc định ['*']
-     * @param array $with        eager load relations
+     * @param array $conditions  ['field' => 'value', ...]
+     * @param array $select
+     * @param array $with
      * @param bool  $orFail      true → throw 404 | false → trả null
      */
     public function findByConditions(
@@ -74,6 +106,10 @@ abstract class BaseService
 
         return $data;
     }
+
+    // -------------------------------------------------------------------------
+    // Write
+    // -------------------------------------------------------------------------
 
     public function create(array $data)
     {
@@ -97,7 +133,10 @@ abstract class BaseService
         return $this->repository->delete($data);
     }
 
-    public function deleteWithSortOrder(int $id)
+    /**
+     * Xóa + dồn lại sort_order trong 1 transaction.
+     */
+    public function deleteWithSortOrder(int $id): bool
     {
         $data = $this->find($id);
 
@@ -136,82 +175,11 @@ abstract class BaseService
         return $model->fresh();
     }
 
-    /**
-     * Build orderBy từ request params
-     *
-     * FIX: bỏ $this->defaultOrderBy (không tồn tại trên Service)
-     *      fallback về 'id' khi sort_by không được truyền
-     */
-    protected function buildOrderBy(
-        array $params,
-        array $allowedColumns = []
-    ): array {
-        if (empty($params['sort_by']) && empty($params['sort_dir'])) {
-            return []; // không có gì → repository dùng default của nó
-        }
+    // -------------------------------------------------------------------------
+    // Authorization
+    // -------------------------------------------------------------------------
 
-        $column = $params['sort_by'] ?? 'id';
-
-        if (
-            !empty($allowedColumns) &&
-            !empty($params['sort_by']) &&
-            !in_array($column, $allowedColumns)
-        ) {
-            $column = 'id';
-        }
-
-        $direction = strtolower($params['sort_dir'] ?? 'desc');
-        if (!in_array($direction, ['asc', 'desc'])) {
-            $direction = 'desc';
-        }
-
-        $orderBy = [$column => $direction];
-
-        if ($column !== 'id') {
-            $orderBy['id'] = $direction;
-        }
-
-        return $orderBy;
-    }
-
-    /**
-     * Build mảng where cho simple equality filters từ params
-     *
-     * FIX: dùng isset + !== '' thay vì !empty()
-     *      để không bỏ qua giá trị falsy như 0, false, '0'
-     */
-    protected function buildWhere(array $params, array $filterKeys = []): array
-    {
-        $where = [];
-
-        foreach ($filterKeys as $key) {
-            if (isset($params[$key]) && $params[$key] !== '' && $params[$key] !== null) {
-                $where[$key] = $params[$key];
-            }
-        }
-
-        return $where;
-    }
-
-    /**
-     * Build search orWhere theo nhiều cột
-     */
-    protected function buildSearchWhere(array $params, array $columns): array
-    {
-        if (empty($params['search'])) {
-            return [];
-        }
-
-        $orWhere = [];
-
-        foreach ($columns as $column) {
-            $orWhere[$column] = [$column, 'like', $params['search']];
-        }
-
-        return ['orWhere' => $orWhere];
-    }
-
-    protected function authorizeAction(string $ability, $model, $user = null)
+    protected function authorizeAction(string $ability, $model, $user = null): void
     {
         $user = $user ?? Auth::user();
 

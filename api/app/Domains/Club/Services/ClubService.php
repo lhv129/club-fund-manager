@@ -9,7 +9,6 @@ use App\Domains\User\Models\User;
 use App\Exceptions\ApiException;
 use App\Helpers\ImageHelper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 
 class ClubService extends BaseService
 {
@@ -22,65 +21,40 @@ class ClubService extends BaseService
     }
 
     // -------------------------------------------------------------------------
-    // List / Search
+    // List — override BaseService::paginate vì có phân quyền admin vs user
     // -------------------------------------------------------------------------
 
     /**
-     * Superadmin/Admin (system) -> tất cả clubs
-     * Owner/Manager/Member       -> chỉ clubs mình được approved
+     * Superadmin/Admin → tất cả clubs (getList từ Base).
+     * Owner/Manager/Member → chỉ clubs mình được approved (getByUser).
+     *
+     * cursorPaginate() và getForSelect() không cần override —
+     * Base delegate thẳng xuống getCursorList() / getForSelect() của Repository.
      */
-    public function index(User $user, array $filters): mixed
+    public function paginate(array $filters = []): LengthAwarePaginator
+    {
+        return $this->repository->getList($filters);
+    }
+
+    /**
+     * Dùng ở ClubController::index — phân quyền theo user.
+     */
+    public function index(User $user, array $filters): LengthAwarePaginator
     {
         if ($user->isSuperAdmin() || $user->isSystemAdmin()) {
-            return $this->repository->getAll($filters);
+            return $this->repository->getList($filters);
         }
 
         return $this->repository->getByUser($user->id, $filters);
-    }
-
-    public function paginate(array $params = []): LengthAwarePaginator
-    {
-        return $this->repository->getAll($params);
-    }
-
-    public function cursorPaginate(array $params = []): \Illuminate\Contracts\Pagination\CursorPaginator
-    {
-        $where = $this->buildWhere($params, ['is_active']);
-
-        if (!empty($params['search'])) {
-            $where['whereHas'] = [['translations', ['name' => ['name', 'like', $params['search']]]]];
-        }
-
-        return $this->repository->cursorPaginate(
-            where: $where,
-            orderBy: ['sort_order' => 'asc', 'id' => 'desc'],
-            select: ['id', 'max_members', 'logo', 'is_active', 'sort_order', 'created_at'],
-            with: ['translations'],
-            limit: (int) ($params['limit'] ?? 0),
-        );
-    }
-
-    public function getForSelect(array $params = []): Collection
-    {
-        $where = $this->buildWhere($params, ['is_active']);
-
-        if (!empty($params['search'])) {
-            $where['whereHas'] = [['translations', ['name' => ['name', 'like', $params['search']]]]];
-        }
-
-        return $this->repository->get(
-            where: $where,
-            orderBy: ['sort_order' => 'asc', 'id' => 'asc'],
-            select: ['id', 'max_members', 'logo'],
-            with: ['translations'],
-            limit: min((int) ($params['limit'] ?? 20), 50),
-        );
     }
 
     // -------------------------------------------------------------------------
     // Single record
     // -------------------------------------------------------------------------
 
+    /**
+     * Tìm club theo ID, eager load translations. Throw 404 nếu không tìm thấy.
+     */
     public function find($id): Club
     {
         $club = $this->repository->first(
@@ -96,6 +70,9 @@ class ClubService extends BaseService
         return $club;
     }
 
+    /**
+     * Tìm club theo slug trong bảng translations, chỉ trả về club đang active.
+     */
     public function findBySlug(string $slug): Club
     {
         $club = $this->repository->findByTranslationSlug(
@@ -121,15 +98,14 @@ class ClubService extends BaseService
      * phải tạo club trước → lấy ID → upload logo → cập nhật lại logo.
      *
      * $data từ StoreClubRequest::validated():
-     *   logo        → UploadedFile|null
-     *   is_active   → bool
-     *   sort_order  → int|null
-     *   max_members → int|null
+     *   logo         → UploadedFile|null
+     *   is_active    → bool
+     *   sort_order   → int|null
+     *   max_members  → int|null
      *   translations → ['vi' => ['name' => ..., 'description' => ...], 'en' => [...]]
      */
     public function create(array $data): Club
     {
-        // Tách logo ra — chưa upload vì chưa có ID
         $logoFile = $data['logo'] ?? null;
         unset($data['logo']);
 
@@ -142,10 +118,10 @@ class ClubService extends BaseService
             $this->repository->applySortOrder((int) $data['sort_order']);
         }
 
-        // Tạo club (chưa có logo)
+        // Tạo club (chưa có logo — cần ID trước)
         $club = $this->repository->createWithTranslations($data, $translations);
 
-        // Upload logo sau khi có ID → /uploads/clubs/{id}/logo/file.webp
+        // Upload logo sau khi có ID
         if ($logoFile) {
             $logo = ImageHelper::uploadSingle(
                 file: $logoFile,
@@ -162,14 +138,13 @@ class ClubService extends BaseService
      * Cập nhật club kèm translations (upsert theo locale).
      *
      * Logo:
-     *   - Có UploadedFile mới  → upload vào /uploads/clubs/{id}/logo/, xóa ảnh cũ
-     *   - Không gửi file       → giữ nguyên logo trong DB (unset key, không set null)
+     *   - Có UploadedFile mới  → upload, xóa ảnh cũ
+     *   - Không gửi file       → giữ nguyên logo trong DB
      */
     public function update(int $id, array $data): Club
     {
         $club = $this->find($id);
 
-        // Xử lý logo
         if (!empty($data['logo'])) {
             $data['logo'] = ImageHelper::uploadSingle(
                 file: $data['logo'],
@@ -177,7 +152,6 @@ class ClubService extends BaseService
                 oldFile: $club->logo,
             );
         } else {
-            // Không gửi file → bỏ key, giữ nguyên giá trị DB
             unset($data['logo']);
         }
 
@@ -192,7 +166,7 @@ class ClubService extends BaseService
     }
 
     /**
-     * Xóa club, đồng thời xóa toàn bộ thư mục ảnh /uploads/clubs/{id}/.
+     * Xóa club + dồn sort_order + xóa toàn bộ folder ảnh.
      */
     public function delete(int $id): bool
     {
@@ -201,7 +175,6 @@ class ClubService extends BaseService
 
         $result = $this->deleteWithSortOrder($id);
 
-        // Xóa cả folder clubs/{id} thay vì chỉ xóa từng file
         if ($result) {
             ImageHelper::deleteFolder("clubs/{$clubId}");
         }
@@ -209,6 +182,9 @@ class ClubService extends BaseService
         return $result;
     }
 
+    /**
+     * Toggle is_active, trả về club kèm translations.
+     */
     public function toggleStatus(int $id): Club
     {
         $club            = $this->find($id);
@@ -222,17 +198,9 @@ class ClubService extends BaseService
     // Helpers
     // -------------------------------------------------------------------------
 
-    public function count(array $params = []): int
-    {
-        $where = $this->buildWhere($params, ['is_active']);
-
-        if (!empty($params['search'])) {
-            $where['whereHas'] = [['translations', ['name' => ['name', 'like', $params['search']]]]];
-        }
-
-        return $this->repository->count($where);
-    }
-
+    /**
+     * Superadmin gán owner mới cho club.
+     */
     public function updateOwner(int $clubId, int $newOwnerId): Club
     {
         $club = $this->find($clubId);
