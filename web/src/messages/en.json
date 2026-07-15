@@ -57,6 +57,11 @@
     "loadError": "Failed to load data",
     "openWorkspace": "Open workspace"
   },
+  "header": {
+    "myAccount": "My Account",
+    "darkMode": "Dark Mode",
+    "logout": "Log out"
+  },
   "auth": {
     "login": {
       "title": "Login",
@@ -113,6 +118,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "subtitle": "Statistical parameters",
     "welcome": "Welcome back, {name}!",
     "totalUsers": "Total Users",
     "totalClubs": "Total Clubs",

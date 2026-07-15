@@ -1,19 +1,38 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
+/* ── Light mode ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Backgrounds */
+  --bg-page: #f4f4f5;
+  /* zinc-100 — nền page */
+  --bg-surface: #ffffff;
+  /* card, sidebar, panel */
+  --bg-subtle: #f4f4f5;
+  /* zinc-100 — row hover, badge bg */
+  --bg-muted: #e4e4e7;
+  /* zinc-200 — input, divider */
 
-  /* ─── Primary color — thay đổi 2 dòng này để đổi màu toàn site ─── */
+  /* Foreground */
+  --fg: #09090b;
+  /* zinc-950 — text chính */
+  --fg-muted: #71717a;
+  /* zinc-500 — text phụ, placeholder */
+  --fg-subtle: #a1a1aa;
+  /* zinc-400 — disabled, hint */
+
+  /* Border */
+  --border: #e4e4e7;
+  /* zinc-200 */
+  --border-strong: #d4d4d8;
+  /* zinc-300 */
+
+  /* Primary */
   --primary: #2563eb;
-  /* blue-600 */
   --primary-hover: #1d4ed8;
-  /* blue-700 */
   --primary-foreground: #ffffff;
-  /* Tints — dùng cho background nhẹ, badge, highlight */
-  --primary-50: #eff6ff;
-  --primary-100: #dbeafe;
-  --primary-700: #1d4ed8;
+  --primary-subtle: #eff6ff;
+  /* blue-50 — badge, highlight bg */
 
   @layer base {
 
@@ -24,30 +43,67 @@
   }
 }
 
+/* ── Dark mode — tự động flip khi class .dark lên <html> ── */
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --primary: #3b82f6;
-  /* blue-500 — sáng hơn chút cho dark mode */
+  /* Backgrounds */
+  --bg-page: #18181b;
+  /* zinc-900 */
+  --bg-surface: #27272a;
+  /* zinc-800 — card, sidebar */
+  --bg-subtle: #3f3f46;
+  /* zinc-700 — row hover, badge bg */
+  --bg-muted: #52525b;
+  /* zinc-600 — input */
+
+  /* Foreground — PHẢI sáng trên nền tối */
+  --fg: #fafafa;
+  /* zinc-50 */
+  --fg-muted: #a1a1aa;
+  /* zinc-400 */
+  --fg-subtle: #71717a;
+  /* zinc-500 */
+
+  /* Border */
+  --border: #3f3f46;
+  /* zinc-700 */
+  --border-strong: #52525b;
+  /* zinc-600 */
+
+  /* Primary */
+  --primary: #60a5fa;
+  /* blue-400 — sáng hơn cho dark bg */
+  --primary-hover: #93c5fd;
+  /* blue-300 */
   --primary-foreground: #ffffff;
-  --primary-50: #1e3a5f;
-  --primary-100: #1e40af33;
-  --primary-700: #60a5fa;
+  --primary-subtle: #1e3a8a40;
 }
 
+/* ── Map vào Tailwind v4 ── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg-page: var(--bg-page);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-bg-muted: var(--bg-muted);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-subtle: var(--primary-subtle);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-
-  /* Map primary vào Tailwind → bg-primary, text-primary, border-primary, bg-primary/10 ... */
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
 }
 
+/* ── Base styles — tự flip không cần dark: ── */
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--bg-page);
+  color: var(--fg);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }

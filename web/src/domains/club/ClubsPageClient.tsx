@@ -5,17 +5,17 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { ImageOff, Pencil, Plus, Trash2, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
-import { DashboardTable, ColumnDef } from "@/components/ui/DashboardTable";
+import { DashboardTable, ColumnDef } from "@/components/shared/ui/DashboardTable";
 import {
     FormModalWithMedia,
     toInitialTranslations,
     type SubmitResult,
-} from "@/components/FormModalWithMedia";
-import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
-import { TableActions } from "@/components/ui/TableActions";
-import { TableActionItem } from "@/components/ui/TableActionItem";
-import CustomImage from "@/components/CustomImage";
-import ToggleSwitch from "@/components/ui/ToggleSwitch";
+} from "@/components/shared/forms/FormModalWithMedia";
+import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
+import { TableActions } from "@/components/shared/ui/TableActions";
+import { TableActionItem } from "@/components/shared/ui/TableActionItem";
+import CustomImage from "@/components/shared/media/CustomImage";
+import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
 import { clubServiceClient } from "@/domains/club/services/clubService";
 import { clubDashboardRoute } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";

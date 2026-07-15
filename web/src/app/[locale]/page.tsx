@@ -4,7 +4,7 @@ import { getAccessToken } from "@/lib/cookies";
 import { authServiceServer } from "@/domains/auth/services/authServiceServer";
 import { clubServiceServer } from "@/domains/club/services/clubServiceServer";
 import { canAccessClub } from "@/lib/permissions";
-import { LandingShell } from "@/components/layout/LandingShell";
+import { LandingShell } from "@/components/shared/layout/LandingShell";
 import { ClubsPageClient } from "@/domains/club/ClubsPageClient";
 import { NoClubClient } from "@/domains/club/NoClubClient";
 import type { Profile } from "@/domains/auth/types";

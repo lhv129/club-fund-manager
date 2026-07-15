@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ClubSidebar } from "./ClubSidebar";
-import { Header } from "./Header";
+import { Header } from "../../shared/layout/Header";
 import { useHydrateAuth } from "@/domains/auth/hooks/useAuth";
 import { useHydrateClub } from "@/domains/club/hooks/useClub";
 import type { Profile } from "@/domains/auth/types";

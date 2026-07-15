@@ -1,6 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/shared/ui/Card";
 
 export default async function AdminUsersPage({
   params,

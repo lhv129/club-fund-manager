@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
-import { Header } from "./Header";
+import { Header } from "../../shared/layout/Header";
 import { useHydrateAuth } from "@/domains/auth/hooks/useAuth";
 import type { Profile } from "@/domains/auth/types";
 

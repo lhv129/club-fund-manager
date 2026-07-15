@@ -6,7 +6,7 @@ import { clubServiceServer } from "@/domains/club/services/clubServiceServer";
 import { canAccessClub } from "@/lib/permissions";
 import type { Profile } from "@/domains/auth/types";
 import type { Club } from "@/domains/club/types";
-import { ClubShell } from "@/components/layout/ClubShell";
+import { ClubShell } from "@/components/club/layout/ClubShell";
 
 /**
  * Club workspace layout — /club/[slug]/...

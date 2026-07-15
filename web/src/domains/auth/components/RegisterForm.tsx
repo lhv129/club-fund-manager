@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/routing";
 import { useAuth } from "../hooks/useAuth";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/shared/ui/Button";
+import { Input } from "@/components/shared/ui/Input";
 import type { RegisterPayload } from "../types";
 
 export function RegisterForm() {

@@ -5,7 +5,7 @@ import { getAccessToken } from "@/lib/cookies";
 import { authServiceServer } from "@/domains/auth/services/authServiceServer";
 import { hasAnySystemPermission } from "@/lib/permissions";
 import type { Profile } from "@/domains/auth/types";
-import { AdminShell } from "@/components/layout/AdminShell";
+import { AdminShell } from "@/components/admin/layout/AdminShell";
 
 /**
  * Fetch profile — cache qua React cache() để tránh gọi lại khi

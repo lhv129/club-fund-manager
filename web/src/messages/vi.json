@@ -57,6 +57,11 @@
     "loadError": "Không thể tải dữ liệu",
     "openWorkspace": "Mở workspace"
   },
+  "header": {
+    "myAccount": "Tài khoản của tôi",
+    "darkMode": "Chế độ tối",
+    "logout": "Đăng xuất"
+  },
   "auth": {
     "login": {
       "title": "Đăng nhập",
@@ -113,6 +118,7 @@
   },
   "dashboard": {
     "title": "Bảng điều khiển",
+    "subtitle": "Thống kê thông số",
     "welcome": "Chào mừng trở lại, {name}!",
     "totalUsers": "Tổng người dùng",
     "totalClubs": "Tổng câu lạc bộ",
