@@ -13,10 +13,10 @@ export type BaseListParams = {
 /** Giá trị filter chỉ chấp nhận string | number | undefined để serialize URL an toàn. */
 export type FilterValue = string | number | undefined;
 
-export type DashboardListParams<TFilters extends Record<string, FilterValue>> =
+export type ListParams<TFilters extends Record<string, FilterValue>> =
     BaseListParams & TFilters;
 
-interface UseDashboardListParamsOptions<TFilters extends Record<string, FilterValue>> {
+interface UseListParamsOptions<TFilters extends Record<string, FilterValue>> {
     /** Shape + giá trị mặc định của filter riêng từng module. */
     defaultFilters: TFilters;
     /** Key của field free-text search cần debounce tự động. Bỏ qua nếu module dùng nút Tìm kiếm riêng. */
@@ -32,8 +32,8 @@ const DEBOUNCE_MS = 400;
 
 type ParamReader = { get(key: string): string | null };
 
-export function useDashboardListParams<TFilters extends Record<string, FilterValue>>(
-    options: UseDashboardListParamsOptions<TFilters>
+export function useListParams<TFilters extends Record<string, FilterValue>>(
+    options: UseListParamsOptions<TFilters>
 ) {
     const {
         defaultFilters,
@@ -50,7 +50,7 @@ export function useDashboardListParams<TFilters extends Record<string, FilterVal
 
     // ─── Parse URL → params ───────────────────────────────────────────────────────
 
-    const parseParams = useCallback((sp: ParamReader): DashboardListParams<TFilters> => {
+    const parseParams = useCallback((sp: ParamReader): ListParams<TFilters> => {
         const base: BaseListParams = syncToUrl
             ? {
                 limit: Number(sp.get("limit")) || defaultLimit,
@@ -67,11 +67,11 @@ export function useDashboardListParams<TFilters extends Record<string, FilterVal
                 raw === null || raw === "" ? defaultFilters[key] : raw;
         });
 
-        return { ...base, ...filters } as DashboardListParams<TFilters>;
+        return { ...base, ...filters } as ListParams<TFilters>;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const [params, setParamsState] = useState<DashboardListParams<TFilters>>(() =>
+    const [params, setParamsState] = useState<ListParams<TFilters>>(() =>
         parseParams(initialSearchParams)
     );
 
@@ -85,7 +85,7 @@ export function useDashboardListParams<TFilters extends Record<string, FilterVal
     // ─── Build query string ───────────────────────────────────────────────────────
 
     const buildQueryString = useCallback(
-        (next: DashboardListParams<TFilters>) => {
+        (next: ListParams<TFilters>) => {
             const p = new URLSearchParams();
             if (next.limit) p.set("limit", String(next.limit));
             if (next.page && next.page > 1) p.set("page", String(next.page));
@@ -122,19 +122,19 @@ export function useDashboardListParams<TFilters extends Record<string, FilterVal
     // ─── Core update ─────────────────────────────────────────────────────────────
 
     const update = useCallback(
-        (patch: Partial<DashboardListParams<TFilters>>, opts: { resetPage?: boolean } = {}) => {
+        (patch: Partial<ListParams<TFilters>>, opts: { resetPage?: boolean } = {}) => {
             setParamsState((prev) => ({
                 ...prev,
                 ...patch,
                 page: patch.page ?? (opts.resetPage !== false ? 1 : prev.page),
-            } as DashboardListParams<TFilters>));
+            } as ListParams<TFilters>));
         },
         []
     );
 
     /** Apply nhiều field cùng lúc trong 1 setState → 1 lần fetch. */
     const updateMany = useCallback(
-        (patch: Partial<DashboardListParams<TFilters>>) => update(patch),
+        (patch: Partial<ListParams<TFilters>>) => update(patch),
         [update]
     );
 
@@ -145,7 +145,7 @@ export function useDashboardListParams<TFilters extends Record<string, FilterVal
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
             if (searchInput !== String(params[searchKey] ?? "")) {
-                update({ [searchKey]: searchInput } as Partial<DashboardListParams<TFilters>>);
+                update({ [searchKey]: searchInput } as Partial<ListParams<TFilters>>);
             }
         }, DEBOUNCE_MS);
         return () => {
@@ -158,24 +158,24 @@ export function useDashboardListParams<TFilters extends Record<string, FilterVal
 
     const setPage = useCallback(
         (page: number) =>
-            update({ page } as Partial<DashboardListParams<TFilters>>, { resetPage: false }),
+            update({ page } as Partial<ListParams<TFilters>>, { resetPage: false }),
         [update]
     );
 
     const setLimit = useCallback(
-        (limit: number) => update({ limit } as Partial<DashboardListParams<TFilters>>),
+        (limit: number) => update({ limit } as Partial<ListParams<TFilters>>),
         [update]
     );
 
     const setSort = useCallback(
         (sort_by: string, sort_dir: "asc" | "desc") =>
-            update({ sort_by, sort_dir } as Partial<DashboardListParams<TFilters>>, { resetPage: false }),
+            update({ sort_by, sort_dir } as Partial<ListParams<TFilters>>, { resetPage: false }),
         [update]
     );
 
     const setFilter = useCallback(
         <K extends keyof TFilters>(key: K, value: TFilters[K]) =>
-            update({ [key]: value } as unknown as Partial<DashboardListParams<TFilters>>),
+            update({ [key]: value } as unknown as Partial<ListParams<TFilters>>),
         [update]
     );
 
@@ -187,7 +187,7 @@ export function useDashboardListParams<TFilters extends Record<string, FilterVal
             sort_by: defaultSortBy,
             sort_dir: defaultSortDir,
             ...defaultFilters,
-        } as DashboardListParams<TFilters>);
+        } as ListParams<TFilters>);
     }, [defaultLimit, defaultSortBy, defaultSortDir, defaultFilters, searchKey]);
 
     return {

@@ -5,6 +5,7 @@ import {
     KeyRound,
     Users,
     LucideIcon,
+    Building2
 } from "lucide-react";
 
 import { APP_ROUTES, MODULE_SLUGS, PERMISSION_ACTIONS } from "@/constants";
@@ -33,6 +34,13 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
         labelKey: "dashboard",
         icon: LayoutDashboard,
         exact: true,
+    },
+    {
+        href: APP_ROUTES.adminClubs,
+        labelKey: "clubs",
+        icon: Building2,
+        module: MODULE_SLUGS.club,
+        action: PERMISSION_ACTIONS.view,
     },
     {
         labelKey: "users",

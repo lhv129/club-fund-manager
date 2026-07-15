@@ -61,21 +61,28 @@ src/
 │   ├── permission/
 │   └── module/
 │
-├── components/
-│   ├── ui/                         # Button, Input, Card, AdminTable, AdminFilterBar, AdminPagination
+components/
+├── shared/
+│   ├── ui/
 │   ├── layout/
-│   │   ├── AdminShell.tsx          # Wrap Sidebar (system) + Header + main — cho /admin
-│   │   ├── LandingShell.tsx        # Wrap Header + main (KHÔNG sidebar) — cho root "/" landing
-│   │   ├── ClubShell.tsx           # Wrap ClubSidebar + Header + main
-│   │   ├── Sidebar.tsx             # System sidebar — ADMIN_NAV_ITEMS, isSuperAdmin||isSystemAdmin
-│   │   ├── ClubSidebar.tsx         # Club sidebar — CLUB_NAV_ITEMS, scope theo club.id
-│   │   ├── Header.tsx              # Menu toggle + LocaleSwitcher + AvatarDropdown
-│   │   ├── nav-config.ts          # ADMIN_NAV_ITEMS + filterNav + findNavTrail
-│   │   └── club-nav-config.ts     # CLUB_NAV_ITEMS (sub-route + module/action)
-│   ├── FormModal.tsx               # Modal form JSON — hỗ trợ translatableFields
-│   ├── FormModalWithMedia.tsx      # Modal form FormData (có ảnh/media)
-│   ├── DeleteConfirmModal.tsx
-│   └── LocaleSwitcher.tsx          # Đổi locale — tự dịch slug nếu đang ở club route
+│   ├── forms/
+│   │   ├── DeleteConfirmModal.tsx
+│   │   ├── FormModal.tsx
+│   │   └── FormModalWithMedia.tsx
+│   ├── media/
+│   │   ├── CustomImage.tsx
+│   │   ├── MediaImage.tsx
+│   │   └── MediaUploader.tsx
+│   └── feedback/
+│
+├── admin/
+│   ├── layout/
+│   └── navigation/
+│
+├── club/
+│   ├── layout/
+│   └── navigation/
+│
 │
 ├── hooks/
 │   └── useAdminListParams.ts       # Hook quản lý filter/sort/page/limit — generic theo module

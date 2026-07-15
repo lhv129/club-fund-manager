@@ -55,15 +55,17 @@ export interface ClubInvite {
   created_at: string | null;
 }
 
-/** Club list filter params. */
-export interface ClubListParams {
-  search?: string;
-  is_active?: 0 | 1;
-  sort_by?: string;
-  sort_dir?: "asc" | "desc";
-  limit?: number;
-  page?: number;
-}
+/**
+ * Filter fields riêng của module club — chỉ chứa filter, KHÔNG chứa page/limit/sort
+ * (những field đó đã nằm trong BaseListParams của useListParams).
+ *
+ * Dùng `type` (không dùng `interface`) để thoả ràng buộc
+ * `Record<string, FilterValue>` mà useListParams yêu cầu.
+ */
+export type ClubFilters = {
+  search: string;
+  is_active: 0 | 1 | undefined;
+};
 
 export interface ClubPayload {
   max_members: number | null;

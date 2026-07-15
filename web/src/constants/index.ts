@@ -24,6 +24,7 @@ export const APP_ROUTES = {
   adminRoles: "/admin/roles",
   adminPermissions: "/admin/permissions",
   adminSettings: "/admin/settings",
+  adminClubs: "/admin/clubs",
 
   // ── Club workspace (route prefix; slug được ghép bằng clubRoute()) ────────
   club: "/club",
@@ -88,6 +89,7 @@ export const MODULE_SLUGS = {
   role: "role",
   permission: "permission",
   module: "module",
+  clubs: "clubs",
   // ── Shared module (cả system + club scope) ───────────────────────────────
   club: "club",
   // ── Club-scoped modules ───────────────────────────────────────────────────

@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { ImageOff, Pencil, Plus, Trash2, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
-import { DashboardTable, ColumnDef } from "@/components/shared/ui/DashboardTable";
+import { Table, ColumnDef } from "@/components/shared/ui/Table";
 import {
     FormModalWithMedia,
     toInitialTranslations,
@@ -265,7 +265,7 @@ export function ClubsPageClient({ clubs }: ClubsPageClientProps) {
                 )}
             </div>
 
-            <DashboardTable
+            <Table
                 columns={columns}
                 data={data}
                 keyExtractor={(row) => row.id}

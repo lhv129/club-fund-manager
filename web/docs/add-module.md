@@ -24,7 +24,7 @@ export interface Example {
   translation?: Translation;   // list endpoint
   translations?: Translation[]; // show/edit endpoint
 }
-/** Dùng type (không dùng interface) để thoả Record<string, FilterValue> trong useDashboardListParams. */
+/** Dùng type (không dùng interface) để thoả Record<string, FilterValue> trong useListParams. */
 export type ExampleFilters = {
   search: string;
   is_active: 0 | 1 | undefined;
@@ -97,9 +97,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { Eye, ImageOff, Pencil, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { DashboardTable, ColumnDef } from "@/components/ui/DashboardTable";
-import { DashboardFilterBar } from "@/components/ui/DashboardFilterBar";
-import { DashboardPagination } from "@/components/ui/DashboardPagination";
+import { Table, ColumnDef } from "@/components/ui/Table";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { Pagination } from "@/components/ui/Pagination";
 import {
     FormModalWithMedia,
     toInitialTranslations,
@@ -109,7 +109,7 @@ import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { TableActions } from "@/components/ui/TableActions";
 import { TableActionItem } from "@/components/ui/TableActionItem";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
-import { useDashboardListParams } from "@/hooks/useDashboardListParams";
+import { useListParams } from "@/hooks/useListParams";
 import { exampleServiceClient } from "@/domains/example/services/exampleService";
 import type { ApiResponse } from "@/types/api";
 import type { Example, ExampleFilters, Translation } from "@/domains/example/types";
@@ -122,7 +122,7 @@ export function ExamplesPageClient() {
     const tr = (translations?: Translation[]) =>
         translations?.find((item) => item.locale === locale) ?? translations?.[0];
     const { params, setPage, setLimit, updateMany, reset } =
-        useDashboardListParams<ExampleFilters>({
+        useListParams<ExampleFilters>({
             defaultFilters: { search: "", is_active: undefined },
             defaultSortBy: "created_at",
             defaultSortDir: "desc",
@@ -262,10 +262,10 @@ export function ExamplesPageClient() {
                 </button>
             </div>
             <div className="space-y-4">
-                <DashboardFilterBar search={params.search} isActive={params.is_active} sortBy={params.sort_by} sortDir={params.sort_dir}
+                <FilterBar search={params.search} isActive={params.is_active} sortBy={params.sort_by} sortDir={params.sort_dir}
                     sortOptions={sortOptions} loading={loading}
                     onApply={(filters) => updateMany(filters as Partial<typeof params>)} onReset={reset} />
-                <DashboardTable columns={columns} data={data} loading={loading} keyExtractor={(row) => row.id}
+                <Table columns={columns} data={data} loading={loading} keyExtractor={(row) => row.id}
                     renderActions={(row) => (
                         <TableActions>
                             <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />
@@ -273,7 +273,7 @@ export function ExamplesPageClient() {
                         </TableActions>
                     )}
                     emptyText={te("notFound")} />
-                <DashboardPagination page={params.page} limit={params.limit} total={total} onPageChange={setPage} onLimitChange={setLimit} />
+                <Pagination page={params.page} limit={params.limit} total={total} onPageChange={setPage} onLimitChange={setLimit} />
             </div>
             <FormModalWithMedia isOpen={modalOpen} onClose={closeModal} onSubmit={handleSubmit}
                 title={editing ? te("edit") : te("create")} isEdit={!!editing} submitting={submitting}
@@ -375,8 +375,8 @@ Checklist pattern quan trọng
   toast.success(res.message || t("saveSuccess")) — không để fallback là "" (toast trống = vô hình)
   handleToggle + handleDelete đều có try/catch + toast.error
   setData(res.data ?? []) — data là optional trong ApiResponse, luôn fallback []
-  Title + nút "Thêm mới" nằm ngoài DashboardTable (trong header riêng)
-  DashboardTable chỉ nhận columns, data, loading, keyExtractor, renderActions, emptyText
+  Title + nút "Thêm mới" nằm ngoài Table (trong header riêng)
+  Table chỉ nhận columns, data, loading, keyExtractor, renderActions, emptyText
   Action buttons dùng <TableActions> + <TableActionItem> — không dùng plain button
   Mọi string hiển thị đều qua t() / te() — không hardcode tiếng Việt trong code
   Club-scoped page: lấy club từ clubStore, permission check truyền club.id
