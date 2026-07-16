@@ -43,8 +43,9 @@ Không được bỏ layer, không được gọi tắt (Controller → Reposito
 | `Rules/UniqueTranslation.php` | `name`/`title` unique theo từng locale |
 | `Traits/HasTranslationSlug.php` | Tự sinh slug cho translation |
 
-**`BaseRepository`** cung cấp helper thao tác **trực tiếp lên Query Builder** (không xây DSL
-thay thế Laravel Query Builder):
+**`BaseRepository`** cung cấp helper thao tác **trực tiếp lên Query Builder của Laravel** —
+không phải một lớp trừu tượng riêng, chỉ là các method compose sẵn cho các pattern filter/sort
+lặp lại ở nhiều domain:
 
 | Helper | Dùng cho |
 |--------|----------|
@@ -53,6 +54,10 @@ thay thế Laravel Query Builder):
 | `applyActiveFilter($query, $filters, $column?)` | shortcut `is_active` |
 | `applyStatusFilter($query, $filters, $key, $allowedStatuses, $column?)` | string status |
 | `applyDateFilter($query, $filters, $key, $column?)` | khoảng ngày (`{key}_from` / `{key}_to`) |
+
+Filter/sort phổ thông dùng các helper trên. Filter phức tạp (`whereHas`, `join`, `withCount`,
+`groupBy`, subquery...) viết thẳng bằng Query Builder của Laravel ngay trong Repository — không
+cần và không nên có một tầng cú pháp riêng cho việc này.
 
 ## 4. Domain Structure
 
@@ -261,6 +266,8 @@ public function paginate(array $filters = [])
   và filter khác nhau giữa các domain).
 - Filter/sort phổ thông dùng helper `BaseRepository` (xem mục 3); filter phức tạp (`whereHas`,
   `join`, `withCount`, `groupBy`) viết thẳng Query Builder trong Repository.
+- Toàn bộ logic filter/search/sort/paginate sống trong Repository — Service và Controller không
+  bao giờ chạm vào Query Builder.
 
 ### Service — chỉ truyền `$filters`
 
@@ -280,6 +287,9 @@ public function paginate(array $filters = [])
 }
 ```
 
+Service không `where`, không `orderBy`, không `select`, không `with`, không `join`, không tự viết
+hàm build điều kiện lọc — mọi thứ liên quan đến truy vấn nằm gọn trong Repository.
+
 ### Controller — validate rồi gọi Service
 
 ```php
@@ -291,13 +301,6 @@ public function index(FilterCategoryRequest $request): JsonResponse
     );
 }
 ```
-
-### Không xây DSL thay thế Laravel Query Builder
-
-Không dùng / không mở rộng `buildWhere()`, `buildOrderBy()`, `buildSearchWhere()` trong Service.
-Lý do: Club cần `whereHas`, module khác cần `join` / `groupBy` / `withCount`. Mở rộng DSL sẽ dần
-trở thành bản sao của Laravel Query Builder — tăng phức tạp, không thêm lợi ích. Viết thẳng Query
-Builder trong Repository thì rõ ràng và mở rộng tự do.
 
 ### Filter Request
 
@@ -313,10 +316,12 @@ Mỗi endpoint `index` nên có `FilterRequest` riêng. **Cột `sort_by` phải
 - Đúng flow `Request → Controller → Service → Repository → Model`, không bỏ layer.
 - File đặt đúng `app/Domains/{Module}/{Layer}/`.
 - **Repository là nơi duy nhất thao tác với Query Builder** — search, filter, sort, select, join,
-  whereHas, with, withCount, paginate. `paginate(array $filters = [])` build thẳng query.
-- **Service KHÔNG build query** — không `where`, `orderBy`, `select`, `with`, `join`, `paginate`,
-  không `buildWhere()` / `buildOrderBy()` / `buildSearchWhere()`. Service chỉ truyền `$filters`
-  xuống Repository (+ business logic: authorize, transaction, orchestration).
+  whereHas, with, withCount, paginate. `paginate(array $filters = [])` build thẳng query bằng
+  Query Builder chuẩn của Laravel; filter/sort phổ thông compose qua helper `BaseRepository`,
+  filter phức tạp viết trực tiếp.
+- **Service KHÔNG build query** — không `where`, `orderBy`, `select`, `with`, `join`, `paginate`.
+  Service chỉ truyền `$filters` xuống Repository (+ business logic: authorize, transaction,
+  orchestration).
 - Repository chỉ query DB; không business logic.
 - Controller không query DB, không validate trực tiếp, không business logic.
 - Mọi API có input đều phải có FormRequest (extends `BaseRequest`). Endpoint `index` dùng

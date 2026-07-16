@@ -19,6 +19,8 @@ return [
 
     'status_toggled' => 'User status toggled successfully',
 
+    'status_updated' => 'User status updated successfully',
+
     'not_found' => 'User not found',
 
     'email_exists' => 'Email already exists',

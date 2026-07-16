@@ -13,7 +13,7 @@ class UserRepository extends BaseRepository
     // Cấu hình — Base sử dụng trực tiếp
     // ------------------------------------------------------------------
 
-    protected string $defaultOrderBy        = 'id';
+    protected string $defaultOrderBy = 'created_at';
     protected string $defaultOrderDirection = 'desc';
 
     /** Whitelist cột sort cho getList() */
@@ -41,7 +41,8 @@ class UserRepository extends BaseRepository
 
             $query->where(function ($q) use ($search) {
                 $q->where('fullname', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
     }
@@ -72,7 +73,7 @@ class UserRepository extends BaseRepository
      */
     protected function baseListQuery(): Builder
     {
-        return $this->model->select(['id', 'fullname', 'email', 'status', 'email_verified_at', 'created_at']);
+        return $this->model->select(['id', 'first_name', 'last_name', 'fullname', 'username', 'phone', 'email', 'avatar', 'address', 'date_of_birth','status', 'email_verified_at', 'created_at']);
     }
 
     // ------------------------------------------------------------------

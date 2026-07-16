@@ -6,9 +6,12 @@ use App\Base\BaseService;
 use App\Domains\User\Models\User;
 use App\Domains\User\Repositories\UserRepository;
 use App\Exceptions\ApiException;
+use App\Helpers\ImageHelper;
+use App\Helpers\UserNameHelper;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserService extends BaseService
@@ -32,7 +35,7 @@ class UserService extends BaseService
      */
     public function paginate(array $params = []): LengthAwarePaginator
     {
-        return $this->repository->paginate($params);
+        return $this->repository->getList($params);
     }
 
     /**
@@ -102,26 +105,72 @@ class UserService extends BaseService
 
     public function create(array $data): User
     {
-        $data['password'] = Hash::make($data['password']);
-        return $this->repository->create($data);
+        $avatar = null;
+
+        try {
+            return DB::transaction(function () use (&$data, &$avatar) {
+
+                if (!empty($data['avatar'])) {
+                    $avatar = ImageHelper::uploadSingle(
+                        file: $data['avatar'],
+                        folder: 'users/avatars',
+                    );
+
+                    $data['avatar'] = $avatar;
+                }
+
+                if (isset($data['first_name'], $data['last_name'])) {
+                    $data['fullname'] = trim($data['last_name'] . ' ' . $data['first_name']);
+                }
+
+                $data['password'] = Hash::make($data['password']);
+                $data['status'] ??= 'active';
+                $data['email_verified_at'] = now();
+                $data['username'] = UserNameHelper::generateGuestUserName();
+                $data['date_of_birth'] ??= '2001-01-01';
+
+                return $this->repository->create($data);
+            });
+        } catch (\Throwable $e) {
+            if ($avatar) {
+                ImageHelper::delete($avatar); // hoặc helper tương ứng của project
+            }
+
+            throw $e;
+        }
     }
 
     public function update(int $id, array $data): User
     {
-        if (isset($data['password'])) {
-            $data['password'] = Hash::make($data['password']);
+        if (isset($data['first_name'], $data['last_name'])) {
+            $data['fullname'] = trim($data['last_name'] . ' ' . $data['first_name']);
         }
+
+        if (!empty($data['avatar'])) {
+            $data['avatar'] = ImageHelper::uploadSingle(
+                file: $data['avatar'],
+                folder: 'users/avatars',
+            );
+        }
+
+        if (!empty($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
+        }
+
         return parent::update($id, $data);
     }
 
     /**
-     * Override vì User dùng status string thay vì is_active boolean
+     * Override vì User dùng status string thay vì is_active boolean.
+     * Nhận status mới ('active'|'inactive'|'block') và lưu thẳng vào DB.
      */
-    public function toggleStatus(int $id): User
+    public function updateStatus(int $id, string $status): User
     {
         $user = $this->find($id);
 
-        $user->status = $user->status === 'active' ? 'locked' : 'active';
+        $user->status = $status;
         $user->save();
 
         return $user->fresh();

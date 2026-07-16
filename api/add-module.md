@@ -244,11 +244,11 @@ class FilterCategoryRequest extends BaseRequest
     {
         return [
             'search'    => ['nullable', 'string', 'max:255'],
-            'is_active'  => ['nullable', 'boolean'],
-            'limit'      => ['nullable', 'integer', 'min:1', 'max:100'],
-            'page'       => ['nullable', 'integer', 'min:1'],
-            'sort_by'    => ['nullable', 'string', 'in:id,sort_order,created_at'],
-            'sort_dir'   => ['nullable', 'string', 'in:asc,desc'],
+            'is_active' => ['nullable', 'boolean'],
+            'limit'     => ['nullable', 'integer', 'min:1', 'max:100'],
+            'page'      => ['nullable', 'integer', 'min:1'],
+            'sort_by'   => ['nullable', 'string', 'in:id,sort_order,created_at'],
+            'sort_dir'  => ['nullable', 'string', 'in:asc,desc'],
         ];
     }
 }
@@ -280,7 +280,7 @@ public function paginate(array $filters = [])
   (cột search và filter khác nhau giữa các domain).
 - `applySorting()` / `applyBooleanFilter()` / `applyActiveFilter()` / `applyStatusFilter()`
   / `applyDateFilter()` là **helper có sẵn trong `BaseRepository`** — thao tác trực tiếp lên
-  Query Builder, không xây DSL thay thế Laravel.
+  Query Builder chuẩn của Laravel, không phải một cú pháp riêng cần học thêm.
 
 ```php
 <?php
@@ -381,8 +381,9 @@ class CategoryRepository extends BaseRepository
 ### Khi cần query phức tạp
 
 Module nào cần `join`, `withCount`, `whereHas`, `groupBy` → viết trực tiếp trong Repository
-như `ClubRepository::getAll()` / `ClubRepository::getByUser()` đang làm. **Không mở rộng DSL
-`buildWhere()` để fake các method đó** — viết thẳng Query Builder của Laravel cho trực quan.
+như `ClubRepository::getAll()` / `ClubRepository::getByUser()` đang làm. Viết thẳng Query Builder
+của Laravel cho trực quan — Repository không bị giới hạn bởi các helper có sẵn, muốn thêm điều
+kiện gì thì cứ nối tiếp lên `$query`.
 
 ```php
 // Ví dụ: cần join + withCount
@@ -485,8 +486,8 @@ public function paginate(array $filters = []): LengthAwarePaginator
 }
 ```
 
-> **Không còn** `buildWhere()`, `buildOrderBy()`, `buildSearchWhere()` trong Service.
-> Đây là chi tiết của tầng truy cập dữ liệu → chuyển hết về Repository.
+> Service không chứa `where`/`orderBy`/`select`/`with`/`join` dưới bất kỳ hình thức nào — mọi
+> chi tiết truy cập dữ liệu thuộc về Repository. Service chỉ orchestrate và áp business rule.
 
 ---
 
@@ -664,8 +665,8 @@ Nhớ require file này trong `routes/api.php` (hoặc trong nhóm v1 đã có s
 - [ ] **Filter Request có whitelist `sort_by` (`in:...`)** để chống cột lạ xuống Query Builder
 - [ ] **Repository là nơi duy nhất build query** — `paginate(array $filters = [])`, build thẳng
       trên Query Builder, dùng helper `BaseRepository` cho filter/sort phổ thông
-- [ ] **Service KHÔNG có** `where`/`orderBy`/`select`/`with`/`join`/`buildWhere`/`buildOrderBy` —
-      chỉ truyền `$filters` xuống Repository (+ business logic khi cần)
+- [ ] **Service KHÔNG có** `where`/`orderBy`/`select`/`with`/`join` — chỉ truyền `$filters`
+      xuống Repository (+ business logic khi cần)
 - [ ] Service extends `BaseService`, có `$notFoundMessage`, override `paginate()` + `cursorPaginate()`
 - [ ] Controller extends `BaseController`, không query DB, không business logic, chỉ gọi Service
       + trả `responseCommon()` / `paginateResponse()` / `cursorResponse()`
@@ -715,7 +716,7 @@ Quy ước:
   qua `array_key_exists` + `!== ''`.
 - Cột sort / giá trị status phải có **whitelist** để chống SQL injection.
 - Helper chỉ xử lý filter phổ thông; filter phức tạp (`whereHas`, `join`, `withCount`, `groupBy`)
-  → viết trực tiếp trong Repository.
+  → viết trực tiếp trong Repository bằng Query Builder chuẩn của Laravel.
 
 ### Format Service chuẩn
 
@@ -726,38 +727,24 @@ public function paginate(array $filters = [])
 }
 ```
 
-Service chỉ thêm business logic (authorize, transaction, inject param theo context).
-**Không** `buildWhere` / `buildOrderBy` / `buildSearchWhere` / `select` / `with` / `join`.
+Service chỉ thêm business logic (authorize, transaction, inject param theo context) — không
+`select` / `with` / `join` / điều kiện lọc dưới bất kỳ hình thức nào.
 
 ---
 
-## Phụ lục B — Migration từ DSL cũ
+## Phụ lục B — Vì sao Repository build query thẳng bằng Query Builder
 
-Code cũ dùng DSL trong Service:
+Repository build `paginate(array $filters = [])` trực tiếp trên Eloquent Query Builder, không qua
+một lớp cú pháp trung gian nào. Lý do:
 
-```php
-// KHÔNG dùng nữa
-$where = $this->buildWhere($params, ['is_active']);
-$where = array_merge($where, $this->buildSearchWhere($params, ['name']));
+- Các domain rất khác nhau — Club cần `whereHas`, module khác cần `join` / `groupBy` / `withCount`,
+  có domain chỉ cần filter đơn giản. Một cú pháp chung cho tất cả các trường hợp này sẽ ngày càng
+  phình to và cuối cùng chỉ là một bản sao (kém hơn) của chính Query Builder.
+- Viết thẳng Query Builder trong Repository rõ ràng hơn khi đọc code, và không giới hạn khả năng
+  mở rộng — muốn thêm điều kiện gì thì nối thêm lên `$query`, không cần học một API riêng.
+- Các pattern lặp lại nhiều lần giữa các domain (sort theo whitelist, filter boolean, filter theo
+  khoảng ngày...) mới được rút ra thành helper trong `BaseRepository`; phần còn lại luôn viết trực
+  tiếp bằng Query Builder trong Repository của từng domain.
 
-return $this->repository->paginate(
-    where:   $where,
-    orderBy: $this->buildOrderBy($params, ['id', 'sort_order', 'created_at']),
-    select:  ['id', 'logo', 'sort_order', 'is_active', 'created_at'],
-    with:    ['translations'],
-    limit:   (int) ($params['limit'] ?? 15),
-);
-```
-
-Chuyển sang:
-
-1. **Repository** — viết `paginate(array $filters = [])` build thẳng Query Builder
-   (xem Bước 5). Di chuyển `select` / `with` / `whereHas` / sort vào đây.
-2. **Service** — thay bằng `return $this->repository->paginate($filters);`.
-3. **Controller** — `index` dùng `FilterRequest` (validate `sort_by` whitelist),
-   gọi `$this->service->paginate($request->validated())`.
-
-Lý do bỏ DSL: Club cần `whereHas`, module khác cần `join` / `groupBy` / `withCount`.
-Nếu tiếp tục mở rộng DSL (`buildWhere` + cú pháp `['field', 'whereIn', [...]]`...)
-thì nó dần trở thành bản sao của Laravel Query Builder — tăng phức tạp mà không thêm lợi ích.
-Viết thẳng Query Builder trong Repository thì rõ ràng và mở rộng tự do.
+Khi thêm module mới, luôn viết `paginate()` / `cursorPaginate()` / `getForSelect()` trong Repository
+theo mẫu ở Bước 5, và giữ Service chỉ truyền `$filters` xuống Repository như ở Bước 6.

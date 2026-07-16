@@ -6,6 +6,7 @@ use App\Base\BaseController;
 use App\Domains\User\Services\UserService;
 use App\Domains\User\Requests\StoreUserRequest;
 use App\Domains\User\Requests\UpdateUserRequest;
+use App\Domains\User\Requests\UpdateUserStatusRequest;
 use App\Domains\User\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -93,21 +94,26 @@ class UserController extends BaseController
 
     /**
      * DELETE /api/v1/users/{id}
+     *
+     * Trả danh sách user mới của trang hiện tại sau khi xóa.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
         $this->service->delete($id);
 
-        return $this->responseCommon(true, __('domains/user.deleted'));
+        $params = $request->only(['limit', 'search', 'status', 'email_verified_at', 'sort_by', 'sort_dir', 'page']);
+        $paginator = $this->service->paginate($params);
+
+        return $this->paginateResponse($paginator, __('domains/user.deleted'));
     }
 
     /**
-     * PATCH /api/v1/users/{id}/toggle-status
+     * PATCH /api/v1/users/{id}/status
      */
-    public function toggleStatus(int $id): JsonResponse
+    public function updateStatus(UpdateUserStatusRequest $request, int $id): JsonResponse
     {
-        $user = $this->service->toggleStatus($id);
+        $user = $this->service->updateStatus($id, $request->validated('status'));
 
-        return $this->responseCommon(true, __('domains/user.status_toggled'), new UserResource($user));
+        return $this->responseCommon(true, __('domains/user.status_updated'), new UserResource($user));
     }
 }

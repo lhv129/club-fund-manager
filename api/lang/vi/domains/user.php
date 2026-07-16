@@ -21,6 +21,8 @@ return [
 
     'status_toggled' => 'Cập nhật trạng thái người dùng thành công',
 
+    'status_updated' => 'Cập nhật trạng thái người dùng thành công',
+
     'not_found' => 'Người dùng không tồn tại',
 
     'email_exists' => 'Email đã được sử dụng',

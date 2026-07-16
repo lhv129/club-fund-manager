@@ -12,5 +12,5 @@ Route::middleware('auth.jwt')->prefix('users')->group(function () {
     Route::get('/{id}',             [UserController::class, 'show'])->middleware('permission:user,view');
     Route::put('/{id}',             [UserController::class, 'update'])->middleware('permission:user,update');
     Route::delete('/{id}',          [UserController::class, 'destroy'])->middleware('permission:user,delete');
-    Route::patch('/{id}/toggle-status', [UserController::class, 'toggleStatus'])->middleware('permission:user,update');
+    Route::patch('/{id}/status', [UserController::class, 'updateStatus'])->middleware('permission:user,update');
 });

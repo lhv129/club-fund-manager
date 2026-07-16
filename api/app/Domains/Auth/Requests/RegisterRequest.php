@@ -18,23 +18,31 @@ class RegisterRequest extends BaseRequest
 
             'last_name' => 'required|string|max:255',
 
-            'username' => 'nullable|string|max:255|unique:users,username',
+            // 'username' => 'nullable|string|max:255|unique:users,username',
 
             'gender' => 'nullable|in:male,female,other',
 
             'email' => 'required|email|unique:users,email',
 
-            'password' => 'required|min:6',
+            'password' => 'required|string|min:8|confirmed',
 
-            'confirm_password' => 'required|same:password',
+            // 'phone' => [
+            //     'nullable',
+            //     'regex:/^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/',
+            //     'unique:users,phone',
+            // ],
 
-            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            // 'date_of_birth' => [
+            //     'nullable',
+            //     'date',
+            //     'date_format:Y-m-d',
+            //     'before_or_equal:today',
+            //     'after:1900-01-01',
+            // ],
 
-            'bgImage' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            // 'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
 
-            'count' => 'nullable|integer|min:0',
-
-            'description' => 'nullable|string|max:2000'
+            // 'address' => 'nullable|string|max:150'
         ];
     }
 }
