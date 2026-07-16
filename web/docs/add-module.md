@@ -64,8 +64,16 @@ showBySlug(slug) GET /examples/slug/:slug → ApiResponse<T>   ← dùng cho rou
 select(params?)  GET /examples/select → ApiResponse<T[]>
 create(data)     POST /examples — nhận Partial<T> hoặc FormData
 update(id, data) PUT /examples/:id — nhận Partial<T> hoặc FormData
-destroy(id)      DELETE /examples/:id → ApiResponse<null>
-toggleStatus(id) POST /examples/:id/toggle-status — BE tự đảo trạng thái
+destroy(id, params?)  DELETE /examples/:id?{params} → PaginatedResponse<T> (list đã cập nhật sau xóa)
+toggleStatus(id) POST /examples/:id/toggle-status → ApiResponse<T>   ← chỉ áp dụng cho cột `is_active`
+updateStatus(id, status)  PATCH /examples/:id/update-status { status } → ApiResponse<T>  ← áp dụng cho cột `status`
+
+Lưu ý phân biệt 2 method trạng thái:
+  - toggleStatus(id): áp dụng cho cột `is_active` (boolean active↔inactive). BE tự đảo trạng thái,
+    KHÔNG nhận payload. Phương thức xử lý call API giữ nguyên (gọi POST, update local state).
+  - updateStatus(id, status): áp dụng cho cột `status` (enum, vd active|inactive|locked). Payload
+    gửi lên là { id, status } — caller truyền status mới muốn set (không phải toggle).
+  - Một module có thể có cả 2 (vd Users: is_active toggle + status enum dropdown), hoặc chỉ 1, hoặc không.
 
 Bước 3: Tạo page (Server Component)
 System module → src/app/[locale]/admin/(system)/examples/page.tsx
@@ -220,24 +228,52 @@ export function ExamplesPageClient() {
             });
         }
     };
-    // ─── Delete ───────────────────────────────────────────────────────────────────
+    // ────────────────────────────────────────────────────────────────────────────────
+    // DELETE có 2 cách xử lý:
+    //
+    // 1. DELETE KHÔNG truyền params (CRUD thông thường)
+    //    API:
+    //      DELETE /examples/{id}
+    //      → Response: { success, message }
+    //
+    //    Frontend:
+    //      - Xóa record khỏi state.
+    //      - total = total - 1.
+    //      - Phù hợp khi không cần giữ đủ số lượng record trên trang.
+    //      - Không cần server query lại danh sách.
+    //
+    //    Ví dụ:
+    //      setData(prev => prev.filter(x => x.id !== id));
+    //      setTotal(prev => prev - 1);
+    //
+    // -------------------------------------------------------------------------------
+    //
+    // 2. DELETE CÓ truyền params (khuyến nghị cho bảng phân trang)
+    //    API:
+    //      DELETE /examples/{id}?page=1&limit=10&search=abc...
+    //      → Server:
+    //           delete()
+    //           paginate(current params)
+    //           return PaginatedResponse<T>
+    //
+    //    Frontend:
+    //      const res = await service.destroy(id, params);
+    //
+    //      setData(res.data);
+    //      setTotal(res.meta.total);
+    //
+    //    Ưu điểm:
+    //      ✔ Chỉ 1 HTTP request.
+    //      ✔ Chỉ 1 lần setState.
+    //      ✔ Luôn đủ limit bản ghi (ví dụ xóa 1 record thì record từ trang sau
+    //        sẽ tự được kéo lên).
+    //      ✔ Không cần gọi lại GET /list.
+    //
+    //    Nên dùng cho các màn hình DataTable có phân trang.
+    // ────────────────────────────────────────────────────────────────────────────────
+
     const handleDeleteConfirm = async () => {
-        if (!deleteTarget) return;
-        setDeleting(true);
-        try {
-            const raw = await exampleServiceClient.destroy(deleteTarget.id);
-            const res = raw as unknown as ApiResponse<never>;
-            if (res.success) {
-                setData((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-                setTotal((prev) => Math.max(0, prev - 1));
-                toast.success(res.message || t("deleteSuccess"));
-                setDeleteTarget(null);
-            }
-        } catch (error: any) {
-            toast.error(error?.message || t("loadError"));
-        } finally {
-            setDeleting(false);
-        }
+        ...
     };
     // ─── Columns ─────────────────────────────────────────────────────────────────
     const columns: ColumnDef<Example>[] = [
@@ -373,10 +409,16 @@ Checklist pattern quan trọng
   useEffect(() => { fetchData(); }, [params]) — gọi trực tiếp, không return cleanup
   handleSubmit trả Promise<SubmitResult> — lỗi BE trả { success: false, message, errors }, không throw
   toast.success(res.message || t("saveSuccess")) — không để fallback là "" (toast trống = vô hình)
-  handleToggle + handleDelete đều có try/catch + toast.error
+  handleToggle + handleStatusChange + handleDelete đều có try/catch + toast.error
   setData(res.data ?? []) — data là optional trong ApiResponse, luôn fallback []
   Title + nút "Thêm mới" nằm ngoài Table (trong header riêng)
   Table chỉ nhận columns, data, loading, keyExtractor, renderActions, emptyText
   Action buttons dùng <TableActions> + <TableActionItem> — không dùng plain button
   Mọi string hiển thị đều qua t() / te() — không hardcode tiếng Việt trong code
   Club-scoped page: lấy club từ clubStore, permission check truyền club.id
+  Delete (destroy): response là list (PaginatedResponse) — setData(res.data ?? []) + setTotal(res.meta?.total).
+    Truyền params hiện tại (page/limit/sort/filters) để BE trả danh sách đã cập nhật, không fetch riêng.
+  Trạng thái cột `is_active` (boolean): dùng toggleStatus(id) — BE tự đảo, không nhận payload,
+    giữ nguyên phương thức xử lý call API (POST → update local state).
+  Trạng thái cột `status` (enum): dùng updateStatus(id, status) — payload { id, status },
+    caller truyền status mới muốn set. KHÔNG nhầm với toggleStatus (chỉ is_active).

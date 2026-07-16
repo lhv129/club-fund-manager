@@ -20,6 +20,8 @@ async function request<T>(
 ): Promise<T> {
     const isFormData = payload instanceof FormData;
     const isGet = method === "GET";
+    const isDelete = method === "DELETE";
+    const hasQuery = isGet || (isDelete && payload && !isFormData);
     const locale = getClientLocale();
 
     /**
@@ -46,7 +48,7 @@ async function request<T>(
         actualPayload = fd;
     }
 
-    const url = `/api/proxy${path}${isGet ? buildQueryString(payload as Record<string, unknown>) : ""}`;
+    const url = `/api/proxy${path}${hasQuery ? buildQueryString(payload as Record<string, unknown>) : ""}`;
 
     const res = await fetch(url, {
         method: actualMethod,
@@ -80,8 +82,8 @@ export const browserAdapter: HttpAdapter = {
     patch<T>(path: string, body?: unknown) {
         return request<T>("PATCH", path, body);
     },
-    delete<T>(path: string) {
-        return request<T>("DELETE", path);
+    delete<T>(path: string, params?: Record<string, unknown>) {
+        return request<T>("DELETE", path, params);
     },
     toggleStatus<T>(path: string) {
         return request<T>("POST", path);

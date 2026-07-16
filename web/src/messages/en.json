@@ -55,7 +55,9 @@
     "deleteSuccess": "Deleted successfully",
     "updateSuccess": "Updated successfully",
     "loadError": "Failed to load data",
-    "openWorkspace": "Open workspace"
+    "updateStatus": "Updated status successfully",
+    "openWorkspace": "Open workspace",
+    "email": "Email"
   },
   "header": {
     "myAccount": "My Account",
@@ -168,5 +170,31 @@
     "tokenSubmit": "Join with code",
     "tokenAccepted": "Joined successfully!",
     "tokenInvalid": "Invite code is invalid or expired"
+  },
+  "user": {
+    "title": "Users",
+    "username": "Username",
+    "phone": "Phone",
+    "address": "Address",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "dateOfBirth": "Date of birth",
+    "gender": "Gender",
+    "emailVerified": "Email verified",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "allStatus": "All statuses",
+    "allEmailVerified": "All email",
+    "create": "Add new",
+    "edit": "Edit",
+    "notFound": "No users found",
+    "totalCount": "{count} users",
+    "cannotToggleSelf": "You cannot deactivate your own account",
+    "deleteConfirmMsg": "Are you sure you want to delete user \"{name}\"?",
+    "status": "Status",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "statusLocked": "Locked",
+    "avatar": "Avatar"
   }
 }

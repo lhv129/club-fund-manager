@@ -211,6 +211,35 @@ CLIENT (Client Component — "use client")
                                                     lib/http/serverAdapter.ts ──▶ Laravel API
                                                     (401 cũng được auto-refresh tại đây)
 
+5.1. BaseRepository — method CRUD & trạng thái
+Toàn bộ CRUD viết 1 lần tại lib/baseRepository.ts. Mọi domain service kế thừa, chỉ khai báo
+`resource` + `adapter`.
+
+Method               Mô tả                                                                    Response
+list(params?)        GET /{resource} — danh sách phân trang                                  PaginatedResponse<T>
+show(id)             GET /{resource}/:id                                                       ApiResponse<T>
+showBySlug(slug)     GET /{resource}/slug/:slug                                                ApiResponse<T>
+select(params?)      GET /{resource}/select                                                    ApiResponse<T[]>
+create(data)         POST /{resource} — Partial<T> | FormData                                 ApiResponse<T>
+update(id, data)     PUT /{resource}/:id — Partial<T> | FormData                               ApiResponse<T>
+destroy(id, params?) DELETE /{resource}/:id?{params} — params = page/limit/sort/filters       PaginatedResponse<T>
+                                                                                              (list đã cập nhật sau xóa)
+toggleStatus(id)     POST /{resource}/:id/toggle-status                                       ApiResponse<T>
+                     ← chỉ áp dụng cho cột `is_active` (boolean active↔inactive).
+                       BE tự đảo trạng thái, KHÔNG nhận payload. Phương thức xử lý
+                       call API giữ nguyên (POST → update local state).
+updateStatus(id, status)  PATCH /{resource}/:id/update-status { status }                       ApiResponse<T>
+                     ← áp dụng cho cột `status` (enum, vd active|inactive|locked).
+                       Payload gửi lên là { id, status } — caller truyền status mới
+                       muốn set (không phải toggle). KHÔNG nhầm toggleStatus.
+
+Lưu ý:
+  - destroy trả list (PaginatedResponse<T>), KHÔNG trả ApiResponse<null>. Caller dùng luôn
+    res.data làm data mới (đã cập nhật) + res.meta.total — tránh fetch riêng. Truyền params
+    hiện tại (page/limit/sort/filters) để BE trả đúng trang/limit đang xem.
+  - Một module có thể có cả toggleStatus (is_active) + updateStatus (status enum), hoặc chỉ 1,
+    hoặc không có — tùy BE có endpoint tương ứng không.
+
 6. Auth — refresh token tự động
 - Token trong httpOnly cookie (access_token 1h, refresh_token 7d).
 - serverAdapter: request trả 401 → gọi Laravel /auth/refresh bằng refresh_token

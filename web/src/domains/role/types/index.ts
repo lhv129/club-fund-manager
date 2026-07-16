@@ -14,7 +14,6 @@ export interface RolePermission {
 /** Role — matches RoleResource. */
 export interface Role {
   id: number;
-  club_id: number | null;
   slug: string;
   sort_order: number;
   is_active: boolean;

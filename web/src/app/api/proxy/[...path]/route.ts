@@ -19,9 +19,11 @@ async function handle(
     const adapter = createServerAdapter(locale);
 
     let payload: unknown;
-    if (method === "GET") {
+    // GET + DELETE truyền params qua query string (không có body).
+    // POST/PUT/PATCH truyền qua body (JSON hoặc FormData).
+    if (method === "GET" || method === "DELETE") {
         payload = Object.fromEntries(request.nextUrl.searchParams.entries());
-    } else if (method !== "DELETE") {
+    } else {
         const contentType = request.headers.get("content-type") ?? "";
         payload = contentType.includes("multipart/form-data")
             ? await request.formData()
@@ -35,7 +37,7 @@ async function handle(
             case "POST": result = await adapter.post(resourcePath, payload); break;
             case "PUT": result = await adapter.put(resourcePath, payload); break;
             case "PATCH": result = await adapter.patch(resourcePath, payload); break;
-            case "DELETE": result = await adapter.delete(resourcePath); break;
+            case "DELETE": result = await adapter.delete(resourcePath, payload as Record<string, unknown>); break;
         }
         return NextResponse.json(result);
     } catch (err) {

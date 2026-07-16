@@ -55,7 +55,9 @@
     "deleteSuccess": "Đã xóa thành công",
     "updateSuccess": "Cập nhật thành công",
     "loadError": "Không thể tải dữ liệu",
-    "openWorkspace": "Mở workspace"
+    "updateStatus": "Cập nhật trạng thái thành công",
+    "openWorkspace": "Mở workspace",
+    "email": "Email"
   },
   "header": {
     "myAccount": "Tài khoản của tôi",
@@ -168,5 +170,31 @@
     "tokenSubmit": "Tham gia bằng mã",
     "tokenAccepted": "Tham gia thành công!",
     "tokenInvalid": "Mã lời mời không hợp lệ hoặc đã hết hạn"
+  },
+  "user": {
+    "title": "Danh sách người dùng",
+    "username": "Tên đăng nhập",
+    "phone": "Số điện thoại",
+    "address": "Địa chỉ",
+    "firstName": "Họ",
+    "lastName": "Tên",
+    "dateOfBirth": "Ngày sinh",
+    "gender": "Giới tính",
+    "emailVerified": "Xác thực email",
+    "verified": "Đã xác thực",
+    "unverified": "Chưa xác thực",
+    "allStatus": "Tất cả trạng thái",
+    "allEmailVerified": "Tất cả email",
+    "create": "Thêm mới",
+    "edit": "Sửa",
+    "notFound": "Không tìm thấy người dùng nào",
+    "totalCount": "{count} người dùng",
+    "cannotToggleSelf": "Không thể tự khoá tài khoản của chính mình",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa người dùng \"{name}\"?",
+    "status": "Trạng thái",
+    "statusActive": "Hoạt động",
+    "statusInactive": "Không hoạt động",
+    "statusLocked": "Bị khóa",
+    "avatar": "Avatar"
   }
 }

@@ -86,7 +86,9 @@ function createRequest(localeOverride?: string) {
 
         const isFormData = payload instanceof FormData;
         const isGet = method === "GET";
-        const url = `${API_URL}${path}${isGet ? buildQueryString(payload as Record<string, unknown>) : ""}`;
+        const isDelete = method === "DELETE";
+        const hasQuery = isGet || (isDelete && payload && !isFormData);
+        const url = `${API_URL}${path}${hasQuery ? buildQueryString(payload as Record<string, unknown>) : ""}`;
 
         const buildHeaders = (token?: string) => ({
             Accept: "application/json",
@@ -170,8 +172,8 @@ export function createServerAdapter(localeOverride?: string): HttpAdapter {
         patch<T>(path: string, body?: unknown) {
             return request<T>("PATCH", path, body);
         },
-        delete<T>(path: string) {
-            return request<T>("DELETE", path);
+        delete<T>(path: string, params?: Record<string, unknown>) {
+            return request<T>("DELETE", path, params);
         },
         // Toggle trạng thái — POST không kèm body, BE tự đảo giá trị hiện tại.
         toggleStatus<T>(path: string) {

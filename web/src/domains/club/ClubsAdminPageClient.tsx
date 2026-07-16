@@ -23,7 +23,7 @@ import { clubServiceClient } from "@/domains/club/services/clubService";
 import { clubDashboardRoute } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import type { Club, ClubFilters, Translation } from "@/domains/club/types";
-import type { ApiResponse } from "@/types/api";
+import type { ApiResponse, PaginatedResponse } from "@/types/api";
 
 export function ClubsAdminPageClient() {
     const router = useRouter();
@@ -175,12 +175,12 @@ export function ClubsAdminPageClient() {
 
         setDeleting(true);
         try {
-            const raw = await clubServiceClient.destroy(deleteTarget.id);
-            const res = raw as unknown as ApiResponse<never>;
-
+            // Truyền params hiện tại (page/limit/sort/filters) lên BE để nhận lại
+            // danh sách đã cập nhật sau khi xóa — tránh fetch riêng.
+            const res = await clubServiceClient.destroy(deleteTarget.id, params);
             if (res.success) {
-                setData((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-                setTotal((prev) => Math.max(0, prev - 1));
+                setData(res.data ?? []);
+                setTotal(res.meta?.total ?? 0);
                 toast.success(res.message || t("deleteSuccess"));
                 setDeleteTarget(null);
             }

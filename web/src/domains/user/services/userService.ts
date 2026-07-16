@@ -1,17 +1,25 @@
+"use client";
+
 import { BaseRepository } from "@/lib/baseRepository";
 import { browserAdapter } from "@/lib/http/browserAdapter";
-import type { ApiResponse, PaginatedResponse } from "@/types/api";
-import type { User, UserListParams } from "../types";
+import type { User } from "../types";
+import type { ApiResponse } from "@/types/api";
 
-class UserService extends BaseRepository<User> {
+
+class UserServiceClient extends BaseRepository<User> {
   protected resource = "users";
   protected adapter = browserAdapter;
 
-
-  /** GET /users/active — active + verified users (paginated). */
-  listActive(params?: Omit<UserListParams, "status" | "email_verified_at">) {
-    return this.get<PaginatedResponse<User>>("/users/active", params);
+  updateStatus(
+    id: number,
+    status: "active" | "inactive" | "locked"
+  ): Promise<ApiResponse<User>> {
+    return this.patch<ApiResponse<User>>(
+      `/${this.resource}/${id}/status`,
+      { status }
+    );
   }
+
 }
 
-export const userService = new UserService();
+export const userServiceClient = new UserServiceClient();

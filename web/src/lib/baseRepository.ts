@@ -49,8 +49,8 @@ export abstract class BaseRepository<T> {
         return this.adapter.patch<R>(path, body);
     }
 
-    protected delete<R>(path: string): Promise<R> {
-        return this.adapter.delete<R>(path);
+    protected delete<R>(path: string, params?: Record<string, unknown>): Promise<R> {
+        return this.adapter.delete<R>(path, params);
     }
 
     // ─── CRUD & common operations ────────────────────────────────────────────────
@@ -86,8 +86,11 @@ export abstract class BaseRepository<T> {
         return this.put<ApiResponse<T>>(`/${this.resource}/${id}`, data);
     }
 
-    destroy(id: number | string): Promise<ApiResponse<null>> {
-        return this.delete<ApiResponse<null>>(`/${this.resource}/${id}`);
+    destroy(
+        id: number | string,
+        params?: Record<string, unknown>
+    ): Promise<PaginatedResponse<T>> {
+        return this.delete<PaginatedResponse<T>>(`/${this.resource}/${id}`, params);
     }
 
     toggleStatus(id: number | string): Promise<ApiResponse<T>> {
