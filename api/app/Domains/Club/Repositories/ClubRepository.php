@@ -6,6 +6,8 @@ use App\Base\BaseRepository;
 use App\Domains\Club\Models\Club;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
 
 class ClubRepository extends BaseRepository
 {
@@ -138,5 +140,33 @@ class ClubRepository extends BaseRepository
         );
 
         return $club->fresh(['translations']);
+    }
+
+    public function updateWithTranslations(
+        Model $model,
+        array $data,
+        array $translations
+    ): Model {
+        /** @var Club $model */
+
+        return DB::transaction(function () use ($model, $data, $translations) {
+            $model->update($data);
+
+            $rows = $this->normalizeTranslations($translations);
+            $rows = $this->prepareTranslationSlugs($rows);
+
+            foreach ($rows as $row) {
+                $model->translations()->updateOrCreate(
+                    ['locale' => $row['locale']],
+                    $row
+                );
+            }
+
+            return $model->loadCount([
+                'members as total_members' => fn($q) => $q
+                    ->where('status', 'approved')
+                    ->where('is_active', 1),
+            ])->load('translations');
+        });
     }
 }

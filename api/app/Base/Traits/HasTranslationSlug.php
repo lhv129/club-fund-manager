@@ -27,7 +27,7 @@ trait HasTranslationSlug
      * @param  array  $translations  [['locale'=>.., 'name'=>.., 'slug'=>..], ...]
      * @param  string $parentTable   tên bảng cha dạng plural, vd: "clubs"
      */
-    protected function prepareTranslationSlugs(array $translations, string $parentTable): array
+    protected function prepareTranslationSlugs(array $translations): array
     {
         return array_map(
             fn(array $t) => $this->resolveTranslationSlug($t),

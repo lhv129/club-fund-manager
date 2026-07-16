@@ -726,7 +726,7 @@ abstract class BaseRepository
         return DB::transaction(function () use ($data, $translations) {
             $model = $this->model->create($data);
             $rows  = $this->normalizeTranslations($translations);
-            $rows  = $this->prepareTranslationSlugs($rows, $model->getTable());
+            $rows  = $this->prepareTranslationSlugs($rows);
             $model->translations()->createMany($rows);
             return $model->load('translations');
         });
@@ -737,7 +737,7 @@ abstract class BaseRepository
         return DB::transaction(function () use ($model, $data, $translations) {
             $model->update($data);
             $rows = $this->normalizeTranslations($translations);
-            $rows = $this->prepareTranslationSlugs($rows, $model->getTable(), $model->getKey());
+            $rows = $this->prepareTranslationSlugs($rows);
             foreach ($rows as $row) {
                 $model->translations()->updateOrCreate(
                     ['locale' => $row['locale']],

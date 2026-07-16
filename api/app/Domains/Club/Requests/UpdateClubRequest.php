@@ -29,7 +29,7 @@ class UpdateClubRequest extends BaseRequest
             ],
             'translations.*'             => ['array'],
             'translations.*.name'        => ['required', 'string', 'max:255'],
-            'translations.*.description' => ['nullable', 'string'],
+            'translations.*.description' => ['nullable', 'string', 'max:1000'],
         ];
     }
     public function attributes(): array
