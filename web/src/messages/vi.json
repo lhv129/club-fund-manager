@@ -57,7 +57,8 @@
     "loadError": "Không thể tải dữ liệu",
     "updateStatus": "Cập nhật trạng thái thành công",
     "openWorkspace": "Mở workspace",
-    "email": "Email"
+    "email": "Email",
+    "today": "Hôm nay"
   },
   "header": {
     "myAccount": "Tài khoản của tôi",
@@ -141,7 +142,9 @@
     "edit": "Sửa",
     "notFound": "Không tìm thấy câu lạc bộ nào",
     "totalCount": "{count} câu lạc bộ",
-    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa câu lạc bộ {name}?"
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa câu lạc bộ {name}?",
+    "namePlaceholder": "Nhập tên câu lạc bộ...",
+    "descriptionPlaceholder": "Nhập mô tả câu lạc bộ..."
   },
   "clubWorkspace": {
     "backToClubs": "Quay lại danh sách CLB",
@@ -195,6 +198,19 @@
     "statusActive": "Hoạt động",
     "statusInactive": "Không hoạt động",
     "statusLocked": "Bị khóa",
-    "avatar": "Avatar"
+    "avatar": "Avatar",
+    "genderMale": "Nam",
+    "genderFemale": "Nữ",
+    "genderOther": "Khác",
+    "genderPlaceholder": "Chọn giới tính",
+    "statusPlaceholder": "Chọn trạng thái",
+    "password": "Mật khẩu",
+    "passwordPlaceholder": "••••••••",
+    "firstNamePlaceholder": "Nhập họ",
+    "lastNamePlaceholder": "Nhập tên",
+    "usernamePlaceholder": "vd: john_doe",
+    "emailPlaceholder": "vd: john@example.com",
+    "phonePlaceholder": "vd: 0901234567",
+    "addressPlaceholder": "Nhập địa chỉ"
   }
 }

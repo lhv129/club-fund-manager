@@ -2,6 +2,7 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 import { PhotoIcon, TrashIcon } from "@heroicons/react/24/outline";
+import CustomImage from "@/components/shared/media/CustomImage";
 
 export interface MediaImageState {
     file: File | null;
@@ -94,7 +95,7 @@ const MediaImage: FC<Props> = ({
                     }`}
             >
                 {hasImage ? (
-                    <img
+                    <CustomImage
                         src={preview ?? ""}
                         className="w-full h-full object-cover"
                         alt=""

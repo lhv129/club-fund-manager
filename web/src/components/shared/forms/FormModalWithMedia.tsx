@@ -12,6 +12,9 @@ import MediaUploader, {
 import MediaImage, { MediaImageState } from "@/components/shared/media/MediaImage";
 import { LOCALES, DEFAULT_LOCALE } from "@/lib/locales";
 import { buildEmptyTranslationValues } from "@/lib/formTranslations";
+import DatePicker from "@/components/shared/ui/DatePicker";
+import Select from "@/components/shared/ui/Select";
+import RichEditor from "@/components/shared/ui/RichEditor";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,7 +27,9 @@ export interface FormFieldDef {
     | "email"
     | "url"
     | "textarea"
+    | "richtext"
     | "select"
+    | "datepicker"
     | "checkbox"
     | "icon-picker"
     | "image";
@@ -38,7 +43,7 @@ export interface FormFieldDef {
 export interface TranslatableFieldDef {
     name: string;
     label: string;
-    type: "text" | "textarea" | "url";
+    type: "text" | "textarea" | "richtext" | "url";
     placeholder?: string;
     required?: boolean;
     className?: string;
@@ -80,11 +85,13 @@ interface FormModalWithMediaProps {
     cancelLabel?: string;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const EMPTY_INITIAL_VALUES: Record<string, string | number | boolean | null | undefined> = {};
 const EMPTY_IMAGE_FIELDS: SingleImageFieldDef[] = [];
 const EMPTY_TRANSLATABLE_FIELDS: TranslatableFieldDef[] = [];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getServerError(err: unknown): ServerErrorResponse | null {
     const responseData = (err as { response?: { data?: ServerErrorResponse } })?.response?.data;
@@ -109,32 +116,14 @@ function appendSingleImagePayload(formData: FormData, fieldName: string, state?:
  * Convert mảng translation đã được TYPE CỤ THỂ (Translation[], ClubTranslation[], ...)
  * sang `Record<locale, Record<string, unknown>>` — đúng shape mà prop `initialTranslations`
  * của FormModalWithMedia cần.
- *
- * Vì sao cần helper này (fix triệt để lỗi TS2352):
- *   Mọi interface translation cụ thể (vd `{ locale: string; name: string; description?: string }`)
- *   KHÔNG có index signature `[key: string]: unknown`, nên TypeScript không cho phép
- *   ép kiểu trực tiếp (`tr as Record<string, unknown>`) — báo lỗi "Conversion ... may be
- *   a mistake" / "Index signature for type 'string' is missing".
- *
- *   Thay vì mỗi page tự viết `.map(tr => [tr.locale, tr as Record<string, unknown>])`
- *   (dễ lặp lại lỗi này ở module khác), dùng chung helper này — cast an toàn qua
- *   `unknown` trước, làm 1 lần duy nhất, review 1 lần duy nhất.
- *
- * Dùng:
- *   initialTranslations={toInitialTranslations(editing?.translations)}
  */
 export function toInitialTranslations<T extends { locale: string }>(
     items: T[] | null | undefined
 ): Record<string, Record<string, unknown>> {
     const result: Record<string, Record<string, unknown>> = {};
-
     (items ?? []).forEach((item) => {
-        // `as unknown as Record<string, unknown>` — điểm cast DUY NHẤT, an toàn vì
-        // ta chỉ đọc lại các field theo tên (string key) ở buildEmptyTranslationValues,
-        // không có logic nào phụ thuộc vào type cụ thể của T sau bước này.
         result[item.locale] = item as unknown as Record<string, unknown>;
     });
-
     return result;
 }
 
@@ -144,12 +133,6 @@ export function toInitialTranslations<T extends { locale: string }>(
  *   imageErrors:       { [fieldName]: string[] }
  *   mediaErrors:       string[]
  *   restErrors:        { [fieldName]: errorMsg }
- *
- * Xử lý 2 dạng backend trả về:
- *   1. "translations": ["Thiếu bản dịch cho các ngôn ngữ: en."]
- *      → đánh dấu tab locale bị thiếu (general error `_tab`)
- *   2. "translations.vi.name": ["...không được để trống"]
- *      → map locale code → field name
  */
 function parseServerErrors(
     errors: Record<string, string[]> | undefined,
@@ -168,21 +151,15 @@ function parseServerErrors(
     if (!errors) return { translationErrors, imageErrors, mediaErrors, restErrors };
 
     Object.entries(errors).forEach(([field, messages]) => {
-        // ── image field ──────────────────────────────────────────────────────
         if (imageFieldNames.includes(field)) {
             imageErrors[field] = messages;
             return;
         }
-
-        // ── media field ──────────────────────────────────────────────────────
         if (field.startsWith("media")) {
             const msg = firstMsg(messages);
             if (msg) mediaErrors.push(msg);
             return;
         }
-
-        // ── translations (general) — "translations" only, no dot ─────────────
-        // Backend: { "translations": ["Thiếu bản dịch cho các ngôn ngữ: en."] }
         if (field === "translations") {
             const msg = firstMsg(messages);
             LOCALES.forEach((locale) => {
@@ -195,9 +172,6 @@ function parseServerErrors(
             });
             return;
         }
-
-        // ── translations.{localeCode}.{fieldName} ────────────────────────────
-        // Backend: { "translations.vi.name": ["...không được để trống"] }
         const translationMatch = field.match(/^translations\.([^.]+)\.(.+)$/);
         if (translationMatch) {
             const localeCode = translationMatch[1];
@@ -208,8 +182,6 @@ function parseServerErrors(
             };
             return;
         }
-
-        // ── regular field ────────────────────────────────────────────────────
         const msg = firstMsg(messages);
         if (msg) restErrors[field] = msg;
     });
@@ -268,7 +240,9 @@ export function FormModalWithMedia({
     // ── Reset khi mở modal ────────────────────────────────────────────────────
     useEffect(() => {
         if (!isOpen) return;
-        setValues(Object.fromEntries(fields.map((f) => [f.name, String(resolvedInitialValues[f.name] ?? "")])));
+        setValues(Object.fromEntries(
+            fields.map((f) => [f.name, String(resolvedInitialValues[f.name] ?? "")])
+        ));
         setErrors({});
         setImageErrors({});
         setMediaErrors([]);
@@ -289,7 +263,7 @@ export function FormModalWithMedia({
                 ])
             )
         );
-    }, [isOpen]);
+    }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (!isOpen) return null;
 
@@ -297,15 +271,18 @@ export function FormModalWithMedia({
     const isChecked = (name: string) => values[name] === "true" || values[name] === "1";
 
     const applyServerErrors = (res: ServerErrorResponse) => {
-        const { translationErrors: nextTransErr, imageErrors: nextImgErr, mediaErrors: nextMediaErr, restErrors } =
-            parseServerErrors(res.errors, imageFieldNames);
+        const {
+            translationErrors: nextTransErr,
+            imageErrors: nextImgErr,
+            mediaErrors: nextMediaErr,
+            restErrors,
+        } = parseServerErrors(res.errors, imageFieldNames);
 
         setErrors(restErrors);
         setImageErrors(nextImgErr);
         setMediaErrors(nextMediaErr);
         setTranslationErrors(nextTransErr);
 
-        // Nhảy sang tab đầu tiên có lỗi
         if (!nextTransErr[activeLocale]) {
             const localeWithError = Object.keys(nextTransErr)[0];
             if (localeWithError) setActiveLocale(localeWithError);
@@ -333,8 +310,6 @@ export function FormModalWithMedia({
         });
 
         if (resolvedTranslatableFields.length > 0) {
-            // Gửi translations[vi][name]=... thay vì translations[0][locale]=vi&translations[0][name]=...
-            // → backend error key sẽ là "translations.vi.name", không phụ thuộc thứ tự
             LOCALES.forEach((locale) => {
                 resolvedTranslatableFields.forEach((field) => {
                     formData.append(
@@ -401,23 +376,27 @@ export function FormModalWithMedia({
 
     const renderField = (field: FormFieldDef) => {
         const err = errors[field.name];
+        const val = values[field.name] ?? "";
 
+        // ── Checkbox (toggle switch) ──────────────────────────────────────────
         if (field.type === "checkbox") return (
             <>
                 <div className="flex items-center justify-between py-1">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{field.label}</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {field.label}
+                    </span>
                     <button
                         type="button"
                         role="switch"
                         aria-checked={isChecked(field.name)}
                         onClick={() => handleChange(field.name, isChecked(field.name) ? "0" : "1")}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2
-                            border-transparent transition-colors duration-200 ease-in-out
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full
+                            border-2 border-transparent transition-colors duration-200 ease-in-out
                             focus-visible:ring-2 focus-visible:ring-indigo-500
                             ${isChecked(field.name) ? "bg-indigo-600" : "bg-gray-200 dark:bg-gray-700"}`}
                     >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full
-                            bg-white shadow-lg transition
+                        <span className={`pointer-events-none inline-block h-5 w-5 transform
+                            rounded-full bg-white shadow-lg transition
                             ${isChecked(field.name) ? "translate-x-5" : "translate-x-0"}`}
                         />
                     </button>
@@ -426,32 +405,35 @@ export function FormModalWithMedia({
             </>
         );
 
+        // ── Icon picker ───────────────────────────────────────────────────────
         if (field.type === "icon-picker") return (
             <>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
                 <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 flex items-center justify-center rounded-lg border bg-white dark:bg-gray-800">
-                        {values[field.name]
-                            ? <i className={`las ${values[field.name]} text-xl`} />
+                    <div className="w-10 h-10 flex items-center justify-center rounded-lg border
+                        bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                        {val
+                            ? <i className={`las ${val} text-xl`} />
                             : <span className="text-gray-400 text-xs">—</span>
                         }
                     </div>
                     <input
-                        type="text" readOnly value={values[field.name] ?? ""}
-                        placeholder={field.placeholder}
+                        type="text" readOnly value={val}
+                        {...(field.placeholder ? { placeholder: field.placeholder } : {})}
                         className={`flex-1 px-3.5 py-2.5 rounded-xl border text-sm bg-gray-50 dark:bg-gray-800
                             text-gray-900 dark:text-white
-                            ${err ? "border-rose-400" : "border-gray-200 dark:border-gray-700"}`}
+                            ${err ? "border-rose-400 dark:border-rose-500" : "border-gray-200 dark:border-gray-700"}`}
                     />
                 </div>
-                <div className="grid grid-cols-8 gap-2 max-h-48 overflow-y-auto p-2 border rounded-xl">
+                <div className="grid grid-cols-8 gap-2 max-h-48 overflow-y-auto p-2 border rounded-xl
+                    border-gray-200 dark:border-gray-700">
                     {field.icons?.map((icon) => (
                         <button key={icon.value} type="button"
                             onClick={() => handleChange(field.name, icon.value)}
                             className={`p-2 rounded-lg border transition hover:bg-gray-100 dark:hover:bg-gray-700
-                                ${values[field.name] === icon.value
+                                ${val === icon.value
                                     ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10"
                                     : "border-gray-200 dark:border-gray-700"}`}
                         >
@@ -463,6 +445,58 @@ export function FormModalWithMedia({
             </>
         );
 
+        // ── Select — custom Select component ──────────────────────────────────
+        if (field.type === "select") return (
+            <>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
+                </label>
+                <Select
+                    label={field.label}
+                    options={field.options ?? []}
+                    value={val}
+                    onChange={(v) => handleChange(field.name, v)}
+                    {...(field.placeholder ? { placeholder: field.placeholder } : {})}
+                    error={!!err}
+                    className="w-full [&>button]:w-full"
+                />
+                {renderError(err)}
+            </>
+        );
+
+        // ── DatePicker ────────────────────────────────────────────────────────
+        if (field.type === "datepicker") return (
+            <>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
+                </label>
+                <DatePicker
+                    value={val}
+                    onChange={(v) => handleChange(field.name, v)}
+                    rounded="rounded-xl"
+                    className={err ? "border-rose-400 dark:border-rose-500" : ""}
+                />
+                {renderError(err)}
+            </>
+        );
+
+        // ── RichText — CKEditor ───────────────────────────────────────────────
+        if (field.type === "richtext") return (
+            <>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
+                </label>
+                <RichEditor
+                    value={val}
+                    onChange={(v) => handleChange(field.name, v)}
+                    placeholder={field.placeholder}
+                    hasError={!!err}
+                />
+                {renderError(err)}
+            </>
+        );
+
+        // ── Textarea / text / email / url / number ────────────────────────────
         return (
             <>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -470,29 +504,18 @@ export function FormModalWithMedia({
                 </label>
                 {field.type === "textarea" ? (
                     <textarea
-                        value={values[field.name] ?? ""}
+                        value={val}
                         onChange={(e) => handleChange(field.name, e.target.value)}
-                        placeholder={field.placeholder}
+                        {...(field.placeholder ? { placeholder: field.placeholder } : {})}
                         rows={3}
                         className={`${inputCls(!!err)} resize-none`}
                     />
-                ) : field.type === "select" ? (
-                    <select
-                        value={values[field.name] ?? ""}
-                        onChange={(e) => handleChange(field.name, e.target.value)}
-                        className={inputCls(!!err)}
-                    >
-                        <option value="">{field.placeholder ?? t("chooseOption")}</option>
-                        {field.options?.map((opt) => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                    </select>
                 ) : (
                     <input
                         type={field.type}
-                        value={values[field.name] ?? ""}
+                        value={val}
                         onChange={(e) => handleChange(field.name, e.target.value)}
-                        placeholder={field.placeholder}
+                        {...(field.placeholder ? { placeholder: field.placeholder } : {})}
                         className={inputCls(!!err)}
                     />
                 )}
@@ -546,7 +569,8 @@ export function FormModalWithMedia({
                         {resolvedTranslatableFields.length > 0 && (
                             <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                                 {/* Tabs */}
-                                <div className="flex border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                                <div className="flex border-b border-gray-100 dark:border-gray-800
+                                    bg-gray-50 dark:bg-gray-800/50">
                                     {LOCALES.map((locale) => {
                                         const hasErr = localeHasError(locale.code);
                                         const isActive = activeLocale === locale.code;
@@ -555,15 +579,14 @@ export function FormModalWithMedia({
                                                 key={locale.code}
                                                 type="button"
                                                 onClick={() => setActiveLocale(locale.code)}
-                                                className={`relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium
-                                                    border-b-2 transition-colors
+                                                className={`relative flex items-center gap-1.5 px-4 py-2.5
+                                                    text-sm font-medium border-b-2 transition-colors
                                                     ${isActive
                                                         ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-gray-900"
                                                         : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                                                     }`}
                                             >
                                                 {locale.label}
-                                                {/* Chấm đỏ nhấp nháy khi có lỗi */}
                                                 {hasErr && (
                                                     <span className="relative flex h-2 w-2">
                                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
@@ -587,22 +610,37 @@ export function FormModalWithMedia({
                                     </div>
                                 )}
 
-                                {/* Fields */}
+                                {/* Fields theo locale */}
                                 <div className="p-4 space-y-4">
                                     {resolvedTranslatableFields.map((field) => {
                                         const value = translationValues[activeLocale]?.[field.name] ?? "";
                                         const err = translationErrors[activeLocale]?.[field.name];
                                         return (
                                             <div key={field.name} className={field.className}>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                                <label className="block text-sm font-medium
+                                                    text-gray-700 dark:text-gray-300 mb-1.5">
                                                     {field.label}
-                                                    {field.required && <span className="text-rose-500 ml-1">*</span>}
+                                                    {field.required && (
+                                                        <span className="text-rose-500 ml-1">*</span>
+                                                    )}
                                                 </label>
-                                                {field.type === "textarea" ? (
+
+                                                {field.type === "richtext" ? (
+                                                    <RichEditor
+                                                        value={value}
+                                                        onChange={(v) =>
+                                                            handleTranslationChange(activeLocale, field.name, v)
+                                                        }
+                                                        placeholder={field.placeholder}
+                                                        hasError={!!err}
+                                                    />
+                                                ) : field.type === "textarea" ? (
                                                     <textarea
                                                         value={value}
-                                                        onChange={(e) => handleTranslationChange(activeLocale, field.name, e.target.value)}
-                                                        placeholder={field.placeholder}
+                                                        onChange={(e) =>
+                                                            handleTranslationChange(activeLocale, field.name, e.target.value)
+                                                        }
+                                                        {...(field.placeholder ? { placeholder: field.placeholder } : {})}
                                                         rows={3}
                                                         className={`${inputCls(!!err)} resize-none`}
                                                     />
@@ -610,8 +648,10 @@ export function FormModalWithMedia({
                                                     <input
                                                         type={field.type}
                                                         value={value}
-                                                        onChange={(e) => handleTranslationChange(activeLocale, field.name, e.target.value)}
-                                                        placeholder={field.placeholder}
+                                                        onChange={(e) =>
+                                                            handleTranslationChange(activeLocale, field.name, e.target.value)
+                                                        }
+                                                        {...(field.placeholder ? { placeholder: field.placeholder } : {})}
                                                         className={inputCls(!!err)}
                                                     />
                                                 )}
@@ -626,7 +666,8 @@ export function FormModalWithMedia({
                         {/* Image fields */}
                         {resolvedImageFields.map((imageField) => (
                             <div key={imageField.name} className={imageField.className}>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                <label className="block text-sm font-medium
+                                    text-gray-700 dark:text-gray-300 mb-1.5">
                                     {imageField.label}
                                     {imageField.required && <span className="text-rose-500 ml-1">*</span>}
                                 </label>
@@ -641,7 +682,8 @@ export function FormModalWithMedia({
                         {/* Media uploader */}
                         {enableMediaUploader && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                <label className="block text-sm font-medium
+                                    text-gray-700 dark:text-gray-300 mb-1.5">
                                     {resolvedMediaLabel}
                                 </label>
                                 <MediaUploader

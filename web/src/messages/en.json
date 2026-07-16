@@ -57,7 +57,8 @@
     "loadError": "Failed to load data",
     "updateStatus": "Updated status successfully",
     "openWorkspace": "Open workspace",
-    "email": "Email"
+    "email": "Email",
+    "today": "Today"
   },
   "header": {
     "myAccount": "My Account",
@@ -141,7 +142,9 @@
     "edit": "Edit",
     "notFound": "No clubs found",
     "totalCount": "{count} clubs",
-    "deleteConfirmMsg": "Are you sure you want to delete club {name}?"
+    "deleteConfirmMsg": "Are you sure you want to delete club {name}?",
+    "namePlaceholder": "Enter the club name...",
+    "descriptionPlaceholder": "Enter the club description..."
   },
   "clubWorkspace": {
     "backToClubs": "Back to clubs",
@@ -195,6 +198,19 @@
     "statusActive": "Active",
     "statusInactive": "Inactive",
     "statusLocked": "Locked",
-    "avatar": "Avatar"
+    "avatar": "Avatar",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "genderOther": "Other",
+    "genderPlaceholder": "Select gender",
+    "statusPlaceholder": "Select status",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "firstNamePlaceholder": "Enter first name",
+    "lastNamePlaceholder": "Enter last name",
+    "usernamePlaceholder": "e.g. john_doe",
+    "emailPlaceholder": "e.g. john@example.com",
+    "phonePlaceholder": "e.g. 0901234567",
+    "addressPlaceholder": "Enter address"
   }
 }

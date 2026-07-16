@@ -1,5 +1,8 @@
 @import "tailwindcss";
+
+
 @variant dark (&:where(.dark, .dark *));
+
 
 /* ── Light mode ── */
 :root {
@@ -106,4 +109,69 @@ body {
   background-color: var(--bg-page);
   color: var(--fg);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ========================================================================== */
+/* CKEditor 5 */
+/* ========================================================================== */
+
+.ck-editor {
+  width: 100%;
+}
+
+.ck-editor__editable {
+  min-height: 160px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ck.ck-toolbar {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ck.ck-toolbar__items {
+  flex-wrap: wrap !important;
+}
+
+.ck-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.ck-content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.dark .ck.ck-editor__main>.ck-editor__editable {
+  background: var(--bg-surface);
+  color: var(--fg);
+  border-color: var(--border);
+}
+
+.dark .ck.ck-toolbar {
+  background: var(--bg-page);
+  border-color: var(--border);
+}
+
+.dark .ck.ck-toolbar .ck-button {
+  color: var(--fg);
+}
+
+.dark .ck.ck-toolbar .ck-button:hover,
+.dark .ck.ck-toolbar .ck-button.ck-on {
+  background: var(--bg-subtle);
+}
+
+.dark .ck.ck-dropdown__panel,
+.dark .ck.ck-list {
+  background: var(--bg-surface);
+  border-color: var(--border);
+}
+
+.dark .ck.ck-list__item .ck-button {
+  color: var(--fg);
 }

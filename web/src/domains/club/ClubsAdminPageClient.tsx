@@ -23,7 +23,10 @@ import { clubServiceClient } from "@/domains/club/services/clubService";
 import { clubDashboardRoute } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import type { Club, ClubFilters, Translation } from "@/domains/club/types";
-import type { ApiResponse, PaginatedResponse } from "@/types/api";
+import type { ApiResponse } from "@/types/api";
+
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function ClubsAdminPageClient() {
     const router = useRouter();
@@ -52,7 +55,7 @@ export function ClubsAdminPageClient() {
         { value: "created_at", label: t("createdAt") },
     ];
 
-    // ─── State ────────────────────────────────────────────────────────────────────
+    // ─── State ────────────────────────────────────────────────────────────────
 
     const [data, setData] = useState<Club[]>([]);
     const [total, setTotal] = useState(0);
@@ -67,12 +70,11 @@ export function ClubsAdminPageClient() {
 
     const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
 
-    // ─── Fetch ────────────────────────────────────────────────────────────────────
+    // ─── Fetch ────────────────────────────────────────────────────────────────
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Cast sang kiểu base mà BaseRepository.list() chấp nhận.
             const res = await clubServiceClient.list(params as unknown as ListParams<ClubFilters>);
             if (res.success) {
                 setData(res.data ?? []);
@@ -89,14 +91,14 @@ export function ClubsAdminPageClient() {
         fetchData();
     }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // ─── Navigation ──────────────────────────────────────────────────────────────
+    // ─── Navigation ───────────────────────────────────────────────────────────
 
     const handleDetail = (row: Club) => {
         const slug = tr(row.translations)?.slug ?? String(row.id);
         router.push(clubDashboardRoute(slug) as never);
     };
 
-    // ─── Modal handlers ───────────────────────────────────────────────────────────
+    // ─── Modal handlers ───────────────────────────────────────────────────────
 
     const openCreate = () => { setEditing(null); setModalOpen(true); };
     const openEdit = (row: Club) => { setEditing(row); setModalOpen(true); };
@@ -136,7 +138,7 @@ export function ClubsAdminPageClient() {
         }
     };
 
-    // ─── Toggle is_active ─────────────────────────────────────────────────────────
+    // ─── Toggle is_active ─────────────────────────────────────────────────────
 
     const handleToggle = async (row: Club) => {
         if (togglingIds.has(row.id)) return;
@@ -168,15 +170,13 @@ export function ClubsAdminPageClient() {
         }
     };
 
-    // ─── Delete ────────────────────────────────────────────────────────────────────
+    // ─── Delete ───────────────────────────────────────────────────────────────
 
     const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
 
         setDeleting(true);
         try {
-            // Truyền params hiện tại (page/limit/sort/filters) lên BE để nhận lại
-            // danh sách đã cập nhật sau khi xóa — tránh fetch riêng.
             const res = await clubServiceClient.destroy(deleteTarget.id, params);
             if (res.success) {
                 setData(res.data ?? []);
@@ -191,7 +191,7 @@ export function ClubsAdminPageClient() {
         }
     };
 
-    // ─── Columns ─────────────────────────────────────────────────────────────────
+    // ─── Columns ──────────────────────────────────────────────────────────────
 
     const columns: ColumnDef<Club>[] = [
         {
@@ -226,11 +226,6 @@ export function ClubsAdminPageClient() {
             render: (row) => tr(row.translations)?.name ?? "—",
         },
         {
-            key: "description",
-            label: t("description"),
-            render: (row) => tr(row.translations)?.description ?? "—",
-        },
-        {
             key: "total_members",
             label: t("members"),
             render: (row) => row.total_members ?? 0,
@@ -248,7 +243,7 @@ export function ClubsAdminPageClient() {
         },
     ];
 
-    // ─── Action buttons ────────────────────────────────────────────────────────────
+    // ─── Row actions ──────────────────────────────────────────────────────────
 
     const renderRowActions = (row: Club) => (
         <TableActions>
@@ -275,7 +270,7 @@ export function ClubsAdminPageClient() {
         </TableActions>
     );
 
-    // ─── Render ──────────────────────────────────────────────────────────────────
+    // ─── Render ───────────────────────────────────────────────────────────────
 
     return (
         <div className="space-y-6">
@@ -347,11 +342,27 @@ export function ClubsAdminPageClient() {
                     is_active: editing?.is_active ?? true,
                 }}
                 imageFields={[
-                    { name: "logo", label: t("logo"), initialUrl: editing?.logo ?? null },
+                    {
+                        name: "logo",
+                        label: t("logo"),
+                        initialUrl: editing?.logo ?? null,
+                    },
                 ]}
                 translatableFields={[
-                    { name: "name", label: t("name"), type: "text", required: true },
-                    { name: "description", label: t("description"), type: "textarea" },
+                    {
+                        name: "name",
+                        label: t("name"),
+                        type: "text",
+                        required: true,
+                        placeholder: tc("namePlaceholder"),
+                    },
+                    {
+                        name: "description",
+                        // ── CKEditor — thay textarea bằng richtext ───────────────
+                        type: "richtext",
+                        label: t("description"),
+                        placeholder: tc("descriptionPlaceholder"),
+                    },
                 ]}
                 initialTranslations={toInitialTranslations(editing?.translations)}
             />
