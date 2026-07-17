@@ -64,6 +64,22 @@
     "users": {
       "title": "Quản lý người dùng",
       "description": "Danh sách và quản lý người dùng"
+    },
+    "clubs": {
+      "title": "Quản lý câu lạc bộ",
+      "description": "Danh sách và quản lý các câu lạc bộ"
+    },
+    "roles": {
+      "title": "Quản lý vai trò",
+      "description": "Danh sách và quản lý các vai trò trong hệ thống"
+    },
+    "rolePermissions": {
+      "title": "Quyền của vai trò",
+      "description": "Quản lý quyền được gán cho từng vai trò"
+    },
+    "permissions": {
+      "title": "Quản lý quyền",
+      "description": "Danh sách và quản lý các quyền trong hệ thống"
     }
   },
   "header": {

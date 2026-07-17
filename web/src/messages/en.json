@@ -64,6 +64,22 @@
     "users": {
       "title": "User Management",
       "description": "Manage users and view the user list"
+    },
+    "clubs": {
+      "title": "Club Management",
+      "description": "Manage and view all clubs"
+    },
+    "roles": {
+      "title": "Role Management",
+      "description": "Manage and view all roles"
+    },
+    "rolePermissions": {
+      "title": "Role Permissions",
+      "description": "Manage permissions assigned to each role"
+    },
+    "permissions": {
+      "title": "Permission Management",
+      "description": "Manage permissions in the system"
     }
   },
   "header": {
