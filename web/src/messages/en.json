@@ -60,6 +60,12 @@
     "email": "Email",
     "today": "Today"
   },
+  "metadata": {
+    "users": {
+      "title": "User Management",
+      "description": "Manage users and view the user list"
+    }
+  },
   "header": {
     "myAccount": "My Account",
     "darkMode": "Dark Mode",
@@ -251,5 +257,61 @@
     "insertTableBtn": "Insert table",
     "statusHint": "Supports pasting images from clipboard · Ctrl+B/I/U · Ctrl+Z/Y",
     "wordCount": "{count} words"
+  },
+  "role": {
+    "title": "Roles",
+    "create": "Add role",
+    "edit": "Edit role",
+    "notFound": "No roles found",
+    "totalCount": "{count} roles",
+    "deleteConfirmMsg": "Are you sure you want to delete role \"{name}\"?",
+    "scope": "Scope",
+    "scopeSystem": "System",
+    "scopeClub": "Club",
+    "assignPermissions": "Assign permissions",
+    "permissionsTitle": "Role Permissions",
+    "permissionsSubtitle": "Role: {role}",
+    "noPermissions": "No permissions available in the system",
+    "permissionsCount": "Permissions",
+    "roleLabel": "Role",
+    "undo": "Undo",
+    "saveChanges": "Save changes",
+    "unsavedChanges": "Unsaved changes",
+    "loadingPermissions": "Loading permissions...",
+    "checkedSummary": "{checked}/{total} permissions enabled",
+    "moduleCount": "{count} modules",
+    "progressLabel": "{checked}/{total} permissions",
+    "searchPlaceholder": "Search module...",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect",
+    "selectAllGlobal": "Select all",
+    "deselectAllGlobal": "Deselect all",
+    "regularActions": "Standard actions",
+    "adminActions": "Admin actions",
+    "notFoundSearch": "No matching module found",
+    "noPermissionsData": "No permission data",
+    "clearFilter": "Clear filter",
+    "action_view": "View",
+    "action_create": "Create",
+    "action_update": "Update",
+    "action_delete": "Delete",
+    "action_view_all": "View all",
+    "action_update_all": "Update all",
+    "action_delete_all": "Delete all"
+  },
+  "permission": {
+    "title": "Permissions",
+    "create": "Add permission",
+    "edit": "Edit permission",
+    "notFound": "No permissions found",
+    "totalCount": "{count} permissions",
+    "deleteConfirmMsg": "Are you sure you want to delete permission \"{name}\"?",
+    "module": "Module",
+    "action": "Action",
+    "namePlaceholder": "Enter permission name...",
+    "action_view": "View",
+    "action_create": "Create",
+    "action_update": "Update",
+    "action_delete": "Delete"
   }
 }

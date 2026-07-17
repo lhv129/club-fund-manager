@@ -60,6 +60,12 @@
     "email": "Email",
     "today": "Hôm nay"
   },
+  "metadata": {
+    "users": {
+      "title": "Quản lý người dùng",
+      "description": "Danh sách và quản lý người dùng"
+    }
+  },
   "header": {
     "myAccount": "Tài khoản của tôi",
     "darkMode": "Chế độ tối",
@@ -251,5 +257,61 @@
     "insertTableBtn": "Chèn bảng",
     "statusHint": "Hỗ trợ paste ảnh từ clipboard · Ctrl+B/I/U · Ctrl+Z/Y",
     "wordCount": "{count} từ"
+  },
+  "role": {
+    "title": "Danh sách Vai trò",
+    "create": "Thêm vai trò",
+    "edit": "Sửa vai trò",
+    "notFound": "Không tìm thấy vai trò nào",
+    "totalCount": "{count} vai trò",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa vai trò \"{name}\"?",
+    "scope": "Phạm vi",
+    "scopeSystem": "Hệ thống",
+    "scopeClub": "Câu lạc bộ",
+    "assignPermissions": "Phân quyền",
+    "permissionsTitle": "Phân quyền cho Vai trò",
+    "permissionsSubtitle": "Vai trò: {role}",
+    "noPermissions": "Chưa có quyền nào trong hệ thống",
+    "permissionsCount": "Số quyền",
+    "roleLabel": "Vai trò",
+    "undo": "Hoàn tác",
+    "saveChanges": "Lưu thay đổi",
+    "unsavedChanges": "Có thay đổi chưa lưu",
+    "loadingPermissions": "Đang tải phân quyền...",
+    "checkedSummary": "{checked}/{total} quyền đang bật",
+    "moduleCount": "{count} modules",
+    "progressLabel": "{checked}/{total} quyền",
+    "searchPlaceholder": "Tìm module...",
+    "selectAll": "Tất cả",
+    "deselectAll": "Bỏ hết",
+    "selectAllGlobal": "Chọn tất cả",
+    "deselectAllGlobal": "Bỏ tất cả",
+    "regularActions": "Quyền thông thường",
+    "adminActions": "Quyền quản trị",
+    "notFoundSearch": "Không tìm thấy module phù hợp",
+    "noPermissionsData": "Không có dữ liệu phân quyền",
+    "clearFilter": "Xóa bộ lọc",
+    "action_view": "Xem",
+    "action_create": "Thêm",
+    "action_update": "Sửa",
+    "action_delete": "Xóa",
+    "action_view_all": "Xem tất cả",
+    "action_update_all": "Sửa tất cả",
+    "action_delete_all": "Xóa tất cả"
+  },
+  "permission": {
+    "title": "Danh sách Quyền",
+    "create": "Thêm quyền",
+    "edit": "Sửa quyền",
+    "notFound": "Không tìm thấy quyền nào",
+    "totalCount": "{count} quyền",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa quyền \"{name}\"?",
+    "module": "Module",
+    "action": "Hành động",
+    "namePlaceholder": "Nhập tên quyền...",
+    "action_view": "Xem",
+    "action_create": "Thêm",
+    "action_update": "Sửa",
+    "action_delete": "Xóa"
   }
 }
