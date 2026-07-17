@@ -73,7 +73,23 @@ class UserRepository extends BaseRepository
      */
     protected function baseListQuery(): Builder
     {
-        return $this->model->select(['id', 'first_name', 'last_name', 'fullname', 'username', 'phone', 'email', 'avatar', 'address', 'date_of_birth','status', 'email_verified_at', 'created_at']);
+        return $this->model
+            ->select([
+                'id',
+                'first_name',
+                'last_name',
+                'fullname',
+                'username',
+                'phone',
+                'email',
+                'avatar',
+                'address',
+                'date_of_birth',
+                'status',
+                'email_verified_at',
+                'created_at',
+            ])
+            ->with('clubMemberRoles','clubMemberRoles.role', 'clubMemberRoles.role.translations');
     }
 
     // ------------------------------------------------------------------

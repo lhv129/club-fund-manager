@@ -9,6 +9,7 @@ use App\Domains\User\Models\User;
 use App\Exceptions\ApiException;
 use App\Helpers\ImageHelper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class ClubService extends BaseService
 {
@@ -106,32 +107,36 @@ class ClubService extends BaseService
      */
     public function create(array $data): Club
     {
-        $logoFile = $data['logo'] ?? null;
-        unset($data['logo']);
+        return DB::transaction(function () use ($data) {
+            $logoFile = $data['logo'] ?? null;
+            unset($data['logo']);
 
-        $translations = $data['translations'] ?? [];
-        unset($data['translations']);
+            $translations = $data['translations'] ?? [];
+            unset($data['translations']);
 
-        if (!isset($data['sort_order'])) {
-            $data['sort_order'] = $this->repository->getNextSortOrder();
-        } else {
-            $this->repository->applySortOrder((int) $data['sort_order']);
-        }
+            if (!isset($data['sort_order'])) {
+                $data['sort_order'] = $this->repository->getNextSortOrder();
+            } else {
+                $this->repository->applySortOrder((int) $data['sort_order']);
+            }
 
-        // Tạo club (chưa có logo — cần ID trước)
-        $club = $this->repository->createWithTranslations($data, $translations);
+            $club = $this->repository->createWithTranslations($data, $translations);
 
-        // Upload logo sau khi có ID
-        if ($logoFile) {
-            $logo = ImageHelper::uploadSingle(
-                file: $logoFile,
-                folder: "clubs/{$club->id}/logo",
-            );
-            $club->update(['logo' => $logo]);
-            $club->logo = $logo;
-        }
+            if ($logoFile) {
+                $logo = ImageHelper::uploadSingle(
+                    file: $logoFile,
+                    folder: "clubs/{$club->id}/logo",
+                );
 
-        return $club->load('translations');
+                $club->update([
+                    'logo' => $logo,
+                ]);
+
+                $club->logo = $logo;
+            }
+
+            return $club->load('translations');
+        });
     }
 
     /**
@@ -143,26 +148,39 @@ class ClubService extends BaseService
      */
     public function update(int $id, array $data): Club
     {
-        $club = $this->find($id);
+        return DB::transaction(function () use ($id, $data) {
+            $club = $this->find($id);
 
-        if (!empty($data['logo'])) {
-            $data['logo'] = ImageHelper::uploadSingle(
-                file: $data['logo'],
-                folder: "clubs/{$club->id}/logo",
-                oldFile: $club->logo,
+            if (!empty($data['logo'])) {
+                $data['logo'] = ImageHelper::uploadSingle(
+                    file: $data['logo'],
+                    folder: "clubs/{$club->id}/logo",
+                    oldFile: $club->logo,
+                );
+            } else {
+                unset($data['logo']);
+            }
+
+            $translations = $data['translations'] ?? [];
+            unset($data['translations']);
+
+            if (
+                isset($data['sort_order']) &&
+                (int) $data['sort_order'] !== (int) $club->sort_order
+            ) {
+                $this->repository->applySortOrder(
+                    (int) $data['sort_order'],
+                    $club->id,
+                    $club->sort_order
+                );
+            }
+
+            return $this->repository->updateWithTranslations(
+                $club,
+                $data,
+                $translations
             );
-        } else {
-            unset($data['logo']);
-        }
-
-        $translations = $data['translations'] ?? [];
-        unset($data['translations']);
-
-        if (isset($data['sort_order']) && (int) $data['sort_order'] !== (int) $club->sort_order) {
-            $this->repository->applySortOrder((int) $data['sort_order'], $club->id, $club->sort_order);
-        }
-
-        return $this->repository->updateWithTranslations($club, $data, $translations);
+        });
     }
 
     /**
@@ -170,16 +188,17 @@ class ClubService extends BaseService
      */
     public function delete(int $id): bool
     {
-        $club   = $this->find($id);
-        $clubId = $club->id;
+        return DB::transaction(function () use ($id) {
+            $club = parent::find($id);
 
-        $result = $this->deleteWithSortOrder($id);
+            $result = $this->deleteWithSortOrder($id);
 
-        if ($result) {
-            ImageHelper::deleteFolder("clubs/{$clubId}");
-        }
+            if ($result) {
+                ImageHelper::deleteFolder("clubs/{$club->id}");
+            }
 
-        return $result;
+            return $result;
+        });
     }
 
     /**

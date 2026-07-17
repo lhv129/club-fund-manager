@@ -7,6 +7,11 @@ use Illuminate\Validation\Rule;
 
 class UpdateRoleRequest extends BaseRequest
 {
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         $roleId = (int) $this->route('role'); // hoặc $this->route('id')

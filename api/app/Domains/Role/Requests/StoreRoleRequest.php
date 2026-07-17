@@ -8,6 +8,11 @@ use Illuminate\Validation\Rule;
 
 class StoreRoleRequest extends BaseRequest
 {
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         $clubId = $this->input('club_id'); // null = system role

@@ -14,4 +14,5 @@ return [
     'status_toggled'     => 'Thay đổi trạng thái vai trò thành công',
     'not_found'          => 'Không tìm thấy vai trò',
     'permissions_synced' => 'Đồng bộ quyền cho vai trò thành công',
+    'permissions_by_slug' => 'Lấy danh sách quyền của vai trò thành công',
 ];

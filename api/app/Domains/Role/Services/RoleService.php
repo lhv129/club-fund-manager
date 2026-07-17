@@ -5,6 +5,7 @@ namespace App\Domains\Role\Services;
 use App\Base\BaseService;
 use App\Domains\Role\Models\Role;
 use App\Domains\Role\Repositories\RoleRepository;
+use App\Exceptions\ApiException;
 use Illuminate\Database\Eloquent\Collection;
 
 class RoleService extends BaseService
@@ -140,5 +141,19 @@ class RoleService extends BaseService
     public function getForSelect(array $filters = []): Collection
     {
         return parent::getForSelect($filters);
+    }
+
+    /**
+     * Danh sách permissions theo module, kèm trạng thái checked của role.
+     */
+    public function getPermissionsBySlug(string $slug): array
+    {
+        $data = $this->repository->getPermissionsBySlug($slug);
+
+        if ($data === null) {
+            throw new ApiException(__($this->notFoundMessage), 404);
+        }
+
+        return $data;
     }
 }

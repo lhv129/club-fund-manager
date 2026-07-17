@@ -6,6 +6,11 @@ use App\Base\BaseRequest;
 
 class SyncRolePermissionRequest extends BaseRequest
 {
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         return [

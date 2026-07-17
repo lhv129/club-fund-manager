@@ -49,6 +49,16 @@ class RoleController extends BaseController
         return $this->responseCommon(true, __('domains/role.detail'), new RoleResource($role));
     }
 
+        /**
+     * GET /api/v1/roles/{slug}/permissions
+     */
+    public function getPermissionsBySlug(string $slug): JsonResponse
+    {
+        $data = $this->roleService->getPermissionsBySlug($slug);
+
+        return $this->responseCommon(true, __('domains/role.permissions_by_slug'), $data);
+    }
+
     /**
      * POST /api/v1/roles
      */
@@ -89,19 +99,4 @@ class RoleController extends BaseController
         return $this->responseCommon(true, __('domains/role.status_toggled'), new RoleResource($role));
     }
 
-    /**
-     * POST /api/v1/roles/{id}/permissions
-     * Sync toàn bộ danh sách permissions cho role
-     */
-    public function syncPermissions(Request $request, int $id): JsonResponse
-    {
-        $request->validate([
-            'permission_ids'   => ['required', 'array'],
-            'permission_ids.*' => ['integer', 'exists:permissions,id'],
-        ]);
-
-        $role = $this->roleService->syncPermissions($id, $request->input('permission_ids', []));
-
-        return $this->responseCommon(true, __('domains/role.permissions_synced'), new RoleResource($role));
-    }
 }

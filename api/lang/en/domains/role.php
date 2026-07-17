@@ -14,4 +14,5 @@ return [
     'status_toggled'     => 'Role status toggled successfully',
     'not_found'          => 'Role not found',
     'permissions_synced' => 'Role permissions synced successfully',
+    'permissions_by_slug' => 'Get role permissions successfully',
 ];
