@@ -8,7 +8,7 @@ import { LOCALES, DEFAULT_LOCALE } from "@/lib/locales";
 import { splitTranslationErrors, buildEmptyTranslationValues } from "@/lib/formTranslations";
 import DatePicker from "@/components/shared/ui/DatePicker";
 import Select from "@/components/shared/ui/Select";
-import RichEditor from "@/components/shared/ui/RichEditor";
+import { RichEditor } from "@/components/shared/ui/RichEditor";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -374,7 +374,7 @@ export function FormModal({
             </>
         );
 
-        // ── RichText — CKEditor ───────────────────────────────────────────────
+        // ── RichText ──────────────────────────────────────────────────────────
         if (field.type === "richtext") return (
             <>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -384,7 +384,7 @@ export function FormModal({
                     value={val}
                     onChange={(v) => handleChange(field.name, v)}
                     placeholder={field.placeholder}
-                    hasError={!!err}
+                    error={err}
                 />
                 {renderError(err)}
             </>
@@ -521,7 +521,7 @@ export function FormModal({
                                                             )
                                                         }
                                                         placeholder={field.placeholder}
-                                                        hasError={!!errorMessage}
+                                                        error={errorMessage}
                                                     />
                                                 ) : field.type === "textarea" ? (
                                                     <textarea

@@ -14,7 +14,7 @@ import { LOCALES, DEFAULT_LOCALE } from "@/lib/locales";
 import { buildEmptyTranslationValues } from "@/lib/formTranslations";
 import DatePicker from "@/components/shared/ui/DatePicker";
 import Select from "@/components/shared/ui/Select";
-import RichEditor from "@/components/shared/ui/RichEditor";
+import { RichEditor } from "@/components/shared/ui/RichEditor";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -112,11 +112,6 @@ function appendSingleImagePayload(formData: FormData, fieldName: string, state?:
     if (state.removed) { formData.append(fieldName, ""); }
 }
 
-/**
- * Convert mảng translation đã được TYPE CỤ THỂ (Translation[], ClubTranslation[], ...)
- * sang `Record<locale, Record<string, unknown>>` — đúng shape mà prop `initialTranslations`
- * của FormModalWithMedia cần.
- */
 export function toInitialTranslations<T extends { locale: string }>(
     items: T[] | null | undefined
 ): Record<string, Record<string, unknown>> {
@@ -127,13 +122,6 @@ export function toInitialTranslations<T extends { locale: string }>(
     return result;
 }
 
-/**
- * Parse backend errors vào các bucket:
- *   translationErrors: { [localeCode]: { [fieldName]: errorMsg } }
- *   imageErrors:       { [fieldName]: string[] }
- *   mediaErrors:       string[]
- *   restErrors:        { [fieldName]: errorMsg }
- */
 function parseServerErrors(
     errors: Record<string, string[]> | undefined,
     imageFieldNames: string[]
@@ -445,7 +433,7 @@ export function FormModalWithMedia({
             </>
         );
 
-        // ── Select — custom Select component ──────────────────────────────────
+        // ── Select ────────────────────────────────────────────────────────────
         if (field.type === "select") return (
             <>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -480,7 +468,7 @@ export function FormModalWithMedia({
             </>
         );
 
-        // ── RichText — CKEditor ───────────────────────────────────────────────
+        // ── RichText ──────────────────────────────────────────────────────────
         if (field.type === "richtext") return (
             <>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -490,7 +478,7 @@ export function FormModalWithMedia({
                     value={val}
                     onChange={(v) => handleChange(field.name, v)}
                     placeholder={field.placeholder}
-                    hasError={!!err}
+                    error={err}
                 />
                 {renderError(err)}
             </>
@@ -598,7 +586,7 @@ export function FormModalWithMedia({
                                     })}
                                 </div>
 
-                                {/* Tab general error (thiếu bản dịch) */}
+                                {/* Tab general error */}
                                 {translationErrors[activeLocale]?._tab && (
                                     <div className="flex items-center gap-2 px-4 py-2
                                         bg-rose-50 dark:bg-rose-500/10
@@ -632,7 +620,7 @@ export function FormModalWithMedia({
                                                             handleTranslationChange(activeLocale, field.name, v)
                                                         }
                                                         placeholder={field.placeholder}
-                                                        hasError={!!err}
+                                                        error={err}
                                                     />
                                                 ) : field.type === "textarea" ? (
                                                     <textarea

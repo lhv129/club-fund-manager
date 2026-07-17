@@ -1,28 +1,23 @@
 @import "tailwindcss";
 
-
+/* Dark mode toggle — class `.dark` trên <html> */
 @variant dark (&:where(.dark, .dark *));
 
-
-/* ── Light mode ── */
+/* ── Light Mode ── */
 :root {
-  /* Backgrounds */
-  --bg-page: #f4f4f5;
-  /* zinc-100 — nền page */
-  --bg-surface: #ffffff;
+  /* Background */
+  --background: #ffffff;
   /* card, sidebar, panel */
-  --bg-subtle: #f4f4f5;
+  --background-subtle: #f4f4f5;
   /* zinc-100 — row hover, badge bg */
-  --bg-muted: #e4e4e7;
+  --background-muted: #e4e4e7;
   /* zinc-200 — input, divider */
 
   /* Foreground */
-  --fg: #09090b;
-  /* zinc-950 — text chính */
-  --fg-muted: #71717a;
+  --foreground: #171717;
+  /* text chính */
+  --foreground-muted: #71717a;
   /* zinc-500 — text phụ, placeholder */
-  --fg-subtle: #a1a1aa;
-  /* zinc-400 — disabled, hint */
 
   /* Border */
   --border: #e4e4e7;
@@ -34,8 +29,10 @@
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
   --primary-foreground: #ffffff;
-  --primary-subtle: #eff6ff;
-  /* blue-50 — badge, highlight bg */
+  --primary-50: #eff6ff;
+  /* badge, highlight bg */
+  --primary-100: #dbeafe;
+  --primary-700: #1d4ed8;
 
   @layer base {
 
@@ -46,51 +43,50 @@
   }
 }
 
-/* ── Dark mode — tự động flip khi class .dark lên <html> ── */
+/* ── Dark Mode — tự động flip khi class .dark lên <html> ──
+ * KHÔNG dùng đen tuyệt đối (#000/#0a0a0a) — gây mỏi mắt, tương phản quá cao,
+ * card hòa nền. Dùng palette xám đậm (gray-900/800/700).
+ */
 .dark {
-  /* Backgrounds */
-  --bg-page: #18181b;
-  /* zinc-900 */
-  --bg-surface: #27272a;
-  /* zinc-800 — card, sidebar */
-  --bg-subtle: #3f3f46;
-  /* zinc-700 — row hover, badge bg */
-  --bg-muted: #52525b;
-  /* zinc-600 — input */
+  /* Background */
+  --background: #111827;
+  /* gray-900 */
+  --background-subtle: #1f2937;
+  /* gray-800 — card, sidebar */
+  --background-muted: #374151;
+  /* gray-700 — input */
 
-  /* Foreground — PHẢI sáng trên nền tối */
-  --fg: #fafafa;
-  /* zinc-50 */
-  --fg-muted: #a1a1aa;
-  /* zinc-400 */
-  --fg-subtle: #71717a;
-  /* zinc-500 */
+  /* Foreground — sáng trên nền tối */
+  --foreground: #f9fafb;
+  /* gray-50 */
+  --foreground-muted: #9ca3af;
+  /* gray-400 */
 
   /* Border */
-  --border: #3f3f46;
-  /* zinc-700 */
-  --border-strong: #52525b;
-  /* zinc-600 */
+  --border: #1f2937;
+  /* gray-800 */
+  --border-strong: #374151;
+  /* gray-700 */
 
-  /* Primary */
+  /* Primary — sáng hơn cho dark bg */
   --primary: #60a5fa;
-  /* blue-400 — sáng hơn cho dark bg */
+  /* blue-400 */
   --primary-hover: #93c5fd;
   /* blue-300 */
   --primary-foreground: #ffffff;
-  --primary-subtle: #1e3a8a40;
+  --primary-50: #1e3a5f;
+  --primary-100: #1e40af33;
+  --primary-700: #93c5fd;
 }
 
-/* ── Map vào Tailwind v4 ── */
+/* ── Map sang Tailwind v4 ── */
 @theme inline {
-  --color-bg-page: var(--bg-page);
-  --color-bg-surface: var(--bg-surface);
-  --color-bg-subtle: var(--bg-subtle);
-  --color-bg-muted: var(--bg-muted);
+  --color-background: var(--background);
+  --color-background-subtle: var(--background-subtle);
+  --color-background-muted: var(--background-muted);
 
-  --color-fg: var(--fg);
-  --color-fg-muted: var(--fg-muted);
-  --color-fg-subtle: var(--fg-subtle);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
 
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
@@ -98,80 +94,17 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-700: var(--primary-700);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/* ── Base styles — tự flip không cần dark: ── */
+/* ── Base styles — tự flip không cần dark: prefix ── */
 body {
-  background-color: var(--bg-page);
-  color: var(--fg);
+  background-color: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-}
-
-/* ========================================================================== */
-/* CKEditor 5 */
-/* ========================================================================== */
-
-.ck-editor {
-  width: 100%;
-}
-
-.ck-editor__editable {
-  min-height: 160px;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.ck.ck-toolbar {
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.ck.ck-toolbar__items {
-  flex-wrap: wrap !important;
-}
-
-.ck-content img {
-  max-width: 100%;
-  height: auto;
-}
-
-.ck-content table {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-}
-
-.dark .ck.ck-editor__main>.ck-editor__editable {
-  background: var(--bg-surface);
-  color: var(--fg);
-  border-color: var(--border);
-}
-
-.dark .ck.ck-toolbar {
-  background: var(--bg-page);
-  border-color: var(--border);
-}
-
-.dark .ck.ck-toolbar .ck-button {
-  color: var(--fg);
-}
-
-.dark .ck.ck-toolbar .ck-button:hover,
-.dark .ck.ck-toolbar .ck-button.ck-on {
-  background: var(--bg-subtle);
-}
-
-.dark .ck.ck-dropdown__panel,
-.dark .ck.ck-list {
-  background: var(--bg-surface);
-  border-color: var(--border);
-}
-
-.dark .ck.ck-list__item .ck-button {
-  color: var(--fg);
 }
