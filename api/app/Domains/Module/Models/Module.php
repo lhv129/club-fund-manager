@@ -2,7 +2,7 @@
 
 namespace App\Domains\Module\Models;
 
-use App\Domains\Permission\Models\Permission;
+use App\Domains\Module\Models\Permission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

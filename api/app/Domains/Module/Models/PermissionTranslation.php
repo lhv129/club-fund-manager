@@ -1,6 +1,6 @@
 <?php
-namespace App\Domains\Permission\Models;
-use App\Domains\Permission\Models\Permission;
+namespace App\Domains\Module\Models;
+use App\Domains\Module\Models\Permission;
 use Illuminate\Database\Eloquent\Model;
 
 class PermissionTranslation extends Model

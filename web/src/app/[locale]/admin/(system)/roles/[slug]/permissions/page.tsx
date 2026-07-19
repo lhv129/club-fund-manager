@@ -15,7 +15,7 @@ export async function generateMetadata({
 
   const t = await getTranslations({
     locale,
-    namespace: "metadata.rolePermissons",
+    namespace: "metadata.rolePermissions",
   });
 
   return {

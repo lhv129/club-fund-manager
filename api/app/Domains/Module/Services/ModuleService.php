@@ -5,52 +5,40 @@ namespace App\Domains\Module\Services;
 use App\Base\BaseService;
 use App\Domains\Module\Models\Module;
 use App\Domains\Module\Repositories\ModuleRepository;
+use App\Domains\Module\Repositories\PermissionRepository;
 use App\Exceptions\ApiException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ModuleService extends BaseService
 {
     protected string $notFoundMessage = 'domains/module.not_found';
 
-    public function __construct(ModuleRepository $repository)
-    {
+    public function __construct(
+        ModuleRepository $repository,
+        protected PermissionRepository $permissionRepository,
+    ) {
         parent::__construct($repository);
     }
 
-    // -------------------------------------------------------------------------
-    // List / Search
-    // -------------------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Read
+    // ------------------------------------------------------------------
 
-    /**
-     * GET /api/v1/modules  (phân trang)
-     *
-     * Params: search, is_active, sort_by, sort_dir, limit, page
-     */
-    public function paginate(array $params = []): LengthAwarePaginator
+    public function paginate(array $filters = []): LengthAwarePaginator
     {
-        return $this->repository->paginateModule($params);
+        return $this->repository->paginateModule($filters);
     }
 
-    /**
-     * GET /api/v1/modules/select — dropdown list
-     */
-    public function getForSelect(array $params = []): Collection
+    public function getForSelect(array $filters = []): Collection
     {
-        return $this->repository->getForSelect($params);
+        return $this->repository->getForSelect($filters);
     }
 
-    // -------------------------------------------------------------------------
-    // Single record
-    // -------------------------------------------------------------------------
-
-    public function find($id): Module
+    public function find($id)
     {
-        $module = $this->repository->first(
-            where: ['id' => $id],
-            with: ['translations', 'permissions.translations'],
-            select: ['*'],
-        );
+        $module = $this->repository->findById($id);
 
         if (!$module) {
             throw new ApiException(__($this->notFoundMessage), 404);
@@ -59,72 +47,112 @@ class ModuleService extends BaseService
         return $module;
     }
 
-    // -------------------------------------------------------------------------
+    // ------------------------------------------------------------------
     // Write
-    // -------------------------------------------------------------------------
+    // ------------------------------------------------------------------
 
     /**
-     * Tạo module kèm translations.
+     * Tạo module + translations + permissions trong 1 transaction.
      *
      * $data = [
-     *   'slug'        => 'club-management',
-     *   'icon'        => 'icon-club',
-     *   'is_active'   => 1,
-     *   'sort_order'  => 1,       // optional — tự sinh nếu thiếu
-     *   'translations' => [
-     *       ['locale' => 'vi', 'name' => 'Quản lý CLB', 'description' => '...'],
-     *       ['locale' => 'en', 'name' => 'Club Management', 'description' => '...'],
-     *   ],
+     *   'slug'         => 'user',
+     *   'sort_order'   => null,
+     *   'is_active'    => true,
+     *   'translations' => ['vi' => ['name' => 'Người dùng'], 'en' => ['name' => 'User']],
+     *   'actions'      => ['view', 'create', 'update', 'delete'],
      * ]
      */
     public function create(array $data): Module
     {
         $translations = $data['translations'] ?? [];
-        unset($data['translations']);
+        $actions      = $data['actions'];
+
+        unset($data['translations'], $data['actions']);
 
         if (!isset($data['sort_order'])) {
             $data['sort_order'] = $this->repository->getNextSortOrder();
         } else {
-            $this->repository->applySortOrder($data['sort_order']);
+            $this->repository->applySortOrder((int) $data['sort_order']);
         }
 
-        return $this->repository->createWithTranslations($data, $translations);
+        $module = DB::transaction(function () use ($data, $translations, $actions) {
+            // 1. Tạo module + translations
+            $module = $this->repository->createWithTranslations($data, $translations);
+
+            // 2. Tạo permissions mặc định
+            foreach ($actions as $action) {
+                $this->permissionRepository->upsertPermission($module->id, $action);
+            }
+
+            return $module;
+        });
+
+        return $this->find($module->id);
     }
 
     /**
-     * Cập nhật module kèm translations (upsert theo locale).
+     * Cập nhật module + translations.
+     * Không sync permissions ở đây — dùng PUT /permissions/{id}.
      */
     public function update(int $id, array $data): Module
     {
-        $module = $this->find($id);
-
+        $module       = $this->find($id);
         $translations = $data['translations'] ?? [];
-        unset($data['translations']);
+        $actions      = $data['actions'] ?? null;
 
-        if (isset($data['sort_order']) && $data['sort_order'] !== $module->sort_order) {
-            $this->repository->applySortOrder($data['sort_order'], $module->id, $module->sort_order);
+        unset($data['translations'], $data['actions']);
+
+        if (isset($data['sort_order']) && (int) $data['sort_order'] !== $module->sort_order) {
+            $this->repository->applySortOrder(
+                (int) $data['sort_order'],
+                $module->id,
+                $module->sort_order,
+            );
         }
 
-        return $this->repository->updateWithTranslations($module, $data, $translations);
+        DB::transaction(function () use ($module, $data, $translations, $actions) {
+            $this->repository->updateWithTranslations($module, $data, $translations);
+
+            if ($actions !== null) {
+                $this->permissionRepository->syncForModule($module->id, $actions);
+            }
+        });
+
+        return $this->find($id);
     }
 
-    /**
-     * Xoá module và dịch chuyển sort_order.
-     */
     public function delete(int $id): bool
     {
-        return $this->deleteWithSortOrder($id);
+        $module = $this->find($id);
+
+        DB::transaction(function () use ($module, $id) {
+
+            if (isset($module->sort_order)) {
+                $this->repository->decrementSortOrderAfterDelete(
+                    $module->sort_order,
+                    $id
+                );
+            }
+
+            // Soft delete permissions
+            $module->permissions()->delete();
+
+            // Xóa translations
+            $module->translations()->delete();
+
+            // Soft delete module
+            $this->repository->delete($module);
+        });
+
+        return true;
     }
 
-    /**
-     * Toggle is_active 0|1.
-     */
     public function toggleStatus(int $id): Module
     {
-        $module = $this->find($id);
+        $module            = $this->find($id);
         $module->is_active = !$module->is_active;
         $module->save();
 
-        return $module->fresh('translations');
+        return $this->find($id);
     }
 }

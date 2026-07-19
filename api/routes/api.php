@@ -12,7 +12,6 @@ Route::prefix('v1')->group(function () {
     require __DIR__ . '/api/v1/club_invite.php';
     require __DIR__ . '/api/v1/club_member.php';
     require __DIR__ . '/api/v1/module.php';
-    require __DIR__ . '/api/v1/permission.php';
     require __DIR__ . '/api/v1/role.php';
 });
 

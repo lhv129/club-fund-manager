@@ -2,7 +2,6 @@
 
 namespace App\Domains\Module\Resources;
 
-use App\Domains\Permission\Resources\PermissionResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -11,15 +10,35 @@ class ModuleResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'          => $this->id,
-            'slug'        => $this->slug,
-            'icon'        => $this->icon,
-            'sort_order'  => $this->sort_order,
-            'is_active'   => (bool) $this->is_active,
-            'translations' => $this->whenLoaded('translations'),
-            'permissions'  => PermissionResource::collection($this->whenLoaded('permissions')),
-            'created_at'  => $this->created_at?->toIso8601String(),
-            'updated_at'  => $this->updated_at?->toIso8601String(),
+            'module_id'  => $this->id,
+            'module'     => $this->slug,
+            'label'      => $this->whenLoaded(
+                'translations',
+                fn() =>
+                $this->translations->firstWhere('locale', app()->getLocale())?->name
+                    ?? $this->translations->first()?->name
+            ),
+            'icon'       => $this->icon,
+            'is_active'  => $this->is_active,
+            'sort_order' => $this->sort_order,
+            'actions'    => $this->whenLoaded(
+                'permissions',
+                fn() =>
+                $this->permissions->map(fn($p) => [
+                    'id'        => $p->id,
+                    'name'      => $p->action,
+                    'is_active' => (bool) $p->is_active,
+                ])->values()
+            ),
+            'translations' => $this->whenLoaded(
+                'translations',
+                fn() =>
+                $this->translations->map(fn($t) => [
+                    'locale' => $t->locale,
+                    'name'   => $t->name,
+                ])->values()
+            ),
+            'created_at' => $this->created_at,
         ];
     }
 }

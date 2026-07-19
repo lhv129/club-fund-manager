@@ -2,7 +2,7 @@
 namespace App\Domains\Role\Models;
 use App\Domains\Club\Models\Club;
 use App\Domains\Club\Models\ClubMemberRole;
-use App\Domains\Permission\Models\Permission;
+use App\Domains\Module\Models\Permission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
