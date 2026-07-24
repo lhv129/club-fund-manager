@@ -133,7 +133,7 @@ export function StatusDropdown({
                 className={[
                     "inline-flex items-center gap-1 rounded-full transition-all",
                     isInteractive
-                        ? "cursor-pointer hover:opacity-80 hover:ring-2 hover:ring-offset-1 hover:ring-gray-300 dark:hover:ring-gray-600"
+                        ? "cursor-pointer hover:opacity-80 hover:ring-2 hover:ring-offset-1 hover:ring-offset-background hover:ring-border-strong"
                         : "cursor-default",
                 ].join(" ")}
                 aria-haspopup="listbox"
@@ -146,8 +146,8 @@ export function StatusDropdown({
                         title={loading ? "…" : currentOption.label}
                     />
                     {loading && (
-                        <span className="absolute inset-0 flex items-center justify-center rounded-full bg-white/60 dark:bg-gray-900/60">
-                            <Loader2 className="w-3 h-3 animate-spin text-gray-500" />
+                        <span className="absolute inset-0 flex items-center justify-center rounded-full bg-background/60">
+                            <Loader2 className="w-3 h-3 animate-spin text-foreground-muted" />
                         </span>
                     )}
                 </span>
@@ -155,7 +155,7 @@ export function StatusDropdown({
                 {/* Chevron nhỏ — chỉ khi interactive */}
                 {isInteractive && (
                     <ChevronDown
-                        className={`w-3 h-3 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+                        className={`w-3 h-3 text-foreground-muted transition-transform ${open ? "rotate-180" : ""}`}
                     />
                 )}
             </button>
@@ -165,8 +165,9 @@ export function StatusDropdown({
                 <div
                     style={dropStyle}
                     role="listbox"
-                    className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700
-                        rounded-xl shadow-lg overflow-hidden py-1"
+                    className="bg-background border border-border
+                        rounded-xl shadow-xl overflow-hidden py-1
+                        animate-in fade-in zoom-in-95 duration-150"
                 >
                     {options.map((opt) => {
                         const isSelected = opt.value === value;
@@ -180,8 +181,8 @@ export function StatusDropdown({
                                 className={[
                                     "w-full flex items-center justify-between gap-2 px-3 py-2 text-left transition-colors",
                                     isSelected
-                                        ? "bg-gray-50 dark:bg-gray-800"
-                                        : "hover:bg-gray-50 dark:hover:bg-gray-800",
+                                        ? "bg-background-subtle"
+                                        : "hover:bg-background-subtle",
                                 ].join(" ")}
                             >
                                 <Badge
@@ -189,7 +190,7 @@ export function StatusDropdown({
                                     title={opt.label}
                                 />
                                 {isSelected && (
-                                    <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                    <Check className="w-3.5 h-3.5 text-primary shrink-0" />
                                 )}
                             </button>
                         );

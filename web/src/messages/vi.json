@@ -70,16 +70,16 @@
       "description": "Danh sách và quản lý các câu lạc bộ"
     },
     "roles": {
-      "title": "Quản lý vai trò",
-      "description": "Danh sách và quản lý các vai trò trong hệ thống"
+      "title": "Quản lý chức vụ",
+      "description": "Danh sách và quản lý các chức vụ trong hệ thống"
     },
     "rolePermissions": {
-      "title": "Quyền của vai trò",
-      "description": "Quản lý quyền được gán cho từng vai trò"
+      "title": "Quyền của chức vụ",
+      "description": "Quản lý quyền được gán cho từng chức vụ"
     },
-    "permissions": {
-      "title": "Quản lý quyền",
-      "description": "Danh sách và quản lý các quyền trong hệ thống"
+    "modules": {
+      "title": "Quản lý chức năng",
+      "description": "Danh sách và quản lý các chức năng trong hệ thống"
     }
   },
   "header": {
@@ -128,12 +128,12 @@
     "dashboard": "Bảng điều khiển",
     "users": "Người dùng",
     "usersList": "Danh sách",
-    "roles": "Vai trò",
+    "roles": "Chức vụ",
     "permissions": "Quyền hạn",
     "clubs": "Câu lạc bộ",
     "clubMembers": "Thành viên CLB",
     "clubInvites": "Lời mời CLB",
-    "modules": "Module",
+    "modules": "Chức năng",
     "settings": "Cài đặt",
     "members": "Thành viên",
     "invites": "Lời mời",
@@ -147,7 +147,7 @@
     "welcome": "Chào mừng trở lại, {name}!",
     "totalUsers": "Tổng người dùng",
     "totalClubs": "Tổng câu lạc bộ",
-    "totalRoles": "Tổng vai trò",
+    "totalRoles": "Tổng chức vụ",
     "activeClubs": "CLB đang hoạt động"
   },
   "error": {
@@ -275,21 +275,21 @@
     "wordCount": "{count} từ"
   },
   "role": {
-    "title": "Danh sách Vai trò",
-    "create": "Thêm vai trò",
-    "edit": "Sửa vai trò",
-    "notFound": "Không tìm thấy vai trò nào",
-    "totalCount": "{count} vai trò",
-    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa vai trò \"{name}\"?",
+    "title": "Danh sách chức vụ",
+    "create": "Thêm chức vụ",
+    "edit": "Sửa chức vụ",
+    "notFound": "Không tìm thấy chức vụ nào",
+    "totalCount": "{count} chức vụ",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa chức vụ \"{name}\"?",
     "scope": "Phạm vi",
     "scopeSystem": "Hệ thống",
     "scopeClub": "Câu lạc bộ",
     "assignPermissions": "Phân quyền",
-    "permissionsTitle": "Phân quyền cho Vai trò",
-    "permissionsSubtitle": "Vai trò: {role}",
+    "permissionsTitle": "Phân quyền cho chức vụ",
+    "permissionsSubtitle": "chức vụ: {role}",
     "noPermissions": "Chưa có quyền nào trong hệ thống",
     "permissionsCount": "Số quyền",
-    "roleLabel": "Vai trò",
+    "roleLabel": "chức vụ",
     "undo": "Hoàn tác",
     "saveChanges": "Lưu thay đổi",
     "unsavedChanges": "Có thay đổi chưa lưu",
@@ -315,19 +315,22 @@
     "action_update_all": "Sửa tất cả",
     "action_delete_all": "Xóa tất cả"
   },
-  "permission": {
-    "title": "Danh sách Quyền",
-    "create": "Thêm quyền",
-    "edit": "Sửa quyền",
-    "notFound": "Không tìm thấy quyền nào",
-    "totalCount": "{count} quyền",
-    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa quyền \"{name}\"?",
+  "module": {
+    "title": "Danh sách Chức năng",
+    "create": "Thêm chức năng",
+    "edit": "Sửa chức năng",
+    "notFound": "Không tìm thấy chức năng nào",
+    "totalCount": "{count} chức năng",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa chức năng \"{name}\"?",
     "module": "Module",
     "action": "Hành động",
-    "namePlaceholder": "Nhập tên quyền...",
+    "namePlaceholder": "Nhập tên chức năng...",
+    "descriptionPlaceholder": "Nhập mô tả chức năng...",
     "action_view": "Xem",
     "action_create": "Thêm",
     "action_update": "Sửa",
-    "action_delete": "Xóa"
+    "action_delete": "Xóa",
+    "sortOrder":"Thứ tự sắp xếp",
+    "label": "Tên chức năng"
   }
 }

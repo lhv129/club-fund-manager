@@ -22,7 +22,7 @@ export const APP_ROUTES = {
   admin: "/admin",
   adminUsers: "/admin/users",
   adminRoles: "/admin/roles",
-  adminPermissions: "/admin/permissions",
+  adminModules: "/admin/modules",
   adminSettings: "/admin/settings",
   adminClubs: "/admin/clubs",
 

@@ -1,26 +1,44 @@
-/** Module domain types — mirror ModuleResource. */
+/** Translation entry cho Module. */
+export interface ModuleTranslation {
+  locale: string;
+  name: string;
+  description?: string | null;
+}
 
-import type { Translation } from "@/domains/club/types";
-import type { Permission } from "@/domains/permission/types";
-
-/** Module — matches ModuleResource. */
+/** Shape trả về từ GET /modules (paginated index). */
 export interface Module {
-  id: number;
-  slug: string;
-  icon: string | null;
+  module_id: number;
+  module: string;
+  label?: string;
+  description?: string | null;
+  icon?: string | null;
   sort_order: number;
   is_active: boolean;
-  translations?: Translation[];
-  permissions?: Permission[];
-  created_at: string | null;
-  updated_at: string | null;
+  actions: Record<string, boolean>;
+  translations?: ModuleTranslation[];
+  created_at?: string;
 }
 
-export interface ModuleListParams {
-  search?: string;
-  is_active?: 0 | 1;
-  sort_by?: string;
-  sort_dir?: "asc" | "desc";
-  limit?: number;
-  page?: number;
+/** Shape trả về từ GET /modules/{id} (show/edit). */
+export interface ModuleDetail {
+  module_id: number;
+  module: string;
+  label?: string;
+  description?: string | null;
+  icon?: string | null;
+  sort_order: number;
+  is_active: boolean;
+  actions: Record<string, boolean>;
+  translations?: ModuleTranslation[];
+  created_at?: string;
 }
+
+export type ModuleFilters = {
+  search: string;
+  is_active: 0 | 1 | undefined;
+};
+
+/** Các action chuẩn. */
+export const MODULE_ACTIONS = ["view", "create", "update", "delete"] as const;
+
+export type ModuleAction = (typeof MODULE_ACTIONS)[number];

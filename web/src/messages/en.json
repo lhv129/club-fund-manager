@@ -77,9 +77,9 @@
       "title": "Role Permissions",
       "description": "Manage permissions assigned to each role"
     },
-    "permissions": {
-      "title": "Permission Management",
-      "description": "Manage permissions in the system"
+    "modules": {
+      "title": "Module Management",
+      "description": "Manage modules in the system"
     }
   },
   "header": {
@@ -315,19 +315,22 @@
     "action_update_all": "Update all",
     "action_delete_all": "Delete all"
   },
-  "permission": {
-    "title": "Permissions",
-    "create": "Add permission",
-    "edit": "Edit permission",
-    "notFound": "No permissions found",
-    "totalCount": "{count} permissions",
-    "deleteConfirmMsg": "Are you sure you want to delete permission \"{name}\"?",
+  "module": {
+    "title": "Modules",
+    "create": "Add module",
+    "edit": "Edit module",
+    "notFound": "No modules found",
+    "totalCount": "{count} modules",
+    "deleteConfirmMsg": "Are you sure you want to delete module \"{name}\"?",
     "module": "Module",
     "action": "Action",
-    "namePlaceholder": "Enter permission name...",
+    "namePlaceholder": "Enter module name...",
+    "descriptionPlaceholder": "Enter module description...",
     "action_view": "View",
     "action_create": "Create",
     "action_update": "Update",
-    "action_delete": "Delete"
+    "action_delete": "Delete",
+    "sortOrder": "Sort order",
+    "label": "Module name"
   }
 }

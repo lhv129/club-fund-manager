@@ -11,6 +11,7 @@ import {
     type CSSProperties,
     type MouseEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Check, ChevronDown, X } from "lucide-react";
 
@@ -33,6 +34,8 @@ interface SelectProps {
 }
 
 const DROPDOWN_MIN_W = 200;
+const EDGE = 8;
+const GAP = 6;
 
 export default function Select({
     label,
@@ -49,25 +52,41 @@ export default function Select({
     const t = useTranslations("common");
     const [open, setOpen] = useState(false);
     const [dropStyle, setDropStyle] = useState<CSSProperties>({});
+    const [mounted, setMounted] = useState(false);
 
     const wrapRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => setMounted(true), []);
 
     // ── Tính vị trí dropdown bằng fixed + JS → không bao giờ tràn viewport ──────
     const calcPosition = () => {
         const el = triggerRef.current;
         if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const dropW = Math.max(rect.width, DROPDOWN_MIN_W);
-        const vw = window.innerWidth;
 
-        let left = rect.left;
-        if (left + dropW > vw - 8) left = rect.right - dropW;
-        if (left < 8) left = 8;
+        const rect = el.getBoundingClientRect();
+        const viewport = window.visualViewport;
+        const vw = viewport?.width ?? window.innerWidth;
+        const vh = viewport?.height ?? window.innerHeight;
+        const offsetLeft = viewport?.offsetLeft ?? 0;
+        const offsetTop = viewport?.offsetTop ?? 0;
+
+        const dropW = Math.min(Math.max(rect.width, DROPDOWN_MIN_W), vw - EDGE * 2);
+
+        let left = rect.left + offsetLeft;
+        if (left + dropW > offsetLeft + vw - EDGE) left = rect.right + offsetLeft - dropW;
+        if (left < offsetLeft + EDGE) left = offsetLeft + EDGE;
+
+        const estimatedPanelH = Math.min(panelRef.current?.offsetHeight ?? 300, vh - EDGE * 2);
+        let top = rect.bottom + offsetTop + GAP;
+        if (top + estimatedPanelH > offsetTop + vh - EDGE) {
+            top = Math.max(offsetTop + EDGE, rect.top + offsetTop - estimatedPanelH - GAP);
+        }
 
         setDropStyle({
             position: "fixed",
-            top: rect.bottom + 6,
+            top,
             left,
             width: dropW,
             zIndex: 9999,
@@ -76,25 +95,50 @@ export default function Select({
 
     useEffect(() => {
         if (!open) return;
+
         calcPosition();
+        const rafId = requestAnimationFrame(() => calcPosition());
+
         window.addEventListener("scroll", calcPosition, true);
         window.addEventListener("resize", calcPosition);
+        window.visualViewport?.addEventListener("resize", calcPosition);
+        window.visualViewport?.addEventListener("scroll", calcPosition);
+
+        const observer = new ResizeObserver(() => calcPosition());
+        if (triggerRef.current) observer.observe(triggerRef.current);
+        if (panelRef.current) observer.observe(panelRef.current);
+
         return () => {
+            cancelAnimationFrame(rafId);
             window.removeEventListener("scroll", calcPosition, true);
             window.removeEventListener("resize", calcPosition);
+            window.visualViewport?.removeEventListener("resize", calcPosition);
+            window.visualViewport?.removeEventListener("scroll", calcPosition);
+            observer.disconnect();
         };
     }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ── Click outside ─────────────────────────────────────────────────────────────
     useEffect(() => {
         const handler = (e: globalThis.MouseEvent) => {
-            if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-                setOpen(false);
-            }
+            const target = e.target as Node;
+            if (wrapRef.current?.contains(target)) return;
+            if (panelRef.current?.contains(target)) return;
+            setOpen(false);
         };
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
     }, []);
+
+    // ── ESC close ───────────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setOpen(false);
+        };
+        document.addEventListener("keydown", handler);
+        return () => document.removeEventListener("keydown", handler);
+    }, [open]);
 
     const selectedOption = useMemo(
         () => options.find((o) => o.value === value) ?? null,
@@ -158,8 +202,9 @@ export default function Select({
             </button>
 
             {/* ── Dropdown (fixed — không bao giờ tràn ra ngoài màn hình) ─────── */}
-            {open && (
+            {open && mounted && createPortal(
                 <div
+                    ref={panelRef}
                     style={dropStyle}
                     className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700
                         rounded-2xl shadow-xl overflow-hidden"
@@ -224,7 +269,8 @@ export default function Select({
                             })}
                         </div>
                     )}
-                </div>
+                </div>,
+                document.body,
             )}
         </div>
     );

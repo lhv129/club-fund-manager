@@ -234,12 +234,12 @@ export function FormModal({
 
     // ── Render helpers ────────────────────────────────────────────────────────
     const inputCls = (hasError: boolean) =>
-        `w-full px-3.5 py-2.5 rounded-xl border text-sm bg-white dark:bg-gray-800
-        text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none
-        focus:ring-2 focus:ring-indigo-500 transition-colors
+        `w-full px-3.5 py-2.5 rounded-xl border text-sm bg-background
+        text-foreground placeholder:text-foreground-muted focus:outline-none
+        focus:ring-2 transition-colors
         ${hasError
-            ? "border-rose-400 dark:border-rose-500 focus:ring-rose-500"
-            : "border-gray-200 dark:border-gray-700"
+            ? "border-rose-400 dark:border-rose-500 focus:ring-rose-500/40 focus:border-rose-500"
+            : "border-border hover:border-border-strong focus:ring-primary/40 focus:border-primary"
         }`;
 
     const renderError = (message?: string) => {
@@ -260,7 +260,7 @@ export function FormModal({
         if (field.type === "checkbox") return (
             <>
                 <div className="flex items-center justify-between py-1">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-medium text-foreground">
                         {field.label}
                     </span>
                     <button
@@ -272,10 +272,10 @@ export function FormModal({
                         }
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full
                             border-2 border-transparent transition-colors duration-200 ease-in-out
-                            focus-visible:ring-2 focus-visible:ring-indigo-500
+                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
                             ${isChecked(field.name)
-                                ? "bg-indigo-600"
-                                : "bg-gray-200 dark:bg-gray-700"
+                                ? "bg-primary"
+                                : "bg-background-muted"
                             }`}
                     >
                         <span
@@ -292,30 +292,30 @@ export function FormModal({
         // ── Icon picker ───────────────────────────────────────────────────────
         if (field.type === "icon-picker") return (
             <>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                     {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 flex items-center justify-center rounded-lg border
-                        bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                        bg-background border-border">
                         {val
                             ? <i className={`las ${val} text-xl`} />
-                            : <span className="text-gray-400 text-xs">—</span>
+                            : <span className="text-foreground-muted text-xs">—</span>
                         }
                     </div>
                     <input
                         type="text" readOnly value={val}
                         {...(field.placeholder ? { placeholder: field.placeholder } : {})}
-                        className={`flex-1 px-3.5 py-2.5 rounded-xl border text-sm bg-gray-50 dark:bg-gray-800
-                            text-gray-900 dark:text-white
+                        className={`flex-1 px-3.5 py-2.5 rounded-xl border text-sm bg-background-subtle
+                            text-foreground
                             ${err
                                 ? "border-rose-400 dark:border-rose-500"
-                                : "border-gray-200 dark:border-gray-700"
+                                : "border-border"
                             }`}
                     />
                 </div>
                 <div className="grid grid-cols-8 gap-2 max-h-48 overflow-y-auto p-2 border rounded-xl
-                    border-gray-200 dark:border-gray-700">
+                    border-border">
                     {field.icons?.length
                         ? field.icons.map((icon) => (
                             <button
@@ -323,16 +323,16 @@ export function FormModal({
                                 type="button"
                                 onClick={() => handleChange(field.name, icon.value)}
                                 className={`p-2 rounded-lg border transition
-                                    hover:bg-gray-100 dark:hover:bg-gray-700
+                                    hover:bg-background-subtle
                                     ${val === icon.value
-                                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10"
-                                        : "border-gray-200 dark:border-gray-700"
+                                        ? "border-primary bg-primary/5"
+                                        : "border-border"
                                     }`}
                             >
                                 <i className={`las ${icon.value} text-lg`} />
                             </button>
                         ))
-                        : <div className="text-xs text-gray-400">No icons</div>
+                        : <div className="text-xs text-foreground-muted">No icons</div>
                     }
                 </div>
                 {renderError(err)}
@@ -342,7 +342,7 @@ export function FormModal({
         // ── Select — custom Select component ──────────────────────────────────
         if (field.type === "select") return (
             <>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                     {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
                 <Select
@@ -361,7 +361,7 @@ export function FormModal({
         // ── DatePicker ────────────────────────────────────────────────────────
         if (field.type === "datepicker") return (
             <>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                     {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
                 <DatePicker
@@ -377,7 +377,7 @@ export function FormModal({
         // ── RichText ──────────────────────────────────────────────────────────
         if (field.type === "richtext") return (
             <>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                     {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
                 <RichEditor
@@ -393,7 +393,7 @@ export function FormModal({
         // ── Textarea / text / email / url / number / password ─────────────────
         return (
             <>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                     {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
                 </label>
                 {field.type === "textarea" ? (
@@ -431,22 +431,23 @@ export function FormModal({
             />
 
             <div className="relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col
-                bg-white dark:bg-gray-900 rounded-2xl shadow-2xl
-                border border-gray-200 dark:border-gray-800">
+                bg-background rounded-2xl shadow-2xl
+                border border-border
+                animate-in fade-in zoom-in-95 duration-150">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4
-                    border-b border-gray-100 dark:border-gray-800 shrink-0">
-                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                    border-b border-border shrink-0">
+                    <h2 className="text-base font-semibold text-foreground">
                         {title}
                     </h2>
                     <button
                         type="button"
                         onClick={onClose}
                         disabled={submitting}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400
-                            hover:text-gray-600 dark:hover:text-gray-300
-                            hover:bg-gray-100 dark:hover:bg-gray-800
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-foreground-muted
+                            hover:text-foreground
+                            hover:bg-background-subtle
                             transition-colors disabled:opacity-50"
                     >
                         <X className="w-4 h-4" />
@@ -465,9 +466,9 @@ export function FormModal({
 
                         {/* Translatable fields — tab per locale */}
                         {resolvedTranslatableFields.length > 0 && (
-                            <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                            <div className="rounded-xl border border-border bg-background-subtle/40 p-4">
                                 {/* Tabs */}
-                                <div className="mb-3 flex gap-2 border-b border-gray-100 dark:border-gray-800">
+                                <div className="mb-3 flex gap-2 border-b border-border">
                                     {LOCALES.map((locale) => {
                                         const hasError =
                                             !!translationErrors[locale.code] &&
@@ -477,10 +478,10 @@ export function FormModal({
                                                 key={locale.code}
                                                 type="button"
                                                 onClick={() => setActiveLocale(locale.code)}
-                                                className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors
+                                                className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors
                                                     ${activeLocale === locale.code
-                                                        ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                                                        : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                                        ? "border-primary text-primary"
+                                                        : "border-transparent text-foreground-muted hover:text-foreground"
                                                     }`}
                                             >
                                                 {locale.label}
@@ -503,7 +504,7 @@ export function FormModal({
                                         return (
                                             <div key={field.name} className={field.className}>
                                                 <label className="block text-sm font-medium
-                                                    text-gray-700 dark:text-gray-300 mb-1.5">
+                                                    text-foreground mb-1.5">
                                                     {field.label}
                                                     {field.required && (
                                                         <span className="text-rose-500 ml-1">*</span>
@@ -568,14 +569,14 @@ export function FormModal({
 
                     {/* Footer */}
                     <div className="flex items-center justify-end gap-2.5 px-6 py-4
-                        border-t border-gray-100 dark:border-gray-800 shrink-0">
+                        border-t border-border shrink-0">
                         <button
                             type="button"
                             onClick={onClose}
                             disabled={submitting}
-                            className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700
-                                text-sm font-medium text-gray-700 dark:text-gray-300
-                                hover:bg-gray-50 dark:hover:bg-gray-800
+                            className="px-4 py-2 rounded-xl border border-border
+                                text-sm font-medium text-foreground-muted
+                                hover:bg-background-subtle hover:text-foreground
                                 disabled:opacity-50 transition-colors"
                         >
                             {resolvedCancelLabel}
@@ -585,8 +586,9 @@ export function FormModal({
                             type="submit"
                             disabled={submitting}
                             className="flex items-center gap-2 px-4 py-2 rounded-xl
-                                bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60
-                                text-white text-sm font-medium transition-colors"
+                                bg-primary hover:bg-primary-hover disabled:opacity-60
+                                text-primary-foreground text-sm font-medium
+                                shadow-sm shadow-primary/25 transition-all duration-150 active:scale-[0.98]"
                         >
                             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                             {resolvedSubmitLabel}

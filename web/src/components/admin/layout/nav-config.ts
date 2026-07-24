@@ -63,10 +63,10 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
                 action: PERMISSION_ACTIONS.view,
             },
             {
-                href: APP_ROUTES.adminPermissions,
-                labelKey: "permissions",
+                href: APP_ROUTES.adminModules,
+                labelKey: "modules",
                 icon: KeyRound,
-                module: MODULE_SLUGS.permission,
+                module: MODULE_SLUGS.module,
                 action: PERMISSION_ACTIONS.view,
             },
         ],

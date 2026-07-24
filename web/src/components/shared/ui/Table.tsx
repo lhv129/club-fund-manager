@@ -35,7 +35,7 @@ function SkeletonRow({ cols }: { cols: number }) {
         <tr className="animate-pulse">
             {Array.from({ length: cols + 1 }).map((_, i) => (
                 <td key={i} className="px-4 py-3.5">
-                    <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded-md w-full" />
+                    <div className="h-4 bg-background-muted rounded-md w-full" />
                 </td>
             ))}
         </tr>
@@ -87,17 +87,30 @@ export function Table<T extends object>({
 
     const showHeader = !!(title || onAdd || headerActions);
 
+    const addButton = (
+        <button
+            onClick={onAdd}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary
+                hover:bg-primary-hover text-primary-foreground text-sm font-medium
+                shadow-sm shadow-primary/25 transition-all duration-150 active:scale-[0.98]
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
+            <Plus className="w-4 h-4" />
+            {resolvedAddLabel}
+        </button>
+    );
+
     return (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+        <div className="bg-background border border-border rounded-2xl overflow-hidden shadow-sm">
             {showHeader && (
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                     {title && (
                         <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                            <h3 className="font-semibold text-foreground">
                                 {title}
                             </h3>
                             {subtitle && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                <p className="text-sm text-foreground-muted mt-0.5">
                                     {subtitle}
                                 </p>
                             )}
@@ -109,23 +122,9 @@ export function Table<T extends object>({
 
                         {onAdd &&
                             (renderAddButton ? (
-                                renderAddButton(
-                                    <button
-                                        onClick={onAdd}
-                                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                        {resolvedAddLabel}
-                                    </button>
-                                )
+                                renderAddButton(addButton)
                             ) : (
-                                <button
-                                    onClick={onAdd}
-                                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    {resolvedAddLabel}
-                                </button>
+                                addButton
                             ))}
                     </div>
                 </div>
@@ -134,14 +133,15 @@ export function Table<T extends object>({
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                        <tr className="border-b border-border bg-background-subtle/60">
                             {selectable && (
                                 <th className="pl-4 pr-2 py-3 w-10">
                                     <input
                                         type="checkbox"
                                         checked={allSelected}
                                         onChange={toggleAll}
-                                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 cursor-pointer"
+                                        className="w-4 h-4 rounded border-border-strong text-primary
+                                            focus:ring-primary/40 cursor-pointer"
                                     />
                                 </th>
                             )}
@@ -149,21 +149,21 @@ export function Table<T extends object>({
                             {columns.map((col) => (
                                 <th
                                     key={col.key}
-                                    className={`px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap ${col.className ?? ""}`}
+                                    className={`px-4 py-3 text-left text-[11px] font-semibold text-foreground-muted uppercase tracking-wider whitespace-nowrap ${col.className ?? ""}`}
                                 >
                                     {col.label}
                                 </th>
                             ))}
 
                             {showActions && (
-                                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">
+                                <th className="px-4 py-3 text-right text-[11px] font-semibold text-foreground-muted uppercase tracking-wider whitespace-nowrap">
                                     {t("actions")}
                                 </th>
                             )}
                         </tr>
                     </thead>
 
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    <tbody className="divide-y divide-border">
                         {loading ? (
                             Array.from({ length: 5 }).map((_, i) => (
                                 <SkeletonRow key={i} cols={columns.length} />
@@ -176,10 +176,13 @@ export function Table<T extends object>({
                                         columns.length +
                                         (selectable ? 1 : 0)
                                     }
-                                    className="text-center py-16 text-gray-400 dark:text-gray-600"
+                                    className="text-center py-16"
                                 >
-                                    <SearchX className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                    <p className="text-sm">{resolvedEmptyText}</p>
+                                    <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-background-subtle
+                                        flex items-center justify-center">
+                                        <SearchX className="w-6 h-6 text-foreground-muted opacity-60" />
+                                    </div>
+                                    <p className="text-sm text-foreground-muted">{resolvedEmptyText}</p>
                                 </td>
                             </tr>
                         ) : (
@@ -194,9 +197,9 @@ export function Table<T extends object>({
                                                 ? () => toggleOne(rowId)
                                                 : undefined
                                         }
-                                        className={`transition-colors ${selectable ? "cursor-pointer select-none" : ""} ${isChecked
-                                            ? "bg-indigo-50/60 dark:bg-indigo-900/15"
-                                            : "hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                                        className={`transition-colors duration-150 ${selectable ? "cursor-pointer select-none" : ""} ${isChecked
+                                            ? "bg-primary/5"
+                                            : "hover:bg-background-subtle/60"
                                             }`}
                                     >
                                         {selectable && (
@@ -208,7 +211,8 @@ export function Table<T extends object>({
                                                     type="checkbox"
                                                     checked={isChecked}
                                                     onChange={() => toggleOne(rowId)}
-                                                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 cursor-pointer"
+                                                    className="w-4 h-4 rounded border-border-strong text-primary
+                                                        focus:ring-primary/40 cursor-pointer"
                                                 />
                                             </td>
                                         )}
@@ -216,7 +220,7 @@ export function Table<T extends object>({
                                         {columns.map((col) => (
                                             <td
                                                 key={col.key}
-                                                className={`px-4 py-3.5 text-gray-700 dark:text-gray-300 ${col.className ?? ""}`}
+                                                className={`px-4 py-3.5 text-foreground ${col.className ?? ""}`}
                                             >
                                                 {col.render
                                                     ? col.render(row, rowIndex)

@@ -100,21 +100,21 @@ export function FilterBar({
 
     return (
         <div
-            className={`flex flex-wrap items-end gap-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3.5 ${className}`}
+            className={`flex flex-wrap items-end gap-2.5 bg-background border border-border rounded-2xl px-4 py-3.5 shadow-sm ${className}`}
         >
             {/* Search input */}
             <div className="flex flex-col gap-1 flex-1 min-w-56">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <span className="text-xs font-medium text-foreground-muted">
                     {t("search")}
                 </span>
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted pointer-events-none" />
                     <input
                         value={draftSearch}
                         onChange={(e) => setDraftSearch(e.target.value)}
                         onKeyDown={handleSearchKeyDown}
                         placeholder={searchPlaceholder ?? t("searchPlaceholder")}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-background text-sm text-foreground placeholder:text-foreground-muted hover:border-border-strong focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
                     />
                 </div>
             </div>
@@ -122,7 +122,7 @@ export function FilterBar({
             {/* Status (is_active) */}
             {showStatusFilter && (
                 <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <span className="text-xs font-medium text-foreground-muted">
                         {t("status")}
                     </span>
                     <SelectDropdown
@@ -139,7 +139,7 @@ export function FilterBar({
 
             {/* Sort by */}
             <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <span className="text-xs font-medium text-foreground-muted">
                     {t("sortBy")}
                 </span>
                 <SelectDropdown
@@ -153,13 +153,13 @@ export function FilterBar({
 
             {/* Order — component cũ (button + icon đảo asc/desc), chỉ đổi draft */}
             <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <span className="text-xs font-medium text-foreground-muted">
                     {t("sortDir")}
                 </span>
                 <button
                     type="button"
                     onClick={() => setDraftSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="h-10 flex items-center gap-1.5 px-3 rounded-xl border border-border bg-background text-sm text-foreground-muted hover:bg-background-subtle hover:text-foreground hover:border-border-strong transition-colors"
                 >
                     <ArrowUpDown className="w-3.5 h-3.5" />
                     {draftSortDir === "asc" ? t("sortAsc") : t("sortDesc")}
@@ -173,7 +173,7 @@ export function FilterBar({
             <button
                 type="button"
                 onClick={onReset}
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="h-10 flex items-center gap-1.5 px-3 rounded-xl border border-border text-sm font-medium text-foreground-muted hover:bg-background-subtle hover:text-foreground hover:border-border-strong transition-colors"
                 title={t("reset")}
             >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -185,8 +185,9 @@ export function FilterBar({
                 type="button"
                 onClick={handleApply}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700
-                    disabled:opacity-60 text-white text-sm font-medium transition-colors shrink-0"
+                className="h-10 flex items-center gap-1.5 px-4 rounded-xl bg-primary hover:bg-primary-hover
+                    disabled:opacity-60 text-primary-foreground text-sm font-medium
+                    shadow-sm shadow-primary/25 transition-all duration-150 active:scale-[0.98] shrink-0"
             >
                 {loading
                     ? <Loader2 className="w-4 h-4 animate-spin" />
