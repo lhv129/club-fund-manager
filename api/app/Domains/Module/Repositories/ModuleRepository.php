@@ -22,11 +22,18 @@ class ModuleRepository extends BaseRepository
     // Read
     // ------------------------------------------------------------------
 
-    public function paginateModule(array $filters = []): LengthAwarePaginator
+    /**
+     * Danh sách có phân trang — dùng cho màn hình CRUD module.
+     * Eager load translation (locale-scoped hasOne) + permissions.
+     */
+    public function getList(array $filters = []): LengthAwarePaginator
     {
         $query = $this->model
             ->select(['id', 'slug', 'sort_order', 'is_active', 'created_at'])
-            ->with(['translations', 'permissions']);
+            ->with([
+                'translations',
+                'permissions' => fn($q) => $q->orderBy('sort_order'),
+            ]);
 
         $this->applySearch($query, $filters);
         $this->applyFilters($query, $filters);
@@ -39,7 +46,7 @@ class ModuleRepository extends BaseRepository
     {
         $query = $this->model
             ->select(['id', 'slug', 'sort_order'])
-            ->with('translations');
+            ->with('translation');
 
         $this->applySearch($query, $filters);
         $this->applyFilters($query, $filters);
@@ -51,7 +58,10 @@ class ModuleRepository extends BaseRepository
     public function findById(int $id): ?Module
     {
         return $this->model
-            ->with(['translations', 'permissions'])
+            ->with([
+                'translations',
+                'permissions' => fn($q) => $q->orderBy('sort_order'),
+            ])
             ->find($id);
     }
 
@@ -62,6 +72,20 @@ class ModuleRepository extends BaseRepository
             ->where('slug', $slug);
 
         return $withTrashed ? $query->withTrashed()->first() : $query->first();
+    }
+
+    /**
+     * Toàn bộ modules kèm permissions — dùng cho màn hình assign permission của role.
+     */
+    public function getAllWithPermissions(): Collection
+    {
+        return $this->model
+            ->with([
+                'translation',
+                'permissions' => fn($q) => $q->orderBy('sort_order'),
+            ])
+            ->orderBy('sort_order')
+            ->get();
     }
 
     // ------------------------------------------------------------------

@@ -100,7 +100,7 @@ class UserRepository extends BaseRepository
      * Danh sách user active + đã verify email (hardcoded business rule).
      * Không dùng getList() vì điều kiện là business rule, không phải filter tùy chọn.
      */
-    public function paginateActive(array $filters = []): LengthAwarePaginator
+    public function getList(array $filters = []): LengthAwarePaginator
     {
         $query = $this->baseListQuery()
             ->where('status', 'active')

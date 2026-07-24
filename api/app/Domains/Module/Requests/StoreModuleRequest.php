@@ -34,6 +34,7 @@ class StoreModuleRequest extends BaseRequest
             ],
             'translations.*'      => ['array'],
             'translations.*.name' => ['required', 'string', 'max:255'],
+            'translations.*.description' => ['nullable', 'string', 'max:255'],
 
             // Actions tự động tạo permissions khi tạo module
             'actions'   => ['required', 'array', 'min:1'],

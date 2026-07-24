@@ -3,7 +3,6 @@
 namespace App\Domains\Role\Repositories;
 
 use App\Base\BaseRepository;
-use App\Domains\Module\Models\Module;
 use App\Domains\Role\Models\Role;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -108,56 +107,21 @@ class RoleRepository extends BaseRepository
     }
 
     /**
-     * Danh sách permissions theo module, kèm checked theo role.
-     * Trả về cấu trúc: [{module_id, module, label, actions: [{id, name, checked}]}].
-     * Trả về null khi không tìm thấy role (để Service throw 404).
+     * Trả về danh sách permission_id đang active của một role.
+     * Dữ liệu thô — assembly logic nằm ở Service.
      */
-    public function getPermissionsBySlug(string $slug): ?array
+    public function getActivePermissionIds(int $roleId): array
     {
-        $role = $this->model
-            ->where('slug', $slug)
-            ->first(['id', 'slug']);
-
-        if (!$role) {
-            return null;
-        }
-
-        // Permission ids đang active của role.
-        $rolePermissionIds = DB::table('role_permissions')
-            ->where('role_id', $role->id)
+        return DB::table('role_permissions')
+            ->where('role_id', $roleId)
             ->where('is_active', true)
             ->whereNull('deleted_at')
             ->pluck('permission_id')
             ->all();
-
-        // Eager load `translation` (locale-scoped hasOne, tự dùng app()->getLocale()).
-        $modules = Module::with([
-            'translation',
-            'permissions' => fn($q) => $q->orderBy('sort_order'),
-        ])
-            ->orderBy('sort_order')
-            ->get();
-
-        return $modules
-            ->map(fn($module) => [
-                'module_id' => $module->id,
-                'module'    => $module->slug,
-                'label'     => $module->translation?->name ?? $module->slug,
-                'actions'   => $module->permissions
-                    ->map(fn($p) => [
-                        'id'      => $p->id,
-                        'name'    => $p->action,
-                        'checked' => in_array($p->id, $rolePermissionIds, true),
-                    ])
-                    ->values()
-                    ->all(),
-            ])
-            ->values()
-            ->all();
     }
 
     /**
-     * Sync permissions.
+     * Sync permissions — xử lý toAdd / toRemove / toRestore kể cả soft-deleted rows.
      */
     public function syncPermissions(Role $role, array $permissionIds): void
     {
@@ -183,20 +147,18 @@ class RoleRepository extends BaseRepository
             $toRestore = array_intersect($existingIds, $newIds);
 
             if ($toAdd) {
-
                 DB::table('role_permissions')->insert(
                     array_map(fn($id) => [
-                        'role_id' => $roleId,
+                        'role_id'       => $roleId,
                         'permission_id' => $id,
-                        'is_active' => true,
-                        'created_at' => $now,
-                        'updated_at' => $now,
+                        'is_active'     => true,
+                        'created_at'    => $now,
+                        'updated_at'    => $now,
                     ], $toAdd)
                 );
             }
 
             if ($toRemove) {
-
                 DB::table('role_permissions')
                     ->where('role_id', $roleId)
                     ->whereIn('permission_id', $toRemove)
@@ -208,14 +170,13 @@ class RoleRepository extends BaseRepository
             }
 
             if ($toRestore) {
-
                 DB::table('role_permissions')
                     ->where('role_id', $roleId)
                     ->whereIn('permission_id', $toRestore)
                     ->whereNotNull('deleted_at')
                     ->update([
                         'deleted_at' => null,
-                        'is_active' => true,
+                        'is_active'  => true,
                         'updated_at' => $now,
                     ]);
             }

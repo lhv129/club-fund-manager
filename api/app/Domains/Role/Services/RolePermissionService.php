@@ -3,6 +3,7 @@
 namespace App\Domains\Role\Services;
 
 use App\Base\BaseService;
+use App\Domains\Module\Repositories\ModuleRepository;
 use App\Domains\Role\Repositories\RolePermissionRepository;
 use App\Domains\Role\Repositories\RoleRepository;
 use App\Exceptions\ApiException;
@@ -10,17 +11,13 @@ use App\Exceptions\ApiException;
 
 class RolePermissionService extends BaseService
 {
-    protected $roleRepository;
-
     public function __construct(
         RolePermissionRepository $repository,
-        RoleRepository $roleRepository
+        protected RoleRepository $roleRepository,
+        protected ModuleRepository $moduleRepository,
     ) {
         parent::__construct($repository);
-        $this->roleRepository = $roleRepository;
     }
-
-    protected string $notFoundMessage = 'domains/role.not_found';
 
     public function syncPermissions(array $data): array
     {
@@ -36,10 +33,27 @@ class RolePermissionService extends BaseService
             ->values()
             ->all();
 
-        // Delegate toàn bộ sync logic xuống RoleRepository
-        // (đã xử lý đúng: toAdd / toRemove / toRestore kể cả soft-deleted rows)
         $this->roleRepository->syncPermissions($role, $permissionIds);
 
-        return $this->roleRepository->getPermissionsBySlug($role->slug);
+        // Assembly giống RoleService::getPermissionsBySlug
+        $activeIds = $this->roleRepository->getActivePermissionIds($role->id);
+        $modules   = $this->moduleRepository->getAllWithPermissions();
+
+        return $modules
+            ->map(fn($module) => [
+                'module_id' => $module->id,
+                'module'    => $module->slug,
+                'label'     => $module->translation?->name ?? $module->slug,
+                'actions'   => $module->permissions
+                    ->map(fn($p) => [
+                        'id'      => $p->id,
+                        'name'    => $p->action,
+                        'checked' => in_array($p->id, $activeIds, true),
+                    ])
+                    ->values()
+                    ->all(),
+            ])
+            ->values()
+            ->all();
     }
 }

@@ -41,6 +41,8 @@ class UpdateModuleRequest extends BaseRequest
             ],
             'translations.*'      => ['array'],
             'translations.*.name' => ['required', 'string', 'max:255'],
+            'translations.*.description' => ['nullable', 'string', 'max:255'],
+
 
             'actions'   => ['sometimes', 'array'],
             'actions.*' => ['string', Rule::in(['view', 'create', 'update', 'delete'])],

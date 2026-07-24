@@ -12,23 +12,15 @@ class ModuleResource extends JsonResource
         return [
             'module_id'  => $this->id,
             'module'     => $this->slug,
-            'label'      => $this->whenLoaded(
-                'translations',
-                fn() =>
-                $this->translations->firstWhere('locale', app()->getLocale())?->name
-                    ?? $this->translations->first()?->name
-            ),
             'icon'       => $this->icon,
             'is_active'  => $this->is_active,
             'sort_order' => $this->sort_order,
-            'actions'    => $this->whenLoaded(
+            'actions' => $this->whenLoaded(
                 'permissions',
-                fn() =>
-                $this->permissions->map(fn($p) => [
-                    'id'        => $p->id,
-                    'name'      => $p->action,
-                    'is_active' => (bool) $p->is_active,
-                ])->values()
+                fn() => $this->permissions
+                    ->mapWithKeys(fn($p) => [
+                        $p->action => (bool) $p->is_active,
+                    ])
             ),
             'translations' => $this->whenLoaded(
                 'translations',
@@ -36,6 +28,7 @@ class ModuleResource extends JsonResource
                 $this->translations->map(fn($t) => [
                     'locale' => $t->locale,
                     'name'   => $t->name,
+                    'description'  => $t->description,
                 ])->values()
             ),
             'created_at' => $this->created_at,

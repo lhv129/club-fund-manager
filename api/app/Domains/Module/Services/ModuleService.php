@@ -7,8 +7,8 @@ use App\Domains\Module\Models\Module;
 use App\Domains\Module\Repositories\ModuleRepository;
 use App\Domains\Module\Repositories\PermissionRepository;
 use App\Exceptions\ApiException;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator as ManualPaginator;
 use Illuminate\Support\Facades\DB;
 
 class ModuleService extends BaseService
@@ -26,9 +26,46 @@ class ModuleService extends BaseService
     // Read
     // ------------------------------------------------------------------
 
-    public function paginate(array $filters = []): LengthAwarePaginator
+    /**
+     * Danh sách modules phân trang, kèm actions theo dạng map.
+     *
+     * Response mỗi item:
+     * {
+     *   module_id, module, label, sort_order, is_active,
+     *   actions: { view: true, create: false, ... }
+     * }
+     */
+    public function paginate(array $filters = []): ManualPaginator
     {
-        return $this->repository->paginateModule($filters);
+        $paginator = $this->repository->getList($filters);
+
+        $items = collect($paginator->items())
+            ->map(fn($module) => [
+                'module_id'  => $module->id,
+                'module'     => $module->slug,
+                'sort_order' => $module->sort_order,
+                'is_active'  => (bool) $module->is_active,
+                'actions'    => $module->permissions
+                    ->mapWithKeys(fn($p) => [
+                        $p->action => (bool) $p->is_active,
+                    ]),
+                'translations' => $module->translations
+                    ->map(fn($translation) => [
+                        'locale' => $translation->locale,
+                        'name'  => $translation->name,
+                        'description'  => $translation->description,
+                    ])
+                    ->values(),
+            ])
+            ->values();
+
+        return new ManualPaginator(
+            $items,
+            $paginator->total(),
+            $paginator->perPage(),
+            $paginator->currentPage(),
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
     }
 
     public function getForSelect(array $filters = []): Collection
@@ -36,7 +73,7 @@ class ModuleService extends BaseService
         return $this->repository->getForSelect($filters);
     }
 
-    public function find($id)
+    public function find($id): Module
     {
         $module = $this->repository->findById($id);
 
@@ -76,10 +113,8 @@ class ModuleService extends BaseService
         }
 
         $module = DB::transaction(function () use ($data, $translations, $actions) {
-            // 1. Tạo module + translations
             $module = $this->repository->createWithTranslations($data, $translations);
 
-            // 2. Tạo permissions mặc định
             foreach ($actions as $action) {
                 $this->permissionRepository->upsertPermission($module->id, $action);
             }
@@ -91,8 +126,7 @@ class ModuleService extends BaseService
     }
 
     /**
-     * Cập nhật module + translations.
-     * Không sync permissions ở đây — dùng PUT /permissions/{id}.
+     * Cập nhật module + translations + sync actions.
      */
     public function update(int $id, array $data): Module
     {
@@ -126,7 +160,6 @@ class ModuleService extends BaseService
         $module = $this->find($id);
 
         DB::transaction(function () use ($module, $id) {
-
             if (isset($module->sort_order)) {
                 $this->repository->decrementSortOrderAfterDelete(
                     $module->sort_order,
@@ -134,13 +167,8 @@ class ModuleService extends BaseService
                 );
             }
 
-            // Soft delete permissions
             $module->permissions()->delete();
-
-            // Xóa translations
             $module->translations()->delete();
-
-            // Soft delete module
             $this->repository->delete($module);
         });
 
@@ -149,7 +177,7 @@ class ModuleService extends BaseService
 
     public function toggleStatus(int $id): Module
     {
-        $module            = $this->find($id);
+        $module = $this->find($id);
         $module->is_active = !$module->is_active;
         $module->save();
 

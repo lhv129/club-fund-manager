@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 class RoleController extends BaseController
 {
     public function __construct(
-        protected RoleService $roleService
+        protected RoleService $service
     ) {}
 
     /**
@@ -22,7 +22,7 @@ class RoleController extends BaseController
      */
     public function index(FilterRoleRequest $request): JsonResponse
     {
-        $roles = $this->roleService->paginate($request->validated());
+        $roles = $this->service->paginate($request->validated());
 
         return $this->paginateResponse($roles, __('domains/role.list'));
     }
@@ -34,7 +34,7 @@ class RoleController extends BaseController
     public function select(Request $request): JsonResponse
     {
         $params = $request->only(['search', 'club_id', 'is_active', 'limit']);
-        $data   = $this->roleService->getForSelect($params);
+        $data   = $this->service->getForSelect($params);
 
         return $this->responseCommon(true, __('domains/role.select'), $data);
     }
@@ -44,7 +44,7 @@ class RoleController extends BaseController
      */
     public function show(int $id): JsonResponse
     {
-        $role = $this->roleService->find($id);
+        $role = $this->service->find($id);
 
         return $this->responseCommon(true, __('domains/role.detail'), new RoleResource($role));
     }
@@ -54,7 +54,7 @@ class RoleController extends BaseController
      */
     public function getPermissionsBySlug(string $slug): JsonResponse
     {
-        $data = $this->roleService->getPermissionsBySlug($slug);
+        $data = $this->service->getPermissionsBySlug($slug);
 
         return $this->responseCommon(true, __('domains/role.permissions_by_slug'), $data);
     }
@@ -64,7 +64,7 @@ class RoleController extends BaseController
      */
     public function store(StoreRoleRequest $request): JsonResponse
     {
-        $role = $this->roleService->create($request->validated());
+        $role = $this->service->create($request->validated());
 
         return $this->responseCommon(true, __('domains/role.created'), new RoleResource($role), 201);
     }
@@ -74,7 +74,7 @@ class RoleController extends BaseController
      */
     public function update(UpdateRoleRequest $request, int $id): JsonResponse
     {
-        $role = $this->roleService->update($id, $request->validated());
+        $role = $this->service->update($id, $request->validated());
 
         return $this->responseCommon(true, __('domains/role.updated'), new RoleResource($role));
     }
@@ -84,7 +84,7 @@ class RoleController extends BaseController
      */
     public function destroy(int $id): JsonResponse
     {
-        $this->roleService->delete($id);
+        $this->service->delete($id);
 
         return $this->responseCommon(true, __('domains/role.deleted'));
     }
@@ -94,7 +94,7 @@ class RoleController extends BaseController
      */
     public function toggleStatus(int $id): JsonResponse
     {
-        $role = $this->roleService->toggleStatus($id);
+        $role = $this->service->toggleStatus($id);
 
         return $this->responseCommon(true, __('domains/role.status_toggled'), new RoleResource($role));
     }

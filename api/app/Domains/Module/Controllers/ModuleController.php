@@ -12,13 +12,14 @@ use Illuminate\Http\JsonResponse;
 
 class ModuleController extends BaseController
 {
-    protected object $service;
+    public function __construct(
+        protected ModuleService $service
+    ) {}
 
-    public function __construct(ModuleService $service)
-    {
-        $this->service = $service;
-    }
-
+    /**
+     * GET /api/v1/modules
+     * Danh sách modules có phân trang, kèm actions (view/create/update/delete + is_active).
+     */
     public function index(FilterModuleRequest $request): JsonResponse
     {
         return $this->paginateResponse(
@@ -27,24 +28,9 @@ class ModuleController extends BaseController
         );
     }
 
-    public function select(FilterModuleRequest $request): JsonResponse
-    {
-        return $this->responseCommon(
-            true,
-            __('domains/module.select'),
-            $this->service->getForSelect($request->validated())
-        );
-    }
-
-    public function show(int $id): JsonResponse
-    {
-        return $this->responseCommon(
-            true,
-            __('domains/module.detail'),
-            new ModuleResource($this->service->find($id))
-        );
-    }
-
+    /**
+     * POST /api/v1/modules
+     */
     public function store(StoreModuleRequest $request): JsonResponse
     {
         return $this->responseCommon(
@@ -55,6 +41,9 @@ class ModuleController extends BaseController
         );
     }
 
+    /**
+     * PUT /api/v1/modules/{id}
+     */
     public function update(UpdateModuleRequest $request, int $id): JsonResponse
     {
         return $this->responseCommon(
@@ -64,6 +53,9 @@ class ModuleController extends BaseController
         );
     }
 
+    /**
+     * DELETE /api/v1/modules/{id}
+     */
     public function destroy(int $id): JsonResponse
     {
         $this->service->delete($id);
@@ -71,6 +63,9 @@ class ModuleController extends BaseController
         return $this->responseCommon(true, __('domains/module.deleted'));
     }
 
+    /**
+     * PATCH /api/v1/modules/{id}/toggle-status
+     */
     public function toggleStatus(int $id): JsonResponse
     {
         return $this->responseCommon(
