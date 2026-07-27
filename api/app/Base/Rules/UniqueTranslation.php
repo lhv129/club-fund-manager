@@ -55,6 +55,7 @@ class UniqueTranslation implements ValidationRule, ValidatorAwareRule
             $exists = DB::table($this->translationTable)
                 ->where($this->nameField, $name)
                 ->where('locale', $locale)
+                ->whereNull('deleted_at')
                 ->when(
                     $this->excludeParentId && $this->fkColumn,
                     fn($q) => $q->where($this->fkColumn, '!=', $this->excludeParentId)

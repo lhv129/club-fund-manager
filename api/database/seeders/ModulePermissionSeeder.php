@@ -121,7 +121,7 @@ class ModulePermissionSeeder extends Seeder
 
             // Permissions của module
             foreach ($moduleData['actions'] as $sortAction => $action) {
-                $permissionId = DB::table('permissions')->insertGetId([
+                DB::table('permissions')->insert([
                     'module_id'  => $moduleId,
                     'action'     => $action,
                     'sort_order' => $sortAction + 1,
@@ -129,15 +129,6 @@ class ModulePermissionSeeder extends Seeder
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]);
-
-                // Translations cho permission
-                foreach (['vi', 'en'] as $locale) {
-                    DB::table('permission_translations')->insert([
-                        'permission_id' => $permissionId,
-                        'locale'        => $locale,
-                        'name'          => $this->actionLabels[$locale][$action],
-                    ]);
-                }
             }
         }
     }

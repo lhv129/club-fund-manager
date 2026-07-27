@@ -18,7 +18,6 @@ class ModuleController extends BaseController
 
     /**
      * GET /api/v1/modules
-     * Danh sách modules có phân trang, kèm actions (view/create/update/delete + is_active).
      */
     public function index(FilterModuleRequest $request): JsonResponse
     {
@@ -59,8 +58,7 @@ class ModuleController extends BaseController
     public function destroy(int $id): JsonResponse
     {
         $this->service->delete($id);
-
-        return $this->responseCommon(true, __('domains/module.deleted'));
+        return $this->responseCommon(true, __('domains/module.deleted'), [], 200);
     }
 
     /**
