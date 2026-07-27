@@ -97,14 +97,11 @@ class UserController extends BaseController
      *
      * Trả danh sách user mới của trang hiện tại sau khi xóa.
      */
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
         $this->service->delete($id);
 
-        $params = $request->only(['limit', 'search', 'status', 'email_verified_at', 'sort_by', 'sort_dir', 'page']);
-        $paginator = $this->service->paginate($params);
-
-        return $this->paginateResponse($paginator, __('domains/user.deleted'));
+        return $this->responseCommon(true, __('domains/user.deleted'));
     }
 
     /**

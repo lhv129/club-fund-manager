@@ -106,16 +106,11 @@ class ClubController extends BaseController
      *
      * Trả danh sách club mới của trang hiện tại sau khi xóa.
      */
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
         $this->service->delete($id);
 
-        $clubs = $this->service->index(
-            $request->user(),
-            $request->only(['search', 'is_active', 'limit', 'page', 'sort_by', 'sort_dir'])
-        );
-
-        return $this->paginateResponse($clubs, __('domains/club.deleted'));
+        return $this->responseCommon(true, __('domains/club.deleted'));
     }
 
     /**

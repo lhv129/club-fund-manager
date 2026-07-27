@@ -63,12 +63,12 @@ class ClubRepository extends BaseRepository
     {
         return $this->model
             ->select([
-                'id',
-                'logo',
-                'is_active',
-                'sort_order',
-                'max_members',
-                'created_at',
+                'clubs.id',
+                'clubs.logo',
+                'clubs.is_active',
+                'clubs.sort_order',
+                'clubs.max_members',
+                'clubs.created_at',
             ])
             ->with('translations')
             ->withCount([
