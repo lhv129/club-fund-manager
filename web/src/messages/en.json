@@ -275,6 +275,7 @@
     "wordCount": "{count} words"
   },
   "role": {
+    "slug": "Slug",
     "title": "Roles",
     "create": "Add role",
     "edit": "Edit role",
@@ -331,6 +332,7 @@
     "action_update": "Update",
     "action_delete": "Delete",
     "sortOrder": "Sort order",
-    "label": "Module name"
+    "label": "Module name",
+    "permissions": "Permissions"
   }
 }

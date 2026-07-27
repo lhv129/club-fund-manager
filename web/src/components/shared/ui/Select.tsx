@@ -99,10 +99,18 @@ export default function Select({
         calcPosition();
         const rafId = requestAnimationFrame(() => calcPosition());
 
-        window.addEventListener("scroll", calcPosition, true);
+        // Scroll BÊN NGOÀI panel → đóng dropdown (tránh panel "rượt đuổi" trigger gây nhảy).
+        // Scroll BÊN TRONG panel (danh sách options) → bỏ qua, giữ mở.
+        const handleScroll = (e: Event) => {
+            const target = e.target as Node | null;
+            if (target && panelRef.current?.contains(target)) return;
+            if (target && wrapRef.current?.contains(target)) return;
+            setOpen(false);
+        };
+        window.addEventListener("scroll", handleScroll, true);
+
         window.addEventListener("resize", calcPosition);
         window.visualViewport?.addEventListener("resize", calcPosition);
-        window.visualViewport?.addEventListener("scroll", calcPosition);
 
         const observer = new ResizeObserver(() => calcPosition());
         if (triggerRef.current) observer.observe(triggerRef.current);
@@ -110,10 +118,9 @@ export default function Select({
 
         return () => {
             cancelAnimationFrame(rafId);
-            window.removeEventListener("scroll", calcPosition, true);
+            window.removeEventListener("scroll", handleScroll, true);
             window.removeEventListener("resize", calcPosition);
             window.visualViewport?.removeEventListener("resize", calcPosition);
-            window.visualViewport?.removeEventListener("scroll", calcPosition);
             observer.disconnect();
         };
     }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -160,7 +167,6 @@ export default function Select({
                 disabled={disabled}
                 onClick={() => !disabled && setOpen((v) => !v)}
                 className={[
-                    // flex w-full → label chiếm hết khoảng giữa, icon luôn ghim phải
                     "flex w-full items-center gap-1.5 px-3 py-2 rounded-xl border",
                     "text-sm font-medium transition-colors",
                     disabled
@@ -173,15 +179,12 @@ export default function Select({
                             : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800",
                 ].join(" ")}
             >
-                {/* Icon trái (tùy chọn) */}
                 {icon && <span className="shrink-0 text-gray-400">{icon}</span>}
 
-                {/* Label — co giãn chiếm hết khoảng trống */}
                 <span className="flex-1 min-w-0 truncate text-left">
                     {loading ? t("loading") : buttonLabel}
                 </span>
 
-                {/* Clear + Chevron — luôn ghim sát phải */}
                 <span className="flex items-center gap-1 shrink-0">
                     {hasValue && !disabled && (
                         <span
@@ -209,7 +212,6 @@ export default function Select({
                     className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700
                         rounded-2xl shadow-xl overflow-hidden"
                 >
-                    {/* Header */}
                     <div className="px-3 pt-3 pb-2 border-b border-gray-100 dark:border-gray-800
                         flex items-center justify-between gap-3">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -226,7 +228,6 @@ export default function Select({
                         )}
                     </div>
 
-                    {/* Options */}
                     {loading ? (
                         <div className="px-3 py-2 space-y-2">
                             {[1, 2, 3].map((i) => (

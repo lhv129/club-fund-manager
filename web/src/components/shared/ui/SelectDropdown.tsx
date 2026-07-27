@@ -102,10 +102,16 @@ export default function SelectDropdown({
         calcPosition();
         const rafId = requestAnimationFrame(() => calcPosition());
 
-        window.addEventListener("scroll", calcPosition, true);
         window.addEventListener("resize", calcPosition);
         window.visualViewport?.addEventListener("resize", calcPosition);
-        window.visualViewport?.addEventListener("scroll", calcPosition);
+
+        const handleScroll = (e: Event) => {
+            const target = e.target as Node | null;
+            if (target && panelRef.current?.contains(target)) return;
+            if (target && wrapRef.current?.contains(target)) return;
+            setOpen(false);
+        };
+        window.addEventListener("scroll", handleScroll, true);
 
         const observer = new ResizeObserver(() => calcPosition());
         if (triggerRef.current) observer.observe(triggerRef.current);
@@ -113,10 +119,9 @@ export default function SelectDropdown({
 
         return () => {
             cancelAnimationFrame(rafId);
-            window.removeEventListener("scroll", calcPosition, true);
+            window.removeEventListener("scroll", handleScroll, true);
             window.removeEventListener("resize", calcPosition);
             window.visualViewport?.removeEventListener("resize", calcPosition);
-            window.visualViewport?.removeEventListener("scroll", calcPosition);
             observer.disconnect();
         };
     }, [open]); // eslint-disable-line react-hooks/exhaustive-deps

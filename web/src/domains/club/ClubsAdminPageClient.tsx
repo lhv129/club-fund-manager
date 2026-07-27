@@ -1,10 +1,13 @@
+// ══════════════════════════════════════════════════════════════════
+// 4. @/domains/club/components/ClubsAdminPageClient.tsx
+// ══════════════════════════════════════════════════════════════════
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { ImageOff, Pencil, Plus, Trash2, ArrowRight } from "lucide-react";
-import toast from "react-hot-toast";
+
 import { Table, ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar } from "@/components/shared/ui/FilterBar";
 import { Pagination } from "@/components/shared/ui/Pagination";
@@ -18,15 +21,11 @@ import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import CustomImage from "@/components/shared/media/CustomImage";
 import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
-import { useListParams, type ListParams } from "@/hooks/useListParams";
-import { clubServiceClient } from "@/domains/club/services/clubService";
+import { useListParams } from "@/hooks/useListParams";
+import { useClubsQuery } from "@/domains/club/hooks/useClubsQuery";
 import { clubDashboardRoute } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import type { Club, ClubFilters, Translation } from "@/domains/club/types";
-import type { ApiResponse } from "@/types/api";
-
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function ClubsAdminPageClient() {
     const router = useRouter();
@@ -50,163 +49,62 @@ export function ClubsAdminPageClient() {
             defaultLimit: 10,
         });
 
-    const sortOptions = [
-        { value: "sort_order", label: t("sortOrder") },
-        { value: "created_at", label: t("createdAt") },
-    ];
+    // ── Cache hook — toàn bộ data + CRUD logic ────────────────────────────────
+    const {
+        data,
+        total,
+        isLoading,
+        togglingIds,
+        isCreating,
+        isUpdating,
+        isDeleting,
+        handleCreate,
+        handleEdit,
+        handleDeleteConfirm,
+        handleToggle,
+    } = useClubsQuery(params);
 
-    // ─── State ────────────────────────────────────────────────────────────────
-
-    const [data, setData] = useState<Club[]>([]);
-    const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(true);
-
+    // ── UI state (chỉ liên quan render) ──────────────────────────────────────
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState<Club | null>(null);
-    const [submitting, setSubmitting] = useState(false);
-
     const [deleteTarget, setDeleteTarget] = useState<Club | null>(null);
-    const [deleting, setDeleting] = useState(false);
-
-    const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
-
-    // ─── Fetch ────────────────────────────────────────────────────────────────
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const res = await clubServiceClient.list(params as unknown as ListParams<ClubFilters>);
-            if (res.success) {
-                setData(res.data ?? []);
-                setTotal(res.meta?.total ?? 0);
-            }
-        } catch (error: any) {
-            toast.error(error?.message || t("loadError"));
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // ─── Navigation ───────────────────────────────────────────────────────────
-
-    const handleDetail = (row: Club) => {
-        const slug = tr(row.translations)?.slug ?? String(row.id);
-        router.push(clubDashboardRoute(slug) as never);
-    };
-
-    // ─── Modal handlers ───────────────────────────────────────────────────────
 
     const openCreate = () => { setEditing(null); setModalOpen(true); };
     const openEdit = (row: Club) => { setEditing(row); setModalOpen(true); };
     const closeModal = () => { setModalOpen(false); setEditing(null); };
 
+    // FormModalWithMedia tự build FormData → chỉ cần delegate xuống hook
     const handleSubmit = async (formData: FormData): Promise<SubmitResult> => {
-        setSubmitting(true);
-        try {
-            const raw = editing
-                ? await clubServiceClient.update(editing.id, formData)
-                : await clubServiceClient.create(formData);
-
-            const res = raw as unknown as ApiResponse<Club>;
-
-            if (!res.success) {
-                return { success: false, message: res.message, errors: res.errors };
-            }
-
-            const saved = res.data;
-            if (saved) {
-                if (editing) {
-                    setData((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
-                } else {
-                    setData((prev) => [saved, ...prev]);
-                    setTotal((prev) => prev + 1);
-                }
-            } else {
-                await fetchData();
-            }
-
-            toast.success(res.message || t("saveSuccess"));
-            closeModal();
-        } catch (error: any) {
-            toast.error(error?.message || t("loadError"));
-        } finally {
-            setSubmitting(false);
-        }
+        const result = editing
+            ? await handleEdit(editing.id, formData)
+            : await handleCreate(formData);
+        if (!result) closeModal();
+        return result;
     };
 
-    // ─── Toggle is_active ─────────────────────────────────────────────────────
+    const sortOptions = [
+        { value: "sort_order", label: t("sortOrder") },
+        { value: "created_at", label: t("createdAt") },
+    ];
 
-    const handleToggle = async (row: Club) => {
-        if (togglingIds.has(row.id)) return;
-
-        setTogglingIds((prev) => new Set(prev).add(row.id));
-        try {
-            const raw = await clubServiceClient.toggleStatus(row.id);
-            const res = raw as unknown as ApiResponse<Club>;
-
-            if (res.success) {
-                setData((prev) =>
-                    prev.map((item) =>
-                        item.id !== row.id
-                            ? item
-                            : res.data
-                                ? { ...item, ...res.data }
-                                : { ...item, is_active: !item.is_active }
-                    )
-                );
-            }
-        } catch (error: any) {
-            toast.error(error?.message || t("loadError"));
-        } finally {
-            setTogglingIds((prev) => {
-                const next = new Set(prev);
-                next.delete(row.id);
-                return next;
-            });
-        }
+    // ── Navigation ────────────────────────────────────────────────────────────
+    const handleDetail = (row: Club) => {
+        const slug = tr(row.translations)?.slug ?? String(row.id);
+        router.push(clubDashboardRoute(slug) as never);
     };
 
-    // ─── Delete ───────────────────────────────────────────────────────────────
-
-    const handleDeleteConfirm = async () => {
-        if (!deleteTarget) return;
-
-        setDeleting(true);
-        try {
-            const res = await clubServiceClient.destroy(deleteTarget.id, params);
-            if (res.success) {
-                setData(res.data ?? []);
-                setTotal(res.meta?.total ?? 0);
-                toast.success(res.message || t("deleteSuccess"));
-                setDeleteTarget(null);
-            }
-        } catch (error: any) {
-            toast.error(error?.message || t("loadError"));
-        } finally {
-            setDeleting(false);
-        }
-    };
-
-    // ─── Columns ──────────────────────────────────────────────────────────────
-
+    // ── Columns ───────────────────────────────────────────────────────────────
     const columns: ColumnDef<Club>[] = [
         {
-            key: "stt",
-            label: t("no"),
-            className: "w-12",
+            key: "stt", label: t("no"), className: "w-12",
             render: (_row, index) => (
-                <span className="text-gray-400 text-xs">
+                <span className="text-foreground-muted text-xs">
                     {(params.page - 1) * params.limit + index + 1}
                 </span>
             ),
         },
         {
-            key: "logo",
-            label: t("logo"),
+            key: "logo", label: t("logo"),
             render: (row) => (
                 <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800
                     flex items-center justify-center shrink-0">
@@ -221,18 +119,19 @@ export function ClubsAdminPageClient() {
             ),
         },
         {
-            key: "name",
-            label: t("name"),
-            render: (row) => tr(row.translations)?.name ?? "—",
+            key: "name", label: t("name"),
+            render: (row) => (
+                <span className="text-sm font-medium text-foreground">
+                    {tr(row.translations)?.name ?? "—"}
+                </span>
+            ),
         },
         {
-            key: "total_members",
-            label: t("members"),
-            render: (row) => row.total_members ?? 0,
+            key: "total_members", label: t("members"),
+            render: (row) => <span className="text-sm text-foreground">{row.total_members ?? 0}</span>,
         },
         {
-            key: "is_active",
-            label: t("status"),
+            key: "is_active", label: t("status"),
             render: (row) => (
                 <ToggleSwitch
                     checked={Boolean(row.is_active)}
@@ -243,56 +142,22 @@ export function ClubsAdminPageClient() {
         },
     ];
 
-    // ─── Row actions ──────────────────────────────────────────────────────────
-
-    const renderRowActions = (row: Club) => (
-        <TableActions>
-            <TableActionItem
-                icon={<ArrowRight className="w-4 h-4" />}
-                label={t("openWorkspace")}
-                onClick={() => handleDetail(row)}
-            />
-            {canUpdate && (
-                <TableActionItem
-                    icon={<Pencil className="w-4 h-4" />}
-                    label={t("edit")}
-                    onClick={() => openEdit(row)}
-                />
-            )}
-            {canDelete && (
-                <TableActionItem
-                    icon={<Trash2 className="w-4 h-4" />}
-                    label={t("delete")}
-                    variant="danger"
-                    onClick={() => setDeleteTarget(row)}
-                />
-            )}
-        </TableActions>
-    );
-
-    // ─── Render ───────────────────────────────────────────────────────────────
-
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        {tc("title")}
-                    </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    <h1 className="text-xl font-semibold text-foreground">{tc("title")}</h1>
+                    <p className="text-sm text-foreground-muted mt-0.5">
                         {tc("totalCount", { count: total.toLocaleString() })}
                     </p>
                 </div>
-
                 {canCreate && (
-                    <button
-                        onClick={openCreate}
-                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600
-                            hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        {tc("create")}
+                    <button onClick={openCreate}
+                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary
+                            hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors">
+                        <Plus className="w-4 h-4" />{tc("create")}
                     </button>
                 )}
             </div>
@@ -304,7 +169,7 @@ export function ClubsAdminPageClient() {
                     sortBy={params.sort_by}
                     sortDir={params.sort_dir}
                     sortOptions={sortOptions}
-                    loading={loading}
+                    loading={isLoading}
                     onApply={(filters) => updateMany(filters as Partial<typeof params>)}
                     onReset={reset}
                 />
@@ -312,9 +177,32 @@ export function ClubsAdminPageClient() {
                 <Table
                     columns={columns}
                     data={data}
-                    loading={loading}
+                    loading={isLoading}
                     keyExtractor={(row) => row.id}
-                    renderActions={renderRowActions}
+                    renderActions={(row) => (
+                        <TableActions>
+                            <TableActionItem
+                                icon={<ArrowRight className="w-4 h-4" />}
+                                label={t("openWorkspace")}
+                                onClick={() => handleDetail(row)}
+                            />
+                            {canUpdate && (
+                                <TableActionItem
+                                    icon={<Pencil className="w-4 h-4" />}
+                                    label={t("edit")}
+                                    onClick={() => openEdit(row)}
+                                />
+                            )}
+                            {canDelete && (
+                                <TableActionItem
+                                    icon={<Trash2 className="w-4 h-4" />}
+                                    label={t("delete")}
+                                    variant="danger"
+                                    onClick={() => setDeleteTarget(row)}
+                                />
+                            )}
+                        </TableActions>
+                    )}
                     emptyText={tc("notFound")}
                 />
 
@@ -334,7 +222,7 @@ export function ClubsAdminPageClient() {
                 onSubmit={handleSubmit}
                 title={editing ? tc("edit") : tc("create")}
                 isEdit={!!editing}
-                submitting={submitting}
+                submitting={editing ? isUpdating : isCreating}
                 fields={[
                     { name: "is_active", label: t("active"), type: "checkbox" },
                 ]}
@@ -342,27 +230,11 @@ export function ClubsAdminPageClient() {
                     is_active: editing?.is_active ?? true,
                 }}
                 imageFields={[
-                    {
-                        name: "logo",
-                        label: t("logo"),
-                        initialUrl: editing?.logo ?? null,
-                    },
+                    { name: "logo", label: t("logo"), initialUrl: editing?.logo ?? null },
                 ]}
                 translatableFields={[
-                    {
-                        name: "name",
-                        label: t("name"),
-                        type: "text",
-                        required: true,
-                        placeholder: tc("namePlaceholder"),
-                    },
-                    {
-                        name: "description",
-                        // ── CKEditor — thay textarea bằng richtext ───────────────
-                        type: "richtext",
-                        label: t("description"),
-                        placeholder: tc("descriptionPlaceholder"),
-                    },
+                    { name: "name", label: t("name"), type: "text", required: true, placeholder: tc("namePlaceholder") },
+                    { name: "description", label: t("description"), type: "richtext", placeholder: tc("descriptionPlaceholder") },
                 ]}
                 initialTranslations={toInitialTranslations(editing?.translations)}
             />
@@ -381,9 +253,14 @@ export function ClubsAdminPageClient() {
                 }
                 confirmText={t("delete")}
                 cancelText={t("cancel")}
-                onConfirm={handleDeleteConfirm}
+                onConfirm={() => {
+                    if (deleteTarget) {
+                        handleDeleteConfirm(deleteTarget.id);
+                        setDeleteTarget(null);
+                    }
+                }}
                 onCancel={() => setDeleteTarget(null)}
-                loading={deleting}
+                loading={isDeleting}
             />
         </div>
     );

@@ -275,6 +275,7 @@
     "wordCount": "{count} từ"
   },
   "role": {
+    "slug": "Slug",
     "title": "Danh sách chức vụ",
     "create": "Thêm chức vụ",
     "edit": "Sửa chức vụ",
@@ -331,6 +332,7 @@
     "action_update": "Sửa",
     "action_delete": "Xóa",
     "sortOrder":"Thứ tự sắp xếp",
-    "label": "Tên chức năng"
+    "label": "Tên chức năng",
+    "permissions": "Quyền hạn"
   }
 }

@@ -30,6 +30,7 @@ import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import { useListParams } from "@/hooks/useListParams";
 import { useModules } from "@/domains/module/hooks/useModules";
 import type { Module, ModuleFilters } from "@/domains/module/types";
+import type { TranslationEntry } from "@/components/shared/forms/FormModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -91,8 +92,8 @@ function ActionPill({ label, active, icon }: ActionPillProps) {
     return (
         <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${active
-                ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-500/30"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600"
+                ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200/60 dark:ring-emerald-500/20"
+                : "bg-gray-50 dark:bg-gray-800/60 text-gray-400 dark:text-gray-600"
                 }`}
         >
             <span className="w-3 h-3 flex-shrink-0">{icon}</span>
@@ -120,28 +121,31 @@ function ModuleCard({
     toggling,
 }: ModuleCardProps) {
     const desc = htmlToPreview(getTranslatedDescription(r, locale));
+    const t = useTranslations("common");
+    const tm = useTranslations("module");
+
     return (
-        <div className="relative rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden transition-shadow hover:shadow-md">
-            <div className="h-0.5 w-full bg-gradient-to-r from-indigo-400 to-violet-400" />
+        <div className="group relative rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden transition-all hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm">
             <div className="p-4">
+                {/* Header: icon + name + actions */}
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-500/20">
-                            <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                            <Shield className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
                             <span className="text-sm font-semibold text-gray-900 dark:text-white truncate block">
                                 {getTranslatedName(r, locale)}
                             </span>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                                <span className="text-[10px] text-gray-400 dark:text-gray-600 tabular-nums">
                                     #{index + 1}
                                 </span>
-                                <span className="inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">
+                                <span className="inline-block px-1.5 py-0.5 text-[11px] font-mono font-medium rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
                                     {r.module}
                                 </span>
-                                <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                                    sort: {r.sort_order}
+                                <span className="text-[11px] text-gray-400 dark:text-gray-600 tabular-nums">
+                                    {tm("sortOrder")}: {r.sort_order}
                                 </span>
                             </div>
                         </div>
@@ -149,26 +153,32 @@ function ModuleCard({
                     <div className="flex items-center gap-1 flex-shrink-0">
                         <button
                             onClick={() => onEdit(r)}
-                            className="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                            aria-label={t("edit")}
+                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
                         >
                             <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button
                             onClick={() => onDelete(r)}
-                            className="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                            aria-label={t("delete")}
+                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                         >
                             <Trash2 className="w-3.5 h-3.5" />
                         </button>
                     </div>
                 </div>
+
+                {/* Description */}
                 {desc && (
                     <p className="mt-3 text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
                         {desc}
                     </p>
                 )}
+
+                {/* Is active */}
                 <div className="mt-3 flex items-center justify-between">
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Trạng thái
+                        {t("active")}
                     </span>
                     <ToggleSwitch
                         checked={!!r.is_active}
@@ -176,16 +186,19 @@ function ModuleCard({
                         onChange={() => onToggleStatus(r)}
                     />
                 </div>
+
                 <div className="my-3 border-t border-gray-100 dark:border-gray-800" />
+
+                {/* Permissions */}
                 <div className="space-y-2">
-                    <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                        Quyền thông thường
+                    <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-wider">
+                        {tm("permissions")}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
-                        <ActionPill label="Xem" active={!!r.actions.view} icon={<Eye className="w-3 h-3" />} />
-                        <ActionPill label="Thêm" active={!!r.actions.create} icon={<FilePlus2 className="w-3 h-3" />} />
-                        <ActionPill label="Sửa" active={!!r.actions.update} icon={<RefreshCw className="w-3 h-3" />} />
-                        <ActionPill label="Xóa" active={!!r.actions.delete} icon={<Eraser className="w-3 h-3" />} />
+                        <ActionPill label={tm("action_view")} active={!!r.actions.view} icon={<Eye className="w-3 h-3" />} />
+                        <ActionPill label={tm("action_create")} active={!!r.actions.create} icon={<FilePlus2 className="w-3 h-3" />} />
+                        <ActionPill label={tm("action_update")} active={!!r.actions.update} icon={<RefreshCw className="w-3 h-3" />} />
+                        <ActionPill label={tm("action_delete")} active={!!r.actions.delete} icon={<Eraser className="w-3 h-3" />} />
                     </div>
                 </div>
             </div>
@@ -224,12 +237,39 @@ export function ModulesPageClient() {
     } = useModules(params);
 
     // ── UI state (chỉ liên quan render, không liên quan cache) ───────────────
-    const [createOpen, setCreateOpen] = useState(false);
-    const [editOpen, setEditOpen] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
     const [selected, setSelected] = useState<Module | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Module | null>(null);
 
-    const openEdit = (m: Module) => { setSelected(m); setEditOpen(true); };
+    const openCreate = () => {
+        setSelected(null);
+        setModalOpen(true);
+    };
+
+    const openEdit = (m: Module) => {
+        setSelected(m);
+        setModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setModalOpen(false);
+        setSelected(null);
+    };
+
+    const handleSubmit = async (
+        values: Record<string, string>,
+        translations?: TranslationEntry[],
+    ) => {
+        const result = selected
+            ? await handleEdit(selected.module_id, values, translations)
+            : await handleCreate(values, translations);
+
+        if (!result) {
+            closeModal();
+        }
+
+        return result;
+    };
 
     // ── Form config ───────────────────────────────────────────────────────────
     const sortOptions = [
@@ -241,11 +281,11 @@ export function ModulesPageClient() {
         () => [
             { name: "slug", label: tm("module"), type: "text", required: true, placeholder: "user" },
             { name: "sort_order", label: tm("sortOrder"), type: "number", required: true, placeholder: "1" },
-            { name: "is_active", label: t("active"), type: "checkbox" },
-            { name: "action_view", label: `${tm("action_view")} (view)`, type: "checkbox" },
-            { name: "action_create", label: `${tm("action_create")} (create)`, type: "checkbox" },
-            { name: "action_update", label: `${tm("action_update")} (update)`, type: "checkbox" },
-            { name: "action_delete", label: `${tm("action_delete")} (delete)`, type: "checkbox" },
+            { name: "is_active", label: t("active"), type: "toggle" },
+            { name: "action_view", label: tm("action_view"), type: "checkbox" },
+            { name: "action_create", label: tm("action_create"), type: "checkbox" },
+            { name: "action_update", label: tm("action_update"), type: "checkbox" },
+            { name: "action_delete", label: tm("action_delete"), type: "checkbox" },
         ],
         [t, tm]
     );
@@ -287,8 +327,8 @@ export function ModulesPageClient() {
             key: "name", label: tm("label"),
             render: (row) => (
                 <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-500/20">
-                        <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                        <Shield className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
                         {getTranslatedName(row, locale)}
@@ -299,7 +339,7 @@ export function ModulesPageClient() {
         {
             key: "module", label: tm("module"),
             render: (row) => (
-                <span className="inline-block px-2 py-1 text-xs font-mono font-medium rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">
+                <span className="inline-block px-2 py-1 text-xs font-mono font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
                     {row.module}
                 </span>
             ),
@@ -349,7 +389,7 @@ export function ModulesPageClient() {
                         </p>
                     </div>
                     <button
-                        onClick={() => setCreateOpen(true)}
+                        onClick={openCreate}
                         className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
                     >
                         <Plus className="w-4 h-4" />
@@ -376,7 +416,7 @@ export function ModulesPageClient() {
                                 {Array.from({ length: 4 }).map((_, i) => (
                                     <div key={i} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 animate-pulse">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800" />
+                                            <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800" />
                                             <div className="flex-1 space-y-2">
                                                 <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-2/3" />
                                                 <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-1/3" />
@@ -444,42 +484,33 @@ export function ModulesPageClient() {
                 </div>
             </div>
 
-            {/* Create modal */}
             <FormModal
-                isOpen={createOpen}
-                onClose={() => setCreateOpen(false)}
-                onSubmit={async (...args) => {
-                    const result = await handleCreate(...args);
-                    if (!result) setCreateOpen(false);
-                    return result;
-                }}
-                title={tm("create")}
-                fields={formFields}
-                initialValues={createInitialValues}
-                translatableFields={translatableFields}
-                initialTranslations={{ vi: { locale: "vi", name: "", description: "" }, en: { locale: "en", name: "", description: "" } }}
-                submitting={isCreating}
-            />
+                isOpen={modalOpen}
+                onClose={closeModal}
+                onSubmit={handleSubmit}
+                title={selected ? tm("edit") : tm("create")}
+                submitting={selected ? isUpdating : isCreating}
+                isEdit={!!selected}
 
-            {/* Edit modal */}
-            {selected && (
-                <FormModal
-                    isOpen={editOpen}
-                    onClose={() => { setEditOpen(false); setSelected(null); }}
-                    onSubmit={async (values, translations) => {
-                        const result = await handleEdit(selected.module_id, values, translations);
-                        if (!result) { setEditOpen(false); setSelected(null); }
-                        return result;
-                    }}
-                    title={tm("edit")}
-                    fields={formFields}
-                    initialValues={editInitialValues}
-                    translatableFields={translatableFields}
-                    initialTranslations={toInitialTranslations(selected.translations)}
-                    submitting={isUpdating}
-                    isEdit
-                />
-            )}
+                fields={formFields}
+
+                initialValues={
+                    selected
+                        ? editInitialValues
+                        : createInitialValues
+                }
+
+                translatableFields={translatableFields}
+
+                initialTranslations={
+                    selected
+                        ? toInitialTranslations(selected.translations)
+                        : {
+                            vi: { locale: "vi", name: "", description: "" },
+                            en: { locale: "en", name: "", description: "" },
+                        }
+                }
+            />
 
             {/* Delete confirm */}
             <DeleteConfirmModal

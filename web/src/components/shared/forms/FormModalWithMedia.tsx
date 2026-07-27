@@ -15,6 +15,8 @@ import { buildEmptyTranslationValues } from "@/lib/formTranslations";
 import DatePicker from "@/components/shared/ui/DatePicker";
 import Select from "@/components/shared/ui/Select";
 import { RichEditor } from "@/components/shared/ui/RichEditor";
+import CheckBox from "@/components/shared/ui/CheckBox";
+import ToggleForm from "@/components/shared/ui/ToggleForm";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +33,7 @@ export interface FormFieldDef {
     | "select"
     | "datepicker"
     | "checkbox"
+    | "toggle"
     | "icon-picker"
     | "image";
     placeholder?: string;
@@ -332,6 +335,11 @@ export function FormModalWithMedia({
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
     };
 
+
+    const handleBoolChange = (name: string) => {
+        handleChange(name, isChecked(name) ? "0" : "1");
+    };
+
     const handleTranslationChange = (locale: string, name: string, value: string) => {
         setTranslationValues((prev) => ({ ...prev, [locale]: { ...prev[locale], [name]: value } }));
         if (translationErrors[locale]?.[name]) {
@@ -366,31 +374,24 @@ export function FormModalWithMedia({
         const err = errors[field.name];
         const val = values[field.name] ?? "";
 
-        // ── Checkbox (toggle switch) ──────────────────────────────────────────
+        // ── CheckBox — ô vuông + checkmark ───────────────────────────────────
         if (field.type === "checkbox") return (
-            <>
-                <div className="flex items-center justify-between py-1">
-                    <span className="text-sm font-medium text-foreground">
-                        {field.label}
-                    </span>
-                    <button
-                        type="button"
-                        role="switch"
-                        aria-checked={isChecked(field.name)}
-                        onClick={() => handleChange(field.name, isChecked(field.name) ? "0" : "1")}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full
-                            border-2 border-transparent transition-colors duration-200 ease-in-out
-                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
-                            ${isChecked(field.name) ? "bg-primary" : "bg-background-muted"}`}
-                    >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform
-                            rounded-full bg-white shadow-lg transition
-                            ${isChecked(field.name) ? "translate-x-5" : "translate-x-0"}`}
-                        />
-                    </button>
-                </div>
-                {renderError(err)}
-            </>
+            <CheckBox
+                checked={isChecked(field.name)}
+                onChange={() => handleBoolChange(field.name)}
+                label={field.label}
+                error={err}
+            />
+        );
+
+        // ── ToggleForm — pill trượt ───────────────────────────────────────────
+        if (field.type === "toggle") return (
+            <ToggleForm
+                checked={isChecked(field.name)}
+                onChange={() => handleBoolChange(field.name)}
+                label={field.label}
+                error={err}
+            />
         );
 
         // ── Icon picker ───────────────────────────────────────────────────────

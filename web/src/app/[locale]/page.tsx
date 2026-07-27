@@ -56,6 +56,7 @@ export default async function LocaleRootPage({
   let clubs: Club[] = [];
   try {
     const res = await clubServiceServer.list({ limit: 100 });
+    
     clubs = (res.data ?? []).filter((c) =>
       canAccessClub(profile!.permissions, profile!.is_superadmin, c.id),
     );

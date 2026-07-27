@@ -298,22 +298,27 @@ export function useExamples(
 
 `src/app/[locale]/admin/(system)/examples/ExamplesPageClient.tsx`
 
+> **Quy tắc chọn pattern:**
+> - Nhìn vào type của entity — nếu có `translations?: Array<{locale, name, ...}>` → dùng **Pattern B (có translations)**
+> - Nếu không có mảng `translations` → dùng **Pattern A (không có translations)**
+
+---
+
+### Pattern A — Không có translations
+
+> Áp dụng khi entity lưu dữ liệu trực tiếp (không đa ngôn ngữ), ví dụ: User, Role, Permission.
+
 ```tsx
 "use client";
 
 import { useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
 import { Table, ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar } from "@/components/shared/ui/FilterBar";
 import { Pagination } from "@/components/shared/ui/Pagination";
-import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
-import {
-    FormModal,
-    type FormFieldDef,
-    type TranslatableFieldDef,
-} from "@/components/shared/forms/FormModal";
+import { FormModal, type SubmitResult } from "@/components/shared/forms/FormModal";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
@@ -322,7 +327,230 @@ import { useExamples } from "@/domains/example/hooks/useExamples";
 import type { Example, ExampleFilters } from "@/domains/example/types";
 
 export function ExamplesPageClient() {
-    const locale = useLocale();
+    // ❌ KHÔNG cần useLocale()
+    const t  = useTranslations("common");
+    const te = useTranslations("example");
+
+    const { params, setPage, setLimit, updateMany, reset } =
+        useListParams<ExampleFilters>({
+            defaultFilters: { search: "", status: undefined },
+            defaultSortBy: "created_at",
+            defaultSortDir: "desc",
+        });
+
+    const {
+        data, total, isLoading,
+        isCreating, isUpdating, isDeleting,
+        handleCreate, handleEdit, handleDeleteConfirm,
+    } = useExamples(params);
+
+    // ── UI state ──────────────────────────────────────────────────────────────
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selected, setSelected] = useState<Example | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<Example | null>(null);
+
+    const openCreate = () => { setSelected(null); setModalOpen(true); };
+    const openEdit   = (m: Example) => { setSelected(m); setModalOpen(true); };
+    const closeModal = () => { setModalOpen(false); setSelected(null); };
+
+    // handleSubmit chỉ nhận values — KHÔNG có translations
+    const handleSubmit = async (
+        values: Record<string, string>,
+    ): Promise<SubmitResult> => {
+        const result = selected
+            ? await handleEdit(selected.id, values)
+            : await handleCreate(values);
+
+        if (!result) closeModal();
+        return result;
+    };
+
+    // ── Form config ───────────────────────────────────────────────────────────
+    const sortOptions = [
+        { value: "created_at", label: t("createdAt") },
+    ];
+
+    // Tất cả fields đều nằm trong formFields (không có translatableFields)
+    const formFields = [
+        { name: "name",       label: t("name"),        type: "text" as const,   required: true },
+        { name: "sort_order", label: t("sortOrder"),   type: "number" as const, required: true, placeholder: "1" },
+        { name: "is_active",  label: t("active"),      type: "toggle" as const },
+    ];
+
+    const formInitialValues = {
+        name:       selected?.name ?? "",
+        sort_order: String(selected?.sort_order ?? 1),
+        is_active:  selected?.is_active ? "1" : "0",
+    };
+
+    // ── Columns ───────────────────────────────────────────────────────────────
+    const columns: ColumnDef<Example>[] = [
+        {
+            key: "stt", label: t("no"), className: "w-12",
+            render: (_row, index) => (
+                <span className="text-foreground-muted text-xs">
+                    {(params.page - 1) * params.limit + index + 1}
+                </span>
+            ),
+        },
+        {
+            key: "name", label: t("name"),
+            // Đọc trực tiếp từ field, không qua getTranslatedName()
+            render: (row) => <span className="text-sm text-foreground">{row.name || "—"}</span>,
+        },
+        {
+            key: "is_active", label: t("status"), className: "text-center w-28",
+            render: (row) => (
+                <span className={`text-xs font-medium ${row.is_active ? "text-emerald-600" : "text-gray-400"}`}>
+                    {row.is_active ? t("active") : t("inactive")}
+                </span>
+            ),
+        },
+    ];
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    return (
+        <>
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-xl font-semibold text-foreground">{te("title")}</h1>
+                        <p className="text-sm text-foreground-muted mt-0.5">
+                            {te("totalCount", { count: total.toLocaleString() })}
+                        </p>
+                    </div>
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />{te("create")}
+                    </button>
+                </div>
+
+                <div className="space-y-4">
+                    <FilterBar
+                        search={params.search}
+                        sortBy={params.sort_by}
+                        sortDir={params.sort_dir}
+                        sortOptions={sortOptions}
+                        loading={isLoading}
+                        onApply={(filters) => updateMany(filters as Partial<typeof params>)}
+                        onReset={reset}
+                    />
+                    <Table
+                        columns={columns}
+                        data={data}
+                        loading={isLoading}
+                        keyExtractor={(row) => row.id}
+                        renderActions={(row) => (
+                            <TableActions>
+                                <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")}   onClick={() => openEdit(row)} />
+                                <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
+                            </TableActions>
+                        )}
+                        emptyText={te("notFound")}
+                    />
+                    <Pagination
+                        page={params.page} limit={params.limit} total={total}
+                        onPageChange={setPage} onLimitChange={setLimit}
+                    />
+                </div>
+            </div>
+
+            {/* FormModal chỉ dùng fields + initialValues, KHÔNG có translatableFields */}
+            <FormModal
+                isOpen={modalOpen}
+                onClose={closeModal}
+                onSubmit={handleSubmit}
+                title={selected ? te("edit") : te("create")}
+                submitting={selected ? isUpdating : isCreating}
+                isEdit={!!selected}
+                fields={formFields}
+                initialValues={formInitialValues}
+            />
+
+            <DeleteConfirmModal
+                isOpen={!!deleteTarget}
+                title={t("deleteConfirmTitle")}
+                description={t("deleteConfirmDesc")}
+                message={deleteTarget ? te("deleteConfirmMsg", { name: deleteTarget.name }) : ""}
+                confirmText={t("delete")}
+                cancelText={t("cancel")}
+                onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.id); setDeleteTarget(null); } }}
+                onCancel={() => setDeleteTarget(null)}
+                loading={isDeleting}
+            />
+        </>
+    );
+}
+```
+
+---
+
+### Pattern B — Có translations
+
+> Áp dụng khi entity có mảng `translations: Array<{locale, name, description?, ...}>`, ví dụ: Module, Category, Tag, Post.
+
+```tsx
+"use client";
+
+import { useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";   // thêm useLocale
+import { Plus, Pencil, Trash2 } from "lucide-react";
+
+import { Table, ColumnDef } from "@/components/shared/ui/Table";
+import { FilterBar } from "@/components/shared/ui/FilterBar";
+import { Pagination } from "@/components/shared/ui/Pagination";
+import {
+    FormModal,
+    type FormFieldDef,
+    type TranslatableFieldDef,
+    type TranslationEntry,
+} from "@/components/shared/forms/FormModal";
+import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
+import { TableActions } from "@/components/shared/ui/TableActions";
+import { TableActionItem } from "@/components/shared/ui/TableActionItem";
+import { useListParams } from "@/hooks/useListParams";
+import { useExamples } from "@/domains/example/hooks/useExamples";
+import type { Example, ExampleFilters } from "@/domains/example/types";
+
+// ── Helpers (đặt ngoài component để tránh re-create) ─────────────────────────
+
+// Đọc tên theo locale hiện tại, fallback về locale đầu tiên
+function getTranslatedName(row: Example, locale: string): string {
+    return (
+        row.translations?.find((x) => x.locale === locale)?.name ??
+        row.translations?.[0]?.name ??
+        ""
+    );
+}
+
+// Đọc description theo locale (nếu entity có description)
+function getTranslatedDescription(row: Example, locale: string): string {
+    return (
+        row.translations?.find((x) => x.locale === locale)?.description ??
+        row.translations?.[0]?.description ??
+        ""
+    );
+}
+
+// Map translations array → object { vi: {...}, en: {...} } cho FormModal
+function toInitialTranslations(translations?: Example["translations"]) {
+    if (!translations?.length) {
+        return {
+            vi: { locale: "vi", name: "", description: "" },
+            en: { locale: "en", name: "", description: "" },
+        };
+    }
+    return Object.fromEntries(
+        translations.map(({ locale, ...rest }) => [locale, { locale, ...rest }])
+    );
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export function ExamplesPageClient() {
+    const locale = useLocale();   // cần để đọc đúng ngôn ngữ
     const t  = useTranslations("common");
     const te = useTranslations("example");
 
@@ -340,71 +568,81 @@ export function ExamplesPageClient() {
     } = useExamples(params);
 
     // ── UI state ──────────────────────────────────────────────────────────────
-    const [createOpen, setCreateOpen] = useState(false);
-    const [editOpen, setEditOpen]     = useState(false);
-    const [selected, setSelected]     = useState<Example | null>(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selected, setSelected] = useState<Example | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Example | null>(null);
 
-    const openEdit = (row: Example) => { setSelected(row); setEditOpen(true); };
+    const openCreate = () => { setSelected(null); setModalOpen(true); };
+    const openEdit   = (m: Example) => { setSelected(m); setModalOpen(true); };
+    const closeModal = () => { setModalOpen(false); setSelected(null); };
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    const getTranslatedName = (row: Example) =>
-        row.translations?.find((x) => x.locale === locale)?.name ??
-        row.translations?.[0]?.name ?? "";
+    // handleSubmit nhận thêm translations
+    const handleSubmit = async (
+        values: Record<string, string>,
+        translations?: TranslationEntry[],
+    ) => {
+        const result = selected
+            ? await handleEdit(selected.id, values, translations)
+            : await handleCreate(values, translations);
 
-    function toInitialTranslations(translations?: Example["translations"]) {
-        if (!translations?.length) {
-            return {
-                vi: { locale: "vi", name: "", description: "" },
-                en: { locale: "en", name: "", description: "" },
-            };
-        }
-        return Object.fromEntries(
-            translations.map(({ locale, ...rest }) => [locale, { locale, ...rest }])
-        );
-    }
+        if (!result) closeModal();
+        return result;
+    };
 
     // ── Form config ───────────────────────────────────────────────────────────
     const sortOptions = [
         { value: "created_at", label: t("createdAt") },
-        { value: "id",         label: "ID" },
     ];
 
-    const formFields: FormFieldDef[] = [
+    // formFields: các field thường (không dịch) — sort_order, is_active, slug...
+    const formFields: FormFieldDef[] = useMemo(() => [
         { name: "sort_order", label: t("sortOrder"), type: "number", required: true, placeholder: "1" },
-        { name: "is_active",  label: t("active"), type: "checkbox" },
-    ];
+        { name: "is_active",  label: t("active"),    type: "toggle" },
+    ], [t]);
 
-    const translatableFields: TranslatableFieldDef[] = [
+    // translatableFields: các field có nội dung đa ngôn ngữ — name, description...
+    const translatableFields: TranslatableFieldDef[] = useMemo(() => [
         { name: "name",        label: t("name"),        type: "text",     required: true },
         { name: "description", label: t("description"), type: "textarea" },
-    ];
+    ], [t]);
 
     const editInitialValues = selected ? {
         sort_order: String(selected.sort_order ?? 1),
         is_active:  selected.is_active ? "1" : "0",
     } : undefined;
 
+    const createInitialValues = {
+        sort_order: "1",
+        is_active:  "1",
+    };
+
     // ── Columns ───────────────────────────────────────────────────────────────
     const columns: ColumnDef<Example>[] = [
-        { key: "stt", label: t("no"), className: "w-12",
-          render: (_row, index) => (
-              <span className="text-foreground-muted text-xs">
-                  {(params.page - 1) * params.limit + index + 1}
-              </span>
-          )},
-        { key: "name", label: t("name"),
-          render: (row) => getTranslatedName(row) || "—" },
-        { key: "is_active", label: t("status"), className: "text-center w-28",
-          render: (row) => (
-              <div className="flex justify-center">
-                  <ToggleSwitch
-                      checked={Boolean(row.is_active)}
-                      loading={togglingIds.has(row.id)}
-                      onChange={() => handleToggleStatus(row)}
-                  />
-              </div>
-          )},
+        {
+            key: "stt", label: t("no"), className: "w-12",
+            render: (_row, index) => (
+                <span className="text-foreground-muted text-xs">
+                    {(params.page - 1) * params.limit + index + 1}
+                </span>
+            ),
+        },
+        {
+            key: "name", label: t("name"),
+            // Phải dùng helper, không đọc row.name trực tiếp
+            render: (row) => <span className="text-sm text-foreground">{getTranslatedName(row, locale) || "—"}</span>,
+        },
+        {
+            key: "is_active", label: t("status"), className: "text-center w-28",
+            render: (row) => (
+                <div className="flex justify-center">
+                    <ToggleSwitch
+                        checked={Boolean(row.is_active)}
+                        loading={togglingIds.has(row.id)}
+                        onChange={() => handleToggleStatus(row)}
+                    />
+                </div>
+            ),
+        },
     ];
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -419,7 +657,7 @@ export function ExamplesPageClient() {
                         </p>
                     </div>
                     <button
-                        onClick={() => setCreateOpen(true)}
+                        onClick={openCreate}
                         className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
                     >
                         <Plus className="w-4 h-4" />{te("create")}
@@ -428,18 +666,23 @@ export function ExamplesPageClient() {
 
                 <div className="space-y-4">
                     <FilterBar
-                        search={params.search} isActive={params.is_active}
-                        sortBy={params.sort_by} sortDir={params.sort_dir}
-                        sortOptions={sortOptions} loading={isLoading}
+                        search={params.search}
+                        isActive={params.is_active}
+                        sortBy={params.sort_by}
+                        sortDir={params.sort_dir}
+                        sortOptions={sortOptions}
+                        loading={isLoading}
                         onApply={(filters) => updateMany(filters as Partial<typeof params>)}
                         onReset={reset}
                     />
                     <Table
-                        columns={columns} data={data} loading={isLoading}
+                        columns={columns}
+                        data={data}
+                        loading={isLoading}
                         keyExtractor={(row) => row.id}
                         renderActions={(row) => (
                             <TableActions>
-                                <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />
+                                <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")}   onClick={() => openEdit(row)} />
                                 <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
                             </TableActions>
                         )}
@@ -452,50 +695,35 @@ export function ExamplesPageClient() {
                 </div>
             </div>
 
-            {/* Create modal */}
+            {/* FormModal dùng đủ 5 props: fields, initialValues, translatableFields, initialTranslations */}
             <FormModal
-                isOpen={createOpen}
-                onClose={() => setCreateOpen(false)}
-                onSubmit={async (...args) => {
-                    const result = await handleCreate(...args);
-                    if (!result) setCreateOpen(false);
-                    return result;
-                }}
-                title={te("create")}
+                isOpen={modalOpen}
+                onClose={closeModal}
+                onSubmit={handleSubmit}
+                title={selected ? te("edit") : te("create")}
+                submitting={selected ? isUpdating : isCreating}
+                isEdit={!!selected}
                 fields={formFields}
-                initialValues={{ sort_order: "1", is_active: "1" }}
+                initialValues={selected ? editInitialValues : createInitialValues}
                 translatableFields={translatableFields}
-                initialTranslations={{ vi: { locale: "vi", name: "", description: "" }, en: { locale: "en", name: "", description: "" } }}
-                submitting={isCreating}
+                initialTranslations={
+                    selected
+                        ? toInitialTranslations(selected.translations)
+                        : {
+                            vi: { locale: "vi", name: "", description: "" },
+                            en: { locale: "en", name: "", description: "" },
+                          }
+                }
             />
 
-            {/* Edit modal */}
-            {selected && (
-                <FormModal
-                    isOpen={editOpen}
-                    onClose={() => { setEditOpen(false); setSelected(null); }}
-                    onSubmit={async (values, translations) => {
-                        const result = await handleEdit(selected.module_id, values, translations);
-                        if (!result) { setEditOpen(false); setSelected(null); }
-                        return result;
-                    }}
-                    title={te("edit")}
-                    fields={formFields}
-                    initialValues={editInitialValues}
-                    translatableFields={translatableFields}
-                    initialTranslations={toInitialTranslations(selected.translations)}
-                    submitting={isUpdating}
-                    isEdit
-                />
-            )}
-
-            {/* Delete confirm */}
             <DeleteConfirmModal
                 isOpen={!!deleteTarget}
                 title={t("deleteConfirmTitle")}
                 description={t("deleteConfirmDesc")}
-                message={deleteTarget ? te("deleteConfirmMsg", { name: getTranslatedName(deleteTarget) }) : ""}
-                confirmText={t("delete")} cancelText={t("cancel")}
+                {/* Dùng helper để lấy tên theo locale */}
+                message={deleteTarget ? te("deleteConfirmMsg", { name: getTranslatedName(deleteTarget, locale) }) : ""}
+                confirmText={t("delete")}
+                cancelText={t("cancel")}
                 onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.id); setDeleteTarget(null); } }}
                 onCancel={() => setDeleteTarget(null)}
                 loading={isDeleting}
@@ -505,6 +733,42 @@ export function ExamplesPageClient() {
 }
 ```
 
+---
+
+### Bảng so sánh nhanh
+
+| | **Pattern A** (không có translations) | **Pattern B** (có translations) |
+|---|---|---|
+| `useLocale()` | ❌ | |
+| `getTranslatedName(row, locale)` | ❌ — đọc `row.name` trực tiếp | — bắt buộc |
+| `toInitialTranslations()` | ❌ | |
+| `handleSubmit` | `(values)` | `(values, translations?)` |
+| `FormModal` | `fields` + `initialValues` | Thêm `translatableFields` + `initialTranslations` |
+| Columns | `row.name` | `getTranslatedName(row, locale)` |
+
+### Cách xác định nên dùng pattern nào?
+
+```ts
+// Nhìn vào type definition của entity:
+
+// ❌ Không có translations[] → Pattern A
+type Example = {
+  id: string;
+  name: string;        // lưu thẳng
+  is_active: boolean;
+}
+
+// Có translations[] → Pattern B
+type Example = {
+  id: string;
+  is_active: boolean;
+  translations?: Array<{
+    locale: string;    // 👈 có mảng này → Pattern B
+    name: string;
+    description?: string;
+  }>;
+}
+```
 ## Bước 6: Thêm i18n keys
 
 ```json
