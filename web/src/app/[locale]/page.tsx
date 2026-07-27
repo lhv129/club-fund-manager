@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { getAccessToken } from "@/lib/cookies";
 import { authServiceServer } from "@/domains/auth/services/authServiceServer";
 import { clubServiceServer } from "@/domains/club/services/clubServiceServer";
 import { canAccessClub } from "@/lib/permissions";
@@ -36,13 +35,7 @@ export default async function LocaleRootPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // 1. Auth check
-  const token = await getAccessToken();
-  if (!token) {
-    redirect(`/${locale}/login`);
-  }
-
-  // 2. Fetch profile
+  // 1. Fetch profile (serverAdapter tự refresh nếu access token hết hạn)
   let profile: Profile | null = null;
   try {
     const response = await authServiceServer.getProfile();

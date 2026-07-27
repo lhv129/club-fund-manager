@@ -44,19 +44,22 @@ export default async function middleware(request: NextRequest) {
   const locale = firstSegment;
   const pathAfterLocale = "/" + pathnameSegments.slice(1).join("/");
   const accessToken = request.cookies.get(COOKIE_NAMES.accessToken)?.value;
+  const refreshToken = request.cookies.get(COOKIE_NAMES.refreshToken)?.value;
+  const hasAnyToken = !!accessToken || !!refreshToken;
 
   // Auth routes — redirect to root if already logged in (root dispatches by role)
   const isAuthRoute = AUTH_ROUTES.some(
     (route) => pathAfterLocale === route || pathAfterLocale === route + "/",
   );
 
-  if (isAuthRoute && accessToken) {
+  if (isAuthRoute && hasAnyToken) {
     const homeUrl = new URL(`/${locale}${APP_ROUTES.home}`, request.url);
     return NextResponse.redirect(homeUrl);
   }
 
-  // Protected routes — redirect to login if not authenticated
-  if (!isAuthRoute && !accessToken) {
+  // Protected routes — redirect to login only when both tokens are missing.
+  // Nếu còn refresh_token thì cho qua để serverAdapter có cơ hội auto-refresh.
+  if (!isAuthRoute && !hasAnyToken) {
     const loginUrl = new URL(`/${locale}${APP_ROUTES.login}`, request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);

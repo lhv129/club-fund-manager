@@ -23,6 +23,35 @@ const BASE_COOKIE_OPTIONS = {
     path: "/",
 };
 
+type RefreshJson = {
+    success?: boolean;
+    data?: {
+        access_token?: string;
+        refresh_token?: string;
+    };
+};
+
+/**
+ * Deduplicate refresh requests theo refresh_token để tránh race:
+ * nhiều request cùng 401 chỉ gọi /auth/refresh đúng 1 lần.
+ */
+const inFlightRefreshByToken = new Map<string, Promise<string | null>>();
+
+function clearAuthCookiesFromStore(cookieStore: Awaited<ReturnType<typeof cookies>>) {
+    cookieStore.set({
+        ...BASE_COOKIE_OPTIONS,
+        name: COOKIE_NAMES.accessToken,
+        value: "",
+        maxAge: 0,
+    });
+    cookieStore.set({
+        ...BASE_COOKIE_OPTIONS,
+        name: COOKIE_NAMES.refreshToken,
+        value: "",
+        maxAge: 0,
+    });
+}
+
 /**
  * Gọi Laravel /auth/refresh bằng refresh_token trong cookie,
  * rồi set lại access_token + refresh_token mới vào cookie.
@@ -36,42 +65,64 @@ async function refreshAccessToken(locale: string): Promise<string | null> {
     const refreshToken = cookieStore.get(COOKIE_NAMES.refreshToken)?.value;
     if (!refreshToken) return null;
 
-    try {
-        const res = await fetch(`${API_URL}/auth/refresh`, {
-            method: "POST",
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "Accept-Language": locale,
-                locale,
-            },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-            cache: "no-store",
-        });
-
-        const json = await res.json();
-        if (!res.ok || !json.success) return null;
-
-        const { access_token, refresh_token: newRefreshToken } = json.data;
-
-        // Set cookie mới trực tiếp (Server Component + Route Handler)
-        cookieStore.set({
-            ...BASE_COOKIE_OPTIONS,
-            name: COOKIE_NAMES.accessToken,
-            value: access_token,
-            maxAge: COOKIE_MAX_AGE.accessToken,
-        });
-        cookieStore.set({
-            ...BASE_COOKIE_OPTIONS,
-            name: COOKIE_NAMES.refreshToken,
-            value: newRefreshToken,
-            maxAge: COOKIE_MAX_AGE.refreshToken,
-        });
-
-        return access_token as string;
-    } catch {
-        return null;
+    const inFlight = inFlightRefreshByToken.get(refreshToken);
+    if (inFlight) {
+        return inFlight;
     }
+
+    const refreshPromise = (async () => {
+        try {
+            const res = await fetch(`${API_URL}/auth/refresh`, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Accept-Language": locale,
+                    locale,
+                },
+                body: JSON.stringify({ refresh_token: refreshToken }),
+                cache: "no-store",
+            });
+
+            const json = (await res.json().catch(() => null)) as RefreshJson | null;
+            if (!res.ok || !json?.success) {
+                // Refresh token invalid/expired → clear cookie để tránh loop login/home.
+                if (res.status === 401 || res.status === 403) {
+                    clearAuthCookiesFromStore(cookieStore);
+                }
+                return null;
+            }
+
+            const accessToken = json.data?.access_token;
+            const nextRefreshToken = json.data?.refresh_token;
+            if (!accessToken || !nextRefreshToken) {
+                return null;
+            }
+
+            // Set cookie mới trực tiếp (Server Component + Route Handler)
+            cookieStore.set({
+                ...BASE_COOKIE_OPTIONS,
+                name: COOKIE_NAMES.accessToken,
+                value: accessToken,
+                maxAge: COOKIE_MAX_AGE.accessToken,
+            });
+            cookieStore.set({
+                ...BASE_COOKIE_OPTIONS,
+                name: COOKIE_NAMES.refreshToken,
+                value: nextRefreshToken,
+                maxAge: COOKIE_MAX_AGE.refreshToken,
+            });
+
+            return accessToken;
+        } catch {
+            return null;
+        } finally {
+            inFlightRefreshByToken.delete(refreshToken);
+        }
+    })();
+
+    inFlightRefreshByToken.set(refreshToken, refreshPromise);
+    return refreshPromise;
 }
 
 function createRequest(localeOverride?: string) {

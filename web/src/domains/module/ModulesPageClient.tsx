@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
     Check,
@@ -14,7 +14,6 @@ import {
     RefreshCw,
     Eraser,
 } from "lucide-react";
-import toast from "react-hot-toast";
 
 import { Table, ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar } from "@/components/shared/ui/FilterBar";
@@ -24,32 +23,15 @@ import {
     FormModal,
     type FormFieldDef,
     type TranslatableFieldDef,
-    type TranslationEntry,
-    type SubmitResult,
-    type ServerErrorResponse,
 } from "@/components/shared/forms/FormModal";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import { useListParams } from "@/hooks/useListParams";
-import { moduleService } from "@/domains/module/services/moduleService";
-import type { ApiResponse } from "@/types/api";
+import { useModules } from "@/domains/module/hooks/useModules";
 import type { Module, ModuleFilters } from "@/domains/module/types";
 
-function getServerError(err: unknown): ServerErrorResponse | null {
-    const responseData = (err as { response?: { data?: ServerErrorResponse } })
-        ?.response?.data;
-    if (responseData) return responseData;
-    if (
-        err &&
-        typeof err === "object" &&
-        "success" in err &&
-        (err as ServerErrorResponse).success === false
-    ) {
-        return err as ServerErrorResponse;
-    }
-    return null;
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function htmlToPreview(html?: string | null): string {
     if (!html) return "";
@@ -62,19 +44,19 @@ function htmlToPreview(html?: string | null): string {
 
 function getTranslatedName(row: Module, locale: string): string {
     return (
-        row.translations?.find((x) => x.locale === locale)?.name
-        ?? row.translations?.[0]?.name
-        ?? row.label
-        ?? row.module
+        row.translations?.find((x) => x.locale === locale)?.name ??
+        row.translations?.[0]?.name ??
+        row.label ??
+        row.module
     );
 }
 
 function getTranslatedDescription(row: Module, locale: string): string {
     return (
-        row.translations?.find((x) => x.locale === locale)?.description
-        ?? row.translations?.[0]?.description
-        ?? row.description
-        ?? ""
+        row.translations?.find((x) => x.locale === locale)?.description ??
+        row.translations?.[0]?.description ??
+        row.description ??
+        ""
     );
 }
 
@@ -90,34 +72,7 @@ function toInitialTranslations(translations?: Module["translations"]) {
     );
 }
 
-function buildPayload(values: Record<string, string>, translations?: TranslationEntry[]) {
-    const formData = new FormData();
-
-    formData.append("slug", values.slug ?? "");
-    formData.append("sort_order", values.sort_order ?? "1");
-    formData.append("is_active", (values.is_active === "1" || values.is_active === "true") ? "1" : "0");
-
-    if (values.action_view === "1" || values.action_view === "true") {
-        formData.append("actions[]", "view");
-    }
-    if (values.action_create === "1" || values.action_create === "true") {
-        formData.append("actions[]", "create");
-    }
-    if (values.action_update === "1" || values.action_update === "true") {
-        formData.append("actions[]", "update");
-    }
-    if (values.action_delete === "1" || values.action_delete === "true") {
-        formData.append("actions[]", "delete");
-    }
-
-    (translations ?? []).forEach((entry) => {
-        formData.append(`translations[${entry.locale}][locale]`, entry.locale);
-        formData.append(`translations[${entry.locale}][name]`, entry.name ?? "");
-        formData.append(`translations[${entry.locale}][description]`, entry.description ?? "");
-    });
-
-    return formData;
-}
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function ActionBadge({ active }: { active?: boolean }) {
     return active ? (
@@ -132,7 +87,6 @@ function ActionBadge({ active }: { active?: boolean }) {
 }
 
 type ActionPillProps = { label: string; active: boolean; icon: React.ReactNode };
-
 function ActionPill({ label, active, icon }: ActionPillProps) {
     return (
         <span
@@ -156,10 +110,16 @@ interface ModuleCardProps {
     onToggleStatus: (m: Module) => void;
     toggling: boolean;
 }
-
-function ModuleCard({ module: r, index, locale, onEdit, onDelete, onToggleStatus, toggling }: ModuleCardProps) {
+function ModuleCard({
+    module: r,
+    index,
+    locale,
+    onEdit,
+    onDelete,
+    onToggleStatus,
+    toggling,
+}: ModuleCardProps) {
     const desc = htmlToPreview(getTranslatedDescription(r, locale));
-
     return (
         <div className="relative rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden transition-shadow hover:shadow-md">
             <div className="h-0.5 w-full bg-gradient-to-r from-indigo-400 to-violet-400" />
@@ -174,7 +134,9 @@ function ModuleCard({ module: r, index, locale, onEdit, onDelete, onToggleStatus
                                 {getTranslatedName(r, locale)}
                             </span>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <span className="text-[10px] text-gray-400 dark:text-gray-500">#{index + 1}</span>
+                                <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                                    #{index + 1}
+                                </span>
                                 <span className="inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">
                                     {r.module}
                                 </span>
@@ -199,24 +161,22 @@ function ModuleCard({ module: r, index, locale, onEdit, onDelete, onToggleStatus
                         </button>
                     </div>
                 </div>
-
                 {desc && (
                     <p className="mt-3 text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
                         {desc}
                     </p>
                 )}
-
                 <div className="mt-3 flex items-center justify-between">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Trạng thái</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Trạng thái
+                    </span>
                     <ToggleSwitch
                         checked={!!r.is_active}
                         loading={toggling}
                         onChange={() => onToggleStatus(r)}
                     />
                 </div>
-
                 <div className="my-3 border-t border-gray-100 dark:border-gray-800" />
-
                 <div className="space-y-2">
                     <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                         Quyền thông thường
@@ -233,11 +193,14 @@ function ModuleCard({ module: r, index, locale, onEdit, onDelete, onToggleStatus
     );
 }
 
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export function ModulesPageClient() {
     const locale = useLocale();
     const t = useTranslations("common");
     const tm = useTranslations("module");
 
+    // ── Params ────────────────────────────────────────────────────────────────
     const { params, setPage, setLimit, updateMany, reset } =
         useListParams<ModuleFilters>({
             defaultFilters: { search: "", is_active: undefined },
@@ -245,227 +208,75 @@ export function ModulesPageClient() {
             defaultSortDir: "asc",
         });
 
-    const [data, setData] = useState<Module[]>([]);
-    const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
-    const [deleting, setDeleting] = useState(false);
-    const [togglingId, setTogglingId] = useState<number | null>(null);
+    // ── Custom hook — toàn bộ data + cache logic ──────────────────────────────
+    const {
+        data,
+        total,
+        isLoading,
+        togglingIds,
+        isCreating,
+        isUpdating,
+        isDeleting,
+        handleCreate,
+        handleEdit,
+        handleDeleteConfirm,
+        handleToggleStatus,
+    } = useModules(params);
 
+    // ── UI state (chỉ liên quan render, không liên quan cache) ───────────────
     const [createOpen, setCreateOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [selected, setSelected] = useState<Module | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Module | null>(null);
 
+    const openEdit = (m: Module) => { setSelected(m); setEditOpen(true); };
+
+    // ── Form config ───────────────────────────────────────────────────────────
     const sortOptions = [
         { value: "sort_order", label: tm("sortOrder") },
         { value: "created_at", label: t("createdAt") },
     ];
 
-    const formFields: FormFieldDef[] = useMemo(() => [
-        {
-            name: "slug",
-            label: tm("module"),
-            type: "text",
-            required: true,
-            placeholder: "user",
-        },
-        {
-            name: "sort_order",
-            label: tm("sortOrder"),
-            type: "number",
-            required: true,
-            placeholder: "1",
-        },
-        {
-            name: "is_active",
-            label: t("active"),
-            type: "checkbox",
-        },
-        {
-            name: "action_view",
-            label: `${tm("action_view")} (view)`,
-            type: "checkbox",
-        },
-        {
-            name: "action_create",
-            label: `${tm("action_create")} (create)`,
-            type: "checkbox",
-        },
-        {
-            name: "action_update",
-            label: `${tm("action_update")} (update)`,
-            type: "checkbox",
-        },
-        {
-            name: "action_delete",
-            label: `${tm("action_delete")} (delete)`,
-            type: "checkbox",
-        },
-    ], [t, tm]);
+    const formFields: FormFieldDef[] = useMemo(
+        () => [
+            { name: "slug", label: tm("module"), type: "text", required: true, placeholder: "user" },
+            { name: "sort_order", label: tm("sortOrder"), type: "number", required: true, placeholder: "1" },
+            { name: "is_active", label: t("active"), type: "checkbox" },
+            { name: "action_view", label: `${tm("action_view")} (view)`, type: "checkbox" },
+            { name: "action_create", label: `${tm("action_create")} (create)`, type: "checkbox" },
+            { name: "action_update", label: `${tm("action_update")} (update)`, type: "checkbox" },
+            { name: "action_delete", label: `${tm("action_delete")} (delete)`, type: "checkbox" },
+        ],
+        [t, tm]
+    );
 
-    const translatableFields: TranslatableFieldDef[] = useMemo(() => [
-        {
-            name: "name",
-            label: t("name"),
-            type: "text",
-            required: true,
-            placeholder: tm("namePlaceholder"),
-        },
-        {
-            name: "description",
-            label: t("description"),
-            type: "richtext",
-            placeholder: tm("descriptionPlaceholder"),
-        },
-    ], [t, tm]);
+    const translatableFields: TranslatableFieldDef[] = useMemo(
+        () => [
+            { name: "name", label: t("name"), type: "text", required: true, placeholder: tm("namePlaceholder") },
+            { name: "description", label: t("description"), type: "richtext", placeholder: tm("descriptionPlaceholder") },
+        ],
+        [t, tm]
+    );
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const res = await moduleService.list(params);
-            if (res.success) {
-                setData(res.data ?? []);
-                setTotal(res.meta?.total ?? 0);
-            }
-        } catch (error: unknown) {
-            toast.error((error as Error)?.message || t("loadError"));
-        } finally {
-            setLoading(false);
-        }
+    const createInitialValues = {
+        slug: "", sort_order: "1", is_active: "1",
+        action_view: "0", action_create: "0", action_update: "0", action_delete: "0",
     };
 
-    useEffect(() => {
-        fetchData();
-    }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
+    const editInitialValues = selected ? {
+        slug: selected.module ?? "",
+        sort_order: String(selected.sort_order ?? 1),
+        is_active: selected.is_active ? "1" : "0",
+        action_view: selected.actions?.view ? "1" : "0",
+        action_create: selected.actions?.create ? "1" : "0",
+        action_update: selected.actions?.update ? "1" : "0",
+        action_delete: selected.actions?.delete ? "1" : "0",
+    } : undefined;
 
-    const openEdit = (m: Module) => {
-        setSelected(m);
-        setEditOpen(true);
-    };
-
-    const handleToggleStatus = async (row: Module) => {
-        setTogglingId(row.module_id);
-        try {
-            const res = await moduleService.toggleStatus(row.module_id) as ApiResponse<Module>;
-            if (!res.success) throw new Error(res.message);
-
-            const saved = res.data;
-            if (saved) {
-                setData((prev) =>
-                    prev.map((item) =>
-                        item.module_id === saved.module_id ? saved : item
-                    )
-                );
-            } else {
-                setData((prev) =>
-                    prev.map((item) =>
-                        item.module_id === row.module_id
-                            ? { ...item, is_active: !item.is_active }
-                            : item
-                    )
-                );
-            }
-
-            toast.success(res.message || t("updateStatus"));
-        } catch (error: unknown) {
-            toast.error((error as Error)?.message || t("loadError"));
-        } finally {
-            setTogglingId(null);
-        }
-    };
-
-    const handleCreate = async (
-        values: Record<string, string>,
-        translations?: TranslationEntry[]
-    ): Promise<SubmitResult> => {
-        setSubmitting(true);
-        try {
-            const raw = await moduleService.create(buildPayload(values, translations));
-            const res = raw as ApiResponse<Module>;
-            if (!res.success) {
-                return { success: false, message: res.message, errors: res.errors };
-            }
-
-            const saved = res.data;
-            if (saved) {
-                setData((prev) => [saved, ...prev]);
-                setTotal((prev) => prev + 1);
-            } else {
-                await fetchData();
-            }
-
-            toast.success(res.message || t("saveSuccess"));
-            setCreateOpen(false);
-        } catch (error: unknown) {
-            const serverErr = getServerError(error);
-            if (serverErr) return serverErr;
-            toast.error((error as Error)?.message || t("loadError"));
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleEdit = async (
-        values: Record<string, string>,
-        translations?: TranslationEntry[]
-    ): Promise<SubmitResult> => {
-        if (!selected) return;
-        setSubmitting(true);
-        try {
-            const raw = await moduleService.update(
-                selected.module_id,
-                buildPayload(values, translations)
-            );
-            const res = raw as ApiResponse<Module>;
-            if (!res.success) {
-                return { success: false, message: res.message, errors: res.errors };
-            }
-
-            const saved = res.data;
-            if (saved) {
-                setData((prev) =>
-                    prev.map((item) =>
-                        item.module_id === saved.module_id ? saved : item
-                    )
-                );
-            } else {
-                await fetchData();
-            }
-
-            toast.success(res.message || t("updateSuccess"));
-            setEditOpen(false);
-            setSelected(null);
-        } catch (error: unknown) {
-            const serverErr = getServerError(error);
-            if (serverErr) return serverErr;
-            toast.error((error as Error)?.message || t("loadError"));
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleDeleteConfirm = async () => {
-        if (!deleteTarget) return;
-        setDeleting(true);
-        try {
-            const res = await moduleService.destroy(deleteTarget.module_id, params);
-            setData(res.data ?? []);
-            setTotal(res.meta?.total ?? 0);
-            toast.success(res.message || t("deleteSuccess"));
-            setDeleteTarget(null);
-        } catch (error: unknown) {
-            toast.error((error as Error)?.message || t("loadError"));
-        } finally {
-            setDeleting(false);
-        }
-    };
-
+    // ── Columns (desktop) ─────────────────────────────────────────────────────
     const columns: ColumnDef<Module>[] = [
         {
-            key: "stt",
-            label: t("no"),
-            className: "w-12",
+            key: "stt", label: t("no"), className: "w-12",
             render: (_row, index) => (
                 <span className="text-foreground-muted text-xs">
                     {(params.page - 1) * params.limit + index + 1}
@@ -473,8 +284,7 @@ export function ModulesPageClient() {
             ),
         },
         {
-            key: "name",
-            label: tm("label"),
+            key: "name", label: tm("label"),
             render: (row) => (
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-500/20">
@@ -487,8 +297,7 @@ export function ModulesPageClient() {
             ),
         },
         {
-            key: "module",
-            label: tm("module"),
+            key: "module", label: tm("module"),
             render: (row) => (
                 <span className="inline-block px-2 py-1 text-xs font-mono font-medium rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">
                     {row.module}
@@ -496,30 +305,7 @@ export function ModulesPageClient() {
             ),
         },
         {
-            key: "sort_order",
-            label: tm("sortOrder"),
-            className: "text-center w-24",
-            render: (row) => (
-                <span className="text-sm text-foreground tabular-nums">{row.sort_order}</span>
-            ),
-        },
-        {
-            key: "is_active",
-            label: t("status"),
-            className: "text-center w-28",
-            render: (row) => (
-                <div className="flex justify-center">
-                    <ToggleSwitch
-                        checked={!!row.is_active}
-                        loading={togglingId === row.module_id}
-                        onChange={() => handleToggleStatus(row)}
-                    />
-                </div>
-            ),
-        },
-        {
-            key: "description",
-            label: t("description"),
+            key: "description", label: t("description"),
             render: (row) => (
                 <span className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 max-w-[320px] block">
                     {htmlToPreview(getTranslatedDescription(row, locale)) || "—"}
@@ -527,56 +313,34 @@ export function ModulesPageClient() {
             ),
         },
         {
-            key: "view",
-            label: tm("action_view"),
-            className: "text-center",
-            render: (row) => <div className="flex justify-center"><ActionBadge active={row.actions.view} /></div>,
+            key: "sort_order", label: tm("sortOrder"), className: "text-center w-24",
+            render: (row) => (
+                <span className="text-sm text-foreground tabular-nums">{row.sort_order}</span>
+            ),
         },
         {
-            key: "create",
-            label: tm("action_create"),
-            className: "text-center",
-            render: (row) => <div className="flex justify-center"><ActionBadge active={row.actions.create} /></div>,
+            key: "is_active", label: t("status"), className: "text-center w-28",
+            render: (row) => (
+                <div className="flex justify-center">
+                    <ToggleSwitch
+                        checked={!!row.is_active}
+                        loading={togglingIds.has(row.module_id)}
+                        onChange={() => handleToggleStatus(row)}
+                    />
+                </div>
+            ),
         },
-        {
-            key: "update",
-            label: tm("action_update"),
-            className: "text-center",
-            render: (row) => <div className="flex justify-center"><ActionBadge active={row.actions.update} /></div>,
-        },
-        {
-            key: "delete",
-            label: tm("action_delete"),
-            className: "text-center",
-            render: (row) => <div className="flex justify-center"><ActionBadge active={row.actions.delete} /></div>,
-        },
+        { key: "view", label: tm("action_view"), className: "text-center", render: (row) => <div className="flex justify-center"><ActionBadge active={row.actions.view} /></div> },
+        { key: "create", label: tm("action_create"), className: "text-center", render: (row) => <div className="flex justify-center"><ActionBadge active={row.actions.create} /></div> },
+        { key: "update", label: tm("action_update"), className: "text-center", render: (row) => <div className="flex justify-center"><ActionBadge active={row.actions.update} /></div> },
+        { key: "delete", label: tm("action_delete"), className: "text-center", render: (row) => <div className="flex justify-center"><ActionBadge active={row.actions.delete} /></div> },
     ];
 
-    const createInitialValues = {
-        slug: "",
-        sort_order: "1",
-        is_active: "1",
-        action_view: "0",
-        action_create: "0",
-        action_update: "0",
-        action_delete: "0",
-    };
-
-    const editInitialValues = selected
-        ? {
-            slug: selected.module ?? "",
-            sort_order: String(selected.sort_order ?? 1),
-            is_active: selected.is_active ? "1" : "0",
-            action_view: selected.actions?.view ? "1" : "0",
-            action_create: selected.actions?.create ? "1" : "0",
-            action_update: selected.actions?.update ? "1" : "0",
-            action_delete: selected.actions?.delete ? "1" : "0",
-        }
-        : undefined;
-
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <>
             <div className="space-y-6">
+                {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-xl font-semibold text-foreground">{tm("title")}</h1>
@@ -600,13 +364,14 @@ export function ModulesPageClient() {
                         sortBy={params.sort_by}
                         sortDir={params.sort_dir}
                         sortOptions={sortOptions}
-                        loading={loading}
+                        loading={isLoading}
                         onApply={(filters) => updateMany(filters as Partial<typeof params>)}
                         onReset={reset}
                     />
 
+                    {/* Mobile card view */}
                     <div className="block lg:hidden">
-                        {loading ? (
+                        {isLoading ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {Array.from({ length: 4 }).map((_, i) => (
                                     <div key={i} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 animate-pulse">
@@ -645,32 +410,24 @@ export function ModulesPageClient() {
                                         onEdit={openEdit}
                                         onDelete={setDeleteTarget}
                                         onToggleStatus={handleToggleStatus}
-                                        toggling={togglingId === m.module_id}
+                                        toggling={togglingIds.has(m.module_id)}
                                     />
                                 ))}
                             </div>
                         )}
                     </div>
 
+                    {/* Desktop table */}
                     <div className="hidden lg:block">
                         <Table
                             columns={columns}
                             data={data}
-                            loading={loading}
+                            loading={isLoading}
                             keyExtractor={(row) => row.module_id}
                             renderActions={(row) => (
                                 <TableActions>
-                                    <TableActionItem
-                                        icon={<Pencil className="w-4 h-4" />}
-                                        label={t("edit")}
-                                        onClick={() => openEdit(row)}
-                                    />
-                                    <TableActionItem
-                                        icon={<Trash2 className="w-4 h-4" />}
-                                        label={t("delete")}
-                                        variant="danger"
-                                        onClick={() => setDeleteTarget(row)}
-                                    />
+                                    <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />
+                                    <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
                                 </TableActions>
                             )}
                             emptyText={tm("notFound")}
@@ -687,53 +444,54 @@ export function ModulesPageClient() {
                 </div>
             </div>
 
+            {/* Create modal */}
             <FormModal
                 isOpen={createOpen}
                 onClose={() => setCreateOpen(false)}
-                onSubmit={handleCreate}
+                onSubmit={async (...args) => {
+                    const result = await handleCreate(...args);
+                    if (!result) setCreateOpen(false);
+                    return result;
+                }}
                 title={tm("create")}
                 fields={formFields}
                 initialValues={createInitialValues}
                 translatableFields={translatableFields}
-                initialTranslations={{
-                    vi: { locale: "vi", name: "", description: "" },
-                    en: { locale: "en", name: "", description: "" },
-                }}
-                submitting={submitting}
+                initialTranslations={{ vi: { locale: "vi", name: "", description: "" }, en: { locale: "en", name: "", description: "" } }}
+                submitting={isCreating}
             />
 
+            {/* Edit modal */}
             {selected && (
                 <FormModal
                     isOpen={editOpen}
-                    onClose={() => {
-                        setEditOpen(false);
-                        setSelected(null);
+                    onClose={() => { setEditOpen(false); setSelected(null); }}
+                    onSubmit={async (values, translations) => {
+                        const result = await handleEdit(selected.module_id, values, translations);
+                        if (!result) { setEditOpen(false); setSelected(null); }
+                        return result;
                     }}
-                    onSubmit={handleEdit}
                     title={tm("edit")}
                     fields={formFields}
                     initialValues={editInitialValues}
                     translatableFields={translatableFields}
                     initialTranslations={toInitialTranslations(selected.translations)}
-                    submitting={submitting}
+                    submitting={isUpdating}
                     isEdit
                 />
             )}
 
+            {/* Delete confirm */}
             <DeleteConfirmModal
                 isOpen={!!deleteTarget}
                 title={t("deleteConfirmTitle")}
                 description={t("deleteConfirmDesc")}
-                message={
-                    deleteTarget
-                        ? tm("deleteConfirmMsg", { name: getTranslatedName(deleteTarget, locale) })
-                        : ""
-                }
+                message={deleteTarget ? tm("deleteConfirmMsg", { name: getTranslatedName(deleteTarget, locale) }) : ""}
                 confirmText={t("delete")}
                 cancelText={t("cancel")}
-                onConfirm={handleDeleteConfirm}
+                onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.module_id); setDeleteTarget(null); } }}
                 onCancel={() => setDeleteTarget(null)}
-                loading={deleting}
+                loading={isDeleting}
             />
         </>
     );

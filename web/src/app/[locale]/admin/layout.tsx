@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { cache } from "react";
-import { getAccessToken } from "@/lib/cookies";
 import { authServiceServer } from "@/domains/auth/services/authServiceServer";
 import { hasAnySystemPermission } from "@/lib/permissions";
 import type { Profile } from "@/domains/auth/types";
@@ -12,8 +11,6 @@ import { AdminShell } from "@/components/admin/layout/AdminShell";
  * admin/layout và các page con đều cần.
  */
 const getProfile = cache(async (): Promise<Profile | null> => {
-  const token = await getAccessToken();
-  if (!token) return null;
   try {
     const res = await authServiceServer.getProfile();
     return res.data || null;
