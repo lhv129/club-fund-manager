@@ -43,6 +43,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
         action: PERMISSION_ACTIONS.view,
     },
     {
+        href: APP_ROUTES.adminUsers,
         labelKey: "users",
         icon: ShieldCheck,
         module: MODULE_SLUGS.user,
@@ -117,14 +118,17 @@ export function findNavTrail(
     parents: NavItem[] = []
 ): NavItem[] | null {
     for (const item of items) {
-        const trail = item.href ? [...parents, item] : parents;
+        if (item.href && item.href !== "/") {
+            const matched = item.exact
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-        if (item.href && item.href !== "/" && pathname.startsWith(item.href)) {
-            return trail;
+            if (matched) return [...parents, item];
         }
 
         if (item.children) {
-            const found = findNavTrail(item.children, pathname, trail);
+            // ← Luôn thêm item vào trail khi đệ quy, dù không có href
+            const found = findNavTrail(item.children, pathname, [...parents, item]);
             if (found) return found;
         }
     }

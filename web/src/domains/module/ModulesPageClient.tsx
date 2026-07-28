@@ -31,6 +31,7 @@ import { useListParams } from "@/hooks/useListParams";
 import { useModules } from "@/domains/module/hooks/useModules";
 import type { Module, ModuleFilters } from "@/domains/module/types";
 import type { TranslationEntry } from "@/components/shared/forms/FormModal";
+import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -378,152 +379,151 @@ export function ModulesPageClient() {
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <>
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-semibold text-foreground">{tm("title")}</h1>
-                        <p className="text-sm text-foreground-muted mt-0.5">
-                            {tm("totalCount", { count: total.toLocaleString() })}
-                        </p>
-                    </div>
-                    <button
-                        onClick={openCreate}
-                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        {tm("create")}
-                    </button>
+        <div className="space-y-6">
+            <Breadcrumb homeHref="/admin" />
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-semibold text-foreground">{tm("title")}</h1>
+                    <p className="text-sm text-foreground-muted mt-0.5">
+                        {tm("totalCount", { count: total.toLocaleString() })}
+                    </p>
                 </div>
-
-                <div className="space-y-4">
-                    <FilterBar
-                        search={params.search}
-                        isActive={params.is_active}
-                        sortBy={params.sort_by}
-                        sortDir={params.sort_dir}
-                        sortOptions={sortOptions}
-                        loading={isLoading}
-                        onApply={(filters) => updateMany(filters as Partial<typeof params>)}
-                        onReset={reset}
-                    />
-
-                    {/* Mobile card view */}
-                    <div className="block lg:hidden">
-                        {isLoading ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {Array.from({ length: 4 }).map((_, i) => (
-                                    <div key={i} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 animate-pulse">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800" />
-                                            <div className="flex-1 space-y-2">
-                                                <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-2/3" />
-                                                <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-1/3" />
-                                            </div>
-                                        </div>
-                                        <div className="mt-4 space-y-2">
-                                            <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-full" />
-                                            <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-5/6" />
-                                        </div>
-                                        <div className="mt-4 flex gap-2">
-                                            {Array.from({ length: 4 }).map((_, j) => (
-                                                <div key={j} className="h-5 w-14 bg-gray-100 dark:bg-gray-800 rounded-full" />
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : data.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-600">
-                                <Shield className="w-10 h-10 mb-3 opacity-40" />
-                                <p className="text-sm">{tm("notFound")}</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {data.map((m, i) => (
-                                    <ModuleCard
-                                        key={m.module_id}
-                                        module={m}
-                                        index={(params.page - 1) * params.limit + i}
-                                        locale={locale}
-                                        onEdit={openEdit}
-                                        onDelete={setDeleteTarget}
-                                        onToggleStatus={handleToggleStatus}
-                                        toggling={togglingIds.has(m.module_id)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Desktop table */}
-                    <div className="hidden lg:block">
-                        <Table
-                            columns={columns}
-                            data={data}
-                            loading={isLoading}
-                            keyExtractor={(row) => row.module_id}
-                            renderActions={(row) => (
-                                <TableActions>
-                                    <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />
-                                    <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
-                                </TableActions>
-                            )}
-                            emptyText={tm("notFound")}
-                        />
-                    </div>
-
-                    <Pagination
-                        page={params.page}
-                        limit={params.limit}
-                        total={total}
-                        onPageChange={setPage}
-                        onLimitChange={setLimit}
-                    />
-                </div>
+                <button
+                    onClick={openCreate}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
+                >
+                    <Plus className="w-4 h-4" />
+                    {tm("create")}
+                </button>
             </div>
 
-            <FormModal
-                isOpen={modalOpen}
-                onClose={closeModal}
-                onSubmit={handleSubmit}
-                title={selected ? tm("edit") : tm("create")}
-                submitting={selected ? isUpdating : isCreating}
-                isEdit={!!selected}
+            <div className="space-y-4">
+                <FilterBar
+                    search={params.search}
+                    isActive={params.is_active}
+                    sortBy={params.sort_by}
+                    sortDir={params.sort_dir}
+                    sortOptions={sortOptions}
+                    loading={isLoading}
+                    onApply={(filters) => updateMany(filters as Partial<typeof params>)}
+                    onReset={reset}
+                />
 
-                fields={formFields}
+                {/* Mobile card view */}
+                <div className="block lg:hidden">
+                    {isLoading ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 animate-pulse">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800" />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-2/3" />
+                                            <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-1/3" />
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 space-y-2">
+                                        <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-full" />
+                                        <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-5/6" />
+                                    </div>
+                                    <div className="mt-4 flex gap-2">
+                                        {Array.from({ length: 4 }).map((_, j) => (
+                                            <div key={j} className="h-5 w-14 bg-gray-100 dark:bg-gray-800 rounded-full" />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : data.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-600">
+                            <Shield className="w-10 h-10 mb-3 opacity-40" />
+                            <p className="text-sm">{tm("notFound")}</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {data.map((m, i) => (
+                                <ModuleCard
+                                    key={m.module_id}
+                                    module={m}
+                                    index={(params.page - 1) * params.limit + i}
+                                    locale={locale}
+                                    onEdit={openEdit}
+                                    onDelete={setDeleteTarget}
+                                    onToggleStatus={handleToggleStatus}
+                                    toggling={togglingIds.has(m.module_id)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
 
-                initialValues={
-                    selected
-                        ? editInitialValues
-                        : createInitialValues
-                }
+                {/* Desktop table */}
+                <div className="hidden lg:block">
+                    <Table
+                        columns={columns}
+                        data={data}
+                        loading={isLoading}
+                        keyExtractor={(row) => row.module_id}
+                        renderActions={(row) => (
+                            <TableActions>
+                                <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />
+                                <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
+                            </TableActions>
+                        )}
+                        emptyText={tm("notFound")}
+                    />
+                </div>
 
-                translatableFields={translatableFields}
+                <Pagination
+                    page={params.page}
+                    limit={params.limit}
+                    total={total}
+                    onPageChange={setPage}
+                    onLimitChange={setLimit}
+                />
 
-                initialTranslations={
-                    selected
-                        ? toInitialTranslations(selected.translations)
-                        : {
-                            vi: { locale: "vi", name: "", description: "" },
-                            en: { locale: "en", name: "", description: "" },
-                        }
-                }
-            />
+                <FormModal
+                    isOpen={modalOpen}
+                    onClose={closeModal}
+                    onSubmit={handleSubmit}
+                    title={selected ? tm("edit") : tm("create")}
+                    submitting={selected ? isUpdating : isCreating}
+                    isEdit={!!selected}
 
-            {/* Delete confirm */}
-            <DeleteConfirmModal
-                isOpen={!!deleteTarget}
-                title={t("deleteConfirmTitle")}
-                description={t("deleteConfirmDesc")}
-                message={deleteTarget ? tm("deleteConfirmMsg", { name: getTranslatedName(deleteTarget, locale) }) : ""}
-                confirmText={t("delete")}
-                cancelText={t("cancel")}
-                onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.module_id); setDeleteTarget(null); } }}
-                onCancel={() => setDeleteTarget(null)}
-                loading={isDeleting}
-            />
-        </>
+                    fields={formFields}
+
+                    initialValues={
+                        selected
+                            ? editInitialValues
+                            : createInitialValues
+                    }
+
+                    translatableFields={translatableFields}
+
+                    initialTranslations={
+                        selected
+                            ? toInitialTranslations(selected.translations)
+                            : {
+                                vi: { locale: "vi", name: "", description: "" },
+                                en: { locale: "en", name: "", description: "" },
+                            }
+                    }
+                />
+
+                {/* Delete confirm */}
+                <DeleteConfirmModal
+                    isOpen={!!deleteTarget}
+                    title={t("deleteConfirmTitle")}
+                    description={t("deleteConfirmDesc")}
+                    message={deleteTarget ? tm("deleteConfirmMsg", { name: getTranslatedName(deleteTarget, locale) }) : ""}
+                    confirmText={t("delete")}
+                    cancelText={t("cancel")}
+                    onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.module_id); setDeleteTarget(null); } }}
+                    onCancel={() => setDeleteTarget(null)}
+                    loading={isDeleting}
+                />
+            </div>
+        </div>
     );
 }

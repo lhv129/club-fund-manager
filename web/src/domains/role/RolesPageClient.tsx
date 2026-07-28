@@ -19,6 +19,8 @@ import { useRoles } from "@/domains/role/hooks/useRoles";
 import type { Role, RoleFilters, RoleTranslation } from "@/domains/role/types";
 import { APP_ROUTES } from "@/constants";
 
+import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function toInitialTranslations(translations?: RoleTranslation[]) {
@@ -151,6 +153,7 @@ export function RolesPageClient() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
+            <Breadcrumb homeHref="/admin" />
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>

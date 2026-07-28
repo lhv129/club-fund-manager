@@ -1,6 +1,3 @@
-// ══════════════════════════════════════════════════════════════════
-// 1. @/domains/role/hooks/useRolePermissions.ts
-// ══════════════════════════════════════════════════════════════════
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -11,7 +8,7 @@ import toast from "react-hot-toast";
 import { roleService } from "@/domains/role/services/roleService";
 import type { RolePermission } from "@/domains/role/types";
 
-// ─── Helpers (dùng cả trong hook lẫn page) ───────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 export function getCheckedIds(data: RolePermission[]) {
     return data.flatMap((m) => m.actions.filter((a) => a.checked).map((a) => a.id));
 }
@@ -21,12 +18,6 @@ export function normalizeIds(ids: number[]) {
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
-/**
- * Cache strategy:
- *   - fetch     → useQuery (cache by slug)
- *   - toggle    → setPermissions local only (KHÔNG gọi API mỗi click)
- *   - sync save → useMutation → setQueryData + reset local state
- */
 export function useRolePermissions(slug: string) {
     const queryClient = useQueryClient();
     const t = useTranslations("common");
@@ -43,13 +34,13 @@ export function useRolePermissions(slug: string) {
         },
     });
 
-    // ── Local state cho toggle (không qua API mỗi click) ─────────────────────
+    // ── Local state cho toggle ────────────────────────────────────────────────
     const [permissions, setPermissions] = useState<RolePermission[]>([]);
     const [originalPermissions, setOriginalPermissions] = useState<RolePermission[]>([]);
 
-    // Seed khi query data về lần đầu (hoặc refetch)
+    // Seed khi query data về (lần đầu hoặc sau sync)
     useEffect(() => {
-        const data = Array.isArray(queryData?.data) ? queryData.data : [];
+        const data = queryData?.data?.permissions ?? [];
         setPermissions(data);
         setOriginalPermissions(data);
     }, [queryData]);
@@ -58,8 +49,9 @@ export function useRolePermissions(slug: string) {
     const originalCheckedIds = useMemo(() => getCheckedIds(originalPermissions), [originalPermissions]);
     const currentCheckedIds = useMemo(() => getCheckedIds(permissions), [permissions]);
     const hasChanged = normalizeIds(originalCheckedIds) !== normalizeIds(currentCheckedIds);
+    const roleName = queryData?.data?.translation?.name ?? slug;
 
-    // ── Toggle handlers (local state only — KHÔNG gọi API) ───────────────────
+    // ── Toggle handlers ───────────────────────────────────────────────────────
     const togglePermission = (permissionId: number) =>
         setPermissions((prev) =>
             prev.map((m) => ({
@@ -92,16 +84,16 @@ export function useRolePermissions(slug: string) {
     const handleDeselectAll = () => setPermissions((prev) => prev.map((m) => ({ ...m, actions: m.actions.map((a) => ({ ...a, checked: false })) })));
     const handleReset = () => setPermissions(originalPermissions);
 
-    // ── Sync mutation — gọi API một lần khi Save ─────────────────────────────
+    // ── Sync mutation ─────────────────────────────────────────────────────────
     const syncMutation = useMutation({
         mutationFn: (ids: number[]) => roleService.syncPermissions(slug, ids),
         onSuccess: (res) => {
             if (!res.success) { toast.error(res.message || t("loadError")); return; }
-            const data = Array.isArray(res.data) ? res.data : [];
-            // Cập nhật local state + cache
-            setPermissions(data);
-            setOriginalPermissions(data);
+
+            // Sync và GET giờ cùng shape → setQueryData trực tiếp
+            // useEffect sẽ tự seed lại permissions từ res.data.permissions
             queryClient.setQueryData(queryKey, res);
+
             toast.success(res.message || t("saveSuccess"));
         },
         onError: (error: unknown) => {
@@ -114,6 +106,7 @@ export function useRolePermissions(slug: string) {
     // ── Return ────────────────────────────────────────────────────────────────
     return {
         permissions,
+        roleName,
         isLoading,
         isSyncing: syncMutation.isPending,
         hasChanged,

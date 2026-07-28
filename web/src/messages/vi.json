@@ -78,8 +78,8 @@
       "description": "Quản lý quyền được gán cho từng chức vụ"
     },
     "modules": {
-      "title": "Quản lý chức năng",
-      "description": "Danh sách và quản lý các chức năng trong hệ thống"
+      "title": "Quản lý phân hệ",
+      "description": "Danh sách và quản lý các phân hệ trong hệ thống"
     }
   },
   "header": {
@@ -133,7 +133,7 @@
     "clubs": "Câu lạc bộ",
     "clubMembers": "Thành viên CLB",
     "clubInvites": "Lời mời CLB",
-    "modules": "Chức năng",
+    "modules": "Phân hệ",
     "settings": "Cài đặt",
     "members": "Thành viên",
     "invites": "Lời mời",
@@ -286,11 +286,9 @@
     "scopeSystem": "Hệ thống",
     "scopeClub": "Câu lạc bộ",
     "assignPermissions": "Phân quyền",
-    "permissionsTitle": "Phân quyền cho chức vụ",
-    "permissionsSubtitle": "chức vụ: {role}",
     "noPermissions": "Chưa có quyền nào trong hệ thống",
     "permissionsCount": "Số quyền",
-    "roleLabel": "chức vụ",
+    "roleLabel": "Chức vụ",
     "undo": "Hoàn tác",
     "saveChanges": "Lưu thay đổi",
     "unsavedChanges": "Có thay đổi chưa lưu",
@@ -317,22 +315,22 @@
     "action_delete_all": "Xóa tất cả"
   },
   "module": {
-    "title": "Danh sách Chức năng",
-    "create": "Thêm chức năng",
-    "edit": "Sửa chức năng",
-    "notFound": "Không tìm thấy chức năng nào",
-    "totalCount": "{count} chức năng",
-    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa chức năng \"{name}\"?",
+    "title": "Danh sách phân hệ",
+    "create": "Thêm phân hệ",
+    "edit": "Sửa phân hệ",
+    "notFound": "Không tìm thấy phân hệ nào",
+    "totalCount": "{count} phân hệ",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa phân hệ \"{name}\"?",
     "module": "Module",
     "action": "Hành động",
-    "namePlaceholder": "Nhập tên chức năng...",
-    "descriptionPlaceholder": "Nhập mô tả chức năng...",
+    "namePlaceholder": "Nhập tên phân hệ...",
+    "descriptionPlaceholder": "Nhập mô tả phân hệ...",
     "action_view": "Xem",
     "action_create": "Thêm",
     "action_update": "Sửa",
     "action_delete": "Xóa",
     "sortOrder":"Thứ tự sắp xếp",
-    "label": "Tên chức năng",
+    "label": "Tên phân hệ",
     "permissions": "Quyền hạn"
   }
 }

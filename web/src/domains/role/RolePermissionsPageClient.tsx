@@ -5,9 +5,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
 import {
-    ArrowLeft,
     Check,
     CheckSquare,
     Loader2,
@@ -21,7 +19,7 @@ import {
 
 import { useRolePermissions } from "@/domains/role/hooks/useRolePermissions";
 import type { RolePermission, RolePermissionAction } from "@/domains/role/types";
-import { APP_ROUTES } from "@/constants";
+import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
 
 /* ============================================================
    TYPES
@@ -199,11 +197,11 @@ function ModuleCard({
 export function RolePermissionsPageClient({ slug }: Props) {
     const t = useTranslations("common");
     const tr = useTranslations("role");
-    const router = useRouter();
 
     // ── Cache hook — toàn bộ data + toggle logic ──────────────────────────────
     const {
         permissions,
+        roleName,
         isLoading,
         isSyncing,
         hasChanged,
@@ -242,20 +240,25 @@ export function RolePermissionsPageClient({ slug }: Props) {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6 pb-24">
-
+            <Breadcrumb
+                homeHref="/admin"
+                extraItems={[
+                    {
+                        label: tr("assignPermissions"),
+                    },
+                    {
+                        label: roleName,
+                    },
+                ]}
+            />
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => router.push(APP_ROUTES.adminRoles)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border
-                            border-border text-foreground-muted hover:bg-background-subtle transition-colors">
-                        <ArrowLeft className="w-4 h-4" />
-                    </button>
                     <div>
-                        <h1 className="text-xl font-semibold text-foreground">{tr("permissionsTitle")}</h1>
+                        <h1 className="text-xl font-semibold text-foreground">{tr("assignPermissions")}</h1>
                         <p className="mt-1 text-sm text-foreground-muted">
                             {tr("roleLabel")}:{" "}
-                            <span className="font-mono font-medium text-foreground">{slug}</span>
+                            <span className="font-mono font-medium text-foreground">{roleName}</span>
                         </p>
                     </div>
                 </div>

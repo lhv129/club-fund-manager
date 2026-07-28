@@ -20,6 +20,8 @@ import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { useUsers } from "@/domains/user/hooks/useUsers";
 import type { User, UserFilters, UserStatus } from "@/domains/user/types";
 
+import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string | null | undefined): string {
@@ -293,7 +295,7 @@ export function UsersPageClient() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-
+      <Breadcrumb homeHref="/admin" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

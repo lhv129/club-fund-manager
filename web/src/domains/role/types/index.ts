@@ -1,5 +1,3 @@
-import type { Permission } from "@/domains/permission/types";
-
 /** Translation entry cho Role. */
 export interface RoleTranslation {
   id?: number;
@@ -21,8 +19,7 @@ export interface Role {
   updated_at?: string | null;
   /** List + show endpoint: mảng đầy đủ bản dịch theo mọi locale. */
   translations?: RoleTranslation[];
-  /** Detail endpoint: danh sách permission hiện tại của role. */
-  permissions?: Permission[];
+  translation?: RoleTranslation;
 }
 
 /** Dùng type (không dùng interface) để thoả Record<string, FilterValue>. */
@@ -48,4 +45,14 @@ export interface RolePermission {
   module: string;
   label: string;
   actions: RolePermissionAction[];
+}
+
+export interface RolePermissionsResponse {
+    id: number;
+    slug: string;
+    translation: {
+        locale: string;
+        name: string;
+    };
+    permissions: RolePermission[];
 }
