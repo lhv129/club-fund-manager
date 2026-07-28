@@ -22,6 +22,8 @@ export function AdminShell({
   useHydrateAuth(profile);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  console.log("profile",profile);
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar

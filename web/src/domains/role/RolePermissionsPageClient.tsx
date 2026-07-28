@@ -20,6 +20,7 @@ import {
 import { useRolePermissions } from "@/domains/role/hooks/useRolePermissions";
 import type { RolePermission, RolePermissionAction } from "@/domains/role/types";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+import { APP_ROUTES } from "@/constants";
 
 /* ============================================================
    TYPES
@@ -241,7 +242,7 @@ export function RolePermissionsPageClient({ slug }: Props) {
     return (
         <div className="space-y-6 pb-24">
             <Breadcrumb
-                homeHref="/admin"
+                homeHref={APP_ROUTES.admin}
                 extraItems={[
                     {
                         label: tr("assignPermissions"),

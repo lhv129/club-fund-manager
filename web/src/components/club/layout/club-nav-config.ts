@@ -3,81 +3,93 @@ import {
     Users,
     Mail,
     Wallet,
-    CalendarDays,
     Settings,
     LucideIcon,
 } from "lucide-react";
 
-import { MODULE_SLUGS, PERMISSION_ACTIONS, CLUB_SUBROUTES } from "@/constants";
+import {
+    MODULE_SLUGS,
+    PERMISSION_ACTIONS,
+    CLUB_SUBROUTES,
+    clubRoute,
+} from "@/constants";
+
+// ─── Re-export NavItem + helpers từ admin nav-config ─────────────────────────
+// Dùng cùng interface + logic — chỉ khác ở check callback (club-scoped).
+export type { NavItem } from "@/components/admin/layout/nav-config";
+export { filterNav, findNavTrail } from "@/components/admin/layout/nav-config";
+
+import type { NavItem } from "@/components/admin/layout/nav-config";
+
+// ─── Club nav factory ─────────────────────────────────────────────────────────
 
 /**
- * Nav item cho Club workspace.
+ * Build club workspace nav với absolute hrefs dựa trên slug.
+ * Gọi từ ClubSidebar sau khi biết slug của club hiện tại.
  *
- * Khác với dashboard nav (href tuyệt đối), club nav dùng `sub` —
- * sub-route key trong CLUB_SUBROUTES. ClubSidebar sẽ ghép với
- * slug của CLB hiện tại thành: `/club/{slug}/{sub}`.
- *
- * `module` + `action` dùng cho permission check theo clubId:
- *   hasPermission(module, action, club.id)
+ * clubRoute(slug, sub) → "/club/{slug}/{sub}"
+ * next-intl Link tự thêm locale prefix.
  */
-export interface ClubNavItem {
-    /** Sub-route key (từ CLUB_SUBROUTES) — ghép với slug để tạo href. */
-    sub: string;
-    labelKey: string;
-    module: string;
-    action: string;
-    icon: LucideIcon;
+export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
+    return [
+        // ── Dashboard ─────────────────────────────────────────────────────────
+        {
+            href: clubRoute(slug, CLUB_SUBROUTES.dashboard),
+            labelKey: "dashboard",
+            icon: LayoutDashboard,
+            module: MODULE_SLUGS.club,
+            action: PERMISSION_ACTIONS.view,
+            exact: true,
+        },
+
+        // ── Thành viên (group) ────────────────────────────────────────────────
+        {
+            labelKey: "members",
+            icon: Users,
+            module: MODULE_SLUGS.member,
+            action: PERMISSION_ACTIONS.view,
+            children: [
+                {
+                    href: clubRoute(slug, CLUB_SUBROUTES.members),
+                    labelKey: "clubMembers",
+                    icon: Users,
+                    module: MODULE_SLUGS.member,
+                    action: PERMISSION_ACTIONS.view,
+                },
+                {
+                    href: clubRoute(slug, CLUB_SUBROUTES.invites),
+                    labelKey: "clubInvites",
+                    icon: Mail,
+                    module: MODULE_SLUGS.member,
+                    action: PERMISSION_ACTIONS.create,
+                },
+            ],
+        },
+
+        // ── Tài chính (group) ─────────────────────────────────────────────────
+        {
+            labelKey: "funds",
+            icon: Wallet,
+            module: MODULE_SLUGS.fund,
+            action: PERMISSION_ACTIONS.view,
+            children: [
+                {
+                    href: clubRoute(slug, CLUB_SUBROUTES.funds),
+                    labelKey: "funds",
+                    icon: Wallet,
+                    module: MODULE_SLUGS.fund,
+                    action: PERMISSION_ACTIONS.view,
+                },
+            ],
+        },
+
+        // ── Cài đặt ───────────────────────────────────────────────────────────
+        {
+            href: clubRoute(slug, CLUB_SUBROUTES.settings),
+            labelKey: "clubSettings",
+            icon: Settings,
+            module: MODULE_SLUGS.club,
+            action: PERMISSION_ACTIONS.update,
+        },
+    ];
 }
-
-/**
- * Club workspace nav.
- *
- * Module slugs dạng "club_member", "club_invite", ... — TODO: xác nhận với BE
- * cho khớp với modules.slug. Nếu BE dùng slug khác, Sidebar tự ẩn item khi
- * user thiếu quyền nên không break.
- */
-export const CLUB_NAV_ITEMS: ClubNavItem[] = [
-    {
-        sub: CLUB_SUBROUTES.dashboard,
-        labelKey: "dashboard",
-        module: MODULE_SLUGS.club,
-        action: PERMISSION_ACTIONS.view,
-        icon: LayoutDashboard,
-    },
-    {
-        sub: CLUB_SUBROUTES.members,
-        labelKey: "members",
-        module: MODULE_SLUGS.club,
-        action: PERMISSION_ACTIONS.view,
-        icon: Users,
-    },
-    {
-        sub: CLUB_SUBROUTES.invites,
-        labelKey: "invites",
-        module: MODULE_SLUGS.club,
-        action: PERMISSION_ACTIONS.view,
-        icon: Mail,
-    },
-    // ── Placeholder — chờ BE triển khai ─────────────────────────────────────
-    // {
-    //     sub: CLUB_SUBROUTES.funds,
-    //     labelKey: "funds",
-    //     module: "club_fund",
-    //     action: PERMISSION_ACTIONS.view,
-    //     icon: Wallet,
-    // },
-    // {
-    //     sub: CLUB_SUBROUTES.events,
-    //     labelKey: "events",
-    //     module: "club_event",
-    //     action: PERMISSION_ACTIONS.view,
-    //     icon: CalendarDays,
-    // },
-    {
-        sub: CLUB_SUBROUTES.settings,
-        labelKey: "clubSettings",
-        module: MODULE_SLUGS.club,
-        action: PERMISSION_ACTIONS.update,
-        icon: Settings,
-    },
-];

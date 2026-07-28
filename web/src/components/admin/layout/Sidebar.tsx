@@ -7,6 +7,7 @@ import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { cn } from "@/utils";
 import { ChevronDown, X } from "lucide-react";
 import { ADMIN_NAV_ITEMS, NavItem, filterNav } from "./nav-config";
+import { APP_VERSION, APP_ENV } from "@/lib/config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,8 +23,7 @@ const SidebarLogo = memo(function SidebarLogo({
 }: {
   onClose: () => void;
 }) {
-  const env = process.env.NODE_ENV;
-  const isDev = env === "development";
+  const t = useTranslations("app") as (key: string) => string;
 
   return (
     <div className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-zinc-200 dark:border-gray-800 shrink-0">
@@ -38,13 +38,8 @@ const SidebarLogo = memo(function SidebarLogo({
         {/* Name + badge */}
         <div className="min-w-0">
           <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight truncate">
-            Club Fund
+            {t('name')}
           </p>
-          {isDev && (
-            <span className="inline-block text-[10px] font-medium px-1.5 py-px rounded-md bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 leading-tight mt-0.5">
-              Dev
-            </span>
-          )}
         </div>
       </div>
 
@@ -269,29 +264,43 @@ const SidebarNav = memo(function SidebarNav({
 // ─── SidebarFooter ────────────────────────────────────────────────────────────
 
 const SidebarFooter = memo(function SidebarFooter() {
-  const version = process.env.NEXT_PUBLIC_APP_VERSION ?? "1.0.0";
-  const env = process.env.NODE_ENV;
+  const t = useTranslations("app") as (key: string) => string;
 
   return (
-    <div className="px-4 lg:px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 shrink-0">
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
-          v{version}
+    <div className="px-4 lg:px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 shrink-0 space-y-2">
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-zinc-500 dark:text-zinc-400">
+          {t("version")}
         </span>
-        <span
-          className={cn(
-            "text-[11px] font-medium px-2 py-0.5 rounded-md",
-            env === "production"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-          )}
-        >
-          {env === "production" ? "Production" : "Development"}
+        <span className="font-medium text-zinc-700 dark:text-zinc-200">
+          v{APP_VERSION}
         </span>
       </div>
-      <p className="text-[11px] text-zinc-400 dark:text-zinc-600 mt-1.5">
-        © {new Date().getFullYear()} Club Fund
-      </p>
+
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-zinc-500 dark:text-zinc-400">
+          {t("environment")}
+        </span>
+
+        <span
+          className={cn(
+            "rounded-md px-2 py-0.5 font-medium",
+            APP_ENV === "production"
+              ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+              : "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+          )}
+        >
+          {APP_ENV === "production"
+            ? t("production")
+            : t("development")}
+        </span>
+      </div>
+
+      <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <p className="text-center text-[11px] text-zinc-400 dark:text-zinc-500">
+          © {new Date().getFullYear()} {t("fullName")}
+        </p>
+      </div>
     </div>
   );
 });

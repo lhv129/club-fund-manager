@@ -153,7 +153,7 @@ export function RolesPageClient() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
-            <Breadcrumb homeHref="/admin" />
+            <Breadcrumb homeHref={APP_ROUTES.admin} />
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>

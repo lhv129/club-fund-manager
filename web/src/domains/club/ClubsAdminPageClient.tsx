@@ -27,6 +27,8 @@ import { clubDashboardRoute } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import type { Club, ClubFilters, Translation } from "@/domains/club/types";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+import { APP_ROUTES } from "@/constants";
+
 
 
 export function ClubsAdminPageClient() {
@@ -147,7 +149,7 @@ export function ClubsAdminPageClient() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
-            <Breadcrumb homeHref="/admin" />
+            <Breadcrumb homeHref={APP_ROUTES.admin} />
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>

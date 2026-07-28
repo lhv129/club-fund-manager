@@ -10,3 +10,6 @@ export const API_URL_PUBLIC = process.env.API_URL_PUBLIC ?? "http://localhost:80
 
 /** Next.js app base URL (cho internal Route Handler calls). */
 export const APP_URL = process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000";
+
+export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "1.0";
+export const APP_ENV = process.env.NEXT_PUBLIC_APP_ENV ?? "development"; 

@@ -1,4 +1,12 @@
 {
+  "app": {
+    "name": "ClubFund",
+    "fullName": "Club Fund Management System",
+    "version": "Version",
+    "environment": "Environment",
+    "development": "Development",
+    "production": "Production"
+  },
   "common": {
     "loading": "Loading...",
     "save": "Save",

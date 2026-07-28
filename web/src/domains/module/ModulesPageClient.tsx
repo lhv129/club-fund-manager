@@ -32,6 +32,8 @@ import { useModules } from "@/domains/module/hooks/useModules";
 import type { Module, ModuleFilters } from "@/domains/module/types";
 import type { TranslationEntry } from "@/components/shared/forms/FormModal";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+import { APP_ROUTES } from "@/constants";
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -380,7 +382,7 @@ export function ModulesPageClient() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
-            <Breadcrumb homeHref="/admin" />
+            <Breadcrumb homeHref={APP_ROUTES.admin} />
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>

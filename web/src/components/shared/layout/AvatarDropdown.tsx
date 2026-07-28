@@ -114,7 +114,7 @@ export function AvatarDropdown({ user, onLogout, className = "" }: AvatarDropdow
 
                                         {/* Profile */}
                                         <Link
-                                            href={APP_ROUTES.profile as never}
+                                            href={APP_ROUTES.home as never}
                                             onClick={() => close()}
                                             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-700 dark:text-gray-300 hover:bg-zinc-100 dark:hover:bg-gray-800 transition-colors"
                                         >

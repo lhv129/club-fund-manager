@@ -1,4 +1,12 @@
 {
+  "app": {
+    "name": "Quỹ Câu lạc bộ",
+    "fullName": "Hệ thống Quản lý Quỹ Câu lạc bộ",
+    "version": "Phiên bản",
+    "environment": "Môi trường",
+    "development": "Thử nghiệm",
+    "production": "Chính thức"
+  },
   "common": {
     "loading": "Đang tải...",
     "save": "Lưu",
@@ -329,7 +337,7 @@
     "action_create": "Thêm",
     "action_update": "Sửa",
     "action_delete": "Xóa",
-    "sortOrder":"Thứ tự sắp xếp",
+    "sortOrder": "Thứ tự sắp xếp",
     "label": "Tên phân hệ",
     "permissions": "Quyền hạn"
   }
