@@ -32,4 +32,7 @@ return [
 
     // app/Base/BaseService.php
     'not_found' => 'Không tìm thấy dữ liệu.',
+
+    // app/Middleware/CheckClubPermission
+    'no_club_permission' => 'Bạn không có quyền truy cập hoặc thực hiện hành động này trên câu lạc bộ.',
 ];

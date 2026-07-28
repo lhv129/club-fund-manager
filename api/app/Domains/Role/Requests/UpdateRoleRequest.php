@@ -3,6 +3,8 @@
 namespace App\Domains\Role\Requests;
 
 use App\Base\BaseRequest;
+use App\Base\Rules\SupportedLocalesOnly;
+use App\Base\Rules\UniqueTranslation;
 use Illuminate\Validation\Rule;
 
 class UpdateRoleRequest extends BaseRequest
@@ -14,16 +16,18 @@ class UpdateRoleRequest extends BaseRequest
 
     public function rules(): array
     {
-        $roleId = (int) $this->route('role');
+        $roleId = (int) $this->route('id');
 
         return [
             'slug' => [
                 'sometimes',
                 'required',
                 'string',
-                'max:255',
-                'alpha_dash',
-                Rule::unique('roles', 'slug')->ignore($roleId),
+                'max:100',
+                'regex:/^[a-z0-9_-]+$/',
+                Rule::unique('modules', 'slug')
+                    ->ignore($roleId)
+                    ->whereNull('deleted_at'),
             ],
 
             'sort_order' => [
@@ -38,39 +42,20 @@ class UpdateRoleRequest extends BaseRequest
                 'boolean',
             ],
 
-            'permission_ids' => [
-                'nullable',
-                'array',
-            ],
-
-            'permission_ids.*' => [
-                'integer',
-                'exists:permissions,id',
-            ],
-
             'translations' => [
                 'sometimes',
                 'array',
                 'min:1',
+                new SupportedLocalesOnly,
+                new UniqueTranslation(
+                    translationTable: 'role_translations',
+                    excludeParentId: $roleId,
+                    fkColumn: 'role_id',
+                ),
             ],
-
-            'translations.*.locale' => [
-                'required_with:translations',
-                'string',
-                'max:5',
-                Rule::in(config('app.supported_locales')),
-            ],
-
-            'translations.*.name' => [
-                'required_with:translations',
-                'string',
-                'max:255',
-            ],
-
-            'translations.*.description' => [
-                'nullable',
-                'string',
-            ],
+            'translations.*'      => ['array'],
+            'translations.*.name' => ['required', 'string', 'max:255'],
+            'translations.*.description' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

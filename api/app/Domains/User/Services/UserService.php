@@ -128,6 +128,7 @@ class UserService extends BaseService
                 $data['email_verified_at'] = now();
                 $data['username'] = UserNameHelper::generateGuestUserName();
                 $data['date_of_birth'] ??= '2001-01-01';
+                $data['gender'] = $data['gender'] ?? null;
 
                 return $this->repository->create($data);
             });
@@ -157,6 +158,10 @@ class UserService extends BaseService
             $data['password'] = Hash::make($data['password']);
         } else {
             unset($data['password']);
+        }
+
+        if (array_key_exists('gender', $data) && empty($data['gender'])) {
+            $data['gender'] = null;
         }
 
         return parent::update($id, $data);

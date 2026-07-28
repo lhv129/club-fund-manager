@@ -27,4 +27,7 @@ return [
 
     // app/Base/BaseService.php
     'not_found' => 'Resource not found.',
+
+    // app/Middleware/CheckClubPermission
+    'no_club_permission' => 'You do not have permission to access or perform this action on the club.',
 ];

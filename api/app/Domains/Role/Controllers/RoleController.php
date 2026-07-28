@@ -49,7 +49,17 @@ class RoleController extends BaseController
         return $this->responseCommon(true, __('domains/role.detail'), new RoleResource($role));
     }
 
-        /**
+    /**
+     * GET /api/v1/roles/{id}
+     */
+    public function getBySlug(string $slug)
+    {
+        $role = $this->service->findBySlug($slug);
+
+        return $this->responseCommon(200, __('domains/role.detail'), new RoleResource($role), 200);
+    }
+
+    /**
      * GET /api/v1/roles/{slug}/permissions
      */
     public function getPermissionsBySlug(string $slug): JsonResponse
@@ -98,5 +108,4 @@ class RoleController extends BaseController
 
         return $this->responseCommon(true, __('domains/role.status_toggled'), new RoleResource($role));
     }
-
 }

@@ -5,9 +5,11 @@ namespace App\Domains\Role\Services;
 use App\Base\BaseService;
 use App\Domains\Module\Repositories\ModuleRepository;
 use App\Domains\Role\Models\Role;
+use App\Domains\Role\Repositories\RolePermissionRepository;
 use App\Domains\Role\Repositories\RoleRepository;
 use App\Exceptions\ApiException;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class RoleService extends BaseService
 {
@@ -16,6 +18,7 @@ class RoleService extends BaseService
     public function __construct(
         RoleRepository $repository,
         protected ModuleRepository $moduleRepository,
+        protected RolePermissionRepository $rolePermissionRepository,
     ) {
         parent::__construct($repository);
     }
@@ -29,10 +32,23 @@ class RoleService extends BaseService
             ['id' => $id],
             ['*'],
             [
-                'translations',
-                'permissions.translations'
+                'translations'
             ]
         );
+    }
+
+    public function findBySlug(string $slug)
+    {
+        $role = $this->repository->findBySlug(
+            $slug,
+            ['id', 'slug'],
+        );
+
+        if (!$role) {
+            throw new ApiException($this->notFoundMessage, 404);
+        }
+
+        return $role->load('translation:id,role_id,locale,name,description');
     }
 
     /**
@@ -42,28 +58,23 @@ class RoleService extends BaseService
     {
         $translations = $data['translations'] ?? [];
 
-        $permissionIds = $data['permission_ids'] ?? [];
-
-        unset(
-            $data['translations'],
-            $data['permission_ids']
-        );
+        unset($data['translations']);
 
         if (!isset($data['sort_order'])) {
             $data['sort_order'] = $this->repository->getNextSortOrder();
         } else {
-            $this->repository->applySortOrder($data['sort_order']);
+            $this->repository->applySortOrder((int) $data['sort_order']);
         }
 
-        $role = $this->repository
-            ->createWithTranslations($data, $translations);
-
-        $this->repository
-            ->syncPermissions($role, $permissionIds);
+        $role = DB::transaction(function () use ($data, $translations) {
+            return $this->repository->createWithTranslations(
+                $data,
+                $translations
+            );
+        });
 
         return $role->load([
-            'translations',
-            'permissions.translations'
+            'translations'
         ]);
     }
 
@@ -76,45 +87,54 @@ class RoleService extends BaseService
 
         $translations = $data['translations'] ?? [];
 
-        $permissionIds = $data['permission_ids'] ?? null;
-
-        unset(
-            $data['translations'],
-            $data['permission_ids']
-        );
+        unset($data['translations']);
 
         if (
             isset($data['sort_order'])
-            && $data['sort_order'] != $role->sort_order
+            && (int) $data['sort_order'] !== $role->sort_order
         ) {
             $this->repository->applySortOrder(
-                $data['sort_order'],
+                (int) $data['sort_order'],
                 $role->id,
                 $role->sort_order
             );
         }
 
-        $role = $this->repository
-            ->updateWithTranslations(
+        DB::transaction(function () use (
+            $role,
+            $data,
+            $translations
+        ) {
+            $this->repository->updateWithTranslations(
                 $role,
                 $data,
                 $translations
             );
+        });
 
-        if ($permissionIds !== null) {
-            $this->repository
-                ->syncPermissions($role, $permissionIds);
-        }
-
-        return $role->load([
-            'translations',
-            'permissions.translations'
-        ]);
+        return $role->load('translations');
     }
 
-    public function delete(int $id): bool
+    public function delete(int $id)
     {
-        return $this->deleteWithSortOrder($id);
+        $role = $this->find($id);
+
+        DB::transaction(function () use ($role, $id) {
+            if (isset($role->sort_order)) {
+                $this->repository->decrementSortOrderAfterDelete(
+                    $role->sort_order,
+                    $id
+                );
+            }
+
+            $this->rolePermissionRepository->deleteByRoleId($role->id);
+
+            $role->translations()->delete();
+
+            $this->repository->delete($role);
+        });
+
+        return true;
     }
 
     public function toggleStatus(int $id): Role
@@ -144,21 +164,29 @@ class RoleService extends BaseService
 
         $modules = $this->moduleRepository->getAllWithPermissions();
 
-        return $modules
-            ->map(fn($module) => [
-                'module_id' => $module->id,
-                'module'    => $module->slug,
-                'label'     => $module->translation?->name ?? $module->slug,
-                'actions'   => $module->permissions
-                    ->map(fn($p) => [
-                        'id'      => $p->id,
-                        'name'    => $p->action,
-                        'checked' => in_array($p->id, $activeIds, true),
-                    ])
-                    ->values()
-                    ->all(),
-            ])
-            ->values()
-            ->all();
+        return [
+            'id' => $role->id,
+            'slug' => $role->slug,
+            'translation' => [
+                'locale' => $role->translation?->locale,
+                'name' => $role->translation?->name,
+            ],
+            'permissions' => $modules
+                ->map(fn($module) => [
+                    'module_id' => $module->id,
+                    'module' => $module->slug,
+                    'label' => $module->translation?->name ?? $module->slug,
+                    'actions' => $module->permissions
+                        ->map(fn($p) => [
+                            'id' => $p->id,
+                            'name' => $p->action,
+                            'checked' => in_array($p->id, $activeIds, true),
+                        ])
+                        ->values()
+                        ->all(),
+                ])
+                ->values()
+                ->all(),
+        ];
     }
 }

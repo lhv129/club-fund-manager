@@ -4,6 +4,8 @@ namespace App\Domains\Role\Requests;
 
 use App\Base\BaseRequest;
 use App\Base\Rules\RequiredLocales;
+use App\Base\Rules\SupportedLocalesOnly;
+use App\Base\Rules\UniqueTranslation;
 use Illuminate\Validation\Rule;
 
 class StoreRoleRequest extends BaseRequest
@@ -35,39 +37,16 @@ class StoreRoleRequest extends BaseRequest
                 'boolean',
             ],
 
-            'permission_ids' => [
-                'nullable',
-                'array',
-            ],
-
-            'permission_ids.*' => [
-                'integer',
-                'exists:permissions,id',
-            ],
-
-            'translations' => [
+                       'translations' => [
                 'required',
                 'array',
                 new RequiredLocales,
+                new SupportedLocalesOnly,
+                new UniqueTranslation('role_translations'),
             ],
-
-            'translations.*.locale' => [
-                'required',
-                'string',
-                'max:5',
-                Rule::in(config('app.supported_locales')),
-            ],
-
-            'translations.*.name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'translations.*.description' => [
-                'nullable',
-                'string',
-            ],
+            'translations.*'      => ['array'],
+            'translations.*.name' => ['required', 'string', 'max:255'],
+            'translations.*.description' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

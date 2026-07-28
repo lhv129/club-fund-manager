@@ -39,21 +39,29 @@ class RolePermissionService extends BaseService
         $activeIds = $this->roleRepository->getActivePermissionIds($role->id);
         $modules   = $this->moduleRepository->getAllWithPermissions();
 
-        return $modules
-            ->map(fn($module) => [
-                'module_id' => $module->id,
-                'module'    => $module->slug,
-                'label'     => $module->translation?->name ?? $module->slug,
-                'actions'   => $module->permissions
-                    ->map(fn($p) => [
-                        'id'      => $p->id,
-                        'name'    => $p->action,
-                        'checked' => in_array($p->id, $activeIds, true),
-                    ])
-                    ->values()
-                    ->all(),
-            ])
-            ->values()
-            ->all();
+        return [
+            'id' => $role->id,
+            'slug' => $role->slug,
+            'translation' => [
+                'locale' => $role->translation?->locale,
+                'name' => $role->translation?->name,
+            ],
+            'permissions' => $modules
+                ->map(fn($module) => [
+                    'module_id' => $module->id,
+                    'module' => $module->slug,
+                    'label' => $module->translation?->name ?? $module->slug,
+                    'actions' => $module->permissions
+                        ->map(fn($p) => [
+                            'id' => $p->id,
+                            'name' => $p->action,
+                            'checked' => in_array($p->id, $activeIds, true),
+                        ])
+                        ->values()
+                        ->all(),
+                ])
+                ->values()
+                ->all(),
+        ];
     }
 }

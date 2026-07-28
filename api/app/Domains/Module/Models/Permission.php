@@ -30,15 +30,7 @@ class Permission extends Model
     {
         return $this->belongsTo(Module::class);
     }
-    public function translations()
-    {
-        return $this->hasMany(PermissionTranslation::class);
-    }
-    public function translation(string $locale = null)
-    {
-        return $this->hasOne(PermissionTranslation::class)
-            ->where('locale', $locale ?? app()->getLocale());
-    }
+
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_permissions')

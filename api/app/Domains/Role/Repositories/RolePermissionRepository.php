@@ -49,4 +49,11 @@ class RolePermissionRepository extends BaseRepository
             })
             ->toArray();
     }
+
+    public function deleteByRoleId(int $roleId): void
+    {
+        $this->model
+            ->where('role_id', $roleId)
+            ->delete();
+    }
 }

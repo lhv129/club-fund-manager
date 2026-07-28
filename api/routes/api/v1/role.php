@@ -6,9 +6,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->prefix('roles')->group(function () {
     // ── Read ──────────────────────────────────────────────────────────────
-    Route::get('/',                      [RoleController::class, 'index'])->middleware('permission:role,view');
-    Route::get('/select',                [RoleController::class, 'select'])->middleware('permission:role,view');
-    Route::get('/{id}',                  [RoleController::class, 'show'])->middleware('permission:role,view');
+    Route::get('/', [RoleController::class, 'index'])->middleware('permission:role,view');
+    Route::get('/select', [RoleController::class, 'select'])->middleware('permission:role,view');
+    Route::get('/{id}', [RoleController::class, 'show'])->middleware('permission:role,view');
+    Route::get('/slug/{slug}', [RoleController::class, 'getBySlug'])->middleware('permission:role,view');
     Route::get('/{slug}/permissions', [RoleController::class, 'getPermissionsBySlug'])->middleware('permission:role,view');
 
     // ── Write ─────────────────────────────────────────────────────────────

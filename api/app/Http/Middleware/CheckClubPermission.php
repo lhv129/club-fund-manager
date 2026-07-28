@@ -56,7 +56,7 @@ class CheckClubPermission
 
         // Check CLUB SCOPE — truyền clubId vào hasPermission
         if (!$user->hasPermission($module, $action, (int) $clubId)) {
-            throw new ApiException(__('exception.forbidden_action'), 403);
+            throw new ApiException(__('exception.no_club_permission'), 403, 'NO_CLUB_PERMISSION');
         }
 
         return $next($request);

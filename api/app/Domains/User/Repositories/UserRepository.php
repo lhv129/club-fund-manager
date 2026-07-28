@@ -85,6 +85,7 @@ class UserRepository extends BaseRepository
                 'avatar',
                 'address',
                 'date_of_birth',
+                'gender',
                 'status',
                 'email_verified_at',
                 'created_at',
