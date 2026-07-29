@@ -27,9 +27,9 @@ class ClubMemberService extends BaseService
     // List
     // -------------------------------------------------------------------------
 
-    public function paginateClubMembers(string $clubSlug, array $params = []): LengthAwarePaginator
+    public function paginateClubMembers(string $clubId, array $params = []): LengthAwarePaginator
     {
-        return $this->repository->paginateClubMembers($clubSlug, $params);
+        return $this->repository->paginateClubMembers($clubId, $params);
     }
 
     // -------------------------------------------------------------------------
@@ -97,7 +97,7 @@ class ClubMemberService extends BaseService
         // 4. Tăng used_count của invite
         $this->inviteRepository->increment(['id' => $invite->id], 'used_count');
 
-        return $member->load(['user', 'invite']);
+        return $member->load(['user', 'invitedBy']);
     }
 
     // -------------------------------------------------------------------------
@@ -124,7 +124,6 @@ class ClubMemberService extends BaseService
 
         // 2. Tìm role mặc định slug='member' trong club
         $defaultRole = $this->roleRepository->first([
-            'club_id' => $clubId,
             'slug'    => 'member',
             'is_active' => true,
         ]);
@@ -134,7 +133,7 @@ class ClubMemberService extends BaseService
             $this->repository->assignRole($member, $defaultRole->id);
         }
 
-        return $member->load(['user', 'reviewer', 'roles.translations']);
+        return $member->load(['user', 'reviewedBy', 'user.clubMemberRoles.role.translations']);
     }
 
     // -------------------------------------------------------------------------

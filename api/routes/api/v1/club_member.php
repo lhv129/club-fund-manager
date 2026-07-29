@@ -9,7 +9,7 @@ Route::middleware('auth.jwt')->group(function () {
     Route::post('/clubs/join', [ClubMemberController::class, 'join']);
 
     // ── Member management (chủ club quản lý) ─────────────────────────────
-    Route::prefix('clubs/{clubSlug}/members')->group(function () {
+    Route::prefix('clubs/{clubId}/members')->group(function () {
         Route::get('/', [ClubMemberController::class, 'index'])->middleware('perm.club:club,view');
         Route::get('/{memberId}', [ClubMemberController::class, 'show'])->middleware('perm.club:club,view');
         Route::post('/{memberId}/approve', [ClubMemberController::class, 'approve'])->middleware('perm.club:club,update');

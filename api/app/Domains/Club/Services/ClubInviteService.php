@@ -5,6 +5,7 @@ namespace App\Domains\Club\Services;
 use App\Base\BaseService;
 use App\Domains\Club\Models\ClubInvite;
 use App\Domains\Club\Repositories\ClubInviteRepository;
+use App\Domains\Club\Repositories\ClubRepository;
 use App\Exceptions\ApiException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -14,8 +15,10 @@ class ClubInviteService extends BaseService
 {
     protected string $notFoundMessage = 'domains/club_invite.not_found';
 
-    public function __construct(ClubInviteRepository $repository)
-    {
+    public function __construct(
+        ClubInviteRepository $repository,
+        protected ClubRepository $clubRepository,
+    ) {
         parent::__construct($repository);
     }
 
@@ -23,22 +26,18 @@ class ClubInviteService extends BaseService
     // List
     // -------------------------------------------------------------------------
 
-    public function paginateClubInvites(int $clubId, array $params = []): LengthAwarePaginator
+    public function paginateByClub(string $clubSlug, array $params = []): LengthAwarePaginator
     {
-        return $this->repository->paginateClubInvites($clubId, $params);
+        return $this->repository->paginateByClub($clubSlug, $params);
     }
 
     // -------------------------------------------------------------------------
     // Single record
     // -------------------------------------------------------------------------
 
-    public function findClubInvite(int $clubId, int $id): ClubInvite
+    public function findClubInvite(string $clubSlug, int $id): ClubInvite
     {
-        $invite = $this->repository->first(
-            where:  ['id' => $id, 'club_id' => $clubId],
-            with:   ['creator'],
-            select: ['*'],
-        );
+        $invite = $this->repository->findByClubSlug($clubSlug, $id);
 
         if (!$invite) {
             throw new ApiException(__($this->notFoundMessage), 404);
@@ -53,17 +52,16 @@ class ClubInviteService extends BaseService
 
     /**
      * Tạo link invite mới.
-     * Token 64 ký tự ngẫu nhiên, unique.
-     *
-     * $data = [
-     *   'expires_at'  => '2026-12-31 23:59:59',  // optional
-     *   'sort_order'  => 1,                        // optional
-     *   'is_active'   => true,                     // default true
-     * ]
      */
-    public function createClubInvite(int $clubId, array $data): ClubInvite
+    public function createClubInvite(string $clubSlug, array $data): ClubInvite
     {
-        $data['club_id'] = $clubId;
+        $club = $this->clubRepository->findByTranslationSlug($clubSlug);
+
+        if (!$club) {
+            throw new ApiException(__('domains/club.not_found'), 404);
+        }
+
+        $data['club_id'] = $club->id;
         $data['created_by'] = Auth::id();
         $data['token'] = $this->generateUniqueToken();
 
@@ -74,19 +72,21 @@ class ClubInviteService extends BaseService
         return $this->repository->create($data);
     }
 
-    public function deleteClubInvite(int $clubId, int $id): bool
+    public function deleteClubInvite(string $clubSlug, int $id): bool
     {
-        $invite = $this->findClubInvite($clubId, $id);
+        $invite = $this->findClubInvite($clubSlug, $id);
+
         return $this->repository->delete($invite);
     }
 
-    public function toggleStatusClubInvite(int $clubId, int $id): ClubInvite
+    public function toggleStatusClubInvite(string $clubSlug, int $id): ClubInvite
     {
-        $invite = $this->findClubInvite($clubId, $id);
+        $invite = $this->findClubInvite($clubSlug, $id);
+
         $invite->is_active = !$invite->is_active;
         $invite->save();
 
-        return $invite->fresh('creator');
+        return $invite->fresh('createdBy');
     }
 
     // -------------------------------------------------------------------------
@@ -94,7 +94,7 @@ class ClubInviteService extends BaseService
     // -------------------------------------------------------------------------
 
     /**
-     * Sinh token 64 ký tự đảm bảo không trùng trong DB.
+     * Sinh token 64 ký tự đảm bảo không trùng.
      */
     private function generateUniqueToken(): string
     {

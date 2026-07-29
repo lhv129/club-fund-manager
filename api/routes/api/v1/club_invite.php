@@ -5,8 +5,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->prefix('clubs/{clubSlug}/invites')->group(function () {
     // ── Read ──────────────────────────────────────────────────────────────
-    Route::get('/', [ClubInviteController::class, 'index'])->middleware('perm.system:club,update');
-    Route::get('/{id}', [ClubInviteController::class, 'show'])->middleware('perm.system:club,update');
+    Route::get('/', [ClubInviteController::class, 'index'])->middleware('perm.system:club,view');
+    Route::get('/{id}', [ClubInviteController::class, 'show'])->middleware('perm.system:club,view');
 
     // ── Write ─────────────────────────────────────────────────────────────
     Route::post('/', [ClubInviteController::class, 'store'])->middleware('perm.system:club,update');

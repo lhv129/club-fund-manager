@@ -16,55 +16,55 @@ class ClubInviteController extends BaseController
     ) {}
 
     /**
-     * GET /api/v1/clubs/{clubId}/invites
+     * GET /api/v1/clubs/{clubSlug}/invites
      * Danh sách link invite của club
      */
-    public function index(FilterClubInviteRequest $request, int $clubId): JsonResponse
+    public function index(FilterClubInviteRequest $request, string $clubSlug): JsonResponse
     {
-        $invites = $this->inviteService->paginateClubInvites($clubId, $request->validated());
+        $invites = $this->inviteService->paginateByClub($clubSlug, $request->validated());
 
         return $this->paginateResponse($invites, __('domains/club_invite.list'));
     }
 
     /**
-     * GET /api/v1/clubs/{clubId}/invites/{id}
+     * GET /api/v1/clubs/{clubSlug}/invites/{id}
      */
-    public function show(int $clubId, int $id): JsonResponse
+    public function show(string $clubSlug, int $id): JsonResponse
     {
-        $invite = $this->inviteService->findClubInvite($clubId, $id);
+        $invite = $this->inviteService->findClubInvite($clubSlug, $id);
 
         return $this->responseCommon(true, __('domains/club_invite.detail'), new ClubInviteResource($invite));
     }
 
     /**
-     * POST /api/v1/clubs/{clubId}/invites
+     * POST /api/v1/clubs/{clubSlug}/invites
      * Tạo link invite mới cho club
      */
-    public function store(StoreClubInviteRequest $request, int $clubId): JsonResponse
+    public function store(StoreClubInviteRequest $request, string $clubSlug): JsonResponse
     {
-        $invite = $this->inviteService->createClubInvite($clubId, $request->validated());
+        $invite = $this->inviteService->createClubInvite($clubSlug, $request->validated());
 
         return $this->responseCommon(true, __('domains/club_invite.created'), new ClubInviteResource($invite), 201);
     }
 
     /**
-     * DELETE /api/v1/clubs/{clubId}/invites/{id}
+     * DELETE /api/v1/clubs/{clubSlug}/invites/{id}
      * Thu hồi link invite
      */
-    public function destroy(int $clubId, int $id): JsonResponse
+    public function destroy(string $clubSlug, int $id): JsonResponse
     {
-        $this->inviteService->deleteClubInvite($clubId, $id);
+        $this->inviteService->deleteClubInvite($clubSlug, $id);
 
         return $this->responseCommon(true, __('domains/club_invite.deleted'));
     }
 
     /**
-     * POST /api/v1/clubs/{clubId}/invites/{id}/toggle-status
+     * POST /api/v1/clubs/{clubSlug}/invites/{id}/toggle-status
      * Bật/tắt link invite
      */
-    public function toggleStatus(int $clubId, int $id): JsonResponse
+    public function toggleStatus(string $clubSlug, int $id): JsonResponse
     {
-        $invite = $this->inviteService->toggleStatusClubInvite($clubId, $id);
+        $invite = $this->inviteService->toggleStatusClubInvite($clubSlug, $id);
 
         return $this->responseCommon(true, __('domains/club_invite.status_toggled'), new ClubInviteResource($invite));
     }

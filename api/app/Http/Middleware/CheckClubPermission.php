@@ -34,7 +34,7 @@ class CheckClubPermission
         }
 
         // 1. Ưu tiên lấy club_id từ route param {id}
-        $clubId = $request->route('id');
+        $clubId = $request->route('id') ?? $request->route('clubId');
 
         // 2. Nếu không có {id}, resolve từ {slug} hoặc {clubSlug}
         if (!$clubId) {

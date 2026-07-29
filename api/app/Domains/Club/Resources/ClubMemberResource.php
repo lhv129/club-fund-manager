@@ -22,22 +22,22 @@ class ClubMemberResource extends JsonResource
             // Relations
             'user'        => $this->whenLoaded('user', fn () => [
                 'id'    => $this->user->id,
-                'name'  => $this->user->name,
+                'fullname'  => $this->user->fullname,
                 'email' => $this->user->email,
             ]),
-            'reviewer'    => $this->whenLoaded('reviewer', fn () => $this->reviewer ? [
-                'id'   => $this->reviewer->id,
-                'name' => $this->reviewer->name,
+            'reviewedBy'    => $this->whenLoaded('reviewedBy', fn () => $this->reviewedBy ? [
+                'id'   => $this->reviewedBy->id,
+                'fullname' => $this->reviewedBy->fullname,
             ] : null),
-            'invite'      => $this->whenLoaded('invite', fn () => $this->invite ? [
-                'id'    => $this->invite->id,
-                'token' => $this->invite->token,
+            'invitedBy'      => $this->whenLoaded('invitedBy', fn () => $this->invitedBy ? [
+                'id'    => $this->invitedBy->id,
+                'token' => $this->invitedBy->token,
             ] : null),
-            'roles'       => $this->whenLoaded('roles', fn () =>
-                $this->roles->map(fn ($role) => [
-                    'id'           => $role->id,
-                    'slug'         => $role->slug,
-                    'translations' => $role->relationLoaded('translations') ? $role->translations : [],
+            'roles'       => $this->whenLoaded('user.clubMemberRoles.role.translations', fn () =>
+                $this->user->clubMemberRoles->map(fn ($clubMemberRole) => [
+                    'id' => $clubMemberRole->role->id,
+                    'slug' => $clubMemberRole->role->slug,
+                    'translations' => $clubMemberRole->role->relationLoaded('translations') ? $clubMemberRole->role->translations : [],
                 ])
             ),
 

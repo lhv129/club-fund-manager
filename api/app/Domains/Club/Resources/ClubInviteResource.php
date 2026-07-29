@@ -19,9 +19,9 @@ class ClubInviteResource extends JsonResource
             'sort_order'  => $this->sort_order,
             'is_active'   => (bool) $this->is_active,
             'is_expired'  => $this->expires_at && $this->expires_at->isPast(),
-            'created_by'  => $this->whenLoaded('creator', fn() => [
-                'id'   => $this->creator->id,
-                'name' => $this->creator->name,
+            'created_by'  => $this->whenLoaded('createdBy', fn() => [
+                'id'   => $this->createdBy->id,
+                'name' => $this->createdBy->name,
             ]),
             'created_at'  => $this->created_at?->toIso8601String(),
         ];
