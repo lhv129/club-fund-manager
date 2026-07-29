@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useLayoutEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useAuthStore } from "../stores/authStore";
 import { authService } from "../services/authService";
 import {
@@ -152,16 +152,12 @@ export function useAuth() {
  *    rồi mới vẽ lên màn hình.
  */
 export function useHydrateAuth(profile: Profile | null) {
-  const setUser = useAuthStore((s) => s.setUser);
-  const reset = useAuthStore((s) => s.reset);
-  const hydratedRef = useRef(false);
-  useLayoutEffect(() => {
-    if (hydratedRef.current) return;
-    hydratedRef.current = true;
+  useEffect(() => {
     if (profile) {
-      setUser(profile);
+      useAuthStore.getState().setUser(profile);
     } else {
-      reset();
+      useAuthStore.getState().reset();
     }
-  }, [profile, setUser, reset]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }

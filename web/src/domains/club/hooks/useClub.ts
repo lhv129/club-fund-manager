@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useClubStore } from "../stores/clubStore";
 import type { Club } from "../types";
 
@@ -19,14 +19,12 @@ export function useClub() {
  * while rendering another" và không bị flash club=null khi paint.
  */
 export function useHydrateClub(club: Club | null) {
-  const hasHydrated = useRef(false);
-
-  if (!hasHydrated.current) {
-    hasHydrated.current = true;
+  useEffect(() => {
     if (club) {
       useClubStore.getState().setClub(club);
     } else {
       useClubStore.getState().reset();
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // club từ SSR — stable, chỉ mount 1 lần
 }
