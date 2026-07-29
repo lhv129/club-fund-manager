@@ -19,16 +19,14 @@ export function useClub() {
  * while rendering another" và không bị flash club=null khi paint.
  */
 export function useHydrateClub(club: Club | null) {
-  const setClub = useClubStore((s) => s.setClub);
-  const reset = useClubStore((s) => s.reset);
-  const hydratedRef = useRef(false);
-  useLayoutEffect(() => {
-    if (hydratedRef.current) return;
-    hydratedRef.current = true;
+  const hasHydrated = useRef(false);
+
+  if (!hasHydrated.current) {
+    hasHydrated.current = true;
     if (club) {
-      setClub(club);
+      useClubStore.getState().setClub(club);
     } else {
-      reset();
+      useClubStore.getState().reset();
     }
-  }, [club, setClub, reset]);
+  }
 }

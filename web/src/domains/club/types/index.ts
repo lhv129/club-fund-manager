@@ -1,3 +1,5 @@
+import { Role } from "@/domains/role/types";
+
 /** Club domain types — mirror ClubResource, ClubMemberResource, ClubInviteResource. */
 
 /** Translation entry — shared shape across all translatable entities. */
@@ -20,6 +22,7 @@ export interface Club {
   translation?: Translation;
   created_at: string | null;
   updated_at: string | null;
+  role?: Role;
 }
 
 /** ClubMember — matches ClubMemberResource. */
@@ -63,8 +66,8 @@ export interface ClubInvite {
  * `Record<string, FilterValue>` mà useListParams yêu cầu.
  */
 export type ClubFilters = {
-  search: string;
-  is_active: 0 | 1 | undefined;
+  search?: string;
+  is_active?: 0 | 1 | undefined;
 };
 
 export interface ClubPayload {

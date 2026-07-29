@@ -1,263 +1,200 @@
+/**
+ * ClubsPageClient — Next.js + next-intl
+ * Copy sang: src/domains/club/ClubsPageClient.tsx
+ *
+ * Cache strategy:
+ *   - useClubsQuery (useClubs.ts) cho toàn bộ CRUD + toggle — không có initialData option.
+ *   - initialClubs / initialTotal từ SSR props dùng làm fallback hiển thị
+ *     trong khi hook đang fetch lần đầu → không flicker.
+ *   - Load more → tăng limit (10 → 20 → 30 → 40…) qua setLimit của useListParams.
+ *     React Query tự refetch với queryKey mới, không cần extraClubs riêng.
+ */
+
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
-import { ImageOff, Pencil, Plus, Trash2, ArrowRight } from "lucide-react";
-import toast from "react-hot-toast";
-import { Table, ColumnDef } from "@/components/shared/ui/Table";
+import { Plus, Building2 } from "lucide-react";
+
 import {
     FormModalWithMedia,
     toInitialTranslations,
     type SubmitResult,
 } from "@/components/shared/forms/FormModalWithMedia";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
-import { TableActions } from "@/components/shared/ui/TableActions";
-import { TableActionItem } from "@/components/shared/ui/TableActionItem";
-import CustomImage from "@/components/shared/media/CustomImage";
-import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
-import { clubServiceClient } from "@/domains/club/services/clubService";
 import { clubDashboardRoute } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
-import type { Club, Translation } from "@/domains/club/types";
-import type { ApiResponse } from "@/types/api";
+import { useListParams } from "@/hooks/useListParams";
+import { useClubsQuery } from "@/domains/club/hooks/useClubsQuery";
+import type { Club, ClubFilters, Translation } from "@/domains/club/types";
+import { ClubCard, type ClubCardLabels } from "@/domains/club/components/ClubCard";
+import { LoadMoreButton } from "@/components/shared/ui/LoadMoreButton";
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+const LIMIT = 10;
 
 interface ClubsPageClientProps {
-    /** Danh sách CLB của user (đã lọc theo permission ở Server Component). */
+    /** Danh sách CLB trang đầu (limit=10) từ Server Component. */
     clubs: Club[];
+    /** Tổng số CLB từ meta.total. */
+    total: number;
 }
 
-export function ClubsPageClient({ clubs }: ClubsPageClientProps) {
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: ClubsPageClientProps) {
     const router = useRouter();
     const locale = useLocale();
     const t = useTranslations("common");
     const tc = useTranslations("club");
 
+    /** Lấy translation theo locale hiện tại, fallback về phần tử đầu tiên. */
     const tr = (translations?: Translation[]) =>
         translations?.find((item) => item.locale === locale) ?? translations?.[0];
 
+    // ── Permission helpers ─────────────────────────────────────────────────────
     const { isSuperAdmin, hasPermission } = useAuth();
-    // Manager (không phải superadmin) cần permission create/update/delete trên club
-    // để thấy nút Thêm/Sửa/Xoá. Superadmin bypass.
+
+    /** canCreate — system scope. */
     const canCreate = isSuperAdmin || hasPermission("club", "create");
-    const canUpdate = isSuperAdmin || hasPermission("club", "update");
-    const canDelete = isSuperAdmin || hasPermission("club", "delete");
 
-    const [data, setData] = useState<Club[]>(clubs);
+    /**
+     * Per-card helpers — CLUB SCOPE, truyền club.id.
+     * Backend: { "club_2": { "club": ["update","delete"] } }
+     * → Không truyền clubId = check system scope → luôn false với club-scoped user.
+     */
+    const canUpdateClub = useCallback(
+        (clubId: number) => isSuperAdmin || hasPermission("club", "update", clubId),
+        [isSuperAdmin, hasPermission],
+    );
+    const canDeleteClub = useCallback(
+        (clubId: number) => isSuperAdmin || hasPermission("club", "delete", clubId),
+        [isSuperAdmin, hasPermission],
+    );
 
-    const [modalOpen, setModalOpen] = useState(false);
-    const [editing, setEditing] = useState<Club | null>(null);
-    const [submitting, setSubmitting] = useState(false);
+    // ── Params — setLimit dùng để tăng limit mỗi lần load more ─────────────────
+    const { params, setLimit } = useListParams<ClubFilters>({
+        defaultFilters: {},
+        defaultSortBy: "sort_order",
+        defaultSortDir: "asc",
+        defaultLimit: LIMIT,
+    });
 
-    const [deleteTarget, setDeleteTarget] = useState<Club | null>(null);
-    const [deleting, setDeleting] = useState(false);
+    // ── Cache hook ─────────────────────────────────────────────────────────────
+    const {
+        data: hookData,
+        total: hookTotal,
+        isLoading,
+        togglingIds,
+        isCreating,
+        isUpdating,
+        isDeleting,
+        handleCreate,
+        handleEdit,
+        handleDeleteConfirm: hookDeleteConfirm,
+        handleToggle,
+    } = useClubsQuery(params);
 
-    const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
+    /**
+     * Fallback về SSR data trong khi hook đang fetch lần đầu (isLoading=true, hookData=[]).
+     * Sau khi hook resolve, hookData thay thế hoàn toàn — không cần extraClubs.
+     */
+    const allData = hookData.length > 0 ? hookData : initialClubs;
+    const total = hookTotal > 0 ? hookTotal : initialTotal;
 
-    // ─── Navigation ──────────────────────────────────────────────────────────────
+    const hasMore = allData.length < total;
+    const remaining = total - allData.length;
 
-    const handleDetail = (row: Club) => {
-        // Mở club workspace theo slug của locale hiện tại.
-        const slug = tr(row.translations)?.slug ?? String(row.id);
-        router.push(clubDashboardRoute(slug) as never);
+    // ── Load more — tăng limit mỗi lần bấm (10 → 20 → 30 → 40…) ─────────────
+    const handleLoadMore = () => {
+        if (isLoading || !hasMore) return;
+        setLimit(params.limit + LIMIT);
     };
 
-    // ─── Modal handlers ───────────────────────────────────────────────────────────
+    // ── Modal state ────────────────────────────────────────────────────────────
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editing, setEditing] = useState<Club | null>(null);
 
     const openCreate = () => { setEditing(null); setModalOpen(true); };
-    const openEdit = (row: Club) => { setEditing(row); setModalOpen(true); };
+    const openEdit = (clubId: number) => {
+        const club = allData.find((c) => c.id === clubId);
+        if (club) { setEditing(club); setModalOpen(true); }
+    };
     const closeModal = () => { setModalOpen(false); setEditing(null); };
 
     const handleSubmit = async (formData: FormData): Promise<SubmitResult> => {
-        setSubmitting(true);
-        try {
-            const raw = editing
-                ? await clubServiceClient.update(editing.id, formData)
-                : await clubServiceClient.create(formData);
-
-            const res = raw as unknown as ApiResponse<Club>;
-
-            if (!res.success) {
-                return { success: false, message: res.message, errors: res.errors };
-            }
-
-            const saved = res.data;
-            if (saved) {
-                if (editing) {
-                    setData((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
-                } else {
-                    setData((prev) => [saved, ...prev]);
-                }
-            }
-
-            toast.success(res.message || t("saveSuccess"));
-            closeModal();
-        } catch (error: any) {
-            // Lỗi mạng / server 500 — modal vẫn mở, hiện toast lỗi
-            toast.error(error?.message || t("loadError"));
-        } finally {
-            setSubmitting(false);
-        }
+        const result = editing
+            ? await handleEdit(editing.id, formData)
+            : await handleCreate(formData);
+        if (!result) closeModal();
+        return result;
     };
 
-    // ─── Toggle is_active ─────────────────────────────────────────────────────────
+    // ── Delete (Disband) ───────────────────────────────────────────────────────
+    const [deleteTarget, setDeleteTarget] = useState<Club | null>(null);
 
-    const handleToggle = async (row: Club) => {
-        if (togglingIds.has(row.id)) return;
-
-        setTogglingIds((prev) => new Set(prev).add(row.id));
-        try {
-            const raw = await clubServiceClient.toggleStatus(row.id);
-            const res = raw as unknown as ApiResponse<Club>;
-
-            if (res.success) {
-                setData((prev) =>
-                    prev.map((item) =>
-                        item.id !== row.id
-                            ? item
-                            : res.data
-                                ? { ...item, ...res.data }
-                                : { ...item, is_active: !item.is_active }
-                    )
-                );
-            }
-        } catch (error: any) {
-            toast.error(error?.message || t("loadError"));
-        } finally {
-            setTogglingIds((prev) => {
-                const next = new Set(prev);
-                next.delete(row.id);
-                return next;
-            });
-        }
-    };
-
-    // ─── Delete ────────────────────────────────────────────────────────────────────
-
-    const handleDeleteConfirm = async () => {
+    const handleDeleteConfirm = () => {
         if (!deleteTarget) return;
-
-        setDeleting(true);
-        try {
-            const raw = await clubServiceClient.destroy(deleteTarget.id);
-            const res = raw as unknown as ApiResponse<never>;
-
-            if (res.success) {
-                setData((prev) => prev.filter((item) => item.id !== deleteTarget.id));
-                toast.success(res.message || t("deleteSuccess"));
-                setDeleteTarget(null);
-            }
-        } catch (error: any) {
-            toast.error(error?.message || t("loadError"));
-        } finally {
-            setDeleting(false);
-        }
+        hookDeleteConfirm(deleteTarget.id);
+        setDeleteTarget(null);
     };
 
-    // ─── Columns ─────────────────────────────────────────────────────────────────
+    // ── Toggle ─────────────────────────────────────────────────────────────────
+    const handleToggleById = (clubId: number) => {
+        const club = allData.find((c) => c.id === clubId);
+        if (!club) return;
+        handleToggle(club);
+    };
 
-    const columns: ColumnDef<Club>[] = [
-        {
-            key: "stt",
-            label: t("no"),
-            className: "w-12",
-            render: (_row, index) => (
-                <span className="text-gray-400 text-xs">
-                    {index + 1}
-                </span>
-            ),
-        },
-        {
-            key: "logo",
-            label: t("logo"),
-            render: (row) => (
-                <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800
-                    flex items-center justify-center shrink-0">
-                    <CustomImage
-                        src={row.logo}
-                        alt={tr(row.translations)?.name ?? ""}
-                        className="w-full h-full object-cover"
-                        fallback={<ImageOff className="w-4 h-4 text-gray-400" />}
-                        fallbackClassName="w-full h-full flex items-center justify-center"
-                    />
-                </div>
-            ),
-        },
-        {
-            key: "name",
-            label: t("name"),
-            render: (row) => tr(row.translations)?.name ?? "—",
-        },
-        {
-            key: "description",
-            label: t("description"),
-            render: (row) => tr(row.translations)?.description ?? "—",
-        },
-        {
-            key: "total_members",
-            label: t("members"),
-            render: (row) => row.total_members ?? 0,
-        },
-        {
-            key: "is_active",
-            label: t("status"),
-            render: (row) => (
-                <ToggleSwitch
-                    checked={Boolean(row.is_active)}
-                    loading={togglingIds.has(row.id)}
-                    onChange={() => handleToggle(row)}
-                />
-            ),
-        },
-    ];
+    // ── Navigation ─────────────────────────────────────────────────────────────
+    const handleOpen = (clubId: number) => {
+        const club = allData.find((c) => c.id === clubId);
+        if (!club) return;
+        const slug = tr(club.translations)?.slug ?? String(club.id);
+        router.push(clubDashboardRoute(slug) as never);
+    };
 
-    // ─── Action buttons ────────────────────────────────────────────────────────────
+    // ── Labels ─────────────────────────────────────────────────────────────────
+    const baseLabels: ClubCardLabels = {
+        active: t("active"),
+        inactive: t("inactive"),
+        members: t("members"),
+        role: t("role"),
+        openWorkspace: t("openWorkspace"),
+        noDescription: t("noDescription"),
+        toggleActive: t("toggleActive"),
+        toggleInactive: t("toggleInactive"),
+        menu: {
+            edit: t("edit"),
+            members: t("members_action"),
+            settings: t("settings"),
+            disband: tc("disband"),
+        },
+    };
 
-    const renderRowActions = (row: Club) => (
-        <TableActions>
-            <TableActionItem
-                icon={<ArrowRight className="w-4 h-4" />}
-                label={t("openWorkspace")}
-                onClick={() => handleDetail(row)}
-            />
-            {canUpdate && (
-                <TableActionItem
-                    icon={<Pencil className="w-4 h-4" />}
-                    label={t("edit")}
-                    onClick={() => openEdit(row)}
-                />
-            )}
-            {canDelete && (
-                <TableActionItem
-                    icon={<Trash2 className="w-4 h-4" />}
-                    label={t("delete")}
-                    variant="danger"
-                    onClick={() => setDeleteTarget(row)}
-                />
-            )}
-        </TableActions>
-    );
-
-    // ─── Render ──────────────────────────────────────────────────────────────────
-
+    // ── Render ─────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
                         {tc("title")}
                     </h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                        {tc("totalCount", { count: data.length.toLocaleString() })}
+                        {tc("totalCount", { count: total })}
                     </p>
                 </div>
 
                 {canCreate && (
                     <button
+                        type="button"
                         onClick={openCreate}
-                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600
-                            hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl shrink-0
+                            bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
+                            text-white text-sm font-medium transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         {tc("create")}
@@ -265,55 +202,141 @@ export function ClubsPageClient({ clubs }: ClubsPageClientProps) {
                 )}
             </div>
 
-            <Table
-                columns={columns}
-                data={data}
-                keyExtractor={(row) => row.id}
-                renderActions={renderRowActions}
-                emptyText={tc("notFound")}
-            />
+            {/* Card grid / empty state */}
+            {allData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40
+                        flex items-center justify-center mb-5">
+                        <Building2 className="w-6 h-6 text-indigo-400" />
+                    </div>
+                    <p className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1.5">
+                        {tc("emptyTitle")}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs leading-relaxed">
+                        {tc("emptyDesc")}
+                    </p>
+                    {canCreate && (
+                        <button
+                            type="button"
+                            onClick={openCreate}
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
+                                text-white text-sm font-medium transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            {tc("create")}
+                        </button>
+                    )}
+                </div>
+            ) : (
+                <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {allData.map((club) => {
+                            const name = tr(club.translations)?.name ?? `Club #${club.id}`;
+                            const description = tr(club.translations)?.description ?? null;
 
-            {/* Form modal */}
+                            const cardCanUpdate = canUpdateClub(club.id);
+                            const cardCanDelete = canDeleteClub(club.id);
+
+                            return (
+                                <ClubCard
+                                    key={club.id}
+                                    club={{
+                                        id: club.id,
+                                        name,
+                                        description,
+                                        logo: club.logo ?? null,
+                                        isActive: Boolean(club.is_active),
+                                        memberCount: club.total_members ?? 0,
+                                        role: club.role?.translation?.name,
+                                    }}
+                                    labels={baseLabels}
+                                    canUpdate={cardCanUpdate}
+                                    canDelete={cardCanDelete}
+                                    isToggling={togglingIds.has(club.id)}
+                                    onOpen={handleOpen}
+                                    onEdit={cardCanUpdate ? openEdit : undefined}
+                                    onToggle={cardCanUpdate ? handleToggleById : undefined}
+                                    onMembers={(id) => {
+                                        const c = allData.find((x) => x.id === id);
+                                        if (!c) return;
+                                        const slug = tr(c.translations)?.slug ?? String(id);
+                                        router.push(`/club/${slug}/members` as never);
+                                    }}
+                                    onSettings={(id) => {
+                                        const c = allData.find((x) => x.id === id);
+                                        if (!c) return;
+                                        const slug = tr(c.translations)?.slug ?? String(id);
+                                        router.push(`/club/${slug}/settings` as never);
+                                    }}
+                                    onDisband={
+                                        cardCanDelete
+                                            ? (id) => setDeleteTarget(allData.find((c) => c.id === id) ?? null)
+                                            : undefined
+                                    }
+                                />
+                            );
+                        })}
+                    </div>
+
+                    {/* Load more / all loaded indicator */}
+                    {hasMore ? (
+                        <LoadMoreButton
+                            onClick={handleLoadMore}
+                            loading={isLoading}
+                            label={tc("loadMore")}
+                            loadingLabel={t("loading")}
+                            remainingLabel={tc("loadMoreCount", { remaining })}
+                        />
+                    ) : (
+                        allData.length > LIMIT && (
+                            <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">
+                                {tc("allLoaded")}
+                            </p>
+                        )
+                    )}
+                </>
+            )}
+
+            {/* Form modal — create / edit */}
             <FormModalWithMedia
                 isOpen={modalOpen}
                 onClose={closeModal}
                 onSubmit={handleSubmit}
                 title={editing ? tc("edit") : tc("create")}
                 isEdit={!!editing}
-                submitting={submitting}
+                submitting={editing ? isUpdating : isCreating}
                 fields={[
                     { name: "is_active", label: t("active"), type: "checkbox" },
                 ]}
-                initialValues={{
-                    is_active: editing?.is_active ?? true,
-                }}
+                initialValues={{ is_active: editing?.is_active ?? true }}
                 imageFields={[
                     { name: "logo", label: t("logo"), initialUrl: editing?.logo ?? null },
                 ]}
                 translatableFields={[
-                    { name: "name", label: t("name"), type: "text", required: true },
-                    { name: "description", label: t("description"), type: "textarea" },
+                    { name: "name", label: t("name"), type: "text", required: true, placeholder: tc("namePlaceholder") },
+                    { name: "description", label: t("description"), type: "richtext", placeholder: tc("descriptionPlaceholder") },
                 ]}
                 initialTranslations={toInitialTranslations(editing?.translations)}
             />
 
-            {/* Delete confirm */}
+            {/* Delete (Disband) confirm modal */}
             <DeleteConfirmModal
                 isOpen={!!deleteTarget}
-                title={t("deleteConfirmTitle")}
-                description={t("deleteConfirmDesc")}
+                title={tc("disbandConfirmTitle")}
+                description={tc("disbandConfirmDesc")}
                 message={
                     deleteTarget
-                        ? tc("deleteConfirmMsg", {
+                        ? tc("disbandConfirmMsg", {
                             name: tr(deleteTarget.translations)?.name ?? String(deleteTarget.id),
                         })
                         : ""
                 }
-                confirmText={t("delete")}
+                confirmText={tc("disband")}
                 cancelText={t("cancel")}
                 onConfirm={handleDeleteConfirm}
                 onCancel={() => setDeleteTarget(null)}
-                loading={deleting}
+                loading={isDeleting}
             />
         </div>
     );

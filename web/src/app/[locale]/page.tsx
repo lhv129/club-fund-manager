@@ -52,17 +52,21 @@ export default async function LocaleRootPage({
     redirect(`/${locale}/admin`);
   }
 
-  // 4. Fetch clubs, lọc "của tôi" theo permission
+  // 4. Fetch clubs
+  const LIMIT = 10;
   let clubs: Club[] = [];
+  let total = 0;
   try {
-    const res = await clubServiceServer.list({ limit: 100 });
-    
-    clubs = (res.data ?? []).filter((c) =>
-      canAccessClub(profile!.permissions, profile!.is_superadmin, c.id),
-    );
+    const res = await clubServiceServer.list({
+      limit: LIMIT,
+    });
+    // Backend đã trả về clubs của user → không cần filter lại ở đây.
+    // canAccessClub dùng cho gate check (layout), không dùng cho list pagination.
+    clubs = res.data ?? [];
+    total = res.meta?.total ?? clubs.length;
   } catch {
-    // Lỗi fetch → coi như 0 club, render NoClubClient
     clubs = [];
+    total = 0;
   }
 
   // 5. 1 club → vào thẳng workspace
@@ -76,7 +80,7 @@ export default async function LocaleRootPage({
   if (clubs.length >= 2) {
     return (
       <LandingShell profile={profile}>
-        <ClubsPageClient clubs={clubs} />
+        <ClubsPageClient clubs={clubs} total={total} />
       </LandingShell>
     );
   }

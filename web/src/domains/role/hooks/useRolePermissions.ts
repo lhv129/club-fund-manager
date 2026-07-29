@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { useState } from "react";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
 import { roleService } from "@/domains/role/services/roleService";
-import type { RolePermission } from "@/domains/role/types";
+import type { RolePermission, RolePermissionsResponse } from "@/domains/role/types";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 export function getCheckedIds(data: RolePermission[]) {
@@ -21,6 +22,13 @@ export function normalizeIds(ids: number[]) {
 export function useRolePermissions(slug: string) {
     const queryClient = useQueryClient();
     const t = useTranslations("common");
+
+    /**
+     * Locale dùng để pick roleName từ translations array.
+     * KHÔNG đưa vào queryKey — response đã trả đủ mọi locale,
+     * chỉ cần derive client-side → không refetch khi đổi locale.
+     */
+    const locale = useLocale();
 
     const queryKey = ["role-permissions", slug] as const;
 
@@ -49,7 +57,23 @@ export function useRolePermissions(slug: string) {
     const originalCheckedIds = useMemo(() => getCheckedIds(originalPermissions), [originalPermissions]);
     const currentCheckedIds = useMemo(() => getCheckedIds(permissions), [permissions]);
     const hasChanged = normalizeIds(originalCheckedIds) !== normalizeIds(currentCheckedIds);
-    const roleName = queryData?.data?.translation?.name ?? slug;
+
+    /**
+     * roleName — pick từ translations array theo locale hiện tại.
+     * Fallback: locale khác → phần tử đầu → slug.
+     *
+     * Response cũ: `data.translation` (object đơn, 1 locale cố định từ BE).
+     * Response mới: `data.translations` (array, đủ mọi locale) → pick client-side,
+     * không cần thêm locale vào queryKey, không tốn network call khi đổi locale.
+     */
+    const roleName = useMemo(() => {
+        const translations = queryData?.data?.translations ?? [];
+        return (
+            translations.find((tr) => tr.locale === locale)?.name ??
+            translations[0]?.name ??
+            slug
+        );
+    }, [queryData, locale, slug]);
 
     // ── Toggle handlers ───────────────────────────────────────────────────────
     const togglePermission = (permissionId: number) =>
@@ -71,17 +95,16 @@ export function useRolePermissions(slug: string) {
             )
         );
 
-    const toggleGroup = (moduleName: string, names: string[], checked: boolean) =>
+    const handleSelectAll = () =>
         setPermissions((prev) =>
-            prev.map((m) =>
-                m.module === moduleName
-                    ? { ...m, actions: m.actions.map((a) => (names.includes(a.name) ? { ...a, checked } : a)) }
-                    : m
-            )
+            prev.map((m) => ({ ...m, actions: m.actions.map((a) => ({ ...a, checked: true })) }))
         );
 
-    const handleSelectAll = () => setPermissions((prev) => prev.map((m) => ({ ...m, actions: m.actions.map((a) => ({ ...a, checked: true })) })));
-    const handleDeselectAll = () => setPermissions((prev) => prev.map((m) => ({ ...m, actions: m.actions.map((a) => ({ ...a, checked: false })) })));
+    const handleDeselectAll = () =>
+        setPermissions((prev) =>
+            prev.map((m) => ({ ...m, actions: m.actions.map((a) => ({ ...a, checked: false })) }))
+        );
+
     const handleReset = () => setPermissions(originalPermissions);
 
     // ── Sync mutation ─────────────────────────────────────────────────────────
@@ -90,8 +113,8 @@ export function useRolePermissions(slug: string) {
         onSuccess: (res) => {
             if (!res.success) { toast.error(res.message || t("loadError")); return; }
 
-            // Sync và GET giờ cùng shape → setQueryData trực tiếp
-            // useEffect sẽ tự seed lại permissions từ res.data.permissions
+            // Sync và GET cùng shape → setQueryData trực tiếp.
+            // useEffect tự seed lại permissions từ res.data.permissions.
             queryClient.setQueryData(queryKey, res);
 
             toast.success(res.message || t("saveSuccess"));
@@ -113,7 +136,6 @@ export function useRolePermissions(slug: string) {
         currentCheckedIds,
         togglePermission,
         toggleModule,
-        toggleGroup,
         handleSelectAll,
         handleDeselectAll,
         handleReset,

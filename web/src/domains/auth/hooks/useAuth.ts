@@ -7,6 +7,7 @@ import {
   can,
   canAccessClub,
   hasAnyClubPermission,
+  hasAnySystemPermission,
 } from "@/lib/permissions";
 import type { LoginPayload, RegisterPayload, Profile } from "../types";
 
@@ -14,11 +15,12 @@ import type { LoginPayload, RegisterPayload, Profile } from "../types";
  * useAuth — main auth hook for client components.
  *
  * Permission check mirrors backend `User::hasPermission(module, action, clubId)`:
- *   - is_superadmin → bypass all
- *   - else: system scope (clubId null) → flat module key
- *           club scope (clubId number) → nested `club_{id}`
+ *   - is_superadmin → bypass all (permissions === ["*"])
+ *   - is_system_admin: true  OR flat permission keys (không có club_X)
+ *     → isSystemAdmin = true (system role)
+ *   - permissions có club_X keys → club scope
  *
- * Xem docs/permission-guide.md §4-§5.
+ * Xem docs/permission-guide.md §2, §4-§5.
  */
 export function useAuth() {
   const {
@@ -39,7 +41,7 @@ export function useAuth() {
       try {
         const profile = await authService.login(payload);
         setUser(profile);
-        return profile; 
+        return profile;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Login failed";
         setError(message);
@@ -82,7 +84,7 @@ export function useAuth() {
   /**
    * Check permission — mirror backend hasPermission(module, action, clubId).
    *
-   * @param module  module slug (e.g. 'club', 'user', 'member')
+   * @param module  module slug (e.g. 'club', 'user', 'member', 'fund')
    * @param action  action (e.g. 'view', 'create', 'update', 'delete')
    * @param clubId  undefined/null → SYSTEM SCOPE; number → CLUB SCOPE
    */
@@ -109,7 +111,19 @@ export function useAuth() {
   );
 
   const isSuperAdmin = user?.is_superadmin ?? false;
-  const isSystemAdmin = user?.is_system_admin ?? false;
+
+  /**
+   * isSystemAdmin = true khi:
+   *   1. user.is_system_admin === true  (flag từ backend), HOẶC
+   *   2. permissions có flat keys (không phải club_X) — shape của system role
+   *      ví dụ: { "club": ["view"], "fund": ["create", ...] }
+   *      → detect ngay cả khi backend chưa set is_system_admin: true
+   *
+   * Superadmin (["*"]) không cần check — isSuperAdmin đã bypass.
+   */
+  const isSystemAdmin =
+    (user?.is_system_admin ?? false) ||
+    (user ? hasAnySystemPermission(user.permissions, false) : false);
 
   return {
     user,
@@ -150,5 +164,4 @@ export function useHydrateAuth(profile: Profile | null) {
       reset();
     }
   }, [profile, setUser, reset]);
-
 }

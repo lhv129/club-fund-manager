@@ -267,11 +267,13 @@ const ClubSidebarHeader = memo(function ClubSidebarHeader({
 const ClubContextCard = memo(function ClubContextCard({
   clubName,
   isSuperAdmin,
+  isSystemAdmin,
   showBackToClubs,
   onClose,
 }: {
   clubName: string | undefined;
   isSuperAdmin: boolean;
+  isSystemAdmin: boolean;
   showBackToClubs: boolean;
   onClose: () => void;
 }) {
@@ -297,10 +299,20 @@ const ClubContextCard = memo(function ClubContextCard({
         <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
           {clubName ?? "—"}
         </p>
+
+        {/* Superadmin badge — ưu tiên hiện trước */}
         {isSuperAdmin && (
           <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold">
             <Shield className="w-3.5 h-3.5 text-amber-500 shrink-0" strokeWidth={2.5} />
             <span className="truncate">{tWorkspace("viewingAsSuperAdmin")}</span>
+          </div>
+        )}
+
+        {/* System admin badge — chỉ hiện khi không phải superadmin */}
+        {!isSuperAdmin && isSystemAdmin && (
+          <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold">
+            <Shield className="w-3.5 h-3.5 text-blue-500 shrink-0" strokeWidth={2.5} />
+            <span className="truncate">{tWorkspace("viewingAsSystemAdmin")}</span>
           </div>
         )}
       </div>
@@ -334,7 +346,9 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
   const t = useTranslations("menu") as (key: string) => string;
   const pathname = usePathname() as string;
   const currentLocale = useLocale() as string;
-  const { hasPermission, isSuperAdmin, hasAnyClubPermission } = useAuth();
+
+  // [FIX] Thêm isSystemAdmin vào destructure
+  const { hasPermission, isSuperAdmin, isSystemAdmin, hasAnyClubPermission } = useAuth();
   const { club } = useClub();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -345,16 +359,31 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
     String(club?.id ?? "");
 
   const clubName = pickTranslation(club?.translations, currentLocale)?.name;
-  const showBackToClubs = isSuperAdmin || hasAnyClubPermission();
+  const showBackToClubs = isSuperAdmin || isSystemAdmin || hasAnyClubPermission();
 
-  // Build items với real hrefs + filter theo club-scoped permission
+  // Build items với real hrefs + filter theo permission
   const filtered = useMemo(() => {
     if (!club) return [];
     const items = CLUB_NAV_ITEMS(slug);
+
+    /**
+     * [FIX] clubCheck giờ check 2 scope theo thứ tự ưu tiên:
+     *
+     * 1. Club scope  — user là member/owner/manager của club cụ thể này
+     *    (permissions có key `club_{id}` → nested { module: actions[] })
+     *
+     * 2. System scope fallback — user là system admin với flat permissions
+     *    (permissions có key `member`, `fund`, ... ở top-level)
+     *    Chỉ apply khi isSystemAdmin = true để tránh nhầm lẫn với user thường.
+     *
+     * Superadmin bypass hoàn toàn qua isSuperAdmin (không gọi clubCheck).
+     */
     const clubCheck = (module?: string, action?: string) =>
-      hasPermission(module!, action!, club.id);
+      hasPermission(module!, action!, club.id) ||            // club scope
+      (isSystemAdmin && hasPermission(module!, action!));    // system scope fallback
+
     return filterNav(items, clubCheck, isSuperAdmin);
-  }, [club, slug, hasPermission, isSuperAdmin]);
+  }, [club, slug, hasPermission, isSuperAdmin, isSystemAdmin]); // [FIX] thêm isSystemAdmin vào deps
 
   // Close on outside click (mobile)
   useEffect(() => {
@@ -399,6 +428,7 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
           <ClubContextCard
             clubName={clubName}
             isSuperAdmin={isSuperAdmin}
+            isSystemAdmin={isSystemAdmin}  // [FIX] truyền thêm prop
             showBackToClubs={showBackToClubs}
             onClose={onClose}
           />

@@ -108,10 +108,14 @@ export function canAccessClub(
   perms: PermissionMap | undefined | null,
   isSuperAdmin: boolean,
   clubId: number,
+  isSystemAdmin = false,   // ← thêm param, default false → không breaking change
 ): boolean {
   if (isSuperAdmin) return true;
   if (Array.isArray(perms)) return perms.includes("*");
   if (!perms) return false;
+  // System admin (flat permissions) → cho phép truy cập club workspace
+  // mirror logic trong useAuth.isSystemAdmin
+  if (isSystemAdmin) return true;
   const club = clubPermissions(perms, clubId);
   if (!club) return false;
   return Object.values(club).some(

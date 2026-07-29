@@ -48,6 +48,7 @@
     "previous": "Previous",
     "next": "Next",
     "createdAt": "Created at",
+    "members_action": "See Members",
     "name": "Name",
     "members": "Members",
     "description": "Description",
@@ -63,10 +64,17 @@
     "deleteSuccess": "Deleted successfully",
     "updateSuccess": "Updated successfully",
     "loadError": "Failed to load data",
-    "updateStatus": "Updated status successfully",
-    "openWorkspace": "Open workspace",
+    "updateStatus": "Status updated successfully",
+    "openWorkspace": "Open Workspace",
     "email": "Email",
-    "today": "Today"
+    "today": "Today",
+    "disband": "Disband Club",
+    "role": "Role",
+    "noDescription": "No description available",
+    "settings": "Settings",
+    "toggleActive": "Click to activate",
+    "toggleInactive": "Click to deactivate",
+    "readOnly": "You have view-only access"
   },
   "metadata": {
     "users": {
@@ -167,24 +175,34 @@
     "backHome": "Back to Home"
   },
   "club": {
-    "title": "Club list",
-    "create": "Add club",
-    "edit": "Edit",
+    "title": "Club List",
+    "create": "Create Club",
+    "edit": "Edit Club",
     "notFound": "No clubs found",
     "totalCount": "{count} clubs",
-    "deleteConfirmMsg": "Are you sure you want to delete club {name}?",
-    "namePlaceholder": "Enter the club name...",
-    "descriptionPlaceholder": "Enter the club description..."
+    "deleteConfirmMsg": "Are you sure you want to delete the club \"{name}\"?",
+    "namePlaceholder": "Enter club name...",
+    "descriptionPlaceholder": "Enter club description...",
+    "emptyTitle": "No clubs available",
+    "emptyDesc": "You haven't joined any clubs or you don't have access to any clubs yet.",
+    "loadMore": "Load More",
+    "loadMoreCount": "Load More ({remaining} remaining)",
+    "allLoaded": "All clubs have been loaded",
+    "disband": "Disband",
+    "disbandConfirmTitle": "Disband Club",
+    "disbandConfirmDesc": "This action cannot be undone. All club data will be permanently deleted.",
+    "disbandConfirmMsg": "Are you sure you want to disband \"{name}\"?"
   },
   "clubWorkspace": {
     "backToClubs": "Back to clubs",
     "currentClub": "Current club",
-    "viewingAsSuperAdmin": "Viewing as Super Admin",
+    "viewingAsSuperAdmin": "Super Admin",
     "dashboard": "Club dashboard",
     "totalMembers": "Total members",
     "totalFunds": "Total funds",
     "activeEvents": "Active events",
-    "monthlyIncome": "Monthly income"
+    "monthlyIncome": "Monthly income",
+    "viewingAsSystemAdmin": "System Admin"
   },
   "noClub": {
     "title": "You haven't joined any club yet",

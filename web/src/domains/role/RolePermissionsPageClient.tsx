@@ -1,24 +1,25 @@
 // ══════════════════════════════════════════════════════════════════
-// 3. @/domains/role/components/RolePermissionsPageClient.tsx
+// @/domains/role/components/RolePermissionsPageClient.tsx
 // ══════════════════════════════════════════════════════════════════
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
     Check,
     CheckSquare,
     Loader2,
+    Lock,
     RotateCcw,
     Save,
     Search,
     Shield,
-    ShieldCheck,
     Square,
 } from "lucide-react";
 
 import { useRolePermissions } from "@/domains/role/hooks/useRolePermissions";
-import type { RolePermission, RolePermissionAction } from "@/domains/role/types";
+import { useAuth } from "@/domains/auth/hooks/useAuth";
+import type { RolePermission, RolePermissionAction, RolePermissionLabelTranslation } from "@/domains/role/types";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
 import { APP_ROUTES } from "@/constants";
 
@@ -30,9 +31,27 @@ interface Props {
 }
 
 /* ============================================================
-   CONSTANTS
+   HELPERS
 ============================================================ */
-const GLOBAL_ACTIONS = ["view_all", "update_all", "delete_all"];
+
+/**
+ * Pick label name từ translations array theo locale.
+ * Fallback: locale khác → phần tử đầu → module key.
+ *
+ * label là array vì BE trả đủ mọi locale trong 1 response —
+ * không cần refetch khi đổi locale, chỉ derive client-side.
+ */
+function pickLabel(
+    label: RolePermissionLabelTranslation[],
+    locale: string,
+    fallback: string,
+): string {
+    return (
+        label.find((l) => l.locale === locale)?.name ??
+        label[0]?.name ??
+        fallback
+    );
+}
 
 /* ============================================================
    ACTION CHIP
@@ -41,28 +60,29 @@ interface ActionChipProps {
     action: RolePermissionAction;
     label: string;
     onToggle: (id: number) => void;
-    amber?: boolean;
+    canUpdate: boolean;
 }
 
-function ActionChip({ action, label, onToggle, amber }: ActionChipProps) {
+function ActionChip({ action, label, onToggle, canUpdate }: ActionChipProps) {
     return (
         <button
             type="button"
-            onClick={() => onToggle(action.id)}
+            onClick={() => canUpdate && onToggle(action.id)}
+            disabled={!canUpdate}
             className={[
                 "group flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                action.checked
-                    ? amber
-                        ? "bg-warning/10 text-warning ring-1 ring-warning/30"
-                        : "bg-primary/10 text-primary ring-1 ring-primary/20"
-                    : "bg-background-subtle text-foreground-muted hover:bg-background-muted",
+                !canUpdate
+                    ? "cursor-not-allowed opacity-60 bg-background-subtle text-foreground-muted"
+                    : action.checked
+                        ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+                        : "bg-background-subtle text-foreground-muted hover:bg-background-muted",
             ].join(" ")}
         >
             <span
                 className={[
                     "w-4 h-4 rounded flex-shrink-0 border flex items-center justify-center transition-colors",
                     action.checked
-                        ? amber ? "bg-warning border-warning" : "bg-primary border-primary"
+                        ? "bg-primary border-primary"
                         : "border-border bg-background",
                 ].join(" ")}
             >
@@ -78,116 +98,96 @@ function ActionChip({ action, label, onToggle, amber }: ActionChipProps) {
 ============================================================ */
 interface ModuleCardProps {
     module: RolePermission;
+    /** Label đã được resolve theo locale — truyền từ page, không derive trong card. */
+    label: string;
     actionLabel: (name: string) => string;
     onToggle: (id: number) => void;
     onToggleAll: (moduleName: string, checked: boolean) => void;
-    onToggleGroup: (moduleName: string, names: string[], checked: boolean) => void;
+    canUpdate: boolean;
     labelSelectAll: string;
     labelDeselectAll: string;
-    labelRegular: string;
-    labelAdmin: string;
     labelProgress: (checked: number, total: number) => string;
 }
 
 function ModuleCard({
     module,
+    label,
     actionLabel,
     onToggle,
     onToggleAll,
-    onToggleGroup,
+    canUpdate,
     labelSelectAll,
     labelDeselectAll,
-    labelRegular,
-    labelAdmin,
     labelProgress,
 }: ModuleCardProps) {
-    const regularActions = module.actions.filter((a) => !GLOBAL_ACTIONS.includes(a.name));
-    const globalActions = module.actions.filter((a) => GLOBAL_ACTIONS.includes(a.name));
-    const hasGlobal = globalActions.length > 0;
     const allChecked = module.actions.every((a) => a.checked);
     const checkedCount = module.actions.filter((a) => a.checked).length;
     const total = module.actions.length;
     const progress = total > 0 ? (checkedCount / total) * 100 : 0;
-    const allRegularChecked = regularActions.every((a) => a.checked);
-    const allOwnerChecked = globalActions.length > 0 && globalActions.every((a) => a.checked);
 
     return (
-        <div className={["rounded-2xl border bg-background overflow-hidden transition-shadow hover:shadow-md", hasGlobal ? "border-warning/30" : "border-border"].join(" ")}>
-            <div className={["h-1 w-full", hasGlobal ? "bg-gradient-to-r from-warning to-orange-400" : "bg-primary"].join(" ")} />
+        <div className="rounded-2xl border border-border bg-background overflow-hidden transition-shadow hover:shadow-md">
+            {/* top accent */}
+            <div className="h-1 w-full bg-primary" />
 
             <div className="px-4 pt-4 pb-3">
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={["w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0", hasGlobal ? "bg-warning/10" : "bg-primary/10"].join(" ")}>
-                            {hasGlobal ? <ShieldCheck className="w-4 h-4 text-warning" /> : <Shield className="w-4 h-4 text-primary" />}
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-primary/10">
+                            <Shield className="w-4 h-4 text-primary" />
                         </div>
                         <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm font-semibold text-foreground">{module.label}</span>
-                                {hasGlobal && (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-warning/10 text-warning uppercase tracking-wide flex-shrink-0">
-                                        Owner
-                                    </span>
-                                )}
-                            </div>
-                            <span className="text-[11px] font-mono text-foreground-muted">{module.module}</span>
+                            {/* label đã resolved theo locale — không dùng module.label trực tiếp */}
+                            <span className="text-sm font-semibold text-foreground">{label}</span>
+                            <div className="text-[11px] font-mono text-foreground-muted">{module.module}</div>
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => onToggleAll(module.module, !allChecked)}
-                        className={["flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors", allChecked ? "bg-background-subtle text-foreground-muted hover:bg-background-muted" : "bg-primary/5 text-primary hover:bg-primary/10"].join(" ")}
-                    >
-                        {allChecked ? labelDeselectAll : labelSelectAll}
-                    </button>
+
+                    {canUpdate && (
+                        <button
+                            type="button"
+                            onClick={() => onToggleAll(module.module, !allChecked)}
+                            className={[
+                                "flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors",
+                                allChecked
+                                    ? "bg-background-subtle text-foreground-muted hover:bg-background-muted"
+                                    : "bg-primary/5 text-primary hover:bg-primary/10",
+                            ].join(" ")}
+                        >
+                            {allChecked ? labelDeselectAll : labelSelectAll}
+                        </button>
+                    )}
                 </div>
 
+                {/* progress bar */}
                 <div className="mt-3">
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] text-foreground-muted">{labelProgress(checkedCount, total)}</span>
                         <span className="text-[11px] font-semibold text-foreground-muted">{Math.round(progress)}%</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-background-subtle overflow-hidden">
-                        <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+                        <div
+                            className="h-full rounded-full bg-primary transition-all duration-300"
+                            style={{ width: `${progress}%` }}
+                        />
                     </div>
                 </div>
             </div>
 
-            <div className="px-4 pb-3">
-                {hasGlobal && (
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] font-semibold text-foreground-muted uppercase tracking-wider">{labelRegular}</p>
-                        <button type="button" onClick={() => onToggleGroup(module.module, regularActions.map((a) => a.name), !allRegularChecked)}
-                            className="text-[10px] text-primary hover:opacity-75 font-semibold transition-opacity">
-                            {allRegularChecked ? labelDeselectAll : labelSelectAll}
-                        </button>
-                    </div>
-                )}
+            {/* Action chips */}
+            <div className="px-4 pb-4">
                 <div className="grid grid-cols-2 gap-1.5">
-                    {regularActions.map((action) => (
-                        <ActionChip key={action.id} action={action} label={actionLabel(action.name)} onToggle={onToggle} />
+                    {module.actions.map((action) => (
+                        <ActionChip
+                            key={action.id}
+                            action={action}
+                            label={actionLabel(action.name)}
+                            onToggle={onToggle}
+                            canUpdate={canUpdate}
+                        />
                     ))}
                 </div>
             </div>
-
-            {hasGlobal && globalActions.length > 0 && (
-                <div className="mx-4 mb-4 rounded-xl border border-warning/30 bg-warning/5 p-3">
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] font-semibold text-warning uppercase tracking-wider flex items-center gap-1">
-                            <ShieldCheck className="w-3 h-3" />{labelAdmin}
-                        </p>
-                        <button type="button" onClick={() => onToggleGroup(module.module, globalActions.map((a) => a.name), !allOwnerChecked)}
-                            className="text-[10px] text-warning hover:opacity-75 font-semibold transition-opacity">
-                            {allOwnerChecked ? labelDeselectAll : labelSelectAll}
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-1 gap-1.5">
-                        {globalActions.map((action) => (
-                            <ActionChip key={action.id} action={action} label={actionLabel(action.name)} onToggle={onToggle} amber />
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
@@ -199,7 +199,18 @@ export function RolePermissionsPageClient({ slug }: Props) {
     const t = useTranslations("common");
     const tr = useTranslations("role");
 
-    // ── Cache hook — toàn bộ data + toggle logic ──────────────────────────────
+    /**
+     * locale dùng để pick label từ array translations của module.
+     * Khi user đổi locale, component re-render, pickLabel() trả về
+     * tên đúng ngôn ngữ mới — không cần refetch.
+     */
+    const locale = useLocale();
+
+    // ── Permission check ──────────────────────────────────────────────────────
+    const { isSuperAdmin, hasPermission } = useAuth();
+    const canUpdate = isSuperAdmin || hasPermission("module", "update");
+
+    // ── Cache hook ────────────────────────────────────────────────────────────
     const {
         permissions,
         roleName,
@@ -209,24 +220,25 @@ export function RolePermissionsPageClient({ slug }: Props) {
         currentCheckedIds,
         togglePermission,
         toggleModule,
-        toggleGroup,
         handleSelectAll,
         handleDeselectAll,
         handleReset,
         handleSync,
     } = useRolePermissions(slug);
 
-    // ── UI state (chỉ liên quan render) ──────────────────────────────────────
+    // ── UI state ──────────────────────────────────────────────────────────────
     const [search, setSearch] = useState("");
 
     // ── Derived state ─────────────────────────────────────────────────────────
     const filteredPermissions = useMemo(() => {
         if (!search.trim()) return permissions;
         const q = search.toLowerCase();
-        return permissions.filter(
-            (m) => m.label.toLowerCase().includes(q) || m.module.toLowerCase().includes(q)
-        );
-    }, [permissions, search]);
+        return permissions.filter((m) => {
+            // label là array → pick theo locale trước khi filter
+            const resolvedLabel = pickLabel(m.label, locale, m.module);
+            return resolvedLabel.toLowerCase().includes(q) || m.module.toLowerCase().includes(q);
+        });
+    }, [permissions, search, locale]);
 
     const totalChecked = currentCheckedIds.length;
     const totalActions = permissions.reduce((sum, m) => sum + m.actions.length, 0);
@@ -244,14 +256,11 @@ export function RolePermissionsPageClient({ slug }: Props) {
             <Breadcrumb
                 homeHref={APP_ROUTES.admin}
                 extraItems={[
-                    {
-                        label: tr("assignPermissions"),
-                    },
-                    {
-                        label: roleName,
-                    },
+                    { label: tr("assignPermissions") },
+                    { label: roleName },
                 ]}
             />
+
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
@@ -264,21 +273,41 @@ export function RolePermissionsPageClient({ slug }: Props) {
                     </div>
                 </div>
 
-                {hasChanged && (
+                {/* Save / Undo — chỉ hiện khi canUpdate && hasChanged */}
+                {canUpdate && hasChanged && (
                     <div className="flex items-center gap-2">
-                        <button type="button" onClick={handleReset} disabled={isSyncing}
+                        <button
+                            type="button"
+                            onClick={handleReset}
+                            disabled={isSyncing}
                             className="inline-flex items-center gap-2 rounded-xl border border-border
                                 bg-background px-3.5 py-2 text-sm font-medium text-foreground-muted
-                                hover:bg-background-subtle disabled:opacity-60 transition-colors">
+                                hover:bg-background-subtle disabled:opacity-60 transition-colors"
+                        >
                             <RotateCcw className="h-4 w-4" />{tr("undo")}
                         </button>
-                        <button type="button" onClick={handleSync} disabled={isSyncing}
+                        <button
+                            type="button"
+                            onClick={handleSync}
+                            disabled={isSyncing}
                             className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2
                                 text-sm font-semibold text-primary-foreground hover:bg-primary-hover
-                                disabled:opacity-60 transition-colors shadow-sm">
-                            {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                disabled:opacity-60 transition-colors shadow-sm"
+                        >
+                            {isSyncing
+                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                : <Save className="h-4 w-4" />}
                             {tr("saveChanges")}
                         </button>
+                    </div>
+                )}
+
+                {/* Read-only badge */}
+                {!canUpdate && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl
+                        bg-background-subtle border border-border text-xs font-medium text-foreground-muted">
+                        <Lock className="w-3.5 h-3.5" />
+                        {t("readOnly")}
                     </div>
                 )}
             </div>
@@ -299,8 +328,10 @@ export function RolePermissionsPageClient({ slug }: Props) {
                     </div>
                     <div className="hidden sm:flex items-center gap-2">
                         <div className="w-24 h-1.5 rounded-full bg-background-subtle overflow-hidden">
-                            <div className="h-full rounded-full bg-primary transition-all duration-300"
-                                style={{ width: totalActions > 0 ? `${(totalChecked / totalActions) * 100}%` : "0%" }} />
+                            <div
+                                className="h-full rounded-full bg-primary transition-all duration-300"
+                                style={{ width: totalActions > 0 ? `${(totalChecked / totalActions) * 100}%` : "0%" }}
+                            />
                         </div>
                         <span className="text-xs text-foreground-muted">
                             {totalActions > 0 ? Math.round((totalChecked / totalActions) * 100) : 0}%
@@ -309,18 +340,31 @@ export function RolePermissionsPageClient({ slug }: Props) {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Search */}
                     <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground-muted" />
-                        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
                             placeholder={tr("searchPlaceholder")}
                             className="pl-8 pr-3 py-2 text-xs rounded-xl border border-border
                                 bg-background text-foreground placeholder:text-foreground-muted
                                 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
-                                w-36 sm:w-44 transition-all" />
+                                w-36 sm:w-44 transition-all"
+                        />
                     </div>
-                    <button type="button" onClick={allGlobalChecked ? handleDeselectAll : handleSelectAll}
+
+                    {/* Select / Deselect All */}
+                    <button
+                        type="button"
+                        onClick={allGlobalChecked ? handleDeselectAll : handleSelectAll}
+                        disabled={!canUpdate}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium
-                            border border-border bg-background text-foreground-muted hover:bg-background-subtle transition-colors">
+                            border border-border bg-background text-foreground-muted
+                            hover:bg-background-subtle transition-colors
+                            disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         {allGlobalChecked
                             ? <><Square className="w-3.5 h-3.5" />{tr("deselectAllGlobal")}</>
                             : <><CheckSquare className="w-3.5 h-3.5" />{tr("selectAllGlobal")}</>}
@@ -339,8 +383,11 @@ export function RolePermissionsPageClient({ slug }: Props) {
                     <Shield className="w-10 h-10 mb-3 opacity-40" />
                     <p className="text-sm">{search ? tr("notFoundSearch") : tr("noPermissionsData")}</p>
                     {search && (
-                        <button type="button" onClick={() => setSearch("")}
-                            className="mt-2 text-xs text-primary hover:underline">
+                        <button
+                            type="button"
+                            onClick={() => setSearch("")}
+                            className="mt-2 text-xs text-primary hover:underline"
+                        >
                             {tr("clearFilter")}
                         </button>
                     )}
@@ -351,14 +398,17 @@ export function RolePermissionsPageClient({ slug }: Props) {
                         <ModuleCard
                             key={module.module}
                             module={module}
+                            /**
+                             * Resolve label theo locale tại đây — ModuleCard không
+                             * cần biết locale hay cấu trúc array, chỉ nhận string.
+                             */
+                            label={pickLabel(module.label, locale, module.module)}
                             actionLabel={getActionLabel}
                             onToggle={togglePermission}
                             onToggleAll={toggleModule}
-                            onToggleGroup={toggleGroup}
+                            canUpdate={canUpdate}
                             labelSelectAll={tr("selectAll")}
                             labelDeselectAll={tr("deselectAll")}
-                            labelRegular={tr("regularActions")}
-                            labelAdmin={tr("adminActions")}
                             labelProgress={(checked, total) => tr("progressLabel", { checked, total })}
                         />
                     ))}
@@ -366,7 +416,7 @@ export function RolePermissionsPageClient({ slug }: Props) {
             )}
 
             {/* Sticky bottom save bar */}
-            {hasChanged && (
+            {canUpdate && hasChanged && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3
                     px-5 py-3 rounded-2xl bg-background border border-border shadow-2xl">
                     <div className="flex items-center gap-2">
@@ -376,15 +426,25 @@ export function RolePermissionsPageClient({ slug }: Props) {
                         </span>
                     </div>
                     <div className="w-px h-4 bg-border" />
-                    <button type="button" onClick={handleReset} disabled={isSyncing}
-                        className="text-xs font-medium text-foreground-muted hover:text-foreground transition-colors disabled:opacity-50">
+                    <button
+                        type="button"
+                        onClick={handleReset}
+                        disabled={isSyncing}
+                        className="text-xs font-medium text-foreground-muted hover:text-foreground transition-colors disabled:opacity-50"
+                    >
                         {tr("undo")}
                     </button>
-                    <button type="button" onClick={handleSync} disabled={isSyncing}
+                    <button
+                        type="button"
+                        onClick={handleSync}
+                        disabled={isSyncing}
                         className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl
                             bg-primary hover:bg-primary-hover text-primary-foreground
-                            text-xs font-semibold transition-colors disabled:opacity-60">
-                        {isSyncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                            text-xs font-semibold transition-colors disabled:opacity-60"
+                    >
+                        {isSyncing
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : <Save className="h-3.5 w-3.5" />}
                         {tr("saveChanges")}
                     </button>
                 </div>

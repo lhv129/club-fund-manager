@@ -18,7 +18,7 @@ import { useListParams } from "@/hooks/useListParams";
 import { useRoles } from "@/domains/role/hooks/useRoles";
 import type { Role, RoleFilters, RoleTranslation } from "@/domains/role/types";
 import { APP_ROUTES } from "@/constants";
-
+import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -44,6 +44,14 @@ export function RolesPageClient() {
     const locale = useLocale();
     const t = useTranslations("common");
     const tr = useTranslations("role");
+
+    const { hasPermission, isSuperAdmin, user } = useAuth();
+
+    const canCreate = isSuperAdmin || hasPermission("user", "create");
+    const canUpdate = isSuperAdmin || hasPermission("user", "update");
+    const canDelete = isSuperAdmin || hasPermission("user", "delete");
+    const canViewModule = isSuperAdmin || hasPermission("module", "view");
+
     const router = useRouter();
 
     const getName = (translations?: RoleTranslation[]) =>
@@ -145,6 +153,7 @@ export function RolesPageClient() {
                     checked={Boolean(row.is_active)}
                     loading={togglingIds.has(row.id)}
                     onChange={() => handleToggleStatus(row)}
+                    disabled={!canUpdate}
                 />
             ),
         },
@@ -162,14 +171,16 @@ export function RolesPageClient() {
                         {tr("totalCount", { count: total.toLocaleString() })}
                     </p>
                 </div>
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary
+                {canCreate && (
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary
                         hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    {tr("create")}
-                </button>
+                    >
+                        <Plus className="w-4 h-4" />
+                        {tr("create")}
+                    </button>
+                )}
             </div>
 
             <div className="space-y-4">
@@ -191,24 +202,30 @@ export function RolesPageClient() {
                     keyExtractor={(row) => row.id}
                     renderActions={(row) => (
                         <TableActions>
-                            <TableActionItem
-                                icon={<ShieldCheck className="w-4 h-4" />}
-                                label={tr("assignPermissions")}
-                                onClick={() =>
-                                    router.push(`${APP_ROUTES.adminRoles}/${row.slug}/permissions`)
-                                }
-                            />
-                            <TableActionItem
-                                icon={<Pencil className="w-4 h-4" />}
-                                label={t("edit")}
-                                onClick={() => openEdit(row)}
-                            />
-                            <TableActionItem
-                                icon={<Trash2 className="w-4 h-4" />}
-                                label={t("delete")}
-                                variant="danger"
-                                onClick={() => setDeleteTarget(row)}
-                            />
+                            {canViewModule && (
+                                <TableActionItem
+                                    icon={<ShieldCheck className="w-4 h-4" />}
+                                    label={tr("assignPermissions")}
+                                    onClick={() =>
+                                        router.push(`${APP_ROUTES.adminRoles}/${row.slug}/permissions`)
+                                    }
+                                />
+                            )}
+                            {canUpdate && (
+                                <TableActionItem
+                                    icon={<Pencil className="w-4 h-4" />}
+                                    label={t("edit")}
+                                    onClick={() => openEdit(row)}
+                                />
+                            )}
+                            {canDelete && row.id !== user?.id && (
+                                <TableActionItem
+                                    icon={<Trash2 className="w-4 h-4" />}
+                                    label={t("delete")}
+                                    variant="danger"
+                                    onClick={() => setDeleteTarget(row)}
+                                />
+                            )}
                         </TableActions>
                     )}
                     emptyText={tr("notFound")}

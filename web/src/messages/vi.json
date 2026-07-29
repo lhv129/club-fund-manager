@@ -18,8 +18,8 @@
     "search": "Tìm kiếm",
     "actions": "Hành động",
     "status": "Trạng thái",
-    "active": "Trạng thái hiển thị",
-    "inactive": "Không hiển thị",
+    "active": "Đang hoạt động",
+    "inactive": "Ngừng hoạt động",
     "confirm": "Xác nhận",
     "back": "Quay lại",
     "noData": "Không có dữ liệu",
@@ -50,6 +50,7 @@
     "createdAt": "Ngày tạo",
     "name": "Tên",
     "members": "Thành viên",
+    "members_action": "Xem thành viên",
     "description": "Mô tả",
     "logo": "Logo",
     "sortOrder": "Thứ tự sắp xếp",
@@ -64,9 +65,16 @@
     "updateSuccess": "Cập nhật thành công",
     "loadError": "Không thể tải dữ liệu",
     "updateStatus": "Cập nhật trạng thái thành công",
-    "openWorkspace": "Mở workspace",
+    "openWorkspace": "Vào câu lạc bộ",
     "email": "Email",
-    "today": "Hôm nay"
+    "today": "Hôm nay",
+    "disband": "Giải tán nhóm",
+    "role": "Vai trò",
+    "noDescription": "Chưa có mô tả",
+    "settings": "Cài đặt",
+    "toggleActive": "Nhấn để bật hoạt động",
+    "toggleInactive": "Nhấn để tắt hoạt động",
+    "readOnly": "Bạn chỉ có quyền xem"
   },
   "metadata": {
     "users": {
@@ -169,22 +177,32 @@
   "club": {
     "title": "Danh sách câu lạc bộ",
     "create": "Thêm mới CLB",
-    "edit": "Sửa",
+    "edit": "Sửa thông tin CLB",
     "notFound": "Không tìm thấy câu lạc bộ nào",
     "totalCount": "{count} câu lạc bộ",
     "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa câu lạc bộ {name}?",
     "namePlaceholder": "Nhập tên câu lạc bộ...",
-    "descriptionPlaceholder": "Nhập mô tả câu lạc bộ..."
+    "descriptionPlaceholder": "Nhập mô tả câu lạc bộ...",
+    "emptyTitle": "Chưa có câu lạc bộ nào",
+    "emptyDesc": "Bạn chưa được thêm vào câu lạc bộ nào hoặc chưa có quyền truy cập.",
+    "loadMore": "Tải thêm",
+    "loadMoreCount": "Tải thêm ({remaining} còn lại)",
+    "allLoaded": "Đã hiển thị tất cả câu lạc bộ",
+    "disband": "Giải tán",
+    "disbandConfirmTitle": "Giải tán câu lạc bộ",
+    "disbandConfirmDesc": "Hành động này không thể hoàn tác. Toàn bộ dữ liệu câu lạc bộ sẽ bị xóa vĩnh viễn.",
+    "disbandConfirmMsg": "Bạn chắc chắn muốn giải tán \"{name}\"?"
   },
   "clubWorkspace": {
     "backToClubs": "Quay lại danh sách CLB",
     "currentClub": "CLB hiện tại",
-    "viewingAsSuperAdmin": "Đang xem với quyền Super Admin",
+    "viewingAsSuperAdmin": "Super Admin",
     "dashboard": "Bảng điều khiển CLB",
     "totalMembers": "Tổng thành viên",
     "totalFunds": "Tổng quỹ",
     "activeEvents": "Sự kiện đang diễn ra",
-    "monthlyIncome": "Thu tháng này"
+    "monthlyIncome": "Thu tháng này",
+     "viewingAsSystemAdmin": "System Admin"
   },
   "noClub": {
     "title": "Bạn chưa tham gia câu lạc bộ nào",

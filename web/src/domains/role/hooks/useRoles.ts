@@ -125,13 +125,20 @@ export function useRoles(
     const toggleMutation = useMutation({
         mutationFn: (id: number) =>
             roleService.toggleStatus(id) as Promise<ApiResponse<Role>>,
+
         onSuccess: (res, id) => {
-            if (!res.success) return;
+            if (!res.success) {
+                toast.error(res.message || t("loadError"));
+                return;
+            }
+
             const saved = res.data;
+
             queryClient.setQueryData(
                 queryKey,
                 (old: PaginatedResponse<Role> | undefined) => {
                     if (!old) return old;
+
                     return {
                         ...old,
                         data: (old.data ?? []).map((item) =>
@@ -144,7 +151,10 @@ export function useRoles(
                     };
                 }
             );
+
+            toast.success(res.message || t("updateStatus"));
         },
+
         onError: (error: unknown) => {
             toast.error((error as Error)?.message || t("loadError"));
         },

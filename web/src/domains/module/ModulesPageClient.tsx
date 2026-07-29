@@ -33,6 +33,7 @@ import type { Module, ModuleFilters } from "@/domains/module/types";
 import type { TranslationEntry } from "@/components/shared/forms/FormModal";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
 import { APP_ROUTES } from "@/constants";
+import { useAuth } from "@/domains/auth/hooks/useAuth";
 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -126,6 +127,9 @@ function ModuleCard({
     const desc = htmlToPreview(getTranslatedDescription(r, locale));
     const t = useTranslations("common");
     const tm = useTranslations("module");
+    const { hasPermission, isSuperAdmin } = useAuth();
+    const canUpdate = isSuperAdmin || hasPermission("module", "update");
+    const canDelete = isSuperAdmin || hasPermission("module", "delete");
 
     return (
         <div className="group relative rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden transition-all hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm">
@@ -154,20 +158,25 @@ function ModuleCard({
                         </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                        <button
-                            onClick={() => onEdit(r)}
-                            aria-label={t("edit")}
-                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
-                        >
-                            <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                            onClick={() => onDelete(r)}
-                            aria-label={t("delete")}
-                            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                        >
-                            <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {canUpdate && (
+                            <button
+                                onClick={() => onEdit(r)}
+                                aria-label={t("edit")}
+                                className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+                            >
+                                <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                        {canDelete && (
+                            <button
+                                onClick={() => onDelete(r)}
+                                aria-label={t("delete")}
+                                className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+
                     </div>
                 </div>
 
@@ -187,6 +196,7 @@ function ModuleCard({
                         checked={!!r.is_active}
                         loading={toggling}
                         onChange={() => onToggleStatus(r)}
+                        disabled={!canUpdate}
                     />
                 </div>
 
@@ -215,6 +225,10 @@ export function ModulesPageClient() {
     const locale = useLocale();
     const t = useTranslations("common");
     const tm = useTranslations("module");
+    const { hasPermission, isSuperAdmin } = useAuth();
+    const canCreate = isSuperAdmin || hasPermission("module", "create");
+    const canUpdate = isSuperAdmin || hasPermission("module", "update");
+    const canDelete = isSuperAdmin || hasPermission("module", "delete");
 
     // ── Params ────────────────────────────────────────────────────────────────
     const { params, setPage, setLimit, updateMany, reset } =
@@ -369,6 +383,7 @@ export function ModulesPageClient() {
                         checked={!!row.is_active}
                         loading={togglingIds.has(row.module_id)}
                         onChange={() => handleToggleStatus(row)}
+                        disabled={!canUpdate}
                     />
                 </div>
             ),
@@ -391,13 +406,15 @@ export function ModulesPageClient() {
                         {tm("totalCount", { count: total.toLocaleString() })}
                     </p>
                 </div>
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    {tm("create")}
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        {tm("create")}
+                    </button>
+                )}
             </div>
 
             <div className="space-y-4">
@@ -467,10 +484,15 @@ export function ModulesPageClient() {
                         data={data}
                         loading={isLoading}
                         keyExtractor={(row) => row.module_id}
+                        showActions={canUpdate || canDelete}
                         renderActions={(row) => (
                             <TableActions>
-                                <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />
-                                <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
+                                {canUpdate && (
+                                    <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />
+                                )}
+                                {canDelete && (
+                                    <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
+                                )}
                             </TableActions>
                         )}
                         emptyText={tm("notFound")}

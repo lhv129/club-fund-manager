@@ -333,25 +333,33 @@ export function UsersPageClient() {
           data={data}
           loading={isLoading}
           keyExtractor={(row) => row.id}
-          renderActions={(row) => (
-            <TableActions>
-              {canUpdate && (
-                <TableActionItem
-                  icon={<Pencil className="w-4 h-4" />}
-                  label={t("edit")}
-                  onClick={() => openEdit(row)}
-                />
-              )}
-              {canDelete && row.id !== user?.id && (
-                <TableActionItem
-                  icon={<Trash2 className="w-4 h-4" />}
-                  label={t("delete")}
-                  variant="danger"
-                  onClick={() => setDeleteTarget(row)}
-                />
-              )}
-            </TableActions>
-          )}
+          showActions={canUpdate || canDelete}
+          renderActions={(row) => {
+            const showEdit = canUpdate;
+            const showDelete = canDelete && row.id !== user?.id;
+
+            if (!showEdit && !showDelete) return null;
+
+            return (
+              <TableActions>
+                {showEdit && (
+                  <TableActionItem
+                    icon={<Pencil className="w-4 h-4" />}
+                    label={t("edit")}
+                    onClick={() => openEdit(row)}
+                  />
+                )}
+                {showDelete && (
+                  <TableActionItem
+                    icon={<Trash2 className="w-4 h-4" />}
+                    label={t("delete")}
+                    variant="danger"
+                    onClick={() => setDeleteTarget(row)}
+                  />
+                )}
+              </TableActions>
+            );
+          }}
           emptyText={tu("notFound")}
         />
 

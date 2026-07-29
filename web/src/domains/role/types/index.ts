@@ -40,19 +40,24 @@ export interface RolePermissionAction {
  * Module quyền của role — response từ GET /roles/[slug]/permissions.
  * `label` đã được backend dịch theo Accept-Language header.
  */
+export interface RolePermissionLabelTranslation {
+  id: number;
+  module_id: number;
+  locale: string;
+  name: string;
+  description?: string | null;
+}
+
 export interface RolePermission {
   module_id: number;
   module: string;
-  label: string;
+  label: RolePermissionLabelTranslation[];  // was: string
   actions: RolePermissionAction[];
 }
 
 export interface RolePermissionsResponse {
-    id: number;
-    slug: string;
-    translation: {
-        locale: string;
-        name: string;
-    };
-    permissions: RolePermission[];
+  id: number;
+  slug: string;
+  translations: RoleTranslation[];  // was: translation (object đơn)
+  permissions: RolePermission[];
 }
