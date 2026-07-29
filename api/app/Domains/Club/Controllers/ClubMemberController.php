@@ -36,9 +36,9 @@ class ClubMemberController extends BaseController
      * GET /api/v1/clubs/{clubId}/members
      * Danh sách thành viên của club (lọc theo status, join_type...)
      */
-    public function index(FilterClubMemberRequest $request, int $clubId): JsonResponse
+    public function index(FilterClubMemberRequest $request, string $clubSlug): JsonResponse
     {
-        $members = $this->memberService->paginateClubMembers($clubId, $request->validated());
+        $members = $this->memberService->paginateClubMembers($clubSlug, $request->validated());
 
         return $this->paginateResponse($members, __('domains/club_member.list'));
     }

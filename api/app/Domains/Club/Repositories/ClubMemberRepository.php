@@ -26,12 +26,23 @@ class ClubMemberRepository extends BaseRepository
      * Danh sách member của 1 club (offset pagination).
      * Toàn bộ filter/search/sort nằm ở đây — Service chỉ truyền $filters + clubId.
      */
-    public function paginateClubMembers(int $clubId, array $filters = []): LengthAwarePaginator
+    public function paginateClubMembers(string $clubSlug, array $filters = []): LengthAwarePaginator
     {
         $query = $this->model
-            ->select(['id', 'club_id', 'user_id', 'join_type', 'status', 'is_active', 'joined_at', 'created_at'])
+            ->select([
+                'id',
+                'club_id',
+                'user_id',
+                'join_type',
+                'status',
+                'is_active',
+                'joined_at',
+                'created_at'
+            ])
             ->with(['user'])
-            ->where('club_id', $clubId);
+            ->whereHas('club.translations', function ($q) use ($clubSlug) {
+                $q->where('slug', $clubSlug);
+            });
 
         $this->applySearch($query, $filters);
         $this->applyFilters($query, $filters);

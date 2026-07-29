@@ -33,7 +33,7 @@ class ClubController extends BaseController
             $request->validated()
         );
 
-        return $this->paginateResponse($clubs, __('domains/club.list'));
+        return $this->paginateResponse($clubs, __('domains/club.list'), ClubResource::class);
     }
 
     /**
@@ -47,7 +47,7 @@ class ClubController extends BaseController
         $params    = $request->only(['limit', 'search', 'is_active']);
         $paginator = $this->service->cursorPaginate($params);
 
-        return $this->cursorResponse($paginator, __('domains/club.list'));
+        return $this->cursorResponse($paginator, __('domains/club.list'), ClubResource::class);
     }
 
     /**

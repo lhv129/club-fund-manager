@@ -81,7 +81,7 @@ class ModuleRepository extends BaseRepository
     {
         return $this->model
             ->with([
-                'translation',
+                'translations',
                 'permissions' => fn($q) => $q->orderBy('sort_order'),
             ])
             ->orderBy('sort_order')

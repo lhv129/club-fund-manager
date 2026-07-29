@@ -635,15 +635,15 @@ use App\Domains\Category\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->prefix('categories')->group(function () {
-    Route::get('/',                       [CategoryController::class, 'index'])->middleware('permission:category,view');
-    Route::get('/cursor',                 [CategoryController::class, 'cursorIndex'])->middleware('permission:category,view');
-    Route::get('/select',                 [CategoryController::class, 'select'])->middleware('permission:category,view');
-    Route::get('/slug/{slug}',            [CategoryController::class, 'showBySlug'])->middleware('permission:category,view');
-    Route::get('/{id}',                   [CategoryController::class, 'show'])->middleware('permission:category,view');
-    Route::post('/',                      [CategoryController::class, 'store'])->middleware('permission:category,create');
-    Route::put('/{id}',                   [CategoryController::class, 'update'])->middleware('permission:category,update');
-    Route::delete('/{id}',                [CategoryController::class, 'destroy'])->middleware('permission:category,delete');
-    Route::post('/{id}/toggle-status',    [CategoryController::class, 'toggleStatus'])->middleware('permission:category,update');
+    Route::get('/',                       [CategoryController::class, 'index'])->middleware('perm.system:category,view');
+    Route::get('/cursor',                 [CategoryController::class, 'cursorIndex'])->middleware('perm.system:category,view');
+    Route::get('/select',                 [CategoryController::class, 'select'])->middleware('perm.system:category,view');
+    Route::get('/slug/{slug}',            [CategoryController::class, 'showBySlug'])->middleware('perm.system:category,view');
+    Route::get('/{id}',                   [CategoryController::class, 'show'])->middleware('perm.system:category,view');
+    Route::post('/',                      [CategoryController::class, 'store'])->middleware('perm.system:category,create');
+    Route::put('/{id}',                   [CategoryController::class, 'update'])->middleware('perm.system:category,update');
+    Route::delete('/{id}',                [CategoryController::class, 'destroy'])->middleware('perm.system:category,delete');
+    Route::post('/{id}/toggle-status',    [CategoryController::class, 'toggleStatus'])->middleware('perm.system:category,update');
 });
 ```
 
@@ -672,7 +672,7 @@ Nhớ require file này trong `routes/api.php` (hoặc trong nhóm v1 đã có s
       + trả `responseCommon()` / `paginateResponse()` / `cursorResponse()`
 - [ ] Resource trả `translations` qua `whenLoaded`
 - [ ] Route đặt đúng thứ tự (`/select`, `/cursor`, `/slug/{slug}` trước `/{id}`), có middleware
-      `auth.jwt` + `permission:{module},{action}`
+      `auth.jwt` + `perm.system:{module},{action}`
 - [ ] Test `Accept-Language: vi` và `Accept-Language: en` cho lỗi validate translations — attribute
       phải ra đúng label riêng của module, không phải chữ "name" chung chung
 - [ ] Không có `DB::table`, `Model::where` trong Controller/Service

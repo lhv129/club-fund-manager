@@ -30,4 +30,5 @@ return [
 
     // app/Middleware/CheckClubPermission
     'no_club_permission' => 'You do not have permission to access or perform this action on the club.',
+    'club_not_found' => 'Club not found.'
 ];

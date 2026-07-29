@@ -3,6 +3,8 @@
 namespace App\Base;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
 
 /**
@@ -46,18 +48,26 @@ abstract class BaseController extends Controller
         ], $httpCode);
     }
 
-    protected function paginateResponse($paginator, $message = '')
-    {
+    protected function paginateResponse(
+        LengthAwarePaginator $paginator,
+        string $message = '',
+        ?string $resource = null,
+    ): JsonResponse {
+
+        $items = $resource
+            ? $resource::collection($paginator->items())->resolve()
+            : $paginator->items();
+
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data' => $paginator->items(),
+            'data' => $items,
             'meta' => [
                 'page' => $paginator->currentPage(),
                 'limit' => $paginator->perPage(),
                 'total' => $paginator->total(),
-                'last_page' => $paginator->lastPage()
-            ]
+                'last_page' => $paginator->lastPage(),
+            ],
         ]);
     }
 
@@ -66,16 +76,22 @@ abstract class BaseController extends Controller
      * Thay thế paginateResponse() khi dùng cursorPaginate()
      */
     protected function cursorResponse(
-        \Illuminate\Contracts\Pagination\CursorPaginator $paginator,
-        string $message = ''
-    ): \Illuminate\Http\JsonResponse {
+        CursorPaginator $paginator,
+        string $message = '',
+        ?string $resource = null,
+    ): JsonResponse {
+
+        $items = $resource
+            ? $resource::collection($paginator->items())->resolve()
+            : $paginator->items();
+
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data'    => $paginator->items(),
-            'meta'    => [
-                'limit'       => $paginator->perPage(),
-                'has_more'    => $paginator->hasMorePages(),
+            'data' => $items,
+            'meta' => [
+                'limit' => $paginator->perPage(),
+                'has_more' => $paginator->hasMorePages(),
                 'next_cursor' => $paginator->nextCursor()?->encode(),
                 'prev_cursor' => $paginator->previousCursor()?->encode(),
             ],

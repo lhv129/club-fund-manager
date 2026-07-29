@@ -4,6 +4,7 @@ namespace App\Domains\Club\Repositories;
 
 use App\Base\BaseRepository;
 use App\Domains\Club\Models\Club;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -70,11 +71,28 @@ class ClubRepository extends BaseRepository
                 'clubs.max_members',
                 'clubs.created_at',
             ])
-            ->with('translations')
+            ->with([
+                'translations:id,club_id,locale,name,description,slug',
+
+                'memberRoles' => function ($query) {
+                    $query->select([
+                        'id',
+                        'club_id',
+                        'user_id',
+                        'role_id',
+                    ])
+                        ->where('user_id', Auth::id())
+                        ->where('is_active', true)
+                        ->with([
+                            'role:id,slug',
+                            'role.translation:role_id,locale,name',
+                        ]);
+                },
+            ])
             ->withCount([
-                'members as total_members' => function ($q) {
-                    $q->where('status', 'approved')
-                        ->where('is_active', 1);
+                'members as total_members' => function ($query) {
+                    $query->where('status', 'approved')
+                        ->where('is_active', true);
                 },
             ]);
     }

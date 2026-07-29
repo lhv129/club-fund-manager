@@ -59,7 +59,7 @@ class PermissionRepository extends BaseRepository
     // ------------------------------------------------------------------
 
     /**
-     * Upsert 1 permission:
+     * Upsert 1 permission
      *   trashed   → restore + is_active = 1
      *   exists    → update sort_order + is_active = 1
      *   not found → create

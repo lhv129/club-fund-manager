@@ -23,6 +23,10 @@ class RolePermissionService extends BaseService
     {
         $role = $this->roleRepository->findBySlug($data['slug']);
 
+        $role->load([
+            'translations:id,role_id,locale,name'
+        ]);
+
         if (!$role) {
             throw new ApiException(__($this->notFoundMessage), 404);
         }
@@ -42,15 +46,12 @@ class RolePermissionService extends BaseService
         return [
             'id' => $role->id,
             'slug' => $role->slug,
-            'translation' => [
-                'locale' => $role->translation?->locale,
-                'name' => $role->translation?->name,
-            ],
+            'translations' => $role->translations,
             'permissions' => $modules
                 ->map(fn($module) => [
                     'module_id' => $module->id,
                     'module' => $module->slug,
-                    'label' => $module->translation?->name ?? $module->slug,
+                    'label' => $module->translations,
                     'actions' => $module->permissions
                         ->map(fn($p) => [
                             'id' => $p->id,

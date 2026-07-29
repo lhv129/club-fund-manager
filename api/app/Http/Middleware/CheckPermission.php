@@ -14,7 +14,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  * Dùng cho các route hệ thống (create/update/delete club, quản lý user, role, ...).
  * clubId luôn null → check flat module key (superadmin hoặc admin).
  *
- * Cú pháp: ->middleware('permission:club,create')
+ * Cú pháp: ->middleware('perm.system:club,create')
  */
 class CheckPermission
 {

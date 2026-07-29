@@ -155,7 +155,7 @@ Xử lý tự động trong `BaseRequest::failedValidation()` / `failedAuthoriza
 | Global API | `ForceJsonResponse` | Luôn trả JSON |
 | Global API | `SetLocale` | Đọc locale từ header `Accept-Language` (fallback `config('app.locale')`) |
 | `auth.jwt` | `JwtAuthenticate` | Parse JWT, throw 401 khi lỗi token |
-| `permission:module,action` | `CheckPermission` | Check quyền theo module + action (club-scoped) |
+| `perm.system:module,action` | `CheckPermission` | Check quyền theo module + action (club-scoped) |
 | Route | `LogApiRequest` | Log API request |
 | Route | `RateLimitByUser` | Rate limit theo user |
 
@@ -205,7 +205,7 @@ Response message trong Controller/Service luôn dùng `__('domains/{module}.{key
 ## 9. Permission (club-scoped)
 
 ```php
-->middleware('permission:club,view')
+->middleware('perm.system:club,view')
 $user->isSuperAdmin();                          // bypass tất cả
 $user->hasPermission('club', 'create', $clubId); // check club-scoped
 $user->permissionsGroupedByClub();               // { club_id: { module: [actions] } }

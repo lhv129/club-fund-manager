@@ -133,7 +133,7 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Admin: role slug = 'admin' với club_id = null (system scope).
+     * Admin:  club_id = null (system scope).
      * KHÔNG bypass — vẫn phải đi qua hasPermission(), nhưng ở system scope.
      * Quyền configurable do superadmin cấp qua POST /roles/{id}/permissions.
      */
@@ -144,8 +144,7 @@ class User extends Authenticatable implements JWTSubject
             ->where('club_member_roles.user_id', $this->id)
             ->where('club_member_roles.is_active', 1)
             ->whereNull('club_member_roles.deleted_at')
-            ->where('club_member_roles.club_id')          // system scope
-            ->where('roles.slug', 'admin')
+            ->whereNull('club_member_roles.club_id')
             ->where('roles.is_active', 1)
             ->whereNull('roles.deleted_at')
             ->exists();
@@ -202,7 +201,10 @@ class User extends Authenticatable implements JWTSubject
         if ($clubId === null) {
             $query->whereNull('club_member_roles.club_id');
         } else {
-            $query->where('club_member_roles.club_id', $clubId);
+            $query->where(function ($q) use ($clubId) {
+                $q->where('club_member_roles.club_id', $clubId)
+                    ->orWhereNull('club_member_roles.club_id');
+            });
         }
 
         return $query->exists();

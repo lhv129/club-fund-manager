@@ -24,6 +24,19 @@ class ClubResource extends JsonResource
                     'slug' => $t->slug,
                 ]);
             }),
+            'role' => $this->whenLoaded('memberRoles', function () {
+                $memberRole = $this->memberRoles->first();
+
+                if (!$memberRole) {
+                    return null;
+                }
+
+                return [
+                    'id'   => $memberRole->role_id,
+                    'slug' => $memberRole->role?->slug,
+                    'translation' => $memberRole->role?->translation,
+                ];
+            }),
             'created_at'   => $this->created_at?->toISOString(),
             'updated_at'   => $this->updated_at?->toISOString(),
         ];

@@ -15,8 +15,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  * Dùng cho các route cần xác định club cụ thể từ {id} hoặc {slug}.
  * Resolve club_id → check nested `club_{id}` key trong permissions.
  *
- * Cú pháp: ->middleware('permission.club:club,view')
- *           ->middleware('permission.club:member,view')
+ * Cú pháp: ->middleware('perm.club:club,view')
+ *           ->middleware('perm.club:member,view')
  */
 class CheckClubPermission
 {
@@ -36,13 +36,17 @@ class CheckClubPermission
         // 1. Ưu tiên lấy club_id từ route param {id}
         $clubId = $request->route('id');
 
-        // 2. Nếu không có {id}, resolve từ {slug}
-        if (!$clubId && $request->route('slug')) {
-            $club = Club::whereHas('translations', function ($query) use ($request) {
-                $query->where('slug', $request->route('slug'));
-            })->first();
+        // 2. Nếu không có {id}, resolve từ {slug} hoặc {clubSlug}
+        if (!$clubId) {
+            $slug = $request->route('clubSlug') ?? $request->route('slug');
 
-            $clubId = $club?->id;
+            if ($slug) {
+                $club = Club::whereHas('translations', function ($query) use ($slug) {
+                    $query->where('slug', $slug);
+                })->first();
+
+                $clubId = $club?->id;
+            }
         }
 
         // 3. Fallback: lấy từ request body (club_id)

@@ -35,4 +35,5 @@ return [
 
     // app/Middleware/CheckClubPermission
     'no_club_permission' => 'Bạn không có quyền truy cập hoặc thực hiện hành động này trên câu lạc bộ.',
+    'club_not_found' => 'Club không tồn tại.'
 ];
