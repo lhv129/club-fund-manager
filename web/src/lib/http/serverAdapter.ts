@@ -125,7 +125,7 @@ async function refreshAccessToken(locale: string): Promise<string | null> {
     return refreshPromise;
 }
 
-function createRequest(localeOverride?: string) {
+function createRequest(localeOverride?: string, autoRefresh = false) {
     return async function request<T>(
         method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
         path: string,
@@ -173,7 +173,10 @@ function createRequest(localeOverride?: string) {
         });
 
         // ─── 401 → thử refresh 1 lần rồi retry ────────────────────────────────
-        if (res.status === 401) {
+        // CHỈ bật ở Route Handler (/api/proxy) — nơi cookies().set() hợp lệ.
+        // Server Component không set cookie được (Next.js 16), nên SSR không
+        // auto-refresh ở đây (tránh rotate refresh_token mà không persist cookie).
+        if (autoRefresh && res.status === 401) {
             const newToken = await refreshAccessToken(locale);
             if (newToken) {
                 // Clone FormData cho retry (vì body đã bị consume)
@@ -204,12 +207,19 @@ function createRequest(localeOverride?: string) {
  * Factory — dùng khi cần truyền locale tường minh (vd: proxy route handler).
  * Locale lấy từ request.headers.get("Accept-Language") thay vì getLocale().
  *
+ * `autoRefresh: true` → bật refresh-on-401 + rotate cookie. CHỈ dùng trong
+ * Route Handler ( nơi cookies().set() hợp lệ). Server Component phải để false
+ * (mặc định) và dùng ensureProfile để recover session qua /api/auth/refresh.
+ *
  * @example
  * const locale = request.headers.get("Accept-Language") ?? FALLBACK_LOCALE;
- * const adapter = createServerAdapter(locale);
+ * const adapter = createServerAdapter(locale, { autoRefresh: true });
  */
-export function createServerAdapter(localeOverride?: string): HttpAdapter {
-    const request = createRequest(localeOverride);
+export function createServerAdapter(
+    localeOverride?: string,
+    options?: { autoRefresh?: boolean },
+): HttpAdapter {
+    const request = createRequest(localeOverride, options?.autoRefresh ?? false);
     return {
         get<T>(path: string, params?: Record<string, unknown>) {
             return request<T>("GET", path, params);

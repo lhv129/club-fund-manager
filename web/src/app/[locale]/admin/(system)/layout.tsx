@@ -1,21 +1,18 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { cache } from "react";
-import { authServiceServer } from "@/domains/auth/services/authServiceServer";
+import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { systemPermissions } from "@/lib/permissions";
 import type { Profile } from "@/domains/auth/types";
 
 /**
  * Fetch profile — cache qua React cache() để tránh gọi lại khi
  * (system)/layout và các page con đều cần.
+ *
+ * Dùng ensureProfile để recover session khi access_token hết hạn.
  */
-const getProfile = cache(async (): Promise<Profile | null> => {
-  try {
-    const res = await authServiceServer.getProfile();
-    return res.data || null;
-  } catch {
-    return null;
-  }
+const getProfile = cache(async (locale: string): Promise<Profile> => {
+  return ensureProfile(locale, `/${locale}/admin`);
 });
 
 /**
@@ -38,10 +35,7 @@ export default async function SystemLayout({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const profile = await getProfile();
-  if (!profile) {
-    redirect(`/${locale}/login`);
-  }
+  const profile = await getProfile(locale);
 
   // Superadmin → qua. Admin (is_system_admin) → có system permission → qua.
   // Club user (không có system scope) → redirect về root để phân luồng.

@@ -1,34 +1,33 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { cache } from "react";
-import { authServiceServer } from "@/domains/auth/services/authServiceServer";
+
+import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { hasAnySystemPermission } from "@/lib/permissions";
 import type { Profile } from "@/domains/auth/types";
 import { AdminShell } from "@/components/admin/layout/AdminShell";
+import { APP_ROUTES } from "@/constants";
 
 /**
  * Fetch profile — cache qua React cache() để tránh gọi lại khi
  * admin/layout và các page con đều cần.
+ *
+ * Dùng ensureProfile để recover session khi access_token hết hạn
+ * (redirect qua /api/auth/refresh?next= rồi quay lại).
+ * ensureProfile không return null — nó throw redirect khi recover thất bại.
  */
-const getProfile = cache(async (): Promise<Profile | null> => {
-  try {
-    const res = await authServiceServer.getProfile();
-    return res.data || null;
-  } catch {
-    return null;
-  }
+const getProfile = cache(async (locale: string): Promise<Profile> => {
+  return ensureProfile(locale, `/${locale}${APP_ROUTES.admin}`);
 });
 
 /**
  * Admin workspace layout — /admin/...
  *
- * Gate: chỉ superadmin / is_system_admin / có bất kỳ system permission mới vào được.
- * Club user (owner/manager/member, không có system scope) → redirect về root "/"
- * để root page phân luồng (chọn club / no-club). KHÔNG redirect thẳng /club vì
- * root đã lo.
+ * Gate: chỉ superadmin / is_system_admin / có bất kỳ system permission
+ * mới được vào.
  *
- * Permission gate chi tiết cho từng system page (users/roles/permissions/settings)
- * nằm ở (system)/layout.tsx.
+ * Club user (owner/manager/member, không có system scope)
+ * → redirect về root "/" để root page tự phân luồng.
  */
 export default async function AdminLayout({
   children,
@@ -40,20 +39,22 @@ export default async function AdminLayout({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const profile = await getProfile();
-  if (!profile) {
-    redirect(`/${locale}/login`);
-  }
+  const profile = await getProfile(locale);
 
-  // Gate admin workspace — superadmin | system admin | có system permission.
   const isSystemUser =
     profile.is_superadmin ||
     profile.is_system_admin ||
-    hasAnySystemPermission(profile.permissions, profile.is_superadmin);
+    hasAnySystemPermission(
+      profile.permissions,
+      profile.is_superadmin,
+    );
 
   if (!isSystemUser) {
-    // Club user → về root để root phân luồng (chọn club / no-club).
-    redirect(`/${locale}`);
+    // Root page sẽ tự phân luồng:
+    // - 1 club  -> /club/{slug}/dashboard
+    // - nhiều club -> trang chọn club
+    // - 0 club -> NoClub
+    redirect(`/${locale}${APP_ROUTES.home}`);
   }
 
   return <AdminShell profile={profile}>{children}</AdminShell>;

@@ -1,11 +1,11 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { authServiceServer } from "@/domains/auth/services/authServiceServer";
 import { clubServiceServer } from "@/domains/club/services/clubServiceServer";
 import { canAccessClub, hasAnySystemPermission } from "@/lib/permissions";
-import type { Profile } from "@/domains/auth/types";
+import { ensureProfile } from "@/lib/auth/ensureProfile";
 import type { Club } from "@/domains/club/types";
 import { ClubShell } from "@/components/club/layout/ClubShell";
+import { clubRoute, CLUB_SUBROUTES } from "@/constants";
 
 export default async function ClubLayout({
   children,
@@ -17,16 +17,9 @@ export default async function ClubLayout({
   const { locale, slug } = await params;
   setRequestLocale(locale);
 
-  // 1. Fetch profile
-  let profile: Profile | null = null;
-  try {
-    const response = await authServiceServer.getProfile();
-    profile = response.data || null;
-  } catch {
-    redirect(`/${locale}/login`);
-  }
-
-  if (!profile) redirect(`/${locale}/login`);
+  // 1. Profile (recover session qua /api/auth/refresh?next= nếu hết access_token)
+  const currentPath = `/${locale}${clubRoute(slug, CLUB_SUBROUTES.dashboard)}`;
+  const profile = await ensureProfile(locale, currentPath);
 
   // 2. Fetch club theo slug
   let club: Club | null = null;

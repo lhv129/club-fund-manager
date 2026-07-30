@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { authServiceServer } from "@/domains/auth/services/authServiceServer";
+
 import { clubServiceServer } from "@/domains/club/services/clubServiceServer";
-import { canAccessClub } from "@/lib/permissions";
+import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { LandingShell } from "@/components/shared/layout/LandingShell";
 import { ClubsPageClient } from "@/domains/club/ClubsPageClient";
 import { NoClubClient } from "@/domains/club/NoClubClient";
-import type { Profile } from "@/domains/auth/types";
 import type { Club, Translation } from "@/domains/club/types";
+import { APP_ROUTES, clubDashboardRoute } from "@/constants";
 
 /** Lấy slug theo locale hiện tại từ club.translations. */
 function pickSlugByLocale(club: Club, locale: string): string | undefined {
@@ -21,11 +21,12 @@ function pickSlugByLocale(club: Club, locale: string): string | undefined {
  * Root landing — /{locale}/
  *
  * Server Component phân luồng theo role:
- *  1. Chưa login                → /{locale}/login
- *  2. superadmin / system admin → /{locale}/admin
- *  3. 1 club truy cập được      → /{locale}/club/{slug}/dashboard
- *  4. 2+ clubs                  → render <ClubsPageClient clubs={...} />
- *  5. 0 club                    → render <NoClubClient /> (KHÔNG redirect)
+ *
+ * 1. Chưa login                → /{locale}/login
+ * 2. superadmin / system admin → /{locale}/admin
+ * 3. 1 club truy cập được      → /{locale}/club/{slug}/dashboard
+ * 4. 2+ clubs                  → render <ClubsPageClient />
+ * 5. 0 club                    → render <NoClubClient /> (KHÔNG redirect)
  */
 export default async function LocaleRootPage({
   params,
@@ -35,33 +36,24 @@ export default async function LocaleRootPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // 1. Fetch profile (serverAdapter tự refresh nếu access token hết hạn)
-  let profile: Profile | null = null;
-  try {
-    const response = await authServiceServer.getProfile();
-    profile = response.data || null;
-  } catch {
-    redirect(`/${locale}/login`);
-  }
-  if (!profile) {
-    redirect(`/${locale}/login`);
-  }
+  // Recover session nếu access token hết hạn
+  const profile = await ensureProfile(locale, `/${locale}`);
 
-  // 3. Superadmin / system admin → admin workspace
+  // System admin → admin workspace
   if (profile.is_superadmin || profile.is_system_admin) {
-    redirect(`/${locale}/admin`);
+    redirect(`/${locale}${APP_ROUTES.admin}`);
   }
 
-  // 4. Fetch clubs
+  // Lấy danh sách CLB user có quyền truy cập
   const LIMIT = 10;
   let clubs: Club[] = [];
   let total = 0;
+
   try {
     const res = await clubServiceServer.list({
       limit: LIMIT,
     });
-    // Backend đã trả về clubs của user → không cần filter lại ở đây.
-    // canAccessClub dùng cho gate check (layout), không dùng cho list pagination.
+
     clubs = res.data ?? [];
     total = res.meta?.total ?? clubs.length;
   } catch {
@@ -69,14 +61,15 @@ export default async function LocaleRootPage({
     total = 0;
   }
 
-  // 5. 1 club → vào thẳng workspace
+  // Chỉ có 1 CLB → vào thẳng dashboard
   if (clubs.length === 1) {
     const slug =
       pickSlugByLocale(clubs[0], locale) ?? String(clubs[0].id);
-    redirect(`/${locale}/club/${slug}/dashboard`);
+
+    redirect(`/${locale}${clubDashboardRoute(slug)}`);
   }
 
-  // 6. 2+ clubs → render danh sách chọn club
+  // Có nhiều CLB → hiển thị trang chọn CLB
   if (clubs.length >= 2) {
     return (
       <LandingShell profile={profile}>
@@ -85,7 +78,7 @@ export default async function LocaleRootPage({
     );
   }
 
-  // 7. 0 club → trang xin vào CLB (render tại chỗ, KHÔNG redirect)
+  // Không thuộc CLB nào
   return (
     <LandingShell profile={profile}>
       <NoClubClient />

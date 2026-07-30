@@ -16,7 +16,8 @@ async function handle(
     // Forward Accept-Language từ browser request — không dùng getLocale()
     // vì URL /api/proxy/... không có locale prefix nên getLocale() trả về fallback.
     const locale = request.headers.get("Accept-Language") ?? FALLBACK_LOCALE;
-    const adapter = createServerAdapter(locale);
+    // Proxy = Route Handler → cookies().set() hợp lệ → bật auto-refresh-on-401.
+    const adapter = createServerAdapter(locale, { autoRefresh: true });
 
     let payload: unknown;
     // GET + DELETE truyền params qua query string (không có body).

@@ -328,12 +328,17 @@ export function ModulesPageClient() {
 
 ## 6. Auth — refresh token tự động
 - Token trong httpOnly cookie (access_token 1h, refresh_token 7d).
-- serverAdapter: request trả 401 → gọi Laravel /auth/refresh bằng refresh_token → set cookie mới qua cookies().set() → retry request gốc 1 lần.
-- Refresh concurrent được dedupe theo refresh_token (single-flight), tránh nhiều request 401 cùng lúc cùng gọi refresh gây race token rotation.
-- Client Component qua /api/proxy cũng hưởng auto-refresh (proxy dùng serverAdapter).
-- Middleware không chặn sớm khi thiếu access_token nếu vẫn còn refresh_token: cho request đi tiếp để serverAdapter có cơ hội refresh on-demand.
+- **Hai ngữ cảnh refresh khác nhau** (Next.js 16: Server Component không set cookie được):
+  - **Route Handler (/api/proxy, /api/auth/refresh)**: `createServerAdapter(locale, { autoRefresh: true })` → request trả 401 tự gọi Laravel /auth/refresh bằng refresh_token, set cookie mới qua cookies().set(), retry 1 lần. Refresh concurrent được dedupe theo refresh_token (single-flight) tránh race.
+  - **Server Component (SSR — page/layout)**: KHÔNG auto-refresh trong serverAdapter (cookie set không persist). Thay vào dùng `ensureProfile(locale, currentPath)` (src/lib/auth/ensureProfile.ts):
+    1. access_token còn → gọi /auth/profile trực tiếp.
+    2. access_token hết/thiếu → `redirect('/api/auth/refresh?next=<currentPath>')` (Route Handler) rotate cookie rồi quay lại trang hiện tại. SSR chạy lại với access_token mới.
+    3. refresh thất bại (refresh_token invalid) → Route Handler tự redirect về /login?redirect=<next>.
+- Middleware không chặn sớm khi thiếu access_token nếu vẫn còn refresh_token (cho request đi tiếp để SSR/proxy refresh on-demand).
+- Middleware chặn auth route (login/register): chỉ cho phép vào khi **cả access_token và refresh_token đều không có** (có 1 trong 2 → redirect về home để recover session).
 - Refresh thất bại do token invalid/expired (401/403) → clear auth cookies, request sau sẽ về /login đúng flow.
 - Login route (POST /api/auth/login) CHỈ set cookie + return JSON { user }. KHÔNG có logic redirect ở server — LoginForm push về "/" và root page tự phân luồng.
+
 
 ## 7. Locale — nguồn duy nhất + dịch slug
 - Chỉ sửa `src/config/locales.json` khi thêm/bớt ngôn ngữ.

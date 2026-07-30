@@ -42,8 +42,7 @@ export function LoginForm() {
     // ── Redirect về root — root page tự phân luồng theo role ────────────────
     //  (admin → /admin, 1 club → /club/{slug}/dashboard, 2+ → clubs list,
     //   0 club → NoClub). Xem src/app/[locale]/page.tsx.
-    router.push(APP_ROUTES.home);
-    router.refresh();
+    router.replace(APP_ROUTES.home);
   };
 
   const updateField = (field: keyof LoginPayload, value: string) => {

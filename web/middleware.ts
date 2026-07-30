@@ -8,15 +8,22 @@ const intlMiddleware = createMiddleware(routing);
 /**
  * Combined middleware: i18n + auth guard.
  *
- * - API routes (/api/*): skip entirely
- * - Auth routes (login, register): redirect to root if already logged in
- * - Protected routes: redirect to login if no access_token cookie
- * - Everything else: pass to next-intl for locale handling
+ * Thứ tự xử lý:
+ *  1. Skip API routes / Next internals / static files.
+ *  2. Auth guard chạy TRƯỚC next-intl để không bị response của intlMiddleware
+ *     "nuốt" redirect của auth guard:
+ *     - Auth route (login/register) + còn access_token HOẶC refresh_token
+ *       → redirect về home (recover session, không cho vào login).
+ *     - Protected route + cả 2 token đều thiếu → redirect login (kèm ?redirect).
+ *  3. Còn lại → nhường cho next-intl xử lý locale.
+ *
+ * Lưu ý: httpOnly cookie vẫn được gửi tới middleware (nằm trong header Cookie),
+ * nên request.cookies.get() đọc được bình thường.
  */
 export default async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
-  // Skip API routes and Next.js internals
+  // 1. Skip API routes và Next.js internals
   if (
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
@@ -25,47 +32,53 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Let next-intl handle locale resolution first
-  const intlResponse = intlMiddleware(request);
-
-  // Determine the locale-prefixed path for redirects
+  // 2. Xác định locale prefix để guard auth-route
   const locales = routing.locales;
-  const pathnameSegments = pathname.split("/").filter(Boolean);
-  const firstSegment = pathnameSegments[0];
+  const segments = pathname.split("/").filter(Boolean);
+  const firstSegment = segments[0];
   const hasLocalePrefix =
     firstSegment !== undefined &&
     (locales as readonly string[]).includes(firstSegment);
 
-  // If no locale prefix, let next-intl handle the redirect
+  // Chưa có locale prefix → để next-intl xử lý redirect thêm locale.
   if (!hasLocalePrefix) {
-    return intlResponse;
+    return intlMiddleware(request);
   }
 
   const locale = firstSegment;
-  const pathAfterLocale = "/" + pathnameSegments.slice(1).join("/");
+  // pathAfterLocale: "/login", "/register", "/admin", "/club/xxx/dashboard", ...
+  const pathAfterLocale = "/" + segments.slice(1).join("/");
+  // Chuẩn hoá: bỏ trailing slash trừ root → "/login/" thành "/login"
+  const normalizedPath =
+    pathAfterLocale.length > 1 && pathAfterLocale.endsWith("/")
+      ? pathAfterLocale.slice(0, -1)
+      : pathAfterLocale;
+
   const accessToken = request.cookies.get(COOKIE_NAMES.accessToken)?.value;
   const refreshToken = request.cookies.get(COOKIE_NAMES.refreshToken)?.value;
-  const hasAnyToken = !!accessToken || !!refreshToken;
+  const hasAnyToken = !!(accessToken || refreshToken);
 
-  // Auth routes — redirect to root if already logged in (root dispatches by role)
-  const isAuthRoute = AUTH_ROUTES.some(
-    (route) => pathAfterLocale === route || pathAfterLocale === route + "/",
+  // Auth route: login / register (chính xác, không match sub-path)
+  const isAuthRoute = AUTH_ROUTES.includes(
+    normalizedPath as (typeof AUTH_ROUTES)[number],
   );
 
+  // 2a. Đã đăng nhập (còn token) → không cho vào login/register nữa
   if (isAuthRoute && hasAnyToken) {
-    const homeUrl = new URL(`/${locale}${APP_ROUTES.home}`, request.url);
+    // /${locale} thay /${locale}/ để tránh trailing-slash fragment.
+    const homeUrl = new URL(`/${locale}`, request.url);
     return NextResponse.redirect(homeUrl);
   }
 
-  // Protected routes — redirect to login only when both tokens are missing.
-  // Nếu còn refresh_token thì cho qua để serverAdapter có cơ hội auto-refresh.
+  // 2b. Protected route + không token → về login (giữ ?redirect để quay lại)
   if (!isAuthRoute && !hasAnyToken) {
     const loginUrl = new URL(`/${locale}${APP_ROUTES.login}`, request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set("redirect", pathname + search);
     return NextResponse.redirect(loginUrl);
   }
 
-  return intlResponse;
+  // 3. Còn lại → next-intl xử lý locale (rewrite/redirect thêm locale)
+  return intlMiddleware(request);
 }
 
 export const config = {
