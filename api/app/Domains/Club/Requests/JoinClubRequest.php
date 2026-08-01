@@ -9,7 +9,7 @@ use App\Base\BaseRequest;
     public function rules(): array
     {
         return [
-            'token' => ['required', 'string', 'size:64'],
+            'invite_code' => ['required', 'string', 'size:6'],
         ];
     }
 }

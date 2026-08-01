@@ -23,7 +23,7 @@ class ClubInviteController extends BaseController
     {
         $invites = $this->inviteService->paginateByClub($clubSlug, $request->validated());
 
-        return $this->paginateResponse($invites, __('domains/club_invite.list'));
+        return $this->paginateResponse($invites, __('domains/club_invite.list'), ClubInviteResource::class);
     }
 
     /**

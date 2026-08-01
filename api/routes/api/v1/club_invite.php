@@ -5,11 +5,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->prefix('clubs/{clubSlug}/invites')->group(function () {
     // ── Read ──────────────────────────────────────────────────────────────
-    Route::get('/', [ClubInviteController::class, 'index'])->middleware('perm.system:club,view');
-    Route::get('/{id}', [ClubInviteController::class, 'show'])->middleware('perm.system:club,view');
+    Route::get('/', [ClubInviteController::class, 'index'])->middleware('perm.club:club_invite,view');
+    Route::get('/{id}', [ClubInviteController::class, 'show'])->middleware('perm.club:club_invite,view');
 
     // ── Write ─────────────────────────────────────────────────────────────
-    Route::post('/', [ClubInviteController::class, 'store'])->middleware('perm.system:club,update');
-    Route::delete('/{id}', [ClubInviteController::class, 'destroy'])->middleware('perm.system:club,update');
-    Route::post('/{id}/toggle-status', [ClubInviteController::class, 'toggleStatus'])->middleware('perm.system:club,update');
+    Route::post('/', [ClubInviteController::class, 'store'])->middleware('perm.club:club_invite,update');
+    Route::delete('/{id}', [ClubInviteController::class, 'destroy'])->middleware('perm.club:club_invite,update');
+    Route::post('/{id}/toggle-status', [ClubInviteController::class, 'toggleStatus'])->middleware('perm.club:club_invite,update');
 });

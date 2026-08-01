@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ClubInviteRepository extends BaseRepository
 {
-    protected string $defaultOrderBy = 'sort_order';
+    protected string $defaultOrderBy        = 'sort_order';
     protected string $defaultOrderDirection = 'asc';
 
     protected array $allowedSortColumns = [
@@ -31,7 +31,7 @@ class ClubInviteRepository extends BaseRepository
     protected function applySearch(Builder $query, array $filters): void
     {
         if (!empty($filters['search'])) {
-            $query->where('token', 'like', "%{$filters['search']}%");
+            $query->where('invite_code', 'like', "%{$filters['search']}%");
         }
     }
 
@@ -40,9 +40,6 @@ class ClubInviteRepository extends BaseRepository
         $this->applyActiveFilter($query, $filters);
     }
 
-    /**
-     * Query cơ sở cho danh sách invite.
-     */
     protected function baseListQuery(): Builder
     {
         return $this->model
@@ -50,16 +47,15 @@ class ClubInviteRepository extends BaseRepository
                 'club_invites.id',
                 'club_invites.club_id',
                 'club_invites.created_by',
-                'club_invites.token',
+                'club_invites.invite_code',
                 'club_invites.expires_at',
                 'club_invites.used_count',
-                'club_invites.sort_order',
                 'club_invites.is_active',
                 'club_invites.created_at',
             ])
             ->with([
-                'createdBy',
-                'club.translations:id,club_id,locale,name,slug',
+                'createdBy:id,fullname,email,phone,avatar',
+                'club.translation:id,club_id,locale,name,slug',
             ]);
     }
 
@@ -68,25 +64,27 @@ class ClubInviteRepository extends BaseRepository
     // ------------------------------------------------------------------
 
     /**
-     * Danh sách invite theo club slug.
+     * Danh sách invite theo club.
+     * Service inject 'club_slug' vào $filters trước khi gọi.
+     *
+     * Dùng method riêng thay vì kế thừa getList() vì cần inject
+     * whereHas theo context param (club_slug) từ Service.
      */
-    public function paginateByClub(
-        string $clubSlug,
-        array $filters = []
-    ): LengthAwarePaginator {
-        $query = $this->baseListQuery()
-            ->whereHas('club.translations', function ($q) use ($clubSlug) {
-                $q->where('slug', $clubSlug);
-            });
+    public function getList(array $filters = []): LengthAwarePaginator
+    {
+        $query = $this->baseListQuery();
+
+        if (!empty($filters['club_slug'])) {
+            $query->whereHas(
+                'club.translations',
+                fn($q) =>
+                $q->where('slug', $filters['club_slug'])
+            );
+        }
 
         $this->applySearch($query, $filters);
         $this->applyFilters($query, $filters);
-
-        $this->applySorting(
-            $query,
-            $filters,
-            $this->allowedSortColumns
-        );
+        $this->applySorting($query, $filters, $this->allowedSortColumns);
 
         return $query->paginate(
             $filters['limit'] ?? $this->defaultLimit,
@@ -96,36 +94,61 @@ class ClubInviteRepository extends BaseRepository
         );
     }
 
-    /**
-     * Tìm một invite theo club slug + invite id.
-     */
-    public function findByClubSlug(
-        string $clubSlug,
-        int $id
-    ): ?ClubInvite {
-        return $this->model
-            ->with([
-                'createdBy',
-                'club.translations:id,club_id,locale,name,slug',
-            ])
-            ->whereKey($id)
-            ->whereHas('club.translations', function ($q) use ($clubSlug) {
-                $q->where('slug', $clubSlug);
-            })
-            ->first();
-    }
-
     // ------------------------------------------------------------------
     // Ad-hoc lookups
     // ------------------------------------------------------------------
 
     /**
-     * Tìm invite hợp lệ theo token.
+     * Tìm một invite theo club slug + invite id.
      */
-    public function findValidByToken(string $token): ?ClubInvite
+    public function findByClubSlug(string $clubSlug, int $id): ?ClubInvite
     {
         return $this->model
-            ->where('token', $token)
+            ->with([
+                'createdBy',
+                'club.translation:id,club_id,locale,name,slug',
+            ])
+            ->whereKey($id)
+            ->whereHas(
+                'club.translation',
+                fn($q) =>
+                $q->where('slug', $clubSlug)
+            )
+            ->first();
+    }
+
+    /**
+     * Tìm invite đang còn hiệu lực của user trong một club.
+     * Dùng để kiểm tra trước khi tạo mới — tránh spam bản ghi.
+     *
+     * Điều kiện "còn hiệu lực":
+     *   - is_active = true
+     *   - expires_at IS NULL hoặc expires_at > now()
+     */
+    public function findActiveByUserAndClub(int $userId, int $clubId): ?ClubInvite
+    {
+        return $this->model
+            ->with([
+                'createdBy',
+                'club.translation:id,club_id,locale,name,slug',
+            ])
+            ->where('created_by', $userId)
+            ->where('club_id', $clubId)
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->first();
+    }
+
+    /**
+     * Tìm invite hợp lệ theo token (dùng khi user dùng link tham gia).
+     */
+    public function findValidByToken(string $inviteCode): ?ClubInvite
+    {
+        return $this->model
+            ->where('invite_code', $inviteCode)
             ->where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('expires_at')
@@ -133,7 +156,7 @@ class ClubInviteRepository extends BaseRepository
             })
             ->with([
                 'createdBy',
-                'club.translations',
+                'club.translation',
             ])
             ->first();
     }

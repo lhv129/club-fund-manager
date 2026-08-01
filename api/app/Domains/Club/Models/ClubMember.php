@@ -13,9 +13,13 @@ class ClubMember extends Model
     protected $fillable = [
         'club_id',
         'user_id',
-        'invited_by',    // user_id tạo invite link (nullable)
+        'invite_id',
         'reviewed_by',   // admin duyệt (nullable)
+        'invited_by',    // user_id tạo invite link (nullable)
         'join_type',     // 'request' | 'invite'
+        'rejected_reason',
+        'removed_by',
+        'removed_at',
         'status',        // 'pending' | 'approved' | 'rejected'
         'is_active',
         'joined_at',
@@ -42,6 +46,10 @@ class ClubMember extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function invite()
+    {
+        return $this->belongsTo(ClubInvite::class, 'invite_id');
+    }
     public function invitedBy()
     {
         return $this->belongsTo(User::class, 'invited_by');
@@ -49,6 +57,10 @@ class ClubMember extends Model
     public function reviewedBy()
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+    public function removedBy()
+    {
+        return $this->belongsTo(User::class, 'removed_by');
     }
 
     /*

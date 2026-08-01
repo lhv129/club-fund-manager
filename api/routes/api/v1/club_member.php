@@ -9,12 +9,11 @@ Route::middleware('auth.jwt')->group(function () {
     Route::post('/clubs/join', [ClubMemberController::class, 'join']);
 
     // ── Member management (chủ club quản lý) ─────────────────────────────
-    Route::prefix('clubs/{clubId}/members')->group(function () {
-        Route::get('/', [ClubMemberController::class, 'index'])->middleware('perm.club:club,view');
-        Route::get('/{memberId}', [ClubMemberController::class, 'show'])->middleware('perm.club:club,view');
-        Route::post('/{memberId}/approve', [ClubMemberController::class, 'approve'])->middleware('perm.club:club,update');
-        Route::post('/{memberId}/reject', [ClubMemberController::class, 'reject'])->middleware('perm.club:club,update');
-        Route::delete('/{memberId}', [ClubMemberController::class, 'destroy'])->middleware('perm.club:club,update');
-        Route::post('/{memberId}/toggle-status', [ClubMemberController::class, 'toggleStatus'])->middleware('perm.club:club,update');
+    Route::prefix('clubs/{clubSlug}/members')->group(function () {
+        Route::get('/', [ClubMemberController::class, 'index'])->middleware('perm.club:club_member,view');
+        Route::get('/{memberId}', [ClubMemberController::class, 'show'])->middleware('perm.club:club_member,view');
+        Route::post('/{memberId}/approve', [ClubMemberController::class, 'approve'])->middleware('perm.club:club_member,update');
+        Route::post('/{memberId}/reject', [ClubMemberController::class, 'reject'])->middleware('perm.club:club_member,update');
+        Route::delete('/{memberId}', [ClubMemberController::class, 'destroy'])->middleware('perm.club:club_member,update');
     });
 });

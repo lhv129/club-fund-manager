@@ -1,6 +1,6 @@
 # api-overview.md
 
-Tài liệu tổng quan API — Laravel 12 / PHP 8.3. Đọc file này để hiểu convention chung trước khi làm việc với bất kỳ module nào.
+Tài liệu tổng quan API — Laravel 12 / PHP 8.3. Đọc trước khi làm việc với bất kỳ module nào.
 
 ## 1. Tech Stack
 
@@ -15,53 +15,44 @@ Tài liệu tổng quan API — Laravel 12 / PHP 8.3. Đọc file này để hi�
 Request → Controller → Service → Repository → Model
 ```
 
-Không được bỏ layer, không được gọi tắt (Controller → Repository, Service → Model trực tiếp).
-
-**Phân chia trách nhiệm:**
-
 | Layer | Trách nhiệm |
-|--------|-------------|
+|---|---|
 | Controller | Validate Request, gọi Service, trả response helper |
-| Service | Business logic, authorization, transaction, orchestration giữa nhiều Repository — **KHÔNG build query** |
-| Repository | Toàn bộ query database: search / filter / sort / select / join / whereHas / with / withCount / paginate |
+| Service | Business logic, authorization, transaction, orchestration — **KHÔNG build query** |
+| Repository | Toàn bộ query DB: search / filter / sort / select / join / whereHas / with / paginate |
 | Model | Schema, relationship, casts |
-
-> Service **không biết** `where`, `orderBy`, `select`, `with`, `join`, `paginate` — đây là
-> chi tiết của tầng truy cập dữ liệu, thuộc về Repository. Service chỉ nhận request params
-> (`$filters`) và truyền xuống Repository.
 
 ## 3. Base Classes (`app/Base/`)
 
 | File | Vai trò |
-|------|---------|
-| `BaseController.php` | Controller extends — cung cấp response helpers |
-| `BaseService.php` | Service extends — business logic, transaction |
-| `BaseRepository.php` | Repository extends — thao tác DB + helper cho Query Builder |
-| `BaseRequest.php` | FormRequest extends — validate + auto response 422/403 |
-| `Rules/RequiredLocales.php` | Bắt buộc translations phải đủ tất cả locale trong `config('app.supported_locales')` |
-| `Rules/SupportedLocalesOnly.php` | Chặn locale lạ không có trong config |
-| `Rules/UniqueTranslation.php` | `name`/`title` unique theo từng locale |
+|---|---|
+| `BaseController.php` | Response helpers (`responseCommon`, `paginateResponse`, `cursorResponse`) |
+| `BaseService.php` | Business logic, transaction |
+| `BaseRepository.php` | Query Builder helpers |
+| `BaseRequest.php` | FormRequest — auto response 422/403 |
+| `Rules/RequiredLocales.php` | Translations phải đủ tất cả locale |
+| `Rules/SupportedLocalesOnly.php` | Chặn locale lạ |
+| `Rules/UniqueTranslation.php` | `name`/`title` unique theo locale |
 | `Traits/HasTranslationSlug.php` | Tự sinh slug cho translation |
 
-**`BaseRepository`** cung cấp helper thao tác **trực tiếp lên Query Builder của Laravel** —
-không phải một lớp trừu tượng riêng, chỉ là các method compose sẵn cho các pattern filter/sort
-lặp lại ở nhiều domain:
+
+**Helper có sẵn trong `BaseRepository`:**
 
 | Helper | Dùng cho |
-|--------|----------|
+|---|---|
 | `applySorting($query, $filters, $allowedColumns)` | sort theo `sort_by` / `sort_dir` |
 | `applyBooleanFilter($query, $filters, $key, $column?)` | boolean column |
 | `applyActiveFilter($query, $filters, $column?)` | shortcut `is_active` |
 | `applyStatusFilter($query, $filters, $key, $allowedStatuses, $column?)` | string status |
 | `applyDateFilter($query, $filters, $key, $column?)` | khoảng ngày (`{key}_from` / `{key}_to`) |
+| `getList($filters)` | Offset pagination chuẩn — **dùng cho code mới** |
+| `getCursorList($filters)` | Cursor pagination chuẩn |
+| `getForSelect($filters)` | Dropdown — không phân trang, không Resource |
+| `paginate($where, ...)` | ~~Legacy~~ — giữ tương thích, không dùng mới |
 
-Filter/sort phổ thông dùng các helper trên. Filter phức tạp (`whereHas`, `join`, `withCount`,
-`groupBy`, subquery...) viết thẳng bằng Query Builder của Laravel ngay trong Repository — không
-cần và không nên có một tầng cú pháp riêng cho việc này.
+Filter phức tạp (`whereHas`, `join`, `withCount`, `groupBy`) viết thẳng Query Builder trong Repository — không cần helper riêng.
 
 ## 4. Domain Structure
-
-Mỗi module nằm ở `app/Domains/{Module}/`, có tối đa 5 layer con — chỉ tạo layer thực sự cần:
 
 ```
 app/Domains/{Module}/
@@ -75,165 +66,107 @@ app/Domains/{Module}/
 
 ## 5. Response Format
 
-### Success
 ```json
-{
-  "success": true,
-  "message": "Club created successfully.",
-  "data": {}
-}
+// Success
+{ "success": true, "message": "...", "data": {} }
+
+// Pagination (offset)
+{ "success": true, "message": "...", "data": [], "meta": { "page": 1, "limit": 15, "total": 100, "last_page": 7 } }
+
+// Pagination (cursor)
+{ "meta": { "limit": 10, "has_more": true, "next_cursor": "eyJpZCI6MTAwfQ", "prev_cursor": null } }
+
+// Business Error
+{ "success": false, "message": "...", "code": "NOT_FOUND", "data": null }
+
+// Validation Error (422)
+{ "success": false, "message": "The given data was invalid.", "errors": { "translations.vi.name": ["..."] } }
+
+// Auth Error (401)
+{ "success": false, "message": "Access token has expired.", "statusCode": 401 }
 ```
 
-### Success + Pagination (offset)
-```json
-{
-  "success": true,
-  "message": "...",
-  "data": [],
-  "meta": { "page": 1, "limit": 15, "total": 100, "last_page": 7 }
-}
-```
+## 6. HTTP Status Codes
 
-### Success + Pagination (cursor)
-```json
-{
-  "meta": { "limit": 10, "has_more": true, "next_cursor": "eyJpZCI6MTAwfQ", "prev_cursor": null }
-}
-```
-
-### Business Error (`ApiException`)
-```json
-{
-  "success": false,
-  "message": "Club not found.",
-  "code": "NOT_FOUND",
-  "data": null
-}
-```
-
-### Validation Error (422)
-```json
-{
-  "success": false,
-  "message": "The given data was invalid.",
-  "errors": {
-    "translations.vi.name": ["Trường tên câu lạc bộ là bắt buộc."]
-  }
-}
-```
-
-Xử lý tự động trong `BaseRequest::failedValidation()` / `failedAuthorization()`.
-
-### Auth Error (401)
-```json
-{
-  "success": false,
-  "message": "Access token has expired.",
-  "data": [],
-  "statusCode": 401
-}
-```
-
-## 6. Standard HTTP Status
-
-| Code | Meaning | errorCode default |
-|------|---------|-------------------|
-| 200 | OK | — |
-| 201 | Created | — |
-| 400 | Bad Request | BAD_REQUEST |
-| 401 | Unauthorized | UNAUTHORIZED |
-| 403 | Forbidden | FORBIDDEN |
-| 404 | Not Found | NOT_FOUND |
-| 422 | Validation Error | VALIDATION_ERROR |
-| 429 | Too Many Requests | TOO_MANY_REQUESTS |
-| 500 | Internal Server Error | SERVER_ERROR |
+| Code | Meaning |
+|---|---|
+| 200 | OK |
+| 201 | Created |
+| 400 | Bad Request |
+| 401 | Unauthorized |
+| 403 | Forbidden |
+| 404 | Not Found |
+| 422 | Validation Error |
+| 500 | Internal Server Error |
 
 ## 7. Middleware
 
-| Alias / Vị trí | Middleware | Nhiệm vụ |
-|----------------|------------|----------|
-| Global API | `ForceJsonResponse` | Luôn trả JSON |
-| Global API | `SetLocale` | Đọc locale từ header `Accept-Language` (fallback `config('app.locale')`) |
-| `auth.jwt` | `JwtAuthenticate` | Parse JWT, throw 401 khi lỗi token |
-| `perm.system:module,action` | `CheckPermission` | Check quyền theo module + action (club-scoped) |
-| Route | `LogApiRequest` | Log API request |
-| Route | `RateLimitByUser` | Rate limit theo user |
+| Alias | Nhiệm vụ |
+|---|---|
+| `ForceJsonResponse` (global) | Luôn trả JSON |
+| `SetLocale` (global) | Đọc locale từ header `Accept-Language` |
+| `auth.jwt` | Parse JWT, throw 401 khi lỗi token |
+| `perm.system:module,action` | Check quyền theo module + action (club-scoped) |
+| `LogApiRequest` | Log API request |
+| `RateLimitByUser` | Rate limit theo user |
 
-## 8. Đa ngôn ngữ (Translation)
+## 8. Đa ngôn ngữ
 
-Bảng dữ liệu: `{table}_translations` (vd `club_translations`), key `locale` nằm ở **key** của mảng,
-không phải field `locale` bên trong từng item.
+Bảng: `{table}_translations`, key `locale` là key của mảng.
 
-Validate:
 ```php
-'translations' => [
-    'required', 'array',
-    new RequiredLocales,
-    new SupportedLocalesOnly,
-    new UniqueTranslation('club_translations'),
-],
+// Request rules
+'translations' => ['required', 'array', new RequiredLocales, new SupportedLocalesOnly, new UniqueTranslation('club_translations')],
 'translations.*'             => ['array'],
 'translations.*.name'        => ['required', 'string', 'max:255'],
 'translations.*.description' => ['nullable', 'string'],
-```
 
-Attribute label cho lỗi validate (không hard-code, không dùng chung "name" cho mọi domain) —
-mỗi Request override:
-```php
+// Request attributes — mỗi Request override, không dùng label chung
 public function attributes(): array
 {
     return $this->translationAttributes('club', ['name', 'description']);
 }
 ```
-`BaseRequest::translationAttributes()` build key `domains/{module}.attributes.{field}` và resolve
-theo locale hiện tại (do `SetLocale` set từ header `Accept-Language`).
 
-Lang file bắt buộc đặt tại `lang/{locale}/domains/{module}.php`, có cấu trúc:
+Lang file: `lang/{locale}/domains/{module}.php`
 ```php
 return [
-    'attributes' => [
-        'name'        => 'tên câu lạc bộ',
-        'description' => 'mô tả câu lạc bộ',
-    ],
-    'list' => '...', 'detail' => '...', 'created' => '...',
-    'updated' => '...', 'deleted' => '...', 'not_found' => '...',
+    'attributes' => ['name' => 'tên câu lạc bộ', 'description' => 'mô tả câu lạc bộ'],
+    'list' => '...', 'detail' => '...', 'created' => '...', 'updated' => '...', 'deleted' => '...', 'not_found' => '...',
 ];
 ```
 
-Response message trong Controller/Service luôn dùng `__('domains/{module}.{key}')`, không hard-code string.
+Message trong Controller/Service luôn dùng `__('domains/{module}.{key}')`.
 
-## 9. Permission (club-scoped)
+## 9. Permission
 
 ```php
 ->middleware('perm.system:club,view')
-$user->isSuperAdmin();                          // bypass tất cả
-$user->hasPermission('club', 'create', $clubId); // check club-scoped
-$user->permissionsGroupedByClub();               // { club_id: { module: [actions] } }
+$user->isSuperAdmin();                           // bypass tất cả
+$user->hasPermission('club', 'create', $clubId); // club-scoped
 ```
 
 ## 10. JWT Auth
 
 - `JwtAuthenticate` parse token, throw `ApiException(401)` theo loại lỗi (expired / blacklisted / invalid / missing)
 - Refresh token qua `UserRefreshToken` + `UserRefreshTokenRepository`
-- `User` implements `JWTSubject`
 
-## 11. Route convention
+## 11. Route Convention
 
 ```
 routes/api.php              → require toàn bộ v1
 routes/api/v1/{module}.php  → route riêng từng module
 ```
 
-Thứ tự bắt buộc: các route tĩnh (`/cursor`, `/select`, `/slug/{slug}`) phải đứng trước `/{id}`
-để tránh bị route dynamic nuốt.
+**Thứ tự bắt buộc:** route tĩnh (`/cursor`, `/select`, `/slug/{slug}`) phải đứng trước `/{id}`.
 
-## 12. Endpoint Pattern chuẩn cho 1 module
+## 12. Endpoint Pattern chuẩn
 
 | Method | Path | Action | Permission |
-|--------|------|--------|------------|
-| GET | `/{module}` | `index` (offset pagination) | view |
+|---|---|---|---|
+| GET | `/{module}` | `index` | view |
 | GET | `/{module}/cursor` | `cursorIndex` | view |
-| GET | `/{module}/select` | `select` (dropdown, không Resource) | view |
+| GET | `/{module}/select` | `select` | view |
 | GET | `/{module}/slug/{slug}` | `showBySlug` | view |
 | GET | `/{module}/{id}` | `show` | view |
 | POST | `/{module}` | `store` | create |
@@ -243,94 +176,93 @@ Thứ tự bắt buộc: các route tĩnh (`/cursor`, `/select`, `/slug/{slug}`)
 
 ## 13. Filter / Search / Sort / Pagination
 
-**Một cách duy nhất** cho toàn bộ project — không để mỗi domain dùng một kiểu.
-
 ### Repository — nơi duy nhất build query
 
 ```php
-public function paginate(array $filters = [])
+// Query cơ sở — tách riêng để tái dùng giữa paginate / cursorPaginate / getForSelect
+protected function baseListQuery(): Builder
 {
-    $query = $this->model
-        ->select([...])
-        ->with([...]);
+    return $this->model
+        ->select(['id', 'field_a', 'field_b', 'created_at'])
+        ->with(['relation']);
+}
 
-    $this->applySearch($query, $filters);        // domain-specific (protected)
-    $this->applyFilters($query, $filters);       // compose helper BaseRepository
-    $this->applySorting($query, $filters, [...]); // helper BaseRepository
+public function getList(array $filters = []): LengthAwarePaginator // hoặc getList
+{
+    $query = $this->baseListQuery();
 
-    return $query->paginate($filters['limit'] ?? $this->defaultLimit);
+    // whereHas phức tạp viết thẳng ở đây trước khi gọi các helper
+    if (!empty($filters['club_slug'])) {
+        $query->whereHas('club.translations', fn ($q) => $q->where('slug', $filters['club_slug']));
+    }
+
+    $this->applySearch($query, $filters);          // protected — domain-specific
+    $this->applyFilters($query, $filters);         // protected — dùng helper BaseRepository
+    $this->applySorting($query, $filters, $this->allowedSortColumns);
+
+    return $query->paginate($filters['limit'] ?? $this->defaultLimit, ['*'], 'page', $filters['page'] ?? 1);
+}
+
+// Search — protected, override per-domain
+protected function applySearch(Builder $query, array $filters): void
+{
+    if (!empty($filters['search'])) {
+        $query->where('fullname', 'like', "%{$filters['search']}%");
+    }
+}
+
+// Filter — protected, compose helper BaseRepository
+protected function applyFilters(Builder $query, array $filters): void
+{
+    $this->applyActiveFilter($query, $filters);
+    // filter phức tạp thêm trực tiếp vào đây
 }
 ```
+**Trường hợp 1 — Chỉ override hooks (đơn giản nhất):**
+Domain repo override `baseListQuery()` / `applySearch()` / `applyFilters()`.
+Service gọi `$this->repository->getList($filters)` — BaseRepository xử lý phần còn lại.
 
-- `applySearch()` / `applyFilters()` là method `protected` riêng của từng Repository (cột search
-  và filter khác nhau giữa các domain).
-- Filter/sort phổ thông dùng helper `BaseRepository` (xem mục 3); filter phức tạp (`whereHas`,
-  `join`, `withCount`, `groupBy`) viết thẳng Query Builder trong Repository.
-- Toàn bộ logic filter/search/sort/paginate sống trong Repository — Service và Controller không
-  bao giờ chạm vào Query Builder.
+**Trường hợp 2 — Tự viết method (khi có business rule cứng hoặc context param):**
+[code example hiện tại với `baseListQuery()` + gọi tay từng hook]
 
-### Service — chỉ truyền `$filters`
+
+### Service — chỉ truyền `$filters`, inject business rule nếu cần
 
 ```php
-public function paginate(array $filters = [])
+public function paginate(array $filters = []): LengthAwarePaginator
 {
+    $filters['owner_id'] = auth()->id(); // business rule — không phải query
     return $this->repository->paginate($filters);
 }
 ```
 
-Service chỉ thêm business logic khi cần (authorize, transaction, inject param theo context):
-```php
-public function paginate(array $filters = [])
-{
-    $filters['owner_id'] = auth()->id(); // business rule, không phải query
-    return $this->repository->paginate($filters);
-}
-```
-
-Service không `where`, không `orderBy`, không `select`, không `with`, không `join`, không tự viết
-hàm build điều kiện lọc — mọi thứ liên quan đến truy vấn nằm gọn trong Repository.
+Service **không** `where`, `orderBy`, `select`, `with`, `join`.
 
 ### Controller — validate rồi gọi Service
 
 ```php
-public function index(FilterCategoryRequest $request): JsonResponse
+public function index(FilterModuleRequest $request): JsonResponse
 {
     return $this->paginateResponse(
         $this->service->paginate($request->validated()),
-        __('domains/category.list')
+        __('domains/module.list')
     );
 }
 ```
 
-### Filter Request
+### Filter Request — sort_by phải có whitelist
 
-Mỗi endpoint `index` nên có `FilterRequest` riêng. **Cột `sort_by` phải có whitelist `in:...`**
-để chống truyền cột lạ xuống Query Builder:
 ```php
 'sort_by'  => ['nullable', 'string', 'in:id,sort_order,created_at'],
 'sort_dir' => ['nullable', 'string', 'in:asc,desc'],
 ```
 
-## 14. AI Rules (bắt buộc khi sinh code)
+## 14. AI Rules
 
-- Đúng flow `Request → Controller → Service → Repository → Model`, không bỏ layer.
-- File đặt đúng `app/Domains/{Module}/{Layer}/`.
-- **Repository là nơi duy nhất thao tác với Query Builder** — search, filter, sort, select, join,
-  whereHas, with, withCount, paginate. `paginate(array $filters = [])` build thẳng query bằng
-  Query Builder chuẩn của Laravel; filter/sort phổ thông compose qua helper `BaseRepository`,
-  filter phức tạp viết trực tiếp.
-- **Service KHÔNG build query** — không `where`, `orderBy`, `select`, `with`, `join`, `paginate`.
-  Service chỉ truyền `$filters` xuống Repository (+ business logic: authorize, transaction,
-  orchestration).
-- Repository chỉ query DB; không business logic.
-- Controller không query DB, không validate trực tiếp, không business logic.
-- Mọi API có input đều phải có FormRequest (extends `BaseRequest`). Endpoint `index` dùng
-  `FilterRequest` với whitelist `sort_by`.
-- Luôn trả qua API Resource, trừ endpoint `/select`.
-- Luôn dùng `responseCommon()` / `paginateResponse()` / `cursorResponse()` — không `response()->json(...)`.
-- Message luôn qua `__('domains/{module}.{key}')`.
-- Service bắt buộc có `protected string $notFoundMessage = 'domains/{module}.not_found'`.
-- Service bắt buộc override `paginate()` và `cursorPaginate()` (chỉ truyền `$filters` xuống Repository).
-- Transaction chỉ mở trong Service (`DB::beginTransaction`/`commit`/`rollBack`).
-- Lỗi nghiệp vụ throw `ApiException`, không tự trả response lỗi trong Controller.
-- PHP 8.3 + PSR-12 + SOLID.
+- Đúng flow `Controller → Service → Repository → Model`, không bỏ layer.
+- **Repository** là nơi duy nhất thao tác Query Builder. Dùng `baseListQuery()` để tách base query; `applySearch()` / `applyFilters()` là method `protected` per-domain; helper BaseRepository cho filter phổ thông; viết thẳng Query Builder cho filter phức tạp.
+- **Service** không build query. Chỉ truyền `$filters` xuống Repository + inject business rule (authorize, transaction, param theo context). Bắt buộc có `protected string $notFoundMessage`.
+- **Controller** không query DB, không business logic. Dùng FormRequest cho mọi endpoint có input (FilterRequest với whitelist `sort_by` cho index). Dùng `responseCommon()` / `paginateResponse()` / `cursorResponse()`.
+- Lỗi nghiệp vụ throw `ApiException`. Transaction chỉ mở trong Service.
+- Resource cho mọi endpoint trừ `/select`. Message luôn qua `__('domains/{module}.{key}')`.
+- PHP 8.3 + PSR-12.

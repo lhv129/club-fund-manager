@@ -12,7 +12,7 @@ class FilterClubInviteRequest extends BaseRequest
             'is_active' => ['nullable', 'boolean'],
             'limit'     => ['nullable', 'integer', 'min:1', 'max:100'],
             'page'      => ['nullable', 'integer', 'min:1'],
-            'sort_by'   => ['nullable', 'string', 'in:id,sort_order,created_at,expires_at'],
+            'sort_by'   => ['nullable', 'string', 'in:created_at,expires_at'],
             'sort_dir'  => ['nullable', 'string', 'in:asc,desc'],
         ];
     }

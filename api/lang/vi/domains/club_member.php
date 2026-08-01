@@ -17,4 +17,5 @@ return [
     'already_pending'  => 'Bạn đã gửi yêu cầu tham gia club này rồi',
     'already_member'   => 'Bạn đã là thành viên của club này',
     'was_rejected'     => 'Yêu cầu tham gia của bạn trước đó đã bị từ chối',
+    'not_approved' => 'Thành viên chưa được phê duyệt.',
 ];

@@ -74,6 +74,13 @@ return [
         'file' => ':attribute phải có dung lượng từ :min đến :max KB.',
     ],
 
+    'size' => [
+        'string' => ':attribute phải có đúng :size ký tự.',
+        'numeric' => ':attribute phải bằng :size.',
+        'array' => ':attribute phải có :size phần tử.',
+        'file' => ':attribute phải có dung lượng :size KB.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Thuộc tính
@@ -109,6 +116,8 @@ return [
         'sort_order' => 'Thứ tự',
 
         'count' => 'Số lượng',
+
+        'invite_code' => 'Mã giới thiệu'
     ],
 
     /*

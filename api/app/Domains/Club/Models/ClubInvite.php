@@ -14,7 +14,7 @@ class ClubInvite extends Model
     protected $fillable = [
         'club_id',
         'created_by',   // user_id tạo link (admin hoặc member)
-        'token',         // unique token
+        'invite_code',         // unique invite_code
         'expires_at',     // null = không giới hạn
         'used_count',
         'sort_order',

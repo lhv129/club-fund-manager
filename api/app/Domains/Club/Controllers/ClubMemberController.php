@@ -18,62 +18,62 @@ class ClubMemberController extends BaseController
 
     /**
      * POST /api/v1/clubs/join
-     * User dùng token từ link invite để xin vào club
+     * User dùng invite_code từ link invite để xin vào club
      *
-     * Body: { "token": "xxx..." }
+     * Body: { "invite_code": "xxx..." }
      */
     public function join(JoinClubRequest $request): JsonResponse
     {
         $member = $this->memberService->join(
             $request->user(),
-            $request->input('token')
+            $request->input('invite_code')
         );
 
         return $this->responseCommon(true, __('domains/club_member.join_requested'), new ClubMemberResource($member), 201);
     }
 
     /**
-     * GET /api/v1/clubs/{clubId}/members
+     * GET /api/v1/clubs/{clubSlug}/members
      * Danh sách thành viên của club (lọc theo status, join_type...)
      */
-    public function index(FilterClubMemberRequest $request, int $clubId): JsonResponse
+    public function index(FilterClubMemberRequest $request, string $clubSlug): JsonResponse
     {
-        $members = $this->memberService->paginateClubMembers($clubId, $request->validated());
+        $members = $this->memberService->paginateClubMembers($clubSlug, $request->validated());
 
-        return $this->paginateResponse($members, __('domains/club_member.list'));
+        return $this->paginateResponse($members, __('domains/club_member.list'), ClubMemberResource::class);
     }
 
     /**
-     * GET /api/v1/clubs/{clubId}/members/{memberId}
+     * GET /api/v1/clubs/{clubSlug}/members/{memberId}
      */
-    public function show(int $clubId, int $memberId): JsonResponse
+    public function show(string $clubSlug, int $memberId): JsonResponse
     {
-        $member = $this->memberService->findClubMember($clubId, $memberId);
+        $member = $this->memberService->findClubMember($clubSlug, $memberId);
 
         return $this->responseCommon(true, __('domains/club_member.detail'), new ClubMemberResource($member));
     }
 
     /**
-     * POST /api/v1/clubs/{clubId}/members/{memberId}/approve
+     * POST /api/v1/clubs/{clubSlug}/members/{memberId}/approve
      * Chủ club duyệt thành viên → tự động gán role "member"
      */
-    public function approve(int $clubId, int $memberId): JsonResponse
+    public function approve(string $clubSlug, int $memberId): JsonResponse
     {
-        $member = $this->memberService->approve($clubId, $memberId, request()->user());
+        $member = $this->memberService->approve($clubSlug, $memberId, request()->user());
 
         return $this->responseCommon(true, __('domains/club_member.approved'), new ClubMemberResource($member));
     }
 
     /**
-     * POST /api/v1/clubs/{clubId}/members/{memberId}/reject
+     * POST /api/v1/clubs/{clubSlug}/members/{memberId}/reject
      * Chủ club từ chối thành viên
      *
      * Body: { "rejected_reason": "..." }  (optional)
      */
-    public function reject(RejectMemberRequest $request, int $clubId, int $memberId): JsonResponse
+    public function reject(RejectMemberRequest $request, string $clubSlug, int $memberId): JsonResponse
     {
         $member = $this->memberService->reject(
-            $clubId,
+            $clubSlug,
             $memberId,
             $request->user(),
             $request->input('rejected_reason')
@@ -83,24 +83,13 @@ class ClubMemberController extends BaseController
     }
 
     /**
-     * DELETE /api/v1/clubs/{clubId}/members/{memberId}
+     * DELETE /api/v1/clubs/{clubSlug}/members/{memberId}
      * Xoá thành viên khỏi club
      */
-    public function destroy(int $clubId, int $memberId): JsonResponse
+    public function destroy(string $clubSlug, int $memberId): JsonResponse
     {
-        $this->memberService->remove($clubId, $memberId);
+        $this->memberService->remove($clubSlug, $memberId, request()->user());
 
         return $this->responseCommon(true, __('domains/club_member.removed'));
-    }
-
-    /**
-     * POST /api/v1/clubs/{clubId}/members/{memberId}/toggle-status
-     * Bật/tắt trạng thái thành viên (không thay đổi status pending/approved/rejected)
-     */
-    public function toggleStatus(int $clubId, int $memberId): JsonResponse
-    {
-        $member = $this->memberService->toggleStatusClubMember($clubId, $memberId);
-
-        return $this->responseCommon(true, __('domains/club_member.status_toggled'), new ClubMemberResource($member));
     }
 }

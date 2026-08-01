@@ -24,23 +24,30 @@ class ClubMemberRepository extends BaseRepository
 
     /**
      * Danh sách member của 1 club (offset pagination).
-     * Toàn bộ filter/search/sort nằm ở đây — Service chỉ truyền $filters + clubId.
+     * Toàn bộ filter/search/sort nằm ở đây — Service chỉ truyền $filters + clubSLUG.
      */
-    public function paginateClubMembers(int $clubId, array $filters = []): LengthAwarePaginator
+    public function paginateClubMembers(string $clubSlug, array $filters = []): LengthAwarePaginator
     {
         $query = $this->model
             ->select([
                 'id',
                 'club_id',
                 'user_id',
+                'invited_by',
+                'reviewed_by',
+                'reviewed_at',
+                'removed_by',
+                'removed_at',
                 'join_type',
-                'status',
-                'is_active',
                 'joined_at',
-                'created_at'
+                'is_active',
+                'status',
+                'rejected_reason'
             ])
-            ->with(['user'])
-            ->where('club_id', $clubId);
+            ->with(['user:id,fullname,email,phone,status', 'reviewedBy:id,fullname', 'user.clubMemberRoles.role.translation','invitedBy:id,fullname'])
+            ->whereHas('club.translations', function ($query) use ($clubSlug) {
+                $query->where('slug', $clubSlug);
+            });
 
         $this->applySearch($query, $filters);
         $this->applyFilters($query, $filters);
@@ -99,17 +106,6 @@ class ClubMemberRepository extends BaseRepository
         ]);
     }
 
-    /**
-     * Xoá tất cả role của member trong club (khi remove member).
-     */
-    public function removeAllRoles(ClubMember $member): void
-    {
-        DB::table('club_member_roles')
-            ->where('club_id', $member->club_id)
-            ->where('user_id', $member->user_id)
-            ->delete();
-    }
-
     // -------------------------------------------------------------------------
     // Permission check helper
     // -------------------------------------------------------------------------
@@ -148,5 +144,38 @@ class ClubMemberRepository extends BaseRepository
             ->where('cmr.is_active', true)
             ->whereNull('cmr.deleted_at')
             ->exists();
+    }
+
+    public function findByClubSlugAndMemberId(
+        string $clubSlug,
+        int $memberId,
+        array $with = [],
+        array $select = ['*']
+    ): ?ClubMember {
+        return $this->model
+            ->select($select)
+            ->with($with)
+            ->where('id', $memberId)
+            ->whereHas('club.translations', function ($query) use ($clubSlug) {
+                $query->where('slug', $clubSlug);
+            })
+            ->first();
+    }
+
+    public function findPendingByClubSlugAndMemberId(
+        string $clubSlug,
+        int $memberId,
+        array $with = [],
+        array $select = ['*']
+    ): ?ClubMember {
+        return $this->model
+            ->select($select)
+            ->with($with)
+            ->where('id', $memberId)
+            ->where('status', 'pending')
+            ->whereHas('club.translations', function ($query) use ($clubSlug) {
+                $query->where('slug', $clubSlug);
+            })
+            ->first();
     }
 }

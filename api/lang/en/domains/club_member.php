@@ -17,4 +17,5 @@ return [
     'already_pending'  => 'You have already submitted a join request for this club',
     'already_member'   => 'You are already a member of this club',
     'was_rejected'     => 'Your join request was previously rejected',
+    'not_approved' => 'The member has not been approved yet.'
 ];

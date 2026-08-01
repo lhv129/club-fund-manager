@@ -74,6 +74,13 @@ return [
         'file' => 'The :attribute must be between :min and :max KB.',
     ],
 
+    'size' => [
+        'string' => 'The :attribute must be exactly :size characters.',
+        'numeric' => 'The :attribute must be :size.',
+        'array' => 'The :attribute must contain :size items.',
+        'file' => 'The :attribute must be :size kilobytes.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Custom Attribute Names
@@ -109,6 +116,8 @@ return [
         'sort_order' => 'sort order',
 
         'count' => 'count',
+
+        'invite_code' => 'Invite code'
     ],
 
     /*
