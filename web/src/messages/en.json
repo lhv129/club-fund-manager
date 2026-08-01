@@ -155,7 +155,9 @@
     "invites": "Invites",
     "funds": "Funds",
     "events": "Events",
-    "clubSettings": "Club Settings"
+    "clubSettings": "Club Settings",
+    "memberships": "Memberships",
+    "detail": "Detail"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -360,5 +362,52 @@
     "sortOrder": "Sort order",
     "label": "Module name",
     "permissions": "Permissions"
+  },
+  "member": {
+    "title": "Member List",
+    "historyTitle": "Member History & Approval",
+    "totalCount": "{count} members",
+    "notFound": "No members found",
+    "avatar": "Avatar",
+    "phone": "Phone Number",
+    "joinedAt": "Joined At",
+    "joinType": "Join Type",
+    "joinTypeRequest": "Request",
+    "joinTypeInvite": "Invite",
+    "reviewedBy": "Reviewed By",
+    "invitedBy": "Invited By",
+    "removedAt": "Removed At",
+    "rejectedReason": "Rejection Reason",
+    "rejectedReasonPlaceholder": "Enter rejection reason (optional)...",
+    "statusPending": "Pending",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "statusRemoved": "Removed",
+    "approve": "Approve",
+    "reject": "Reject",
+    "rejectTitle": "Reject Member",
+    "deleteConfirmMsg": "Are you sure you want to remove member \"{name}\"?",
+    "forbidden_description": "You do not have permission to access the membership management page."
+  },
+  "invite": {
+    "title": "Invite Link Management",
+    "totalCount": "{count} invite code",
+    "code": "Invite Code",
+    "joinLink": "Join Link",
+    "usedCount": "Used",
+    "maxUses": "Max Uses",
+    "maxUsesPlaceholder": "Leave blank = unlimited",
+    "expiresAt": "Expires At",
+    "createdBy": "Created By",
+    "create": "Create Invite",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "copyLink": "Copy Link",
+    "copied": "Copied!",
+    "notFound": "No invite links found.",
+    "deleteConfirmMsg": "Are you sure you want to delete code <b>{code}</b>? This cannot be undone.",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "statusExpired": "Expired"
   }
 }

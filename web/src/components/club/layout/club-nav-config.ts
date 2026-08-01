@@ -5,6 +5,7 @@ import {
     Wallet,
     Settings,
     LucideIcon,
+    UserCheck
 } from "lucide-react";
 
 import {
@@ -46,21 +47,28 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
         {
             labelKey: "members",
             icon: Users,
-            module: MODULE_SLUGS.member,
+            module: MODULE_SLUGS.clubMember,
             action: PERMISSION_ACTIONS.view,
             children: [
                 {
                     href: clubRoute(slug, CLUB_SUBROUTES.members),
                     labelKey: "clubMembers",
                     icon: Users,
-                    module: MODULE_SLUGS.member,
+                    module: MODULE_SLUGS.clubMember,
+                    action: PERMISSION_ACTIONS.view,
+                },
+                {
+                    href: clubRoute(slug, CLUB_SUBROUTES.memberships),
+                    labelKey: "memberships",
+                    icon: UserCheck,
+                    module: MODULE_SLUGS.clubMember,
                     action: PERMISSION_ACTIONS.view,
                 },
                 {
                     href: clubRoute(slug, CLUB_SUBROUTES.invites),
                     labelKey: "clubInvites",
                     icon: Mail,
-                    module: MODULE_SLUGS.member,
+                    module: MODULE_SLUGS.clubInvite,
                     action: PERMISSION_ACTIONS.create,
                 },
             ],

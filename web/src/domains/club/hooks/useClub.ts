@@ -1,23 +1,24 @@
+// src/domains/club/hooks/useClub.ts
 "use client";
 
 import { useEffect } from "react";
+import { useLocale } from "next-intl";
 import { useClubStore } from "../stores/clubStore";
 import type { Club } from "../types";
 
-/**
- * useClub — đọc club workspace hiện tại từ store.
- */
 export function useClub() {
   const club = useClubStore((s) => s.club);
-  return { club };
+  const locale = useLocale();
+
+  // Slug theo locale hiện tại, fallback sang bản đầu tiên
+  const slug =
+    club?.translations?.find((t) => t.locale === locale)?.slug ??
+    club?.translations?.[0]?.slug ??
+    null;
+
+  return { club, slug };
 }
 
-/**
- * Hydrate club store từ club do Server Component fetch.
- *
- * Chạy trong useLayoutEffect để tránh cảnh báo "Cannot update a component
- * while rendering another" và không bị flash club=null khi paint.
- */
 export function useHydrateClub(club: Club | null) {
   useEffect(() => {
     if (club) {
@@ -25,6 +26,5 @@ export function useHydrateClub(club: Club | null) {
     } else {
       useClubStore.getState().reset();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // club từ SSR — stable, chỉ mount 1 lần
+  }, []);
 }

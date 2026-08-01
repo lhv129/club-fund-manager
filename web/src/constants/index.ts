@@ -35,6 +35,7 @@ export const CLUB_SUBROUTES = {
   dashboard: "dashboard",
   members: "members",
   invites: "invites",
+  memberships: "memberships",
   funds: "funds",
   events: "events",
   settings: "settings",
@@ -93,7 +94,8 @@ export const MODULE_SLUGS = {
   // ── Shared module (cả system + club scope) ───────────────────────────────
   club: "club",
   // ── Club-scoped modules ───────────────────────────────────────────────────
-  member: "member",
+  clubMember: "club_member",
+  clubInvite: "club_invite",
   fund: "fund",
   transaction: "transaction",
   exchangeSession: "exchange_session",

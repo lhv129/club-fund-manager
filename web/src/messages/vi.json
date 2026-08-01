@@ -74,7 +74,8 @@
     "settings": "Cài đặt",
     "toggleActive": "Nhấn để bật hoạt động",
     "toggleInactive": "Nhấn để tắt hoạt động",
-    "readOnly": "Bạn chỉ có quyền xem"
+    "readOnly": "Bạn chỉ có quyền xem",
+    "detail": "Chi tiết"
   },
   "metadata": {
     "users": {
@@ -155,7 +156,8 @@
     "invites": "Lời mời",
     "funds": "Quỹ CLB",
     "events": "Sự kiện",
-    "clubSettings": "Cài đặt CLB"
+    "clubSettings": "Cài đặt CLB",
+    "memberships": "Quản lý tham gia"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
@@ -202,7 +204,7 @@
     "totalFunds": "Tổng quỹ",
     "activeEvents": "Sự kiện đang diễn ra",
     "monthlyIncome": "Thu tháng này",
-     "viewingAsSystemAdmin": "System Admin"
+    "viewingAsSystemAdmin": "System Admin"
   },
   "noClub": {
     "title": "Bạn chưa tham gia câu lạc bộ nào",
@@ -358,5 +360,52 @@
     "sortOrder": "Thứ tự sắp xếp",
     "label": "Tên phân hệ",
     "permissions": "Quyền hạn"
+  },
+  "member": {
+    "title": "Danh sách thành viên",
+    "historyTitle": "Lịch sử & Duyệt thành viên",
+    "totalCount": "{count} thành viên",
+    "notFound": "Không tìm thấy thành viên nào",
+    "avatar": "Ảnh đại diện",
+    "phone": "Số điện thoại",
+    "joinedAt": "Ngày tham gia",
+    "joinType": "Hình thức",
+    "joinTypeRequest": "Xin vào",
+    "joinTypeInvite": "Được mời",
+    "reviewedBy": "Người duyệt",
+    "invitedBy": "Người mời",
+    "removedAt": "Ngày xóa",
+    "rejectedReason": "Lý do từ chối",
+    "rejectedReasonPlaceholder": "Nhập lý do từ chối (nếu có)...",
+    "statusPending": "Chờ duyệt",
+    "statusApproved": "Đã duyệt",
+    "statusRejected": "Từ chối",
+    "statusRemoved": "Đã xóa",
+    "approve": "Duyệt",
+    "reject": "Từ chối",
+    "rejectTitle": "Từ chối thành viên",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa thành viên \"{name}\"?",
+    "forbidden_description": "Bạn không có quyền truy cập trang quản lý thành viên."
+  },
+  "invite": {
+    "title": "Quản lý link mời",
+    "totalCount":"{count} mã mời",
+    "code": "Mã mời",
+    "joinLink": "Link tham gia",
+    "usedCount": "Đã dùng",
+    "maxUses": "Giới hạn lượt dùng",
+    "maxUsesPlaceholder": "Để trống = không giới hạn",
+    "expiresAt": "Hết hạn",
+    "createdBy": "Người tạo",
+    "create": "Tạo link mời",
+    "activate": "Kích hoạt",
+    "deactivate": "Vô hiệu hóa",
+    "copyLink": "Sao chép link",
+    "copied": "Đã sao chép!",
+    "notFound": "Không có link mời nào.",
+    "deleteConfirmMsg": "Bạn chắc chắn muốn xóa mã <b>{code}</b>? Hành động này không thể hoàn tác.",
+    "statusActive": "Đang hoạt động",
+    "statusInactive": "Vô hiệu",
+    "statusExpired": "Hết hạn"
   }
 }

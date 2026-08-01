@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { cache } from "react";
+
 import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { systemPermissions } from "@/lib/permissions";
 import type { Profile } from "@/domains/auth/types";
+import { APP_ROUTES } from "@/constants";
 
 /**
  * Fetch profile — cache qua React cache() để tránh gọi lại khi
@@ -12,7 +14,7 @@ import type { Profile } from "@/domains/auth/types";
  * Dùng ensureProfile để recover session khi access_token hết hạn.
  */
 const getProfile = cache(async (locale: string): Promise<Profile> => {
-  return ensureProfile(locale, `/${locale}/admin`);
+  return ensureProfile(locale, `/${locale}${APP_ROUTES.admin}`);
 });
 
 /**
@@ -37,15 +39,13 @@ export default async function SystemLayout({
 
   const profile = await getProfile(locale);
 
-  // Superadmin → qua. Admin (is_system_admin) → có system permission → qua.
-  // Club user (không có system scope) → redirect về root để phân luồng.
   const isSystemUser =
     profile.is_superadmin ||
     profile.is_system_admin ||
     systemPermissions(profile.permissions) !== null;
 
   if (!isSystemUser) {
-    redirect(`/${locale}`);
+    redirect(`/${locale}${APP_ROUTES.home}`);
   }
 
   return <>{children}</>;
