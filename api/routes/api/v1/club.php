@@ -4,11 +4,13 @@ use App\Domains\Club\Controllers\ClubController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->prefix('clubs')->group(function () {
+
     // Index — mọi user đã login đều được xem (service tự filter theo quyền)
     Route::get('/', [ClubController::class, 'index']);
     Route::get('/select', [ClubController::class, 'select']);
+    Route::get('/cursor', [ClubController::class, 'cursorIndex']);
 
-    Route::get('/cursor', [ClubController::class, 'cursorIndex'])->middleware('perm.club:club,view');
+
     // Xem chi tiết 1 club — check club scope qua clubId
     Route::get('/slug/{slug}', [ClubController::class, 'showBySlug'])->middleware('perm.club:club,view');
     Route::get('/{id}', [ClubController::class, 'show'])->middleware('perm.club:club,view');

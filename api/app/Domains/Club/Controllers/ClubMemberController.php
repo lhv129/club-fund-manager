@@ -24,10 +24,7 @@ class ClubMemberController extends BaseController
      */
     public function join(JoinClubRequest $request): JsonResponse
     {
-        $member = $this->memberService->join(
-            $request->user(),
-            $request->input('invite_code')
-        );
+        $member = $this->memberService->join($request->user(), $request->validated());
 
         return $this->responseCommon(true, __('domains/club_member.join_requested'), new ClubMemberResource($member), 201);
     }

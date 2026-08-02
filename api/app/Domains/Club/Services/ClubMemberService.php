@@ -7,6 +7,7 @@ use App\Domains\Club\Models\ClubMember;
 use App\Domains\Club\Repositories\ClubInviteRepository;
 use App\Domains\Club\Repositories\ClubMemberRepository;
 use App\Domains\Club\Repositories\ClubMemberRoleRepository;
+use App\Domains\Club\Repositories\ClubRepository;
 use App\Domains\Role\Repositories\RoleRepository;
 use App\Domains\User\Models\User;
 use App\Exceptions\ApiException;
@@ -21,6 +22,7 @@ class ClubMemberService extends BaseService
         protected ClubInviteRepository $inviteRepository,
         protected RoleRepository $roleRepository,
         protected ClubMemberRoleRepository $clubMemberRoleRepository,
+        protected ClubRepository $clubRepository,
     ) {
         parent::__construct($repository);
     }
@@ -70,18 +72,61 @@ class ClubMemberService extends BaseService
      *   1. invite_code tồn tại, còn hạn, còn active
      *   2. User chưa là member của club đó (kể cả pending/rejected)
      */
-    public function join(User $user, string $inviteCode): ClubMember
+    public function join(User $user, array $data): ClubMember
     {
-        // 1. Tìm invite hợp lệ
-        $invite = $this->inviteRepository->findValidByToken($inviteCode);
+        $inviteCode = $data['invite_code'] ?? null;
+        $clubSlug   = $data['club_slug'] ?? null;
 
-        if (! $invite) {
-            throw new ApiException(__('domains/club_invite.invalid_or_expired'), 422);
+        if (!$inviteCode && !$clubSlug) {
+            throw new ApiException(__('domains/club_member.join_source_required'), 422);
         }
 
-        // 2. Kiểm tra đã từng tham gia club chưa
+        $invite = null;
+
+        // -------------------------------------------------------------------------
+        // Join bằng Invite Code
+        // -------------------------------------------------------------------------
+        if ($inviteCode) {
+
+            $invite = $this->inviteRepository->findValidByToken($inviteCode);
+
+            if (! $invite) {
+                throw new ApiException(__('domains/club_invite.invalid_or_expired'), 422);
+            }
+
+            $clubId    = $invite->club_id;
+            $joinType  = 'invite';
+            $inviteId  = $invite->id;
+            $invitedBy = $invite->created_by;
+        }
+        // -------------------------------------------------------------------------
+        // Join bằng Club Slug
+        // -------------------------------------------------------------------------
+        else {
+
+            $club = $this->clubRepository->findByTranslationSlug(
+                $clubSlug,
+                ['*'],
+                [
+                    'is_active' => true,
+                ]
+            );
+
+            if (! $club) {
+                throw new ApiException(__('domains/club.not_found'), 404);
+            }
+
+            $clubId    = $club->id;
+            $joinType  = 'request';
+            $inviteId  = null;
+            $invitedBy = null;
+        }
+
+        // -------------------------------------------------------------------------
+        // Kiểm tra đã từng tham gia club chưa
+        // -------------------------------------------------------------------------
         $existing = $this->repository->first([
-            'club_id' => $invite->club_id,
+            'club_id' => $clubId,
             'user_id' => $user->id,
         ]);
 
@@ -99,10 +144,11 @@ class ClubMemberService extends BaseService
                     throw new ApiException(__('domains/club_member.was_rejected'), 422);
 
                 case 'removed':
+
                     $member = $this->repository->update($existing, [
-                        'join_type'       => 'invite',
-                        'invite_id'       => $invite->id,
-                        'invited_by'      => $invite->created_by,
+                        'join_type'       => $joinType,
+                        'invite_id'       => $inviteId,
+                        'invited_by'      => $invitedBy,
 
                         'status'          => 'pending',
 
@@ -117,10 +163,12 @@ class ClubMemberService extends BaseService
                         'is_active'       => true,
                     ]);
 
-                    $this->inviteRepository->increment(
-                        ['id' => $invite->id],
-                        'used_count'
-                    );
+                    if ($invite) {
+                        $this->inviteRepository->increment(
+                            ['id' => $invite->id],
+                            'used_count'
+                        );
+                    }
 
                     return $member->load([
                         'user',
@@ -129,21 +177,27 @@ class ClubMemberService extends BaseService
             }
         }
 
-        // 3. Tạo bản ghi mới
+        // -------------------------------------------------------------------------
+        // Tạo yêu cầu tham gia mới
+        // -------------------------------------------------------------------------
         $member = $this->repository->create([
-            'club_id'    => $invite->club_id,
+            'club_id'    => $clubId,
             'user_id'    => $user->id,
-            'join_type'  => 'invite',
-            'invite_id'  => $invite->id,
-            'invited_by' => $invite->created_by,
+            'join_type'  => $joinType,
+            'invite_id'  => $inviteId,
+            'invited_by' => $invitedBy,
             'status'     => 'pending',
         ]);
 
-        // 4. Tăng số lần sử dụng invite
-        $this->inviteRepository->increment(
-            ['id' => $invite->id],
-            'used_count'
-        );
+        // -------------------------------------------------------------------------
+        // Tăng số lượt dùng invite
+        // -------------------------------------------------------------------------
+        if ($invite) {
+            $this->inviteRepository->increment(
+                ['id' => $invite->id],
+                'used_count'
+            );
+        }
 
         return $member->load([
             'user',

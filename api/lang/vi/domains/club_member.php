@@ -18,4 +18,6 @@ return [
     'already_member'   => 'Bạn đã là thành viên của club này',
     'was_rejected'     => 'Yêu cầu tham gia của bạn trước đó đã bị từ chối',
     'not_approved' => 'Thành viên chưa được phê duyệt.',
+    'join_source_required' => 'Vui lòng cung cấp mã mời hoặc tham gia trực tiếp câu lạc bộ.',
+
 ];

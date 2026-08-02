@@ -96,7 +96,7 @@ return [
         'username' => 'username',
         'email' => 'email',
         'password' => 'password',
-        'confirm_password' => 'confirm password',
+        'password_confirmation' => 'confirm password',
 
         'phone' => 'phone number',
         'address' => 'address',

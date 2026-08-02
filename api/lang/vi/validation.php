@@ -96,7 +96,7 @@ return [
         'username' => 'Tên đăng nhập',
         'email' => 'Email',
         'password' => 'Mật khẩu',
-        'confirm_password' => 'Xác nhận mật khẩu',
+        'password_confirmation' => 'Xác nhận mật khẩu',
 
         'phone' => 'Số điện thoại',
         'address' => 'Địa chỉ',
