@@ -1,15 +1,38 @@
-import { setRequestLocale } from "next-intl/server";
-import { getTranslations } from "next-intl/server";
+import { Metadata } from "next";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+
 import { Card } from "@/components/shared/ui/Card";
+
+type Props = {
+  params: Promise<{
+    locale: string;
+    slug: string;
+  }>;
+};
+
+export async function generateMetadata({
+  params,
+}: Props): Promise<Metadata> {
+  const { locale } = await params;
+
+  const t = await getTranslations({
+    locale,
+    namespace: "metadata.clubDashboard",
+  });
+
+  return {
+    title: t("title"),
+    description: t("description"),
+  };
+}
 
 export default async function ClubDashboardPage({
   params,
-}: {
-  params: Promise<{ locale: string; slug: string }>;
-}) {
+}: Props) {
   const { locale } = await params;
+
   setRequestLocale(locale);
-  const t = await getTranslations("dashboard");
+
   const tWorkspace = await getTranslations("clubWorkspace");
 
   const stats = [
@@ -22,7 +45,9 @@ export default async function ClubDashboardPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900">{tWorkspace("dashboard")}</h1>
+        <h1 className="text-2xl font-bold text-zinc-900">
+          {tWorkspace("dashboard")}
+        </h1>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -33,8 +58,12 @@ export default async function ClubDashboardPage({
                 {stat.icon}
               </div>
               <div>
-                <p className="text-sm text-zinc-500">{tWorkspace(stat.key)}</p>
-                <p className="text-2xl font-bold text-zinc-900">{stat.value}</p>
+                <p className="text-sm text-zinc-500">
+                  {tWorkspace(stat.key)}
+                </p>
+                <p className="text-2xl font-bold text-zinc-900">
+                  {stat.value}
+                </p>
               </div>
             </div>
           </Card>

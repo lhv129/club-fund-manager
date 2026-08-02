@@ -25,7 +25,7 @@ export interface ClubInvite {
 
 export type InviteFilters = {
     search: string;
-    is_active: true | false | undefined;
+    is_active?: 0 | 1;
 };
 
 

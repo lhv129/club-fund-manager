@@ -1,3 +1,5 @@
+//sidebarAdmin
+
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,18 +28,18 @@ const SidebarLogo = memo(function SidebarLogo({
   const t = useTranslations("app") as (key: string) => string;
 
   return (
-    <div className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-zinc-200 dark:border-gray-800 shrink-0">
+    <div className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-border shrink-0">
       <div className="flex items-center gap-3 min-w-0">
         {/* Logo mark */}
-        <div className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-white flex items-center justify-center shrink-0 shadow-sm">
-          <span className="text-white dark:text-zinc-900 font-black text-base leading-none">
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-sm">
+          <span className="text-primary-foreground font-black text-base leading-none">
             C
           </span>
         </div>
 
         {/* Name + badge */}
         <div className="min-w-0">
-          <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight truncate">
+          <p className="font-semibold text-sm text-foreground tracking-tight leading-tight truncate">
             {t('name')}
           </p>
         </div>
@@ -47,7 +49,7 @@ const SidebarLogo = memo(function SidebarLogo({
       <button
         aria-label="Close sidebar"
         onClick={onClose}
-        className="lg:hidden rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-all duration-200 hover:rotate-90 shrink-0"
+        className="lg:hidden rounded-lg p-1.5 text-foreground-muted hover:bg-background-muted transition-all duration-200 hover:rotate-90 shrink-0"
       >
         <X className="w-4 h-4" />
       </button>
@@ -88,7 +90,7 @@ const SidebarItem = memo(function SidebarItem({
       {isActive && (
         <span
           aria-hidden="true"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2.5px] h-5 bg-blue-600 dark:bg-blue-500 rounded-full"
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2.5px] h-5 bg-primary rounded-full"
         />
       )}
 
@@ -98,11 +100,11 @@ const SidebarItem = memo(function SidebarItem({
         aria-current={isActive ? "page" : undefined}
         className={cn(
           "group flex items-center gap-2.5 rounded-lg text-sm transition-all duration-200 outline-none",
-          "focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
           depth === 0 ? "px-3 py-2" : "px-2.5 py-1.5",
           isActive
-            ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold shadow-sm"
-            : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
+            ? "bg-primary/10 text-primary font-semibold"
+            : "text-foreground-muted hover:bg-background-muted hover:text-foreground"
         )}
       >
         <Icon
@@ -110,7 +112,7 @@ const SidebarItem = memo(function SidebarItem({
             "w-4 h-4 shrink-0 transition-all duration-200",
             isActive
               ? "text-blue-600 dark:text-blue-400"
-              : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300"
+              : "text-foreground-muted text-foreground-muted group-hover:text-foreground dark:group-hover:text-zinc-300"
           )}
           strokeWidth={isActive ? 2.5 : 2}
         />
@@ -159,18 +161,18 @@ const SidebarGroup = memo(function SidebarGroup({
         aria-label={`${t(item.labelKey)} menu`}
         className={cn(
           "group w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 outline-none",
-          "focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
           isChildActive
-            ? "text-zinc-900 dark:text-zinc-100"
-            : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 hover:text-zinc-900 dark:hover:text-zinc-100"
+            ? "text-foreground"
+            : "text-foreground-muted hover:bg-primary/10 hover:bg-background-muted hover:text-zinc-900 hover:text-foreground"
         )}
       >
         <Icon
           className={cn(
             "w-4 h-4 shrink-0 transition-all duration-200",
             isChildActive
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300"
+              ? "text-primary"
+              : "text-foreground-muted text-foreground-muted group-hover:text-foreground dark:group-hover:text-zinc-300"
           )}
           strokeWidth={isChildActive ? 2.5 : 2}
         />
@@ -180,14 +182,14 @@ const SidebarGroup = memo(function SidebarGroup({
         {isChildActive && (
           <span
             aria-hidden="true"
-            className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shrink-0"
+            className="w-1.5 h-1.5 rounded-full bg-primary dark:bg-blue-400 shrink-0"
           />
         )}
 
         <ChevronDown
           aria-hidden="true"
           className={cn(
-            "h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform duration-250 ease-out",
+            "h-3.5 w-3.5 shrink-0 text-foreground-muted transition-transform duration-250 ease-out",
             expanded && "rotate-180"
           )}
         />
@@ -201,7 +203,7 @@ const SidebarGroup = memo(function SidebarGroup({
         )}
       >
         <div className="overflow-hidden">
-          <div className="mt-1 ml-[22px] pl-3 py-0.5 border-l border-zinc-200 dark:border-zinc-700/60 space-y-0.5">
+          <div className="mt-1 ml-[22px] pl-3 py-0.5 border-l border-border space-y-0.5">
             {item.children?.map((child) => (
               <SidebarItem
                 key={child.href ?? child.labelKey}
@@ -267,18 +269,18 @@ const SidebarFooter = memo(function SidebarFooter() {
   const t = useTranslations("app") as (key: string) => string;
 
   return (
-    <div className="px-4 lg:px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 shrink-0 space-y-2">
+    <div className="px-4 lg:px-6 py-4 border-t border-border shrink-0 space-y-2">
       <div className="flex items-center justify-between text-[11px]">
-        <span className="text-zinc-500 dark:text-zinc-400">
+        <span className="text-foreground-muted">
           {t("version")}
         </span>
-        <span className="font-medium text-zinc-700 dark:text-zinc-200">
+        <span className="font-medium text-foreground dark:text-zinc-200">
           v{APP_VERSION}
         </span>
       </div>
 
       <div className="flex items-center justify-between text-[11px]">
-        <span className="text-zinc-500 dark:text-zinc-400">
+        <span className="text-foreground-muted">
           {t("environment")}
         </span>
 
@@ -296,8 +298,8 @@ const SidebarFooter = memo(function SidebarFooter() {
         </span>
       </div>
 
-      <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
-        <p className="text-center text-[11px] text-zinc-400 dark:text-zinc-500">
+      <div className="pt-2 border-t border-border">
+        <p className="text-center text-[11px] text-foreground-muted text-foreground-muted">
           © {new Date().getFullYear()} {t("fullName")}
         </p>
       </div>
@@ -355,8 +357,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         ref={sidebarRef}
         className={cn(
           "fixed top-0 left-0 z-50 h-full w-[264px] flex flex-col",
-          "bg-white dark:bg-zinc-900",
-          "border-r border-zinc-200 dark:border-zinc-800",
+          "bg-background",
+          "border-r border-border",
           "shadow-[1px_0_0_0_rgba(0,0,0,0.04)]",
           "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           "lg:relative lg:translate-x-0 lg:z-auto lg:shadow-none lg:sticky lg:top-0 lg:h-screen",

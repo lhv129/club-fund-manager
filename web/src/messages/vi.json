@@ -106,6 +106,22 @@
     "joinClub": {
       "title": "Tham gia câu lạc bộ",
       "description": "Tìm kiếm và tham gia câu lạc bộ phù hợp với bạn."
+    },
+    "clubDashboard": {
+      "title": "Bảng điều khiển",
+      "description": "Tổng quan về thành viên, quỹ, sự kiện và các thống kê của câu lạc bộ."
+    },
+    "members": {
+      "title": "Thành viên",
+      "description": "Quản lý danh sách thành viên đang trong câu lạc bộ và vai trò trong câu lạc bộ."
+    },
+    "memberships": {
+      "title": "Lịch sử thành viên",
+      "description": "Quản lý và theo dõi lịch sử tham gia của các thành viên trong câu lạc bộ."
+    },
+    "invites": {
+      "title": "Lời mời",
+      "description": "Quản lý lời mời tham gia câu lạc bộ và trạng thái của chúng."
     }
   },
   "header": {
@@ -219,8 +235,12 @@
     "activeEvents": "Sự kiện đang diễn ra",
     "monthlyIncome": "Thu tháng này",
     "viewingAsSystemAdmin": "System Admin",
+    "memberRole": "Thành viên",
     "joinAnotherClub": "Tham gia CLB khác",
-    "switchClub": "Chuyển CLB"
+    "switchClub": "Chuyển CLB",
+    "inviteLinkHint": "Chia sẻ link này để mời người khác tham gia CLB.",
+    "inviteLinkCopy": "Sao chép link mời",
+    "yourRole": "Vai trò của bạn"
   },
   "noClub": {
     "breadcrumb": "Tham gia CLB",
@@ -236,7 +256,7 @@
     "searchHint": "Sau khi gửi, yêu cầu sẽ ở trạng thái chờ duyệt. Quản trị viên CLB sẽ phê duyệt.",
     "tokenLabel": "Mã lời mời",
     "tokenPlaceholder": "Dán mã lời mời vào đây...",
-    "tokenHint": "Mã lời mời lấy từ link chia sẻ do CLB cấp (ví dụ: /join?token=...).",
+    "tokenHint": "Mã lời mời lấy từ link chia sẻ do CLB cấp (ví dụ: u0ZsL4).",
     "tokenSubmit": "Tham gia bằng mã",
     "tokenAccepted": "Tham gia thành công!",
     "tokenInvalid": "Mã lời mời không hợp lệ hoặc đã hết hạn",
@@ -244,7 +264,8 @@
     "joinSuccessTitle": "Đã gửi yêu cầu tham gia!",
     "joinSuccessDefault": "Yêu cầu của bạn đang chờ quản trị viên xét duyệt.",
     "joinSuccessHint": "Bạn sẽ nhận được thông báo khi được chấp thuận.",
-    "joinSuccessDismiss": "Tìm thêm câu lạc bộ khác"
+    "joinSuccessDismiss": "Tìm thêm câu lạc bộ khác",
+    "joinSuccessBadge": "Thành công"
   },
   "user": {
     "title": "Danh sách người dùng",
@@ -384,7 +405,7 @@
     "permissions": "Quyền hạn"
   },
   "member": {
-    "title": "Danh sách thành viên",
+    "title": "Danh sách thành viên trong câu lạc bộ",
     "historyTitle": "Lịch sử & Duyệt thành viên",
     "totalCount": "{count} thành viên",
     "notFound": "Không tìm thấy thành viên nào",
@@ -428,6 +449,8 @@
     "deleteConfirmMsg": "Bạn chắc chắn muốn xóa mã <b>{code}</b>? Hành động này không thể hoàn tác.",
     "statusActive": "Đang hoạt động",
     "statusInactive": "Vô hiệu",
-    "statusExpired": "Hết hạn"
+    "statusExpired": "Hết hạn",
+    "copyJoinLink": "Sao chép link tham gia",
+    "copyJoinLinkSuccess": "Đã sao chép link tham gia!"
   }
 }

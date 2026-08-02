@@ -106,6 +106,22 @@
     "joinClub": {
       "title": "Join club",
       "description": "Search and join clubs that match your interests."
+    },
+    "clubDashboard": {
+      "title": "Dashboard",
+      "description": "Overview of your club activities, members, funds, and statistics."
+    },
+    "members": {
+      "title": "Members",
+      "description": "Manage club members and their roles."
+    },
+    "memberships": {
+      "title": "Membership History",
+      "description": "Manage and track the membership history of club members."
+    },
+    "invites": {
+      "title": "Invitations",
+      "description": "Manage club invitations and their statuses."
     }
   },
   "header": {
@@ -220,8 +236,12 @@
     "activeEvents": "Active events",
     "monthlyIncome": "Monthly income",
     "viewingAsSystemAdmin": "System Admin",
+    "memberRole": "Member",
     "joinAnotherClub": "Join another club",
-    "switchClub": "Switch club"
+    "switchClub": "Switch club",
+    "inviteLinkHint": "Share this link to invite others to join the club.",
+    "inviteLinkCopy": "Copy invite link",
+    "yourRole": "Your role"
   },
   "noClub": {
     "breadcrumb": "Join club",
@@ -237,7 +257,7 @@
     "searchHint": "After sending, the request will be pending. The club dashboard will review it.",
     "tokenLabel": "Invite code",
     "tokenPlaceholder": "Paste the invite code here...",
-    "tokenHint": "The invite code comes from a share link provided by the club (e.g. /join?token=...).",
+    "tokenHint": "The invite code comes from a share link provided by the club (e.g: u0ZsL4).",
     "tokenSubmit": "Join with code",
     "tokenAccepted": "Joined successfully!",
     "tokenInvalid": "Invite code is invalid or expired",
@@ -245,7 +265,8 @@
     "joinSuccessTitle": "Request sent!",
     "joinSuccessDefault": "Your request is awaiting admin approval.",
     "joinSuccessHint": "You'll be notified once approved.",
-    "joinSuccessDismiss": "Search for more clubs"
+    "joinSuccessDismiss": "Search for more clubs",
+    "joinSuccessBadge": "Successfully sent join request."
   },
   "user": {
     "title": "Users",
@@ -431,6 +452,8 @@
     "deleteConfirmMsg": "Are you sure you want to delete code <b>{code}</b>? This cannot be undone.",
     "statusActive": "Active",
     "statusInactive": "Inactive",
-    "statusExpired": "Expired"
+    "statusExpired": "Expired",
+    "copyJoinLink": "Copy Join Link",
+    "copyJoinLinkSuccess": "Successfully copied join link!"
   }
 }

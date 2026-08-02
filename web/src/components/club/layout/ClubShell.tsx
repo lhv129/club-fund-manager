@@ -11,12 +11,10 @@ import type { Club } from "@/domains/club/types";
 export function ClubShell({
   profile,
   club,
-  hasMultipleClubs, // ✅ nhận từ Server Component
   children,
 }: {
   profile: Profile | null;
   club: Club | null;
-  hasMultipleClubs: boolean;
   children: React.ReactNode;
 }) {
   useHydrateAuth(profile);
@@ -28,7 +26,6 @@ export function ClubShell({
       <ClubSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        hasMultipleClubs={hasMultipleClubs}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header onMenuToggle={() => setSidebarOpen((v) => !v)} />

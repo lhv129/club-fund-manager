@@ -14,7 +14,7 @@ class ClubInviteService extends BaseRepository<ClubInvite> {
     this.resource = `/clubs/${clubSlug}/invites`;
   }
 
-  async store(payload: CreateInvitePayload): Promise<ApiResponse<ClubInvite>> {
+  async create(payload: CreateInvitePayload): Promise<ApiResponse<ClubInvite>> {
     return this.adapter.post<ApiResponse<ClubInvite>>(
       this.resource,
       payload

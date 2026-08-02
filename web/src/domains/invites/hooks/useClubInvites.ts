@@ -30,7 +30,7 @@ export function useClubInvites(
 
     // ── Create ────────────────────────────────────────────────────────────────
     const createMutation = useMutation({
-        mutationFn: (payload: CreateInvitePayload) => service.store(payload),
+        mutationFn: (payload: CreateInvitePayload) => service.create(payload),
         onSuccess: (res) => {
             if (!res.success) return;
             queryClient.invalidateQueries({ queryKey: ["club-invites", clubSlug] });

@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Card } from "@/components/shared/ui/Card";
 import { Users, Building2, KeyRound, CheckCircle2 } from "lucide-react";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+import { APP_ROUTES } from "@/constants";
 
 const STATS = [
   { key: "totalUsers", icon: Users, color: "text-blue-500  bg-blue-500/10" },
@@ -22,7 +23,7 @@ export default async function AdminDashboardPage({
 
   return (
     <div className="space-y-6">
-      <Breadcrumb homeHref="/admin"/>
+      <Breadcrumb homeHref={APP_ROUTES.admin}/>
       <div>
         <h1 className="text-2xl font-bold text-fg">{t("title")}</h1>
         <p className="mt-1 text-sm text-fg-muted">{t("subtitle")}</p>

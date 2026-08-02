@@ -157,16 +157,16 @@ export function NoClubClient() {
       <Breadcrumb navItems={[]} homeHref="/" extraItems={[{ label: t("breadcrumb") }]} />
 
       {/* ── Hero header ──────────────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-gradient-to-br from-indigo-50 via-blue-50/60 to-slate-50 dark:from-indigo-950/50 dark:via-blue-950/30 dark:to-zinc-900/50 border border-indigo-100/80 dark:border-indigo-900/40 px-6 py-7">
+      <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background-muted border border-primary/20 px-6 py-7">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-600/25">
-            <Users className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/25">
+            <Users className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-[18px] font-bold text-zinc-900 dark:text-zinc-50 tracking-tight leading-snug">
+            <h1 className="text-[18px] font-bold text-foreground tracking-tight leading-snug">
               {t("title")}
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+            <p className="text-sm text-foreground-muted mt-0.5 leading-relaxed">
               {t("subtitle")}
             </p>
           </div>
@@ -174,14 +174,14 @@ export function NoClubClient() {
       </div>
 
       {/* ── Tab switcher — sliding pill, không remount content ───────────── */}
-      <div className="relative grid grid-cols-2 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl p-1">
+      <div className="relative grid grid-cols-2 bg-background-muted rounded-xl p-1">
         {/* Animated sliding background */}
         <span
           aria-hidden
           className={cn(
             "absolute inset-y-1 left-1 w-[calc(50%-4px)]",
-            "bg-white dark:bg-zinc-700 rounded-lg",
-            "shadow-sm ring-1 ring-black/[0.06] dark:ring-white/[0.08]",
+            "bg-background rounded-lg",
+            "shadow-sm ring-1 ring-foreground/10",
             "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
             mode === "token" && "translate-x-[calc(100%+4px)]"
           )}
@@ -198,8 +198,8 @@ export function NoClubClient() {
                 "relative z-10 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg",
                 "text-sm font-medium transition-colors duration-200",
                 isActive
-                  ? "text-zinc-900 dark:text-zinc-100"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "text-foreground"
+                  : "text-foreground-muted hover:text-foreground"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -222,7 +222,7 @@ export function NoClubClient() {
             : "absolute inset-x-0 top-0 opacity-0 -translate-y-2 pointer-events-none select-none"
         )}>
           {joinSuccess ? (
-            <div className="rounded-2xl border border-emerald-200/70 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/30 p-6">
+            <div className="rounded-2xl p-6">
               <JoinSuccess
                 clubName={joinSuccess.name}
                 message={joinSuccess.message}
@@ -233,31 +233,31 @@ export function NoClubClient() {
             <div className="space-y-4">
               {/* Search input */}
               <div className="relative group">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 z-10 transition-colors group-focus-within:text-indigo-500" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted z-10 transition-colors group-focus-within:text-primary" />
                 <input
                   type="text"
                   placeholder={t("searchPlaceholder")}
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                   className={cn(
-                    "h-11 w-full rounded-xl border bg-white dark:bg-zinc-900",
-                    "pl-10 pr-10 text-sm text-zinc-900 dark:text-zinc-100",
-                    "placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
-                    "border-zinc-200 dark:border-zinc-700",
-                    "focus:border-indigo-400 dark:focus:border-indigo-500",
-                    "focus:outline-none focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/20",
+                    "h-11 w-full rounded-xl border bg-background",
+                    "pl-10 pr-10 text-sm text-foreground",
+                    "placeholder:text-foreground-muted",
+                    "border-border",
+                    "focus:border-primary",
+                    "focus:outline-none focus:ring-4 focus:ring-primary/10",
                     "shadow-sm transition-all duration-200"
                   )}
                 />
                 {searching && (
-                  <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-indigo-500 z-10" />
+                  <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-primary z-10" />
                 )}
               </div>
 
               {/* Min length hint — fixed height tránh nhảy layout */}
               <div className="h-4">
                 {showHintShort && (
-                  <p className="text-xs text-center text-zinc-400 dark:text-zinc-500">
+                  <p className="text-xs text-center text-foreground-muted">
                     {t("searchMinLength", { min: String(MIN_SEARCH_LENGTH) })}
                   </p>
                 )}
@@ -272,14 +272,14 @@ export function NoClubClient() {
                     <ClubRowSkeleton />
                   </>
                 ) : showEmpty ? (
-                  <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30">
-                    <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
-                      <Search className="w-5 h-5 text-zinc-400" />
+                  <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-dashed border-border bg-background-muted/50">
+                    <div className="w-10 h-10 rounded-full bg-background-muted flex items-center justify-center mb-3">
+                      <Search className="w-5 h-5 text-foreground-muted" />
                     </div>
-                    <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                    <p className="text-sm font-medium text-foreground-muted">
                       {t("noResults")}
                     </p>
-                    <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+                    <p className="text-xs text-foreground-muted mt-1">
                       {t("searchHint")}
                     </p>
                   </div>
@@ -295,22 +295,22 @@ export function NoClubClient() {
                         key={club.id}
                         className={cn(
                           "group flex items-center gap-4 p-4 rounded-2xl",
-                          "bg-white dark:bg-zinc-900",
-                          "border border-zinc-200 dark:border-zinc-800",
-                          "shadow-sm ring-1 ring-black/[0.03] dark:ring-white/[0.03]",
-                          "hover:border-indigo-200 dark:hover:border-indigo-800/60",
+                          "bg-background",
+                          "border border-border",
+                          "shadow-sm ring-1 ring-foreground/5",
+                          "hover:border-primary/40",
                           "hover:shadow-md hover:-translate-y-0.5",
                           "transition-all duration-200"
                         )}
                       >
                         {/* Logo */}
-                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 ring-1 ring-black/[0.06] dark:ring-white/[0.06]">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-background-muted flex items-center justify-center shrink-0 ring-1 ring-foreground/10">
                           <CustomImage
                             src={club.logo}
                             alt={name}
                             className="w-full h-full object-cover"
                             fallback={
-                              <span className="text-sm font-bold text-zinc-400 dark:text-zinc-500 uppercase">
+                              <span className="text-sm font-bold text-foreground-muted uppercase">
                                 {name.slice(0, 2)}
                               </span>
                             }
@@ -320,22 +320,22 @@ export function NoClubClient() {
 
                         {/* Info */}
                         <div className="flex-1 min-w-0 space-y-0.5">
-                          <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate leading-snug">
+                          <p className="font-semibold text-sm text-foreground truncate leading-snug">
                             {name}
                           </p>
                           {desc ? (
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                            <p className="text-xs text-foreground-muted truncate">
                               {desc}
                             </p>
                           ) : (
-                            <p className="text-xs text-zinc-400 dark:text-zinc-600 italic">
+                            <p className="text-xs text-foreground-muted italic">
                               {tCommon("noDescription")}
                             </p>
                           )}
                           {club.total_members != null && (
                             <div className="flex items-center gap-1 pt-0.5">
-                              <Users className="w-3 h-3 text-zinc-400" />
-                              <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                              <Users className="w-3 h-3 text-foreground-muted" />
+                              <span className="text-[11px] text-foreground-muted">
                                 {club.total_members} {tCommon("members")}
                               </span>
                             </div>
@@ -349,11 +349,11 @@ export function NoClubClient() {
                           className={cn(
                             "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl",
                             "text-sm font-medium",
-                            "border border-indigo-200 dark:border-indigo-700/60",
-                            "text-indigo-600 dark:text-indigo-400",
-                            "bg-indigo-50/70 dark:bg-indigo-950/40",
-                            "hover:bg-indigo-100 dark:hover:bg-indigo-900/60",
-                            "hover:border-indigo-300 dark:hover:border-indigo-600",
+                            "border border-primary/40",
+                            "text-primary",
+                            "bg-primary/10",
+                            "hover:bg-primary/15",
+                            "hover:border-primary/50",
                             "disabled:opacity-50 disabled:cursor-not-allowed",
                             "transition-all duration-150"
                           )}
@@ -383,7 +383,7 @@ export function NoClubClient() {
               )}
 
               {results.length > 0 && (
-                <p className="text-xs text-center text-zinc-400 dark:text-zinc-500">
+                <p className="text-xs text-center text-foreground-muted">
                   {t("searchHint")}
                 </p>
               )}
@@ -398,17 +398,17 @@ export function NoClubClient() {
             ? "relative opacity-100 translate-y-0"
             : "absolute inset-x-0 top-0 opacity-0 translate-y-2 pointer-events-none select-none"
         )}>
-          <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm ring-1 ring-black/[0.03] dark:ring-white/[0.03] overflow-hidden">
+          <div className="rounded-2xl bg-background border border-border shadow-sm ring-1 ring-foreground/5 overflow-hidden">
             {/* Panel header */}
-            <div className="flex items-center gap-3 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 bg-amber-50/60 dark:bg-amber-950/20">
+            <div className="flex items-center gap-3 px-6 py-5 border-b border-border bg-amber-50/60 dark:bg-amber-950/20">
               <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
                 <Ticket className="w-[18px] h-[18px] text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                <p className="text-sm font-semibold text-foreground">
                   {t("tokenLabel")}
                 </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p className="text-xs text-foreground-muted mt-0.5">
                   {t("tokenHint")}
                 </p>
               </div>
@@ -421,12 +421,12 @@ export function NoClubClient() {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 className={cn(
-                  "h-11 w-full rounded-xl border bg-zinc-50 dark:bg-zinc-800/60",
-                  "px-4 text-sm text-zinc-900 dark:text-zinc-100",
-                  "placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
-                  "border-zinc-200 dark:border-zinc-700",
+                  "h-11 w-full rounded-xl border bg-background-muted",
+                  "px-4 text-sm text-foreground",
+                  "placeholder:text-foreground-muted",
+                  "border-border",
                   "focus:border-amber-400 dark:focus:border-amber-500",
-                  "focus:bg-white dark:focus:bg-zinc-900",
+                  "focus:bg-background",
                   "focus:outline-none focus:ring-4 focus:ring-amber-500/10",
                   "font-mono tracking-widest transition-all duration-200"
                 )}

@@ -19,9 +19,10 @@ import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { useClub } from "@/domains/club/hooks/useClub";
 import { useClubMembers } from "@/domains/members/hooks/useClubMembers";
 import type { ClubMember, MemberFilters } from "@/domains/members/types/member";
-import { APP_ROUTES, clubRoute } from "@/constants";
+import { clubRoute } from "@/constants";
 import { Badge } from "@/components/shared/ui/Badge";
 import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -51,8 +52,6 @@ export function MembersPageClient() {
 
     const sortOptions = [
         { value: "joined_at", label: tm("joinedAt") },
-        { value: "created_at", label: t("createdAt") },
-        { value: "id", label: "ID" },
     ];
 
     // ── List params ───────────────────────────────────────────────────────────
@@ -147,7 +146,6 @@ export function MembersPageClient() {
         {
             key: "is_active",
             label: t("status"),
-            className: "min-w-[120px] text-center",
             render: (row) => (
                 <Badge
                     variant={row.is_active ? "active" : "inactive"}

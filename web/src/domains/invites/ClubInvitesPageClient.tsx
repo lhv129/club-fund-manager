@@ -26,61 +26,13 @@ import {
     type InviteFilters,
 } from "@/domains/invites/types/invite";
 import { APP_ROUTES, clubRoute } from "@/constants";
+import { CopyLinkButton } from "@/domains/invites/components/CopyLinkButton";
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+import { formatDate } from "@/utils";
+import { buildJoinLink } from "@/lib/invites";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDate(iso: string | null | undefined): string {
-    if (!iso) return "—";
-    return new Intl.DateTimeFormat("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    }).format(new Date(iso));
-}
 
-/** Tạo join link từ invite */
-function buildJoinLink(locale: string, clubSlug: string, inviteCode: string): string {
-    const origin =
-        typeof window !== "undefined" ? window.location.origin : "";
-    return `${origin}/${locale}/club/${clubSlug}/join?invite-code=${inviteCode}`;
-}
-
-// ─── CopyLinkButton ───────────────────────────────────────────────────────────
-
-function CopyLinkButton({ link }: { link: string }) {
-    const [copied, setCopied] = useState(false);
-    const ti = useTranslations("invite");
-
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(link);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch {
-            // fallback
-            const el = document.createElement("textarea");
-            el.value = link;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand("copy");
-            document.body.removeChild(el);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
-    };
-
-    return (
-        <TableActionItem
-            icon={copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            label={copied ? ti("copied") : ti("copyLink")}
-            onClick={handleCopy}
-        />
-    );
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function ClubInvitesPageClient() {
     const t = useTranslations("common");
@@ -109,8 +61,8 @@ export function ClubInvitesPageClient() {
 
     // ── is_active filter options ──────────────────────────────────────────────
     const activeOptions = [
-        { value: "true", label: ti("statusActive") },
-        { value: "false", label: ti("statusInactive") },
+        { value: "1", label: ti("statusActive") },
+        { value: "0", label: ti("statusInactive") },
     ];
 
     // ── List params ─────────────────
@@ -124,7 +76,7 @@ export function ClubInvitesPageClient() {
             defaultSortDir: "desc",
         });
 
-    const [draftIsActive, setDraftIsActive] = useState<boolean | undefined>(params.is_active);
+    const [draftIsActive, setDraftIsActive] = useState<0 | 1 | undefined>(params.is_active);
 
     // ── Data ──────────────────────────────────────────────────────────────────
     const {
@@ -146,8 +98,6 @@ export function ClubInvitesPageClient() {
     const handleApplyFilters = (filters: AppliedFilters) => {
         updateMany({
             search: filters.search,
-            sort_by: filters.sort_by as InviteFilters["sort_by"],
-            sort_dir: filters.sort_dir as InviteFilters["sort_dir"],
             is_active: draftIsActive,
         });
     };
@@ -266,9 +216,13 @@ export function ClubInvitesPageClient() {
                 label={t("active")}
                 options={activeOptions}
                 value={draftIsActive !== undefined ? String(draftIsActive) : ""}
-                onChange={(v) =>
-                    setDraftIsActive(v === "" ? undefined : v === "true")
-                }
+                onChange={(v) => {
+                    if (v === "") {
+                        setDraftIsActive(undefined);
+                    } else {
+                        setDraftIsActive(v === "1" ? 1 : 0);
+                    }
+                }}
                 placeholder={t("all")}
             />
         </div>
@@ -380,7 +334,7 @@ export function ClubInvitesPageClient() {
                     {
                         name: "expires_at",
                         label: ti("expiresAt"),
-                        type: "datetime-local" as const,
+                        type: "datepicker" as const,
                         required: false,
                     },
                 ]}

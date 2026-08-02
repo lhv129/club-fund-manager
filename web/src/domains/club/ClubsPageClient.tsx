@@ -147,16 +147,16 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
             {/* ── Page header ──────────────────────────────────────────────── */}
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-2xl bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center shrink-0 shadow-md shadow-indigo-600/25">
-                        <Building2 className="w-5 h-5 text-white" />
+                    <div className="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-md shadow-primary/25">
+                        <Building2 className="w-5 h-5 text-primary-foreground" />
                     </div>
                     <div>
-                        <h1 className="text-[18px] font-bold text-zinc-900 dark:text-zinc-50 tracking-tight leading-snug">
+                        <h1 className="text-[18px] font-bold text-foreground tracking-tight leading-snug">
                             {tc("title")}
                         </h1>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                            <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                            <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                            <p className="text-sm text-foreground-muted">
                                 {tc("totalCount", { count: total })}
                             </p>
                         </div>
@@ -169,12 +169,11 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                         href={APP_ROUTES.joinClub as never}
                         className={cn(
                             "inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium",
-                            "border border-zinc-200 dark:border-zinc-700",
-                            "bg-white dark:bg-zinc-900",
-                            "text-zinc-700 dark:text-zinc-300",
-                            "hover:border-indigo-200 dark:hover:border-indigo-700/60",
-                            "hover:text-indigo-600 dark:hover:text-indigo-400",
-                            "hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30",
+                            "border border-border",
+                            "bg-background",
+                            "text-foreground",
+                            "hover:border-primary/40",
+                            "hover:text-primary hover:bg-primary/5",
                             "shadow-sm transition-all duration-150"
                         )}
                     >
@@ -188,8 +187,8 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                             onClick={openCreate}
                             className={cn(
                                 "inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold",
-                                "bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800",
-                                "text-white shadow-sm shadow-indigo-600/25",
+                                "bg-primary hover:bg-primary/90 active:bg-primary/80",
+                                "text-primary-foreground shadow-sm shadow-primary/25",
                                 "transition-all duration-150"
                             )}
                         >
@@ -202,18 +201,18 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
 
             {/* ── Stats strip ──────────────────────────────────────────────── */}
             {total > 0 && (
-                <div className="flex items-center gap-6 px-5 py-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-700/60">
+                <div className="flex items-center gap-6 px-5 py-3.5 rounded-xl bg-background-muted border border-border">
                     <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-indigo-400 shrink-0" />
-                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                            <span className="font-semibold text-zinc-900 dark:text-zinc-100">{total}</span>
+                        <Building2 className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-sm text-foreground-muted">
+                            <span className="font-semibold text-foreground">{total}</span>
                             {" "}{tc("statsClubs")}
                         </span>
                     </div>
-                    <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+                    <div className="h-4 w-px bg-border" />
                     <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                        <span className="text-sm text-foreground-muted">
                             {tc("statsDesc")}
                         </span>
                     </div>
@@ -222,14 +221,14 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
 
             {/* ── Grid / empty state ───────────────────────────────────────── */}
             {allData.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/20">
-                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center mb-5 ring-1 ring-indigo-100 dark:ring-indigo-900/50">
-                        <Building2 className="w-6 h-6 text-indigo-400" />
+                <div className="flex flex-col items-center justify-center py-24 rounded-2xl border border-dashed border-border bg-background-muted/50">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 ring-1 ring-primary/20">
+                        <Building2 className="w-6 h-6 text-primary" />
                     </div>
-                    <p className="text-[15px] font-semibold text-zinc-800 dark:text-zinc-200 mb-1.5">
+                    <p className="text-[15px] font-semibold text-foreground mb-1.5">
                         {tc("emptyTitle")}
                     </p>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-7 max-w-xs text-center leading-relaxed">
+                    <p className="text-sm text-foreground-muted mb-7 max-w-xs text-center leading-relaxed">
                         {tc("emptyDesc")}
                     </p>
                     {canCreate && (
@@ -238,8 +237,8 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                             onClick={openCreate}
                             className={cn(
                                 "inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold",
-                                "bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800",
-                                "text-white shadow-sm shadow-indigo-600/25",
+                                "bg-primary hover:bg-primary/90 active:bg-primary/80",
+                                "text-primary-foreground shadow-sm shadow-primary/25",
                                 "transition-all duration-150"
                             )}
                         >
@@ -308,7 +307,7 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                         />
                     ) : (
                         allData.length > LIMIT && (
-                            <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-2">
+                            <p className="text-center text-xs text-foreground-muted py-2">
                                 {tc("allLoaded")}
                             </p>
                         )

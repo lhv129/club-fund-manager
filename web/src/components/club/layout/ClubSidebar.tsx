@@ -1,23 +1,24 @@
-"use client";
+'use client';
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { Link, usePathname } from "@/i18n/routing";
-import { useAuth } from "@/domains/auth/hooks/useAuth";
-import { useClub } from "@/domains/club/hooks/useClub";
-import { cn } from "@/utils";
-import { ArrowLeft, ChevronDown, Shield, X, PlusCircle } from "lucide-react";
-import { CLUB_NAV_ITEMS, filterNav, type NavItem } from "./club-nav-config";
-import { getTranslation } from "@/lib/translations";
-import { APP_VERSION } from "@/lib/config";
-import { APP_ROUTES } from "@/constants";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { Link, usePathname } from '@/i18n/routing';
+import { useAuth } from '@/domains/auth/hooks/useAuth';
+import { useClub } from '@/domains/club/hooks/useClub';
+import { cn } from '@/utils';
+import { ArrowLeft, ChevronDown, Sparkles, X } from 'lucide-react';
+import { CLUB_NAV_ITEMS, filterNav, type NavItem } from './club-nav-config';
+import { getTranslation } from '@/lib/translations';
+import { APP_VERSION } from '@/lib/config';
+import { APP_ROUTES } from '@/constants';
+import ClubContextCard from './ClubContextCard';
+import { SidebarCopyJoinLinkButton } from '@/components/club/layout/SidebarCopyJoinLinkButton';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ClubSidebarProps {
   open: boolean;
   onClose: () => void;
-  // hasMultipleClubs đã được bỏ — showBackToClubs giờ chỉ phụ thuộc role
 }
 
 // ─── SidebarItem ──────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ const SidebarItem = memo(function SidebarItem({
 
   const isActive = useMemo(() => {
     if (!item.href) return false;
-    if (item.href === "/") return pathname === "/";
+    if (item.href === '/') return pathname === '/';
     return item.exact
       ? pathname === item.href
       : pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -52,29 +53,29 @@ const SidebarItem = memo(function SidebarItem({
       {isActive && (
         <span
           aria-hidden="true"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2.5px] h-5 bg-blue-600 dark:bg-blue-500 rounded-full"
+          className="absolute left-0 top-1/2 h-5 w-[2.5px] -translate-y-1/2 rounded-full bg-primary"
         />
       )}
 
       <Link
-        href={(item.href ?? "/") as never}
+        href={(item.href ?? '/') as never}
         onClick={onClose}
-        aria-current={isActive ? "page" : undefined}
+        aria-current={isActive ? 'page' : undefined}
         className={cn(
-          "group flex items-center gap-2.5 rounded-lg text-sm transition-all duration-200 outline-none",
-          "focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
-          depth === 0 ? "px-3 py-2" : "px-2.5 py-1.5",
+          'group flex items-center gap-2.5 rounded-lg text-sm transition-all duration-200 outline-none',
+          'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
+          depth === 0 ? 'px-3 py-2' : 'px-2.5 py-1.5',
           isActive
-            ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold shadow-sm"
-            : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
+            ? 'bg-primary/10 text-primary font-semibold'
+            : 'text-foreground-muted hover:bg-background-muted hover:text-foreground',
         )}
       >
         <Icon
           className={cn(
-            "w-4 h-4 shrink-0 transition-all duration-200",
+            'h-4 w-4 shrink-0 transition-all duration-200',
             isActive
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300"
+              ? 'text-primary'
+              : 'text-foreground-muted group-hover:text-foreground',
           )}
           strokeWidth={isActive ? 2.5 : 2}
         />
@@ -103,7 +104,7 @@ const SidebarGroup = memo(function SidebarGroup({
 
   const isChildActive = useMemo(
     () => item.children?.some((c) => c.href && pathname.startsWith(c.href)) ?? false,
-    [item.children, pathname]
+    [item.children, pathname],
   );
 
   const [expanded, setExpanded] = useState(isChildActive);
@@ -121,19 +122,19 @@ const SidebarGroup = memo(function SidebarGroup({
         aria-expanded={expanded}
         aria-label={`${t(item.labelKey)} menu`}
         className={cn(
-          "group w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 outline-none",
-          "focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+          'group w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 outline-none',
+          'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
           isChildActive
-            ? "text-zinc-900 dark:text-zinc-100"
-            : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 hover:text-zinc-900 dark:hover:text-zinc-100"
+            ? 'text-foreground'
+            : 'text-foreground-muted hover:bg-background-muted hover:text-foreground',
         )}
       >
         <Icon
           className={cn(
-            "w-4 h-4 shrink-0 transition-all duration-200",
+            'h-4 w-4 shrink-0 transition-all duration-200',
             isChildActive
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300"
+              ? 'text-primary'
+              : 'text-foreground-muted group-hover:text-foreground',
           )}
           strokeWidth={isChildActive ? 2.5 : 2}
         />
@@ -142,27 +143,27 @@ const SidebarGroup = memo(function SidebarGroup({
         {isChildActive && (
           <span
             aria-hidden="true"
-            className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shrink-0"
+            className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"
           />
         )}
 
         <ChevronDown
           aria-hidden="true"
           className={cn(
-            "h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform duration-250 ease-out",
-            expanded && "rotate-180"
+            'h-3.5 w-3.5 shrink-0 text-foreground-muted transition-transform duration-250 ease-out',
+            expanded && 'rotate-180',
           )}
         />
       </button>
 
       <div
         className={cn(
-          "grid transition-[grid-template-rows] duration-250 ease-out",
-          expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          'grid transition-[grid-template-rows] duration-250 ease-out',
+          expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
         )}
       >
         <div className="overflow-hidden">
-          <div className="mt-1 ml-[22px] pl-3 py-0.5 border-l border-zinc-200 dark:border-zinc-700/60 space-y-0.5">
+          <div className="mt-1 ml-[22px] pl-3 py-0.5 border-l border-border space-y-0.5">
             {item.children?.map((child) => (
               <SidebarItem
                 key={child.href ?? child.labelKey}
@@ -216,7 +217,7 @@ const SidebarNav = memo(function SidebarNav({
             onClose={onClose}
             t={t}
           />
-        )
+        ),
       )}
     </nav>
   );
@@ -225,27 +226,34 @@ const SidebarNav = memo(function SidebarNav({
 // ─── ClubSidebarHeader ────────────────────────────────────────────────────────
 
 const ClubSidebarHeader = memo(function ClubSidebarHeader({
+  club,
+  currentLocale,
+  slug,
+  isSuperAdmin,
+  isSystemAdmin,
   onClose,
 }: {
+  club: ReturnType<typeof useClub>['club'];
+  currentLocale: string;
+  slug: string;
+  isSuperAdmin: boolean;
+  isSystemAdmin: boolean;
   onClose: () => void;
 }) {
-  const t = useTranslations("app") as (key: string) => string;
-
   return (
-    <div className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-zinc-200 dark:border-gray-800 shrink-0">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-600/30">
-          <span className="text-white font-black text-base leading-none">C</span>
-        </div>
-        <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight truncate">
-          {t("name")}
-        </p>
-      </div>
+    <div className="h-16 flex items-center gap-2 px-4 lg:px-6 border-b border-border shrink-0">
+      <ClubContextCard
+        club={club}
+        currentLocale={currentLocale}
+        slug={slug}
+        isSuperAdmin={isSuperAdmin}
+        isSystemAdmin={isSystemAdmin}
+      />
 
       <button
         aria-label="Close sidebar"
         onClick={onClose}
-        className="lg:hidden rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-all duration-200 hover:rotate-90 shrink-0"
+        className="lg:hidden rounded-lg p-1.5 text-foreground-muted hover:bg-background-muted hover:text-foreground transition-all duration-200 hover:rotate-90 shrink-0"
       >
         <X className="w-4 h-4" />
       </button>
@@ -253,112 +261,51 @@ const ClubSidebarHeader = memo(function ClubSidebarHeader({
   );
 });
 
-// ─── ClubContextCard ──────────────────────────────────────────────────────────
+// ─── BackToClubsLink ──────────────────────────────────────────────────────────
 
-const ClubContextCard = memo(function ClubContextCard({
-  slug,         // ← thêm prop slug để build href join-club
-  clubName,
-  isSuperAdmin,
-  isSystemAdmin,
-  showBackToClubs,
-  backHref,
-  onClose,
+function BackToClubsLink({
+  href,
+  onClick,
+  label,
 }: {
-  slug: string;
-  clubName: string | undefined;
-  isSuperAdmin: boolean;
-  isSystemAdmin: boolean;
-  showBackToClubs: boolean;
-  backHref: string;
-  onClose: () => void;
+  href: string;
+  onClick?: () => void;
+  label: string;
 }) {
-  const tWorkspace = useTranslations("clubWorkspace") as (key: string) => string;
-
   return (
-    <div className="px-4 lg:px-5 pt-5 pb-3">
-      {/*
-       * Quay về danh sách CLB
-       * Case 1: member bình thường có club_{id} permission
-       * Case 2: is_superadmin
-       * Case 3: is_system_admin
-       */}
-      {showBackToClubs && (
-        <Link
-          href={backHref as never}
-          onClick={onClose}
-          className="flex items-center gap-1.5 mb-4 text-xs font-semibold text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 uppercase tracking-wider transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2.5} />
-          {tWorkspace("backToClubs")}
-        </Link>
+    <Link
+      href={href as never}
+      onClick={onClick}
+      className={cn(
+        'group/back inline-flex items-center gap-1.5',
+        'text-[11px] font-semibold uppercase tracking-wider',
+        'text-foreground-muted hover:text-foreground',
+        'transition-colors duration-200',
       )}
-
-      {/* Club info card */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3.5 space-y-2">
-        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-          {tWorkspace("currentClub")}
-        </p>
-        <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
-          {clubName ?? "—"}
-        </p>
-
-        {isSuperAdmin && (
-          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold">
-            <Shield className="w-3.5 h-3.5 text-amber-500 shrink-0" strokeWidth={2.5} />
-            <span className="truncate">{tWorkspace("viewingAsSuperAdmin")}</span>
-          </div>
-        )}
-
-        {!isSuperAdmin && isSystemAdmin && (
-          <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold">
-            <Shield className="w-3.5 h-3.5 text-blue-500 shrink-0" strokeWidth={2.5} />
-            <span className="truncate">{tWorkspace("viewingAsSystemAdmin")}</span>
-          </div>
-        )}
-      </div>
-
-
-
-      {/*
-       * Tham gia CLB khác — hiển thị cho tất cả member
-       * href dùng clubRoute(slug, "join-club") → /{locale}/club/{slug}/join-club
-       */}
-
-      {/* {!isSuperAdmin && !isSystemAdmin && (
-        <Link
-          href={clubRoute(slug, "join-club") as never}
-          onClick={onClose}
-          className="mt-3 flex items-center gap-2 w-full px-3 py-2 rounded-lg
-               text-xs font-medium text-zinc-500 dark:text-zinc-400
-               hover:bg-zinc-100 dark:hover:bg-zinc-800
-               hover:text-zinc-800 dark:hover:text-zinc-200
-               border border-dashed border-zinc-200 dark:border-zinc-700
-               transition-all duration-150"
-        >
-          <PlusCircle className="w-3.5 h-3.5 shrink-0" />
-          {tWorkspace("joinAnotherClub")}
-        </Link>
-      )} */}
-
-
-    </div>
+    >
+      <ArrowLeft
+        className="h-3.5 w-3.5 transition-transform duration-200 group-hover/back:-translate-x-0.5"
+        strokeWidth={2.5}
+      />
+      {label}
+    </Link>
   );
-});
+}
 
 // ─── ClubSidebarFooter ────────────────────────────────────────────────────────
 
 const ClubSidebarFooter = memo(function ClubSidebarFooter() {
-  const t = useTranslations("app") as (key: string) => string;
+  const t = useTranslations('app') as (key: string) => string;
 
   return (
-    <div className="px-4 lg:px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 shrink-0 space-y-2">
+    <div className="px-4 lg:px-6 py-4 border-t border-border shrink-0 space-y-2">
       <div className="flex items-center justify-between text-[11px]">
-        <span className="text-zinc-500 dark:text-zinc-400">{t("version")}</span>
-        <span className="font-medium text-zinc-700 dark:text-zinc-200">v{APP_VERSION}</span>
+        <span className="text-foreground-muted">{t('version')}</span>
+        <span className="font-medium text-foreground">v{APP_VERSION}</span>
       </div>
-      <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-800">
-        <p className="text-center text-[11px] text-zinc-400 dark:text-zinc-500">
-          © {new Date().getFullYear()} {t("fullName")}
+      <div className="pt-1.5 border-t border-border">
+        <p className="text-center text-[11px] text-foreground-muted">
+          © {new Date().getFullYear()} {t('fullName')}
         </p>
       </div>
     </div>
@@ -368,35 +315,26 @@ const ClubSidebarFooter = memo(function ClubSidebarFooter() {
 // ─── ClubSidebar (main) ───────────────────────────────────────────────────────
 
 export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
-  const t = useTranslations("menu") as (key: string) => string;
+  const t = useTranslations('menu') as (key: string) => string;
+  const tWorkspace = useTranslations('clubWorkspace') as (key: string) => string;
   const pathname = usePathname() as string;
   const currentLocale = useLocale() as string;
 
-  const { hasPermission, isSuperAdmin, isSystemAdmin, hasAnyClubPermission, hasMultipleClubs } = useAuth();
+  const { hasPermission, isSuperAdmin, isSystemAdmin, hasMultipleClubs } = useAuth();
   const { club } = useClub();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   const slug =
     getTranslation(club?.translations, currentLocale)?.slug ??
-    pathname.split("/")[2] ??
-    String(club?.id ?? "");
+    pathname.split('/')[2] ??
+    String(club?.id ?? '');
 
-  const clubName = getTranslation(club?.translations, currentLocale)?.name;
+  const canCreateInvite =
+    isSuperAdmin ||
+    isSystemAdmin ||
+    hasPermission('club_invite', 'create', club?.id);
 
-  // ClubSidebar (main) — tính backHref trước khi render
-  const backHref = (isSuperAdmin || isSystemAdmin)
-    ? APP_ROUTES.adminClubs   // → /admin/clubs
-    : "/";                    // → root landing (phân luồng danh sách clubs)
-
-  /*
-   * showBackToClubs — 3 case:
-   *   1. member bình thường có permission club_{id}  → hasAnyClubPermission()
-   *   2. is_superadmin                               → isSuperAdmin
-   *   3. is_system_admin                             → isSystemAdmin
-   *
-   * Bỏ điều kiện && hasMultipleClubs cũ:
-   *   button luôn hiển thị cho 3 case trên, bất kể số lượng club.
-   */
+  const backHref = isSuperAdmin || isSystemAdmin ? APP_ROUTES.adminClubs : '/';
   const showBackToClubs = isSuperAdmin || isSystemAdmin || hasMultipleClubs;
 
   const filtered = useMemo(() => {
@@ -414,8 +352,8 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
         onClose();
       }
     }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (open) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open, onClose]);
 
   return (
@@ -423,8 +361,8 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
       <div
         aria-hidden="true"
         className={cn(
-          "fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          'fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden',
+          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
         onClick={onClose}
       />
@@ -432,34 +370,47 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
       <aside
         ref={sidebarRef}
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-[264px] flex flex-col",
-          "bg-white dark:bg-zinc-900",
-          "border-r border-zinc-200 dark:border-zinc-800",
-          "shadow-[1px_0_0_0_rgba(0,0,0,0.04)]",
-          "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          "lg:relative lg:translate-x-0 lg:z-auto lg:shadow-none lg:sticky lg:top-0 lg:h-screen",
-          open ? "translate-x-0" : "-translate-x-full"
+          'fixed top-0 left-0 z-50 h-full w-[264px] flex flex-col',
+          'bg-background',
+          'border-r border-border',
+          'shadow-[1px_0_0_0_rgba(0,0,0,0.04)]',
+          'transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'lg:relative lg:translate-x-0 lg:z-auto lg:shadow-none lg:sticky lg:top-0 lg:h-screen',
+          open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <ClubSidebarHeader onClose={onClose} />
+        <ClubSidebarHeader
+          club={club}
+          currentLocale={currentLocale}
+          slug={slug}
+          isSuperAdmin={isSuperAdmin}
+          isSystemAdmin={isSystemAdmin}
+          onClose={onClose}
+        />
 
         <div className="flex-1 flex flex-col overflow-y-auto">
-          <ClubContextCard
-            slug={slug}
-            clubName={clubName}
-            isSuperAdmin={isSuperAdmin}
-            isSystemAdmin={isSystemAdmin}
-            showBackToClubs={showBackToClubs}
-            backHref={backHref}
-            onClose={onClose}
-          />
+          {(showBackToClubs || canCreateInvite) && (
+            <div className="px-4 lg:px-5 pt-4 space-y-3">
+              {showBackToClubs && (
+                <BackToClubsLink
+                  href={backHref}
+                  onClick={onClose}
+                  label={tWorkspace('backToClubs')}
+                />
+              )}
+              {canCreateInvite && (
+                <div>
+                  <SidebarCopyJoinLinkButton slug={slug} />
+                  <p className="mt-2 flex items-center justify-center gap-1 text-[10px] text-foreground-muted">
+                    <Sparkles className="h-3 w-3" strokeWidth={2} />
+                    {tWorkspace('inviteLinkHint')}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
-          <SidebarNav
-            items={filtered}
-            pathname={pathname}
-            onClose={onClose}
-            t={t}
-          />
+          <SidebarNav items={filtered} pathname={pathname} onClose={onClose} t={t} />
         </div>
 
         <ClubSidebarFooter />

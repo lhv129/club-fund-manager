@@ -45,6 +45,7 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
 
         // ── Thành viên (group) ────────────────────────────────────────────────
         {
+            href: clubRoute(slug, CLUB_SUBROUTES.members),
             labelKey: "members",
             icon: Users,
             module: MODULE_SLUGS.clubMember,
@@ -69,7 +70,7 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
                     labelKey: "clubInvites",
                     icon: Mail,
                     module: MODULE_SLUGS.clubInvite,
-                    action: PERMISSION_ACTIONS.create,
+                    action: PERMISSION_ACTIONS.view,
                 },
             ],
         },

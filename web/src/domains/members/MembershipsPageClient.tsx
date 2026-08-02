@@ -27,8 +27,10 @@ import type {
     ClubMemberJoinType,
     MemberHistoryFilters,
 } from "@/domains/members/types/member";
-import { APP_ROUTES, clubRoute } from "@/constants";
+import { clubRoute } from "@/constants";
 import { Badge } from "@/components/shared/ui/Badge";
+import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
+
 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -338,7 +340,10 @@ export function MembershipsPageClient() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
-            <Breadcrumb homeHref={club ? clubRoute(slug) : APP_ROUTES.home} />
+            <Breadcrumb
+                navItems={CLUB_NAV_ITEMS(slug)}
+                homeHref={clubRoute(slug)}
+            />
 
             {/* Header */}
             <div className="flex items-center justify-between">

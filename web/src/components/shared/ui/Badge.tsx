@@ -27,7 +27,7 @@ interface BadgeProps {
   /** Key khai báo màu — không cần truyền màu thủ công */
   variant: BadgeVariant | string;
   /** Nhãn đã dịch: t("active"), t("roleAdmin"), ... */
-  title: string;
+  title?: string;
   className?: string;
   showDot?: boolean;
 }
@@ -141,7 +141,7 @@ const FALLBACK = {
   ring: "ring-gray-500/20",
 };
 
-export function Badge({ variant, title, className = "", showDot = true }: BadgeProps) {
+export function Badge({ variant, title = "", className = "", showDot = true }: BadgeProps) {
   const { dot, bg, text, ring } = CONFIG[variant as BadgeVariant] ?? FALLBACK;
 
   return (
