@@ -102,6 +102,7 @@ components/
 │   ├── errors.ts                   # ApiError
 │   ├── locales.ts                  # Nguồn locale duy nhất — đọc config/locales.json
 │   └── formTranslations.ts         # Parse lỗi validate + khởi tạo field đa ngôn ngữ
+|   └── translations.ts             # ⬅ getTranslation, getTranslatedName, getTranslatedSlug,getTranslatedDescription — helpers đọc translations[] theo locale
 │
 ├── config/
 │   └── locales.json                # Danh sách locale — SỬA FILE NÀY khi thêm/bớt ngôn ngữ

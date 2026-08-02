@@ -75,7 +75,12 @@
     "toggleActive": "Nhấn để bật hoạt động",
     "toggleInactive": "Nhấn để tắt hoạt động",
     "readOnly": "Bạn chỉ có quyền xem",
-    "detail": "Chi tiết"
+    "detail": "Chi tiết",
+    "showing": "Đang hiển thị",
+    "items": "kết quả",
+    "loadMore": "Xem thêm",
+    "allLoaded": "Đã hiển thị tất cả dữ liệu",
+    "noResultsFound": "Không tìm thấy kết quả phù hợp"
   },
   "metadata": {
     "users": {
@@ -97,6 +102,10 @@
     "modules": {
       "title": "Quản lý phân hệ",
       "description": "Danh sách và quản lý các phân hệ trong hệ thống"
+    },
+    "joinClub": {
+      "title": "Tham gia câu lạc bộ",
+      "description": "Tìm kiếm và tham gia câu lạc bộ phù hợp với bạn."
     }
   },
   "header": {
@@ -177,6 +186,7 @@
     "backHome": "Về trang chủ"
   },
   "club": {
+    "breadcrumb": "Câu lạc bộ",
     "title": "Danh sách câu lạc bộ",
     "create": "Thêm mới CLB",
     "edit": "Sửa thông tin CLB",
@@ -193,7 +203,11 @@
     "disband": "Giải tán",
     "disbandConfirmTitle": "Giải tán câu lạc bộ",
     "disbandConfirmDesc": "Hành động này không thể hoàn tác. Toàn bộ dữ liệu câu lạc bộ sẽ bị xóa vĩnh viễn.",
-    "disbandConfirmMsg": "Bạn chắc chắn muốn giải tán \"{name}\"?"
+    "disbandConfirmMsg": "Bạn chắc chắn muốn giải tán \"{name}\"?",
+    "joinAnother": "Tham gia CLB khác",
+    "switchClub": "Chuyển CLB",
+    "statsClubs": "Thống kê câu lạc bộ",
+    "statsDesc": "Xem tổng quan về các câu lạc bộ và thành viên."
   },
   "clubWorkspace": {
     "backToClubs": "Quay lại danh sách CLB",
@@ -204,16 +218,19 @@
     "totalFunds": "Tổng quỹ",
     "activeEvents": "Sự kiện đang diễn ra",
     "monthlyIncome": "Thu tháng này",
-    "viewingAsSystemAdmin": "System Admin"
+    "viewingAsSystemAdmin": "System Admin",
+    "joinAnotherClub": "Tham gia CLB khác",
+    "switchClub": "Chuyển CLB"
   },
   "noClub": {
+    "breadcrumb": "Tham gia CLB",
     "title": "Bạn chưa tham gia câu lạc bộ nào",
     "subtitle": "Tìm và xin vào một câu lạc bộ, hoặc nhập mã lời mời để tham gia ngay.",
     "searchTab": "Tìm CLB",
     "tokenTab": "Mã lời mời",
     "searchPlaceholder": "Nhập tên câu lạc bộ...",
     "noResults": "Không tìm thấy câu lạc bộ nào",
-    "join": "Xin vào",
+    "join": "Tham gia",
     "joinRequested": "Đã gửi yêu cầu tham gia \"{name}\". Vui lòng chờ quản trị viên duyệt.",
     "joinFailed": "Không thể gửi yêu cầu tham gia",
     "searchHint": "Sau khi gửi, yêu cầu sẽ ở trạng thái chờ duyệt. Quản trị viên CLB sẽ phê duyệt.",
@@ -222,7 +239,12 @@
     "tokenHint": "Mã lời mời lấy từ link chia sẻ do CLB cấp (ví dụ: /join?token=...).",
     "tokenSubmit": "Tham gia bằng mã",
     "tokenAccepted": "Tham gia thành công!",
-    "tokenInvalid": "Mã lời mời không hợp lệ hoặc đã hết hạn"
+    "tokenInvalid": "Mã lời mời không hợp lệ hoặc đã hết hạn",
+    "searchMinLength": "Nhập ít nhất {min} ký tự để tìm kiếm",
+    "joinSuccessTitle": "Đã gửi yêu cầu tham gia!",
+    "joinSuccessDefault": "Yêu cầu của bạn đang chờ quản trị viên xét duyệt.",
+    "joinSuccessHint": "Bạn sẽ nhận được thông báo khi được chấp thuận.",
+    "joinSuccessDismiss": "Tìm thêm câu lạc bộ khác"
   },
   "user": {
     "title": "Danh sách người dùng",
@@ -370,7 +392,7 @@
     "phone": "Số điện thoại",
     "joinedAt": "Ngày tham gia",
     "joinType": "Hình thức",
-    "joinTypeRequest": "Xin vào",
+    "joinTypeRequest": "Trực tiếp",
     "joinTypeInvite": "Được mời",
     "reviewedBy": "Người duyệt",
     "invitedBy": "Người mời",
@@ -389,7 +411,7 @@
   },
   "invite": {
     "title": "Quản lý link mời",
-    "totalCount":"{count} mã mời",
+    "totalCount": "{count} mã mời",
     "code": "Mã mời",
     "joinLink": "Link tham gia",
     "usedCount": "Đã dùng",

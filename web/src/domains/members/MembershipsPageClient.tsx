@@ -63,8 +63,6 @@ export function MembershipsPageClient() {
     const canUpdate = isSuperAdmin || hasPermission("club_member", "update", club?.id);
     const canDelete = isSuperAdmin || hasPermission("club_member", "delete", club?.id);
 
-    console.log(canUpdate);
-
     // ── Filter options ────────────────────────────────────────────────────────
     const statusOptions = [
         { value: "pending", label: tm("statusPending"), variant: "pending" as const },

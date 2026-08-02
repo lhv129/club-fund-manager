@@ -24,8 +24,8 @@ class ClubServiceClient extends BaseRepository<Club> {
    * BE tạo ClubMember với status = pending → dashboard duyệt → approved/rejected.
    */
   join(payload: {
-    token?: string;
-    club_id?: number;
+    invite_code?: string;
+    club_slug?: string;
     join_type: "request" | "invite";
     reason?: string;
   }): Promise<ApiResponse<ClubMember>> {

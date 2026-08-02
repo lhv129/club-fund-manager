@@ -19,7 +19,7 @@ export function RegisterForm() {
     last_name: "",
     email: "",
     password: "",
-    confirm_password: "",
+    password_confirmation: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -38,10 +38,10 @@ export function RegisterForm() {
     } else if (form.password.length < 6) {
       newErrors.password = tValidation("minPassword");
     }
-    if (!form.confirm_password) {
-      newErrors.confirm_password = tValidation("required");
-    } else if (form.password !== form.confirm_password) {
-      newErrors.confirm_password = tValidation("passwordMismatch");
+    if (!form.password_confirmation) {
+      newErrors.password_confirmation = tValidation("required");
+    } else if (form.password !== form.password_confirmation) {
+      newErrors.password_confirmation = tValidation("passwordMismatch");
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -125,9 +125,9 @@ export function RegisterForm() {
         <Input
           label={t("confirmPassword")}
           type="password"
-          value={form.confirm_password}
-          onChange={(e) => updateField("confirm_password", e.target.value)}
-          error={errors.confirm_password}
+          value={form.password_confirmation}
+          onChange={(e) => updateField("password_confirmation", e.target.value)}
+          error={errors.password_confirmation}
           autoComplete="new-password"
         />
 

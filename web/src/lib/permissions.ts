@@ -138,6 +138,17 @@ export function hasAnyClubPermission(
 }
 
 /**
+ * Đếm số club_{id} key trong permissions.
+ * Dùng để check user có 2+ clubs (hiển thị nút "Quay lại danh sách CLB").
+ */
+export function clubPermissionCount(
+  perms: PermissionMap | undefined | null,
+): number {
+  if (!perms || Array.isArray(perms)) return 0;
+  return Object.keys(perms).filter(isClubKey).length;
+}
+
+/**
  * Check user có quyền system nào (dùng cho (system) layout gate).
  * Superadmin → true. `["*"]` → true. Admin → có flat module key.
  */

@@ -3,12 +3,7 @@
 import { useCallback, useEffect } from "react";
 import { useAuthStore } from "../stores/authStore";
 import { authService } from "../services/authService";
-import {
-  can,
-  canAccessClub,
-  hasAnyClubPermission,
-  hasAnySystemPermission,
-} from "@/lib/permissions";
+import { can, canAccessClub, hasAnyClubPermission, hasAnySystemPermission, clubPermissionCount } from "@/lib/permissions";
 import type { LoginPayload, RegisterPayload, Profile } from "../types";
 
 /**
@@ -96,6 +91,8 @@ export function useAuth() {
     [user],
   );
 
+  const hasMultipleClubs = clubPermissionCount(user?.permissions) > 1;
+
   /** Check user có truy cập club workspace này không (club layout guard). */
   const checkClubAccess = useCallback(
     (clubId: number): boolean =>
@@ -138,6 +135,7 @@ export function useAuth() {
     hasPermission,
     canAccessClub: checkClubAccess,
     hasAnyClubPermission: checkAnyClubPermission,
+    hasMultipleClubs,
     clearError: () => setError(null),
   };
 }
@@ -158,6 +156,6 @@ export function useHydrateAuth(profile: Profile | null) {
     } else {
       useAuthStore.getState().reset();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }

@@ -6,26 +6,18 @@ import { Link, usePathname } from "@/i18n/routing";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { useClub } from "@/domains/club/hooks/useClub";
 import { cn } from "@/utils";
-import { ArrowLeft, ChevronDown, Shield, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, Shield, X, PlusCircle } from "lucide-react";
 import { CLUB_NAV_ITEMS, filterNav, type NavItem } from "./club-nav-config";
-import type { Translation } from "@/domains/club/types";
+import { getTranslation } from "@/lib/translations";
 import { APP_VERSION } from "@/lib/config";
-
+import { APP_ROUTES } from "@/constants";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ClubSidebarProps {
   open: boolean;
   onClose: () => void;
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function pickTranslation(
-  translations: Translation[] | undefined,
-  locale: string,
-): Translation | undefined {
-  return translations?.find((t) => t.locale === locale) ?? translations?.[0];
+  // hasMultipleClubs đã được bỏ — showBackToClubs giờ chỉ phụ thuộc role
 }
 
 // ─── SidebarItem ──────────────────────────────────────────────────────────────
@@ -163,7 +155,6 @@ const SidebarGroup = memo(function SidebarGroup({
         />
       </button>
 
-      {/* Collapsible — CSS grid trick */}
       <div
         className={cn(
           "grid transition-[grid-template-rows] duration-250 ease-out",
@@ -265,25 +256,35 @@ const ClubSidebarHeader = memo(function ClubSidebarHeader({
 // ─── ClubContextCard ──────────────────────────────────────────────────────────
 
 const ClubContextCard = memo(function ClubContextCard({
+  slug,         // ← thêm prop slug để build href join-club
   clubName,
   isSuperAdmin,
   isSystemAdmin,
   showBackToClubs,
+  backHref,
   onClose,
 }: {
+  slug: string;
   clubName: string | undefined;
   isSuperAdmin: boolean;
   isSystemAdmin: boolean;
   showBackToClubs: boolean;
+  backHref: string;
   onClose: () => void;
 }) {
   const tWorkspace = useTranslations("clubWorkspace") as (key: string) => string;
 
   return (
     <div className="px-4 lg:px-5 pt-5 pb-3">
+      {/*
+       * Quay về danh sách CLB
+       * Case 1: member bình thường có club_{id} permission
+       * Case 2: is_superadmin
+       * Case 3: is_system_admin
+       */}
       {showBackToClubs && (
         <Link
-          href={"/" as never}
+          href={backHref as never}
           onClick={onClose}
           className="flex items-center gap-1.5 mb-4 text-xs font-semibold text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 uppercase tracking-wider transition-colors"
         >
@@ -292,6 +293,7 @@ const ClubContextCard = memo(function ClubContextCard({
         </Link>
       )}
 
+      {/* Club info card */}
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3.5 space-y-2">
         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
           {tWorkspace("currentClub")}
@@ -300,7 +302,6 @@ const ClubContextCard = memo(function ClubContextCard({
           {clubName ?? "—"}
         </p>
 
-        {/* Superadmin badge — ưu tiên hiện trước */}
         {isSuperAdmin && (
           <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold">
             <Shield className="w-3.5 h-3.5 text-amber-500 shrink-0" strokeWidth={2.5} />
@@ -308,7 +309,6 @@ const ClubContextCard = memo(function ClubContextCard({
           </div>
         )}
 
-        {/* System admin badge — chỉ hiện khi không phải superadmin */}
         {!isSuperAdmin && isSystemAdmin && (
           <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold">
             <Shield className="w-3.5 h-3.5 text-blue-500 shrink-0" strokeWidth={2.5} />
@@ -316,6 +316,31 @@ const ClubContextCard = memo(function ClubContextCard({
           </div>
         )}
       </div>
+
+
+
+      {/*
+       * Tham gia CLB khác — hiển thị cho tất cả member
+       * href dùng clubRoute(slug, "join-club") → /{locale}/club/{slug}/join-club
+       */}
+
+      {/* {!isSuperAdmin && !isSystemAdmin && (
+        <Link
+          href={clubRoute(slug, "join-club") as never}
+          onClick={onClose}
+          className="mt-3 flex items-center gap-2 w-full px-3 py-2 rounded-lg
+               text-xs font-medium text-zinc-500 dark:text-zinc-400
+               hover:bg-zinc-100 dark:hover:bg-zinc-800
+               hover:text-zinc-800 dark:hover:text-zinc-200
+               border border-dashed border-zinc-200 dark:border-zinc-700
+               transition-all duration-150"
+        >
+          <PlusCircle className="w-3.5 h-3.5 shrink-0" />
+          {tWorkspace("joinAnotherClub")}
+        </Link>
+      )} */}
+
+
     </div>
   );
 });
@@ -347,45 +372,42 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
   const pathname = usePathname() as string;
   const currentLocale = useLocale() as string;
 
-  // [FIX] Thêm isSystemAdmin vào destructure
-  const { hasPermission, isSuperAdmin, isSystemAdmin, hasAnyClubPermission } = useAuth();
+  const { hasPermission, isSuperAdmin, isSystemAdmin, hasAnyClubPermission, hasMultipleClubs } = useAuth();
   const { club } = useClub();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Lấy slug từ club translations (locale hiện tại)
   const slug =
-    pickTranslation(club?.translations, currentLocale)?.slug ??
+    getTranslation(club?.translations, currentLocale)?.slug ??
     pathname.split("/")[2] ??
     String(club?.id ?? "");
 
-  const clubName = pickTranslation(club?.translations, currentLocale)?.name;
-  const showBackToClubs = isSuperAdmin || isSystemAdmin || hasAnyClubPermission();
+  const clubName = getTranslation(club?.translations, currentLocale)?.name;
 
-  // Build items với real hrefs + filter theo permission
+  // ClubSidebar (main) — tính backHref trước khi render
+  const backHref = (isSuperAdmin || isSystemAdmin)
+    ? APP_ROUTES.adminClubs   // → /admin/clubs
+    : "/";                    // → root landing (phân luồng danh sách clubs)
+
+  /*
+   * showBackToClubs — 3 case:
+   *   1. member bình thường có permission club_{id}  → hasAnyClubPermission()
+   *   2. is_superadmin                               → isSuperAdmin
+   *   3. is_system_admin                             → isSystemAdmin
+   *
+   * Bỏ điều kiện && hasMultipleClubs cũ:
+   *   button luôn hiển thị cho 3 case trên, bất kể số lượng club.
+   */
+  const showBackToClubs = isSuperAdmin || isSystemAdmin || hasMultipleClubs;
+
   const filtered = useMemo(() => {
     if (!club) return [];
     const items = CLUB_NAV_ITEMS(slug);
-
-    /**
-     * [FIX] clubCheck giờ check 2 scope theo thứ tự ưu tiên:
-     *
-     * 1. Club scope  — user là member/owner/manager của club cụ thể này
-     *    (permissions có key `club_{id}` → nested { module: actions[] })
-     *
-     * 2. System scope fallback — user là system admin với flat permissions
-     *    (permissions có key `member`, `fund`, ... ở top-level)
-     *    Chỉ apply khi isSystemAdmin = true để tránh nhầm lẫn với user thường.
-     *
-     * Superadmin bypass hoàn toàn qua isSuperAdmin (không gọi clubCheck).
-     */
     const clubCheck = (module?: string, action?: string) =>
-      hasPermission(module!, action!, club.id) ||            // club scope
-      (isSystemAdmin && hasPermission(module!, action!));    // system scope fallback
-
+      hasPermission(module!, action!, club.id) ||
+      (isSystemAdmin && hasPermission(module!, action!));
     return filterNav(items, clubCheck, isSuperAdmin);
-  }, [club, slug, hasPermission, isSuperAdmin, isSystemAdmin]); // [FIX] thêm isSystemAdmin vào deps
+  }, [club, slug, hasPermission, isSuperAdmin, isSystemAdmin]);
 
-  // Close on outside click (mobile)
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
@@ -398,7 +420,6 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
       <div
         aria-hidden="true"
         className={cn(
@@ -408,7 +429,6 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
         onClick={onClose}
       />
 
-      {/* Sidebar panel */}
       <aside
         ref={sidebarRef}
         className={cn(
@@ -423,13 +443,14 @@ export function ClubSidebar({ open, onClose }: ClubSidebarProps) {
       >
         <ClubSidebarHeader onClose={onClose} />
 
-        {/* Scrollable body */}
         <div className="flex-1 flex flex-col overflow-y-auto">
           <ClubContextCard
+            slug={slug}
             clubName={clubName}
             isSuperAdmin={isSuperAdmin}
-            isSystemAdmin={isSystemAdmin}  // [FIX] truyền thêm prop
+            isSystemAdmin={isSystemAdmin}
             showBackToClubs={showBackToClubs}
+            backHref={backHref}
             onClose={onClose}
           />
 

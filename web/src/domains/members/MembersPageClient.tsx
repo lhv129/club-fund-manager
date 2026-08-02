@@ -21,6 +21,7 @@ import { useClubMembers } from "@/domains/members/hooks/useClubMembers";
 import type { ClubMember, MemberFilters } from "@/domains/members/types/member";
 import { APP_ROUTES, clubRoute } from "@/constants";
 import { Badge } from "@/components/shared/ui/Badge";
+import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -159,7 +160,11 @@ export function MembersPageClient() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
-            <Breadcrumb homeHref={club ? clubRoute(slug) : APP_ROUTES.home} />
+            <Breadcrumb
+                navItems={CLUB_NAV_ITEMS(slug)}
+                homeHref={clubRoute(slug)}
+            //   extraItems={[{ label: tm("title") }]}
+            />
 
             {/* Header */}
             <div className="flex items-center justify-between">

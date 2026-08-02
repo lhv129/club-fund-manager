@@ -17,6 +17,7 @@ export const APP_ROUTES = {
 
   // ── Root landing — phân luồng theo role ───────────────────────────────────
   home: "/",
+  joinClub: "/join-club",
 
   // ── Admin workspace (system) — URL: /admin/... ────────────────────────────
   admin: "/admin",

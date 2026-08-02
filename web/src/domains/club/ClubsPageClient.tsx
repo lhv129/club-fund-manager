@@ -1,21 +1,9 @@
-/**
- * ClubsPageClient — Next.js + next-intl
- * Copy sang: src/domains/club/ClubsPageClient.tsx
- *
- * Cache strategy:
- *   - useClubsQuery (useClubs.ts) cho toàn bộ CRUD + toggle — không có initialData option.
- *   - initialClubs / initialTotal từ SSR props dùng làm fallback hiển thị
- *     trong khi hook đang fetch lần đầu → không flicker.
- *   - Load more → tăng limit (10 → 20 → 30 → 40…) qua setLimit của useListParams.
- *     React Query tự refetch với queryKey mới, không cần extraClubs riêng.
- */
-
 "use client";
 
 import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
-import { Plus, Building2 } from "lucide-react";
+import { useRouter, Link } from "@/i18n/routing";
+import { Plus, Building2, PlusCircle, Users, TrendingUp } from "lucide-react";
 
 import {
     FormModalWithMedia,
@@ -23,26 +11,23 @@ import {
     type SubmitResult,
 } from "@/components/shared/forms/FormModalWithMedia";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
-import { clubDashboardRoute } from "@/constants";
+import { clubDashboardRoute, APP_ROUTES } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { useListParams } from "@/hooks/useListParams";
 import { useClubsQuery } from "@/domains/club/hooks/useClubsQuery";
-import type { Club, ClubFilters, Translation } from "@/domains/club/types";
+import { getTranslation } from "@/lib/translations";
+import type { Club, ClubFilters } from "@/domains/club/types";
 import { ClubCard, type ClubCardLabels } from "@/domains/club/components/ClubCard";
 import { LoadMoreButton } from "@/components/shared/ui/LoadMoreButton";
-
-// ─────────────────────────────────────────────────────────────────────────────
+import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+import { cn } from "@/utils";
 
 const LIMIT = 10;
 
 interface ClubsPageClientProps {
-    /** Danh sách CLB trang đầu (limit=10) từ Server Component. */
     clubs: Club[];
-    /** Tổng số CLB từ meta.total. */
     total: number;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: ClubsPageClientProps) {
     const router = useRouter();
@@ -50,21 +35,9 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
     const t = useTranslations("common");
     const tc = useTranslations("club");
 
-    /** Lấy translation theo locale hiện tại, fallback về phần tử đầu tiên. */
-    const tr = (translations?: Translation[]) =>
-        translations?.find((item) => item.locale === locale) ?? translations?.[0];
-
-    // ── Permission helpers ─────────────────────────────────────────────────────
+    // ── Permissions ────────────────────────────────────────────────────────────
     const { isSuperAdmin, hasPermission } = useAuth();
-
-    /** canCreate — system scope. */
     const canCreate = isSuperAdmin || hasPermission("club", "create");
-
-    /**
-     * Per-card helpers — CLUB SCOPE, truyền club.id.
-     * Backend: { "club_2": { "club": ["update","delete"] } }
-     * → Không truyền clubId = check system scope → luôn false với club-scoped user.
-     */
     const canUpdateClub = useCallback(
         (clubId: number) => isSuperAdmin || hasPermission("club", "update", clubId),
         [isSuperAdmin, hasPermission],
@@ -74,7 +47,7 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
         [isSuperAdmin, hasPermission],
     );
 
-    // ── Params — setLimit dùng để tăng limit mỗi lần load more ─────────────────
+    // ── Params + data ──────────────────────────────────────────────────────────
     const { params, setLimit } = useListParams<ClubFilters>({
         defaultFilters: {},
         defaultSortBy: "sort_order",
@@ -82,7 +55,6 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
         defaultLimit: LIMIT,
     });
 
-    // ── Cache hook ─────────────────────────────────────────────────────────────
     const {
         data: hookData,
         total: hookTotal,
@@ -97,23 +69,17 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
         handleToggle,
     } = useClubsQuery(params);
 
-    /**
-     * Fallback về SSR data trong khi hook đang fetch lần đầu (isLoading=true, hookData=[]).
-     * Sau khi hook resolve, hookData thay thế hoàn toàn — không cần extraClubs.
-     */
     const allData = hookData.length > 0 ? hookData : initialClubs;
     const total = hookTotal > 0 ? hookTotal : initialTotal;
-
     const hasMore = allData.length < total;
     const remaining = total - allData.length;
 
-    // ── Load more — tăng limit mỗi lần bấm (10 → 20 → 30 → 40…) ─────────────
     const handleLoadMore = () => {
         if (isLoading || !hasMore) return;
         setLimit(params.limit + LIMIT);
     };
 
-    // ── Modal state ────────────────────────────────────────────────────────────
+    // ── Modal ──────────────────────────────────────────────────────────────────
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState<Club | null>(null);
 
@@ -132,9 +98,8 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
         return result;
     };
 
-    // ── Delete (Disband) ───────────────────────────────────────────────────────
+    // ── Delete ─────────────────────────────────────────────────────────────────
     const [deleteTarget, setDeleteTarget] = useState<Club | null>(null);
-
     const handleDeleteConfirm = () => {
         if (!deleteTarget) return;
         hookDeleteConfirm(deleteTarget.id);
@@ -144,15 +109,14 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
     // ── Toggle ─────────────────────────────────────────────────────────────────
     const handleToggleById = (clubId: number) => {
         const club = allData.find((c) => c.id === clubId);
-        if (!club) return;
-        handleToggle(club);
+        if (club) handleToggle(club);
     };
 
     // ── Navigation ─────────────────────────────────────────────────────────────
     const handleOpen = (clubId: number) => {
         const club = allData.find((c) => c.id === clubId);
         if (!club) return;
-        const slug = tr(club.translations)?.slug ?? String(club.id);
+        const slug = getTranslation(club.translations, locale)?.slug ?? String(club.id);
         router.push(clubDashboardRoute(slug) as never);
     };
 
@@ -174,54 +138,110 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
         },
     };
 
-    // ── Render ─────────────────────────────────────────────────────────────────
+    // ─── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
-            {/* Header */}
+
+            <Breadcrumb navItems={[]} homeHref="/" extraItems={[{ label: tc("breadcrumb") }]} />
+
+            {/* ── Page header ──────────────────────────────────────────────── */}
             <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
-                        {tc("title")}
-                    </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                        {tc("totalCount", { count: total })}
-                    </p>
+                <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-2xl bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center shrink-0 shadow-md shadow-indigo-600/25">
+                        <Building2 className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-[18px] font-bold text-zinc-900 dark:text-zinc-50 tracking-tight leading-snug">
+                            {tc("title")}
+                        </h1>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                                {tc("totalCount", { count: total })}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                {canCreate && (
-                    <button
-                        type="button"
-                        onClick={openCreate}
-                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl shrink-0
-                            bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
-                            text-white text-sm font-medium transition-colors shadow-sm"
+                <div className="flex items-center gap-2 shrink-0">
+                    {/* Tham gia CLB khác */}
+                    <Link
+                        href={APP_ROUTES.joinClub as never}
+                        className={cn(
+                            "inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium",
+                            "border border-zinc-200 dark:border-zinc-700",
+                            "bg-white dark:bg-zinc-900",
+                            "text-zinc-700 dark:text-zinc-300",
+                            "hover:border-indigo-200 dark:hover:border-indigo-700/60",
+                            "hover:text-indigo-600 dark:hover:text-indigo-400",
+                            "hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30",
+                            "shadow-sm transition-all duration-150"
+                        )}
                     >
-                        <Plus className="w-4 h-4" />
-                        {tc("create")}
-                    </button>
-                )}
+                        <PlusCircle className="w-4 h-4" />
+                        {tc("joinAnother")}
+                    </Link>
+
+                    {canCreate && (
+                        <button
+                            type="button"
+                            onClick={openCreate}
+                            className={cn(
+                                "inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold",
+                                "bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800",
+                                "text-white shadow-sm shadow-indigo-600/25",
+                                "transition-all duration-150"
+                            )}
+                        >
+                            <Plus className="w-4 h-4" />
+                            {tc("create")}
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {/* Card grid / empty state */}
+            {/* ── Stats strip ──────────────────────────────────────────────── */}
+            {total > 0 && (
+                <div className="flex items-center gap-6 px-5 py-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-700/60">
+                    <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-indigo-400 shrink-0" />
+                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                            <span className="font-semibold text-zinc-900 dark:text-zinc-100">{total}</span>
+                            {" "}{tc("statsClubs")}
+                        </span>
+                    </div>
+                    <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+                    <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                            {tc("statsDesc")}
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Grid / empty state ───────────────────────────────────────── */}
             {allData.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40
-                        flex items-center justify-center mb-5">
+                <div className="flex flex-col items-center justify-center py-24 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/20">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center mb-5 ring-1 ring-indigo-100 dark:ring-indigo-900/50">
                         <Building2 className="w-6 h-6 text-indigo-400" />
                     </div>
-                    <p className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1.5">
+                    <p className="text-[15px] font-semibold text-zinc-800 dark:text-zinc-200 mb-1.5">
                         {tc("emptyTitle")}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs leading-relaxed">
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-7 max-w-xs text-center leading-relaxed">
                         {tc("emptyDesc")}
                     </p>
                     {canCreate && (
                         <button
                             type="button"
                             onClick={openCreate}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
-                                bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
-                                text-white text-sm font-medium transition-colors shadow-sm"
+                            className={cn(
+                                "inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold",
+                                "bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800",
+                                "text-white shadow-sm shadow-indigo-600/25",
+                                "transition-all duration-150"
+                            )}
                         >
                             <Plus className="w-4 h-4" />
                             {tc("create")}
@@ -232,9 +252,8 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {allData.map((club) => {
-                            const name = tr(club.translations)?.name ?? `Club #${club.id}`;
-                            const description = tr(club.translations)?.description ?? null;
-
+                            const name = getTranslation(club.translations, locale)?.name ?? `Club #${club.id}`;
+                            const description = getTranslation(club.translations, locale)?.description ?? null;
                             const cardCanUpdate = canUpdateClub(club.id);
                             const cardCanDelete = canDeleteClub(club.id);
 
@@ -260,13 +279,13 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                                     onMembers={(id) => {
                                         const c = allData.find((x) => x.id === id);
                                         if (!c) return;
-                                        const slug = tr(c.translations)?.slug ?? String(id);
+                                        const slug = getTranslation(c.translations, locale)?.slug ?? String(id);
                                         router.push(`/club/${slug}/members` as never);
                                     }}
                                     onSettings={(id) => {
                                         const c = allData.find((x) => x.id === id);
                                         if (!c) return;
-                                        const slug = tr(c.translations)?.slug ?? String(id);
+                                        const slug = getTranslation(c.translations, locale)?.slug ?? String(id);
                                         router.push(`/club/${slug}/settings` as never);
                                     }}
                                     onDisband={
@@ -279,7 +298,6 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                         })}
                     </div>
 
-                    {/* Load more / all loaded indicator */}
                     {hasMore ? (
                         <LoadMoreButton
                             onClick={handleLoadMore}
@@ -290,7 +308,7 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                         />
                     ) : (
                         allData.length > LIMIT && (
-                            <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">
+                            <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-2">
                                 {tc("allLoaded")}
                             </p>
                         )
@@ -298,7 +316,7 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                 </>
             )}
 
-            {/* Form modal — create / edit */}
+            {/* ── Modals ────────────────────────────────────────────────────── */}
             <FormModalWithMedia
                 isOpen={modalOpen}
                 onClose={closeModal}
@@ -320,7 +338,6 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                 initialTranslations={toInitialTranslations(editing?.translations)}
             />
 
-            {/* Delete (Disband) confirm modal */}
             <DeleteConfirmModal
                 isOpen={!!deleteTarget}
                 title={tc("disbandConfirmTitle")}
@@ -328,7 +345,7 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                 message={
                     deleteTarget
                         ? tc("disbandConfirmMsg", {
-                            name: tr(deleteTarget.translations)?.name ?? String(deleteTarget.id),
+                            name: getTranslation(deleteTarget.translations, locale)?.name ?? String(deleteTarget.id),
                         })
                         : ""
                 }

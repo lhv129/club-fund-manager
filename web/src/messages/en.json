@@ -74,7 +74,13 @@
     "settings": "Settings",
     "toggleActive": "Click to activate",
     "toggleInactive": "Click to deactivate",
-    "readOnly": "You have view-only access"
+    "readOnly": "You have view-only access",
+    "detail": "Detail",
+    "showing": "Showing",
+    "items": "items",
+    "loadMore": "Show more",
+    "allLoaded": "All items loaded",
+    "noResultsFound": "No results found"
   },
   "metadata": {
     "users": {
@@ -96,6 +102,10 @@
     "modules": {
       "title": "Module Management",
       "description": "Manage modules in the system"
+    },
+    "joinClub": {
+      "title": "Join club",
+      "description": "Search and join clubs that match your interests."
     }
   },
   "header": {
@@ -177,6 +187,7 @@
     "backHome": "Back to Home"
   },
   "club": {
+    "breadcrumb": "Clubs",
     "title": "Club List",
     "create": "Create Club",
     "edit": "Edit Club",
@@ -193,7 +204,11 @@
     "disband": "Disband",
     "disbandConfirmTitle": "Disband Club",
     "disbandConfirmDesc": "This action cannot be undone. All club data will be permanently deleted.",
-    "disbandConfirmMsg": "Are you sure you want to disband \"{name}\"?"
+    "disbandConfirmMsg": "Are you sure you want to disband \"{name}\"?",
+    "joinAnother": "Join another club",
+    "switchClub": "Switch club",
+    "statsClubs": "Club Statistics",
+    "statsDesc": "View an overview of clubs and their members."
   },
   "clubWorkspace": {
     "backToClubs": "Back to clubs",
@@ -204,9 +219,12 @@
     "totalFunds": "Total funds",
     "activeEvents": "Active events",
     "monthlyIncome": "Monthly income",
-    "viewingAsSystemAdmin": "System Admin"
+    "viewingAsSystemAdmin": "System Admin",
+    "joinAnotherClub": "Join another club",
+    "switchClub": "Switch club"
   },
   "noClub": {
+    "breadcrumb": "Join club",
     "title": "You haven't joined any club yet",
     "subtitle": "Find and request to join a club, or enter an invite code to join instantly.",
     "searchTab": "Find club",
@@ -222,7 +240,12 @@
     "tokenHint": "The invite code comes from a share link provided by the club (e.g. /join?token=...).",
     "tokenSubmit": "Join with code",
     "tokenAccepted": "Joined successfully!",
-    "tokenInvalid": "Invite code is invalid or expired"
+    "tokenInvalid": "Invite code is invalid or expired",
+    "searchMinLength": "Type at least {min} characters to search",
+    "joinSuccessTitle": "Request sent!",
+    "joinSuccessDefault": "Your request is awaiting admin approval.",
+    "joinSuccessHint": "You'll be notified once approved.",
+    "joinSuccessDismiss": "Search for more clubs"
   },
   "user": {
     "title": "Users",

@@ -8,19 +8,15 @@ import { useHydrateClub } from "@/domains/club/hooks/useClub";
 import type { Profile } from "@/domains/auth/types";
 import type { Club } from "@/domains/club/types";
 
-/**
- * ClubShell — client wrapper cho Club workspace (/club/[slug]/...).
- *
- * Hydrate cả auth store lẫn club store với data do Server Component fetch,
- * render ClubSidebar + Header + content.
- */
 export function ClubShell({
   profile,
   club,
+  hasMultipleClubs, // ✅ nhận từ Server Component
   children,
 }: {
   profile: Profile | null;
   club: Club | null;
+  hasMultipleClubs: boolean;
   children: React.ReactNode;
 }) {
   useHydrateAuth(profile);
@@ -32,6 +28,7 @@ export function ClubShell({
       <ClubSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        hasMultipleClubs={hasMultipleClubs}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header onMenuToggle={() => setSidebarOpen((v) => !v)} />

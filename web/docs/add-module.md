@@ -325,6 +325,7 @@ import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import { useListParams } from "@/hooks/useListParams";
 import { useExamples } from "@/domains/example/hooks/useExamples";
 import type { Example, ExampleFilters } from "@/domains/example/types";
+import { getTranslatedName, getTranslatedDescription } from "@/lib/translations";
 
 export function ExamplesPageClient() {
     // ❌ KHÔNG cần useLocale()
@@ -514,25 +515,6 @@ import { useListParams } from "@/hooks/useListParams";
 import { useExamples } from "@/domains/example/hooks/useExamples";
 import type { Example, ExampleFilters } from "@/domains/example/types";
 
-// ── Helpers (đặt ngoài component để tránh re-create) ─────────────────────────
-
-// Đọc tên theo locale hiện tại, fallback về locale đầu tiên
-function getTranslatedName(row: Example, locale: string): string {
-    return (
-        row.translations?.find((x) => x.locale === locale)?.name ??
-        row.translations?.[0]?.name ??
-        ""
-    );
-}
-
-// Đọc description theo locale (nếu entity có description)
-function getTranslatedDescription(row: Example, locale: string): string {
-    return (
-        row.translations?.find((x) => x.locale === locale)?.description ??
-        row.translations?.[0]?.description ??
-        ""
-    );
-}
 
 // Map translations array → object { vi: {...}, en: {...} } cho FormModal
 function toInitialTranslations(translations?: Example["translations"]) {
@@ -629,7 +611,7 @@ export function ExamplesPageClient() {
         {
             key: "name", label: t("name"),
             // Phải dùng helper, không đọc row.name trực tiếp
-            render: (row) => <span className="text-sm text-foreground">{getTranslatedName(row, locale) || "—"}</span>,
+            render: (row) => <span className="text-sm text-foreground">{getTranslatedName(row.translations, locale) || "—"}</span>,
         },
         {
             key: "is_active", label: t("status"), className: "text-center w-28",
