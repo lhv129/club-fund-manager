@@ -7,7 +7,7 @@
  * login, register, logout, reset password
  *
  * Cách dùng:
- * __('domains.auth.login_success')
+ * __('domains/auth.login_success')
  */
 
 return [

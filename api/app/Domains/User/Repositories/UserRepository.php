@@ -89,8 +89,7 @@ class UserRepository extends BaseRepository
                 'status',
                 'email_verified_at',
                 'created_at',
-            ])
-            ->with('clubMemberRoles','clubMemberRoles.role', 'clubMemberRoles.role.translations');
+            ]);
     }
 
     // ------------------------------------------------------------------

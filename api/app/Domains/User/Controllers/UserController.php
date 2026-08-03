@@ -26,7 +26,7 @@ class UserController extends BaseController
     {
         $params = $request->only(['limit', 'search', 'status', 'email_verified_at', 'sort_by', 'sort_dir', 'page']);
         $paginator = $this->service->paginate($params);
-        return $this->paginateResponse($paginator, __('domains/user.list'));
+        return $this->paginateResponse($paginator, __('domains/user.list'), UserResource::class);
     }
     /**
      * GET /api/v1/users/active?limit=15&search=abc&sort_by=name&sort_dir=asc

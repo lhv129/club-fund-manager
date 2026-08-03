@@ -1,5 +1,6 @@
 <?php
-namespace App\Domains\Club\Models;
+namespace App\Domains\ClubMemberRole\Models;
+use App\Domains\Club\Models\Club;
 use App\Domains\Role\Models\Role;
 use App\Domains\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

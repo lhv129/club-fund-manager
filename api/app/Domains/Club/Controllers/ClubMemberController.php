@@ -13,7 +13,7 @@ use Illuminate\Http\JsonResponse;
 class ClubMemberController extends BaseController
 {
     public function __construct(
-        protected ClubMemberService $memberService
+        protected ClubMemberService $service
     ) {}
 
     /**
@@ -24,7 +24,7 @@ class ClubMemberController extends BaseController
      */
     public function join(JoinClubRequest $request): JsonResponse
     {
-        $member = $this->memberService->join($request->user(), $request->validated());
+        $member = $this->service->join($request->user(), $request->validated());
 
         return $this->responseCommon(true, __('domains/club_member.join_requested'), new ClubMemberResource($member), 201);
     }
@@ -35,7 +35,7 @@ class ClubMemberController extends BaseController
      */
     public function index(FilterClubMemberRequest $request, string $clubSlug): JsonResponse
     {
-        $members = $this->memberService->paginateClubMembers($clubSlug, $request->validated());
+        $members = $this->service->paginateClubMembers($clubSlug, $request->validated());
 
         return $this->paginateResponse($members, __('domains/club_member.list'), ClubMemberResource::class);
     }
@@ -45,7 +45,7 @@ class ClubMemberController extends BaseController
      */
     public function show(string $clubSlug, int $memberId): JsonResponse
     {
-        $member = $this->memberService->findClubMember($clubSlug, $memberId);
+        $member = $this->service->findClubMember($clubSlug, $memberId);
 
         return $this->responseCommon(true, __('domains/club_member.detail'), new ClubMemberResource($member));
     }
@@ -56,7 +56,7 @@ class ClubMemberController extends BaseController
      */
     public function approve(string $clubSlug, int $memberId): JsonResponse
     {
-        $member = $this->memberService->approve($clubSlug, $memberId, request()->user());
+        $member = $this->service->approve($clubSlug, $memberId, request()->user());
 
         return $this->responseCommon(true, __('domains/club_member.approved'), new ClubMemberResource($member));
     }
@@ -69,7 +69,7 @@ class ClubMemberController extends BaseController
      */
     public function reject(RejectMemberRequest $request, string $clubSlug, int $memberId): JsonResponse
     {
-        $member = $this->memberService->reject(
+        $member = $this->service->reject(
             $clubSlug,
             $memberId,
             $request->user(),
@@ -85,7 +85,7 @@ class ClubMemberController extends BaseController
      */
     public function destroy(string $clubSlug, int $memberId): JsonResponse
     {
-        $this->memberService->remove($clubSlug, $memberId, request()->user());
+        $this->service->remove($clubSlug, $memberId, request()->user());
 
         return $this->responseCommon(true, __('domains/club_member.removed'));
     }

@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Domains\Role\Models;
+
 use App\Domains\Club\Models\Club;
-use App\Domains\Club\Models\ClubMemberRole;
+use App\Domains\ClubMemberRole\Models\ClubMemberRole;
 use App\Domains\Module\Models\Permission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +14,7 @@ class Role extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'slug',
+        'scope',
         'sort_order',
         'is_active',
     ];
@@ -19,6 +22,10 @@ class Role extends Model
     {
         return ['is_active' => 'boolean'];
     }
+
+    public const SCOPE_GLOBAL = 'global';
+    public const SCOPE_CLUB = 'club';
+
     /*
     |--------------------------------------------------------------------------
     | Relationships

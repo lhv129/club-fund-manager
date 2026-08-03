@@ -2,6 +2,7 @@
 
 namespace App\Domains\Club\Models;
 
+use App\Domains\ClubMemberRole\Models\ClubMemberRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

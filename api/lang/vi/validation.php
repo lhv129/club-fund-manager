@@ -117,7 +117,11 @@ return [
 
         'count' => 'Số lượng',
 
-        'invite_code' => 'Mã giới thiệu'
+        'invite_code' => 'Mã giới thiệu',
+
+        'club_member_role_id' => 'ID vai trò thành viên',
+        'role_slug' => 'Slug vai trò thành viên',
+        'club_slug' => 'Slug câu lạc bộ',
     ],
 
     /*

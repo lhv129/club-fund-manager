@@ -7,7 +7,7 @@
  * login, register, logout, reset password
  *
  * Cách dùng:
- * __('domains.club.{key}')
+ * __('domains/club.{key}')
  */
 
 return [

@@ -4,7 +4,7 @@ namespace App\Domains\User\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Domains\Club\Models\ClubMember;
-use App\Domains\Club\Models\ClubMemberRole;
+use App\Domains\ClubMemberRole\Models\ClubMemberRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;

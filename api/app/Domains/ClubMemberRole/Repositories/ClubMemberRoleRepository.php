@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Domains\Club\Repositories;
+namespace App\Domains\ClubMemberRole\Repositories;
 
 use App\Base\BaseRepository;
 use App\Domains\Club\Models\ClubMember;
-use App\Domains\Club\Models\ClubMemberRole;
+use App\Domains\ClubMemberRole\Models\ClubMemberRole;
+
 
 class ClubMemberRoleRepository extends BaseRepository
 {

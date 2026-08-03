@@ -117,7 +117,12 @@ return [
 
         'count' => 'count',
 
-        'invite_code' => 'Invite code'
+        'invite_code' => 'Invite code',
+
+        'club_member_role_id' => 'Club Member Role ID',
+        'role_slug' => 'Role Slug',
+        'club_slug' => 'Club Slug',
+
     ],
 
     /*

@@ -24,6 +24,7 @@ class RoleSeeder extends Seeder
         [
             'slug'       => 'superadmin',
             'sort_order' => 0,
+            'scope' => 'global',
             'translations' => ['vi' => 'Quản trị hệ thống', 'en' => 'Super Admin'],
             'permissions' => [],
         ],
@@ -34,11 +35,13 @@ class RoleSeeder extends Seeder
             // Quyền rỗng mặc định — SA gán sau qua POST /roles/{id}/permissions
             // (vd: user.view, user.create, role.view, club.view, ...).
             // Phân biệt với owner/manager/member: admin ở SYSTEM SCOPE (club_id = NULL).
+            'scope' => 'global',
             'permissions' => [],
         ],
         [
             'slug'       => 'owner',
             'sort_order' => 2,
+            'scope' => 'club',
             'translations' => ['vi' => 'Chủ CLB', 'en' => 'Owner'],
             'permissions' => [
                 'club'             => ['view', 'update', 'delete'],
@@ -50,8 +53,9 @@ class RoleSeeder extends Seeder
             ],
         ],
         [
-            'slug'       => 'manager',
+            'slug' => 'manager',
             'sort_order' => 3,
+            'scope' => 'club',
             'translations' => ['vi' => 'Quản lý', 'en' => 'Manager'],
             'permissions' => [
                 'club'             => ['view'],
@@ -63,8 +67,9 @@ class RoleSeeder extends Seeder
             ],
         ],
         [
-            'slug'       => 'member',
+            'slug' => 'member',
             'sort_order' => 4,
+            'scope' => 'club',
             'translations' => ['vi' => 'Thành viên', 'en' => 'Member'],
             'permissions' => [
                 'club'             => ['view'],

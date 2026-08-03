@@ -44,7 +44,44 @@ class ClubMemberRepository extends BaseRepository
                 'status',
                 'rejected_reason'
             ])
-            ->with(['user:id,fullname,email,phone,status', 'reviewedBy:id,fullname', 'user.clubMemberRoles.role.translation','invitedBy:id,fullname'])
+            ->with([
+                'user:id,fullname,email,phone,status',
+                'user.clubMemberRoles' => function ($q) use ($clubSlug) {
+                    $q->select([
+                        'id',
+                        'club_id',
+                        'user_id',
+                        'role_id',
+                    ])
+                        ->whereHas('club.translations', function ($q) use ($clubSlug) {
+                            $q->where('slug', $clubSlug);
+                        })
+                        ->with([
+                            'role' => function ($q) {
+                                $q->select([
+                                    'id',
+                                    'slug',
+                                    'scope',
+                                    'sort_order',
+                                    'is_active',
+                                    'created_at',
+                                    'updated_at',
+                                ])
+                                    ->with([
+                                        'translation' => function ($q) {
+                                            $q->select([
+                                                'role_id',
+                                                'locale',
+                                                'name',
+                                            ]);
+                                        }
+                                    ]);
+                            }
+                        ]);
+                },
+                'reviewedBy:id,fullname',
+                'invitedBy:id,fullname',
+            ])
             ->whereHas('club.translations', function ($query) use ($clubSlug) {
                 $query->where('slug', $clubSlug);
             });

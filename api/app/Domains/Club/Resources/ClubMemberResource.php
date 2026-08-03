@@ -2,6 +2,8 @@
 
 namespace App\Domains\Club\Resources;
 
+use App\Domains\Role\Resources\RoleResource;
+use App\Domains\User\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,25 +22,16 @@ class ClubMemberResource extends JsonResource
             'rejected_reason' => $this->rejected_reason,
 
             // Relations
-            'user'        => $this->whenLoaded('user', fn() => [
-                'id'    => $this->user->id,
-                'fullname'  => $this->user->fullname,
-                'email' => $this->user->email,
-                'phone' => $this->user->phone,
-                'avatar' => $this->user->avatar,
-                'role' => $this->when(
-                    $this->relationLoaded('user')
-                        && $this->user->relationLoaded('clubMemberRoles'),
-                    function () {
-                        $role = $this->user->clubMemberRoles->first()?->role;
+            'user' => new UserResource($this->whenLoaded('user')),
 
-                        return $role ? [
-                            'id' => $role->id,
-                            'name' => $role->translation?->name,
-                        ] : null;
-                    }
-                ),
-            ]),
+            'role' => $this->when(
+                $this->user?->relationLoaded('clubMemberRoles')
+                    && $this->user->clubMemberRoles->isNotEmpty(),
+                fn() => RoleResource::make(
+                    $this->user->clubMemberRoles->first()->role
+                )
+            ),
+
             'reviewedBy'    => $this->whenLoaded('reviewedBy', fn() => $this->reviewedBy ? [
                 'id'   => $this->reviewedBy->id,
                 'fullname' => $this->reviewedBy->fullname,
@@ -51,15 +44,6 @@ class ClubMemberResource extends JsonResource
                 'id'    => $this->removedBy->id,
                 'fullname' => $this->removedBy->fullname,
             ] : null),
-            'roles'       => $this->whenLoaded(
-                'user.clubMemberRoles.role.translations',
-                fn() =>
-                $this->user->clubMemberRoles->map(fn($clubMemberRole) => [
-                    'id' => $clubMemberRole->role->id,
-                    'slug' => $clubMemberRole->role->slug,
-                    'translations' => $clubMemberRole->role->relationLoaded('translations') ? $clubMemberRole->role->translations : [],
-                ])
-            ),
 
             'created_at'  => $this->created_at,
             'reviewed_at' => $this->reviewed_at,
