@@ -24,6 +24,7 @@ class RoleRepository extends BaseRepository
     protected array $selectColumns = [
         'id',
         'slug',
+        'scope'
     ];
 
     public function __construct(Role $model)
@@ -40,6 +41,7 @@ class RoleRepository extends BaseRepository
             ->select([
                 'id',
                 'slug',
+                'scope',
                 'is_active',
                 'sort_order',
                 'created_at',
@@ -70,6 +72,10 @@ class RoleRepository extends BaseRepository
     protected function applyFilters(Builder $query, array $filters): void
     {
         $this->applyActiveFilter($query, $filters);
+
+        if (!empty($filters['scope'])) {
+            $query->where('scope', $filters['scope']);
+        }
     }
 
     /**

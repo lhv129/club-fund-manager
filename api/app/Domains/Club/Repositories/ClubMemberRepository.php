@@ -45,7 +45,7 @@ class ClubMemberRepository extends BaseRepository
                 'rejected_reason'
             ])
             ->with([
-                'user:id,fullname,email,phone,status',
+                'user:id,fullname,email,phone,status,gender,avatar',
                 'user.clubMemberRoles' => function ($q) use ($clubSlug) {
                     $q->select([
                         'id',

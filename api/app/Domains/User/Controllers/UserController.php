@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 
 class UserController extends BaseController
 {
-    protected $service;
+    protected object $service;
     public function __construct(UserService $service)
     {
         $this->service = $service;

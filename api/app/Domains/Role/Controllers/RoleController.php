@@ -24,7 +24,7 @@ class RoleController extends BaseController
     {
         $roles = $this->service->paginate($request->validated());
 
-        return $this->paginateResponse($roles, __('domains/role.list'));
+        return $this->paginateResponse($roles, __('domains/role.list'), RoleResource::class);
     }
 
     /**
@@ -33,10 +33,10 @@ class RoleController extends BaseController
      */
     public function select(Request $request): JsonResponse
     {
-        $params = $request->only(['search', 'club_id', 'is_active', 'limit']);
+        $params = $request->only(['search', 'scope', 'is_active', 'limit']);
         $data   = $this->service->getForSelect($params);
 
-        return $this->responseCommon(true, __('domains/role.select'), $data);
+        return $this->responseCommon(true, __('domains/role.select'), RoleResource::collection($data), 200);
     }
 
     /**

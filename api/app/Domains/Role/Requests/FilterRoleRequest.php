@@ -15,7 +15,7 @@ class FilterRoleRequest extends BaseRequest
     {
         return [
             'search'    => ['nullable', 'string', 'max:255'],
-            'club_id'   => ['nullable', 'integer', 'exists:clubs,id'],
+            'scope'   => ['nullable', 'string', 'in:global,club'],
             'is_active' => ['nullable', 'boolean'],
             'limit'     => ['nullable', 'integer', 'min:1', 'max:100'],
             'page'      => ['nullable', 'integer', 'min:1'],

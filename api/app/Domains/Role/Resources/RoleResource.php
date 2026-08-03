@@ -25,6 +25,7 @@ class RoleResource extends JsonResource
             //         'is_active'    => (bool) $p->pivot->is_active,
             //     ]);
             // }),
+            'permissions_count' => $this->whenCounted('permissions'),
             'created_at'  => $this->created_at?->toIso8601String(),
             'updated_at'  => $this->updated_at?->toIso8601String(),
         ];
