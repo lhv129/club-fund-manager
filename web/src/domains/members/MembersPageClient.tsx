@@ -25,23 +25,15 @@ import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatDate(iso: string | null | undefined): string {
-    if (!iso) return "—";
-    return new Intl.DateTimeFormat("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    }).format(new Date(iso));
-}
+import { formatDate } from "@/utils/index";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function MembersPageClient() {
     const t = useTranslations("common");
     const tm = useTranslations("member");
+    const tu = useTranslations("user");
+
     const router = useRouter();
 
     const { hasPermission, isSuperAdmin } = useAuth();
@@ -110,29 +102,65 @@ export function MembersPageClient() {
             render: (row) => (
                 <div className="flex flex-col min-w-0">
                     <span className="text-fg font-medium truncate">{row.user.fullname}</span>
-                    {row.user.role && (
-                        <span className="text-fg-muted text-xs truncate">{row.user.role.name}</span>
-                    )}
+                    <span className="text-fg-muted text-xs truncate">{row.user.phone ?? "—"}</span>
                 </div>
             ),
         },
         {
-            key: "phone",
-            label: tm("phone"),
+            key: "gender",
+            label: tu("gender"),
             render: (row) => (
-                <span className="text-sm text-fg whitespace-nowrap">
-                    {row.user.phone ?? "—"}
+                <span className="text-sm text-fg">
+                    {row.user.gender === "male"
+                        ? tu("genderMale")
+                        : row.user.gender === "female"
+                            ? tu("genderFemale")
+                            : row.user.gender === "other"
+                                ? tu("genderOther")
+                                : "—"}
                 </span>
             ),
         },
         {
-            key: "email",
-            label: t("email"),
-            render: (row) => (
-                <span className="text-sm text-fg-muted whitespace-nowrap">
-                    {row.user.email}
-                </span>
-            ),
+            key: "role",
+            label: t("role"),
+            render: (row) => {
+                if (row.user.is_superadmin) {
+                    return (
+                        <Badge
+                            variant="super_admin"
+                            title={t("superAdmin")}
+                            showDot={false}
+                        />
+                    );
+                }
+
+                if (row.user.is_system_admin) {
+                    return (
+                        <Badge
+                            variant="admin"
+                            title={t("systemAdmin")}
+                            showDot={false}
+                        />
+                    );
+                }
+
+                if (!row.role) {
+                    return (
+                        <span className="text-sm text-fg-muted whitespace-nowrap">
+                            —
+                        </span>
+                    );
+                }
+
+                return (
+                    <Badge
+                        variant="role"
+                        title={row.role.translation?.name ?? "—"}
+                        showDot={false}
+                    />
+                );
+            },
         },
         {
             key: "joined_at",
@@ -150,6 +178,7 @@ export function MembersPageClient() {
                 <Badge
                     variant={row.is_active ? "active" : "inactive"}
                     title={row.is_active ? t("active") : t("inactive")}
+                    showDot={false}
                 />
             ),
         },

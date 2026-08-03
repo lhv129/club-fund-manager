@@ -1,25 +1,28 @@
 // @/domains/role/components/RolesPageClient.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 
 import { Table, ColumnDef } from "@/components/shared/ui/Table";
-import { FilterBar } from "@/components/shared/ui/FilterBar";
+import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
 import { Pagination } from "@/components/shared/ui/Pagination";
 import { FormModal, type SubmitResult } from "@/components/shared/forms/FormModal";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
+import Select from "@/components/shared/ui/Select";
+import { Badge } from "@/components/shared/ui/Badge";
 import { useListParams } from "@/hooks/useListParams";
 import { useRoles } from "@/domains/role/hooks/useRoles";
 import type { Role, RoleFilters, RoleTranslation } from "@/domains/role/types";
 import { APP_ROUTES } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+import { getTranslatedName } from "@/lib/translations";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -54,18 +57,29 @@ export function RolesPageClient() {
 
     const router = useRouter();
 
-    const getName = (translations?: RoleTranslation[]) =>
-        translations?.find((x) => x.locale === locale)?.name ??
-        translations?.[0]?.name ??
-        "—";
+    // ── Options ───────────────────────────────────────────────────────────────
+    const scopeOptions = [
+        { value: "global", label: tr("scopeGlobal") },
+        { value: "club", label: tr("scopeClub") },
+    ];
+
+    const sortOptions = [
+        { value: "sort_order", label: t("sortOrder") },
+        { value: "created_at", label: t("createdAt") },
+    ];
 
     // ── Params ────────────────────────────────────────────────────────────────
     const { params, setPage, setLimit, updateMany, reset } =
         useListParams<RoleFilters>({
-            defaultFilters: { search: "", is_active: undefined },
+            defaultFilters: { search: "", is_active: undefined, scope: undefined },
             defaultSortBy: "sort_order",
             defaultSortDir: "asc",
         });
+
+    // Draft cho extraFilters (chỉ apply khi bấm "Tìm kiếm")
+    const [draftScope, setDraftScope] = useState<"global" | "club" | undefined>(params.scope);
+
+    useEffect(() => { setDraftScope(params.scope); }, [params.scope]);
 
     // ── Cache hook ────────────────────────────────────────────────────────────
     const {
@@ -91,6 +105,19 @@ export function RolesPageClient() {
     const openEdit = (row: Role) => { setEditing(row); setModalOpen(true); };
     const closeModal = () => { setModalOpen(false); setEditing(null); };
 
+    // ── FilterBar handlers ────────────────────────────────────────────────────
+    const handleApply = (filters: AppliedFilters) => {
+        updateMany({
+            ...filters,
+            scope: draftScope,
+        } as Partial<typeof params>);
+    };
+
+    const handleReset = () => {
+        setDraftScope(undefined);
+        reset();
+    };
+
     // ── Submit ────────────────────────────────────────────────────────────────
     const handleSubmit = async (
         values: Record<string, string>,
@@ -103,11 +130,6 @@ export function RolesPageClient() {
         if (!result) closeModal();
         return result;
     };
-
-    const sortOptions = [
-        { value: "sort_order", label: t("sortOrder") },
-        { value: "created_at", label: t("createdAt") },
-    ];
 
     // ── Columns ───────────────────────────────────────────────────────────────
     const columns: ColumnDef<Role>[] = [
@@ -127,12 +149,23 @@ export function RolesPageClient() {
             render: (row) => (
                 <div className="flex flex-col min-w-0">
                     <span className="font-medium text-foreground">
-                        {getName(row.translations)}
+                        {getTranslatedName(row.translations, locale) ?? "—"}
                     </span>
                     <span className="font-mono text-xs text-foreground-muted mt-0.5">
                         {row.slug}
                     </span>
                 </div>
+            ),
+        },
+        {
+            key: "scope",
+            label: tr("scope"),
+            render: (row) => (
+                <Badge
+                    variant={row.scope === "global" ? "admin" : "role"}
+                    title={row.scope === "global" ? tr("scopeGlobal") : tr("scopeClub")}
+                    showDot={false}
+                />
             ),
         },
         {
@@ -158,6 +191,24 @@ export function RolesPageClient() {
             ),
         },
     ];
+
+    // ── extraFilters ──────────────────────────────────────────────────────────
+    const extraFilters = (
+        <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-foreground-muted">
+                {tr("scope")}
+            </span>
+            <Select
+                label={tr("scope")}
+                options={scopeOptions}
+                value={draftScope ?? ""}
+                onChange={(v) =>
+                    setDraftScope((v || undefined) as "global" | "club" | undefined)
+                }
+                placeholder={t("all")}
+            />
+        </div>
+    );
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
@@ -191,8 +242,9 @@ export function RolesPageClient() {
                     sortDir={params.sort_dir}
                     sortOptions={sortOptions}
                     loading={isLoading}
-                    onApply={(filters) => updateMany(filters as Partial<typeof params>)}
-                    onReset={reset}
+                    onApply={handleApply}
+                    onReset={handleReset}
+                    extraFilters={extraFilters}
                 />
 
                 <Table
@@ -287,7 +339,7 @@ export function RolesPageClient() {
                 description={t("deleteConfirmDesc")}
                 message={
                     deleteTarget
-                        ? tr("deleteConfirmMsg", { name: getName(deleteTarget.translations) })
+                        ? tr("deleteConfirmMsg", { name: getTranslatedName(deleteTarget.translations, locale) })
                         : ""
                 }
                 confirmText={t("delete")}

@@ -1,3 +1,5 @@
+import { Role } from "@/domains/role/types";
+
 export type UserStatus = "active" | "inactive" | "banned";
 
 export type UserGender = "male" | "female" | "other";
@@ -16,6 +18,9 @@ export interface User {
   avatar: string | null;
   email_verified_at: string | null;
   status: UserStatus;
+  is_superadmin?: boolean;
+  is_system_admin?: boolean;
+  role?: Role;
   created_at: string | null;
   updated_at: string | null;
   deleted_at: string | null;

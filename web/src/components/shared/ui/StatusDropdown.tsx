@@ -23,6 +23,7 @@ interface StatusDropdownProps {
     onChange?: (value: string) => void;
     loading?: boolean;
     disabled?: boolean;
+    showDot?: boolean;
 }
 
 export function StatusDropdown({
@@ -31,6 +32,7 @@ export function StatusDropdown({
     onChange,
     loading = false,
     disabled = false,
+    showDot = true,
 }: StatusDropdownProps) {
     const [open, setOpen] = useState(false);
     const [dropStyle, setDropStyle] = useState<CSSProperties>({});
@@ -116,6 +118,7 @@ export function StatusDropdown({
             <Badge
                 variant={currentOption.variant as BadgeVariant}
                 title={currentOption.label}
+                showDot={showDot}
             />
         );
     }

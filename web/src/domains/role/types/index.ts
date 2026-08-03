@@ -12,6 +12,7 @@ export interface RoleTranslation {
 export interface Role {
   id: number;
   slug: string;
+  scope?: "global" | "club";
   is_active: boolean;
   sort_order: number;
   permissions_count?: number;
@@ -26,6 +27,7 @@ export interface Role {
 export type RoleFilters = {
   search: string;
   is_active: 0 | 1 | undefined;
+  scope?: "global" | "club";
 };
 
 

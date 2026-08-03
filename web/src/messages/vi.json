@@ -80,7 +80,9 @@
     "items": "kết quả",
     "loadMore": "Xem thêm",
     "allLoaded": "Đã hiển thị tất cả dữ liệu",
-    "noResultsFound": "Không tìm thấy kết quả phù hợp"
+    "noResultsFound": "Không tìm thấy kết quả phù hợp",
+    "systemAdmin": "Quản trị hệ thống",
+    "superAdmin": "Super Admin"
   },
   "metadata": {
     "users": {
@@ -304,7 +306,9 @@
     "usernamePlaceholder": "vd: john_doe",
     "emailPlaceholder": "vd: john@example.com",
     "phonePlaceholder": "vd: 0901234567",
-    "addressPlaceholder": "Nhập địa chỉ"
+    "addressPlaceholder": "Nhập địa chỉ",
+    "rolePlaceholder": "Chọn chức vụ",
+    "searchPlaceholder": "Nhập tên, email hoặc số điện thoại..."
   },
   "richEditor": {
     "paragraph": "Đoạn văn",
@@ -356,6 +360,7 @@
     "scope": "Phạm vi",
     "scopeSystem": "Hệ thống",
     "scopeClub": "Câu lạc bộ",
+    "scopeGlobal": "Toàn hệ thống",
     "assignPermissions": "Phân quyền",
     "noPermissions": "Chưa có quyền nào trong hệ thống",
     "permissionsCount": "Số quyền",

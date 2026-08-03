@@ -80,7 +80,9 @@
     "items": "items",
     "loadMore": "Show more",
     "allLoaded": "All items loaded",
-    "noResultsFound": "No results found"
+    "noResultsFound": "No results found",
+    "systemAdmin": "System Admin",
+    "superAdmin": "Super Admin"
   },
   "metadata": {
     "users": {
@@ -305,7 +307,9 @@
     "usernamePlaceholder": "e.g. john_doe",
     "emailPlaceholder": "e.g. john@example.com",
     "phonePlaceholder": "e.g. 0901234567",
-    "addressPlaceholder": "Enter address"
+    "addressPlaceholder": "Enter address",
+    "rolePlaceholder": "Select role",
+    "searchPlaceholder": "Enter name, email, or phone number..."
   },
   "richEditor": {
     "paragraph": "Paragraph",
@@ -357,6 +361,7 @@
     "scope": "Scope",
     "scopeSystem": "System",
     "scopeClub": "Club",
+    "scopeGlobal": "Global",
     "assignPermissions": "Assign permissions",
     "permissionsTitle": "Role Permissions",
     "permissionsSubtitle": "Role: {role}",

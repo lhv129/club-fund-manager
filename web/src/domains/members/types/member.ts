@@ -1,17 +1,6 @@
 // src/domains/club/types/member.ts
-
-export interface ClubMemberUser {
-    id: number;
-    fullname: string;
-    email: string;
-    phone: string | null;
-    avatar: string | null;
-    role?: {
-        id: number;
-        name: string;
-    };
-}
-
+import type { User } from "@/domains/user/types";
+import type { Role } from "@/domains/role/types";
 export interface ClubMemberActor {
     id: number;
     fullname: string;
@@ -27,7 +16,8 @@ export interface ClubMember {
     is_active: boolean;
     joined_at: string | null;
     rejected_reason: string | null;
-    user: ClubMemberUser;
+    user: User;
+    role?: Role;
     reviewedBy: ClubMemberActor | null;
     invitedBy: ClubMemberActor | null;
     removedBy?: ClubMemberActor | null;

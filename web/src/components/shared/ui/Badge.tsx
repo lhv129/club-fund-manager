@@ -21,7 +21,8 @@ export type BadgeVariant =
   | "public"
   | "private"
   | "request"
-  | "invite";
+  | "invite"
+  | "role";
 
 interface BadgeProps {
   /** Key khai báo màu — không cần truyền màu thủ công */
@@ -130,6 +131,12 @@ const CONFIG: Record<
     bg: "bg-blue-500/10",
     text: "text-blue-600 dark:text-blue-400",
     ring: "ring-blue-500/20",
+  },
+  role: {
+    dot: "bg-gray-400",
+    bg: "bg-gray-500/10",
+    text: "text-gray-600 dark:text-gray-400",
+    ring: "ring-gray-500/20",
   },
 };
 

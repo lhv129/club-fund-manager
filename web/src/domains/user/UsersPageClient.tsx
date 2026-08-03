@@ -21,15 +21,10 @@ import { useUsers } from "@/domains/user/hooks/useUsers";
 import type { User, UserFilters, UserStatus } from "@/domains/user/types";
 import { APP_ROUTES } from "@/constants";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+import { Badge } from "@/components/shared/ui/Badge";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-  }).format(new Date(iso));
-}
+import { formatDate } from "@/utils/index";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -170,23 +165,25 @@ export function UsersPageClient() {
       ),
     },
     {
-      key: "username", label: tu("username"),
-      render: (row) => (
-        <span className="font-mono text-xs text-fg-muted bg-gray-100 dark:bg-gray-800
-                    px-2 py-0.5 rounded-md whitespace-nowrap">
-          @{row.username}
-        </span>
-      ),
-    },
-    {
       key: "phone", label: tu("phone"),
       render: (row) => (
         <span className="text-sm text-fg whitespace-nowrap">{row.phone ?? "—"}</span>
       ),
     },
     {
-      key: "gender", label: tu("gender"),
-      render: (row) => <span className="text-sm text-fg">{row.gender ?? "—"}</span>,
+      key: "gender",
+      label: tu("gender"),
+      render: (row) => (
+        <span className="text-sm text-fg">
+          {row.gender === "male"
+            ? tu("genderMale")
+            : row.gender === "female"
+              ? tu("genderFemale")
+              : row.gender === "other"
+                ? tu("genderOther")
+                : "—"}
+        </span>
+      ),
     },
     {
       key: "date_of_birth", label: tu("dateOfBirth"),
@@ -197,14 +194,54 @@ export function UsersPageClient() {
       ),
     },
     {
-      key: "email_verified_at", label: tu("emailVerified"),
+      key: "role",
+      label: t("role"),
+      render: (row) => {
+        if (row.is_superadmin) {
+          return (
+            <Badge
+              variant="super_admin"
+              title={t("superAdmin")}
+              showDot={false}
+            />
+          );
+        }
+
+        if (row.is_system_admin) {
+          return (
+            <Badge
+              variant="admin"
+              title={t("systemAdmin")}
+              showDot={false}
+            />
+          );
+        }
+
+        if (!row.role) {
+          return (
+            <span className="text-sm text-fg-muted whitespace-nowrap">
+              —
+            </span>
+          );
+        }
+
+        return (
+          <Badge
+            variant="role"
+            title={row.role.translation?.name ?? "—"}
+            showDot={false}
+          />
+        );
+      },
+    },
+    {
+      key: "email_verified_at",
+      label: tu("emailVerified"),
       render: (row) => (
-        <StatusDropdown
-          value={row.email_verified_at ? "verified" : "unverified"}
-          options={[
-            { value: "verified", label: tu("verified"), variant: "active" },
-            { value: "unverified", label: tu("unverified"), variant: "inactive" },
-          ]}
+        <Badge
+          variant={row.email_verified_at ? "active" : "inactive"}
+          title={row.email_verified_at ? tu("verified") : tu("unverified")}
+          showDot={false}
         />
       ),
     },
@@ -326,6 +363,7 @@ export function UsersPageClient() {
           onApply={handleApply}
           onReset={handleReset}
           extraFilters={extraFilters}
+          searchPlaceholder={tu("searchPlaceholder")}
         />
 
         <Table
