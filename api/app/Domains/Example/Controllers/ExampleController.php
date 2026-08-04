@@ -3,55 +3,66 @@
 namespace App\Domains\Example\Controllers;
 
 use App\Base\BaseController;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Domains\Example\Requests\FilterExampleRequest;
+use App\Domains\Example\Requests\ReorderExampleRequest;
 use App\Domains\Example\Requests\StoreExampleRequest;
 use App\Domains\Example\Requests\UpdateExampleRequest;
 use App\Domains\Example\Resources\ExampleResource;
 use App\Domains\Example\Services\ExampleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ExampleController extends BaseController
 {
-    protected $service;
-
-    public function __construct(ExampleService $service) {
-        $this->service = $service;
-    }
+    public function __construct(protected ExampleService $service) {}
 
     /**
      * GET /api/v1/examples?search=abc&is_active=1&user_id=2&sort_by=title&sort_dir=asc&limit=20&page=1
      */
-    public function index(Request $request): JsonResponse
+    public function index(FilterExampleRequest $request): JsonResponse
     {
-        $params    = $request->only(['limit', 'page', 'search', 'is_active', 'user_id', 'sort_by', 'sort_dir']);
-        $paginator = $this->service->paginate($params);
-
-        return $this->paginateResponse($paginator, __('domains/example.list'));
-    }
-
-    /**
-     * GET /api/v1/examples/active — dropdown
-     */
-    public function active(): JsonResponse
-    {
-        $data = $this->service->getActive();
-
-        return $this->responseCommon(true, __('domains/example.active'), ExampleResource::collection($data));
-    }
-
-    /**
-     * GET /api/v1/examples/meta/{slug}
-     */
-    public function meta(string $slug): JsonResponse
-    {
-        $data = $this->service->findByConditions(
-            conditions: ['slug' => $slug, 'is_active' => true],
-            select: ['id', 'title', 'slug', 'description'],
-            orFail: true,
+        return $this->paginateResponse(
+            $this->service->paginate($request->validated()),
+            __('domains/example.list'),
+            ExampleResource::class,
         );
+    }
 
-        return $this->responseCommon(true, __('domains/example.meta'), new ExampleResource($data));
+    /**
+     * GET /api/v1/examples/cursor?limit=10&cursor=eyJpZCI6MTAwfQ
+     */
+    public function cursorIndex(Request $request): JsonResponse
+    {
+        return $this->cursorResponse(
+            $this->service->cursorPaginate($request->only(['limit', 'search', 'is_active', 'user_id'])),
+            __('domains/example.list'),
+            ExampleResource::class,
+        );
+    }
+
+    /**
+     * GET /api/v1/examples/select — dropdown, không Resource, không phân trang.
+     */
+    public function select(Request $request): JsonResponse
+    {
+        return $this->responseCommon(
+            true,
+            __('domains/example.select'),
+            $this->service->getForSelect($request->only(['search', 'is_active', 'user_id', 'limit'])),
+        );
+    }
+
+    /**
+     * GET /api/v1/examples/slug/{slug}
+     */
+    public function showBySlug(string $slug): JsonResponse
+    {
+        return $this->responseCommon(
+            true,
+            __('domains/example.detail'),
+            new ExampleResource($this->service->findBySlug($slug)),
+        );
     }
 
     /**
@@ -59,9 +70,11 @@ class ExampleController extends BaseController
      */
     public function show(int $id): JsonResponse
     {
-        $example = $this->service->findWithRelations($id, ['user']);
-
-        return $this->responseCommon(true, __('domains/example.show'), new ExampleResource($example));
+        return $this->responseCommon(
+            true,
+            __('domains/example.detail'),
+            new ExampleResource($this->service->findWithRelations($id, ['user'])),
+        );
     }
 
     /**
@@ -69,11 +82,15 @@ class ExampleController extends BaseController
      */
     public function store(StoreExampleRequest $request): JsonResponse
     {
-        $data = $request->validated();
+        $data             = $request->validated();
         $data['user_id']  = JWTAuth::user()->id;
-        $example = $this->service->create($data);
 
-        return $this->responseCommon(true, __('domains/example.store'), new ExampleResource($example), 201);
+        return $this->responseCommon(
+            true,
+            __('domains/example.created'),
+            new ExampleResource($this->service->create($data)),
+            201,
+        );
     }
 
     /**
@@ -81,19 +98,21 @@ class ExampleController extends BaseController
      */
     public function update(UpdateExampleRequest $request, int $id): JsonResponse
     {
-        $example = $this->service->update($id, $request->validated());
-
-        return $this->responseCommon(true, __('domains/example.update'), new ExampleResource($example));
+        return $this->responseCommon(
+            true,
+            __('domains/example.updated'),
+            new ExampleResource($this->service->update($id, $request->validated())),
+        );
     }
 
     /**
-     * DELETE /api/v1/examples/{id}
+     * DELETE /api/v1/examples/{id} — xoá mềm + dồn sort_order.
      */
     public function destroy(int $id): JsonResponse
     {
         $this->service->deleteWithSortOrder($id);
 
-        return $this->responseCommon(true, __('domains/example.destroy'));
+        return $this->responseCommon(true, __('domains/example.deleted'));
     }
 
     /**
@@ -101,24 +120,21 @@ class ExampleController extends BaseController
      */
     public function toggleStatus(int $id): JsonResponse
     {
-        $example = $this->service->toggleStatus($id);
-
-        return $this->responseCommon(true, __('domains/example.toggle_status'), new ExampleResource($example));
+        return $this->responseCommon(
+            true,
+            __('domains/example.status_toggled'),
+            new ExampleResource($this->service->toggleStatus($id)),
+        );
     }
 
     /**
-     * POST /api/v1/examples/reorder
+     * POST /api/v1/examples/reorder — kéo thả sort_order.
      * Body: [{ id: 1, sort_order: 2 }, { id: 2, sort_order: 1 }]
      */
-    public function reorder(Request $request): JsonResponse
+    public function reorder(ReorderExampleRequest $request): JsonResponse
     {
-        $request->validate([
-            '*.id'         => ['required', 'integer'],
-            '*.sort_order' => ['required', 'integer', 'min:0'],
-        ]);
+        $this->service->reorder($request->validated());
 
-        $this->service->reorder($request->all());
-
-        return $this->responseCommon(true, __('domains/example.reorder'));
+        return $this->responseCommon(true, __('domains/example.reordered'));
     }
 }

@@ -34,4 +34,5 @@ return [
 
     'register_success' => 'Đăng ký thành công! Vui lòng kiểm tra email :email để kích hoạt tài khoản.',
 
+    'update_profile' => 'Cập nhật thông tin cá nhân thành công',
 ];

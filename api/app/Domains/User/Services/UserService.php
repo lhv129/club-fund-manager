@@ -141,30 +141,56 @@ class UserService extends BaseService
         }
     }
 
-    public function update(int $id, array $data): User
+    public function prepareUpdateData($user, array $data)
     {
         if (isset($data['first_name'], $data['last_name'])) {
             $data['fullname'] = trim($data['last_name'] . ' ' . $data['first_name']);
-        }
-
-        if (!empty($data['avatar'])) {
-            $data['avatar'] = ImageHelper::uploadSingle(
-                file: $data['avatar'],
-                folder: 'users/avatars',
-            );
-        }
-
-        if (!empty($data['password'])) {
-            $data['password'] = Hash::make($data['password']);
-        } else {
-            unset($data['password']);
         }
 
         if (array_key_exists('gender', $data) && empty($data['gender'])) {
             $data['gender'] = null;
         }
 
-        return parent::update($id, $data);
+        $oldAvatar = $user->avatar;
+        $newAvatar = null;
+
+        DB::beginTransaction();
+
+        try {
+            if (!empty($data['avatar'])) {
+                $newAvatar = ImageHelper::uploadSingle(
+                    file: $data['avatar'],
+                    folder: 'users/avatars',
+                );
+
+                $data['avatar'] = $newAvatar;
+            }
+
+            $user->update($data);
+
+            DB::commit();
+
+            if ($newAvatar && $oldAvatar) {
+                ImageHelper::delete($oldAvatar);
+            }
+
+            return $user->fresh();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            if ($newAvatar) {
+                ImageHelper::delete($newAvatar);
+            }
+
+            throw $e;
+        }
+    }
+
+    public function update(int $id, array $data): User
+    {
+        $user = $this->repository->find($id);
+
+        return $this->prepareUpdateData($user, $data);
     }
 
     /**

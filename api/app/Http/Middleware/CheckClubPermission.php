@@ -38,7 +38,10 @@ class CheckClubPermission
 
         // 2. Nếu không có {id}, resolve từ {slug} hoặc {clubSlug}
         if (!$clubId) {
-            $slug = $request->route('clubSlug') ?? $request->route('slug');
+            $slug = $request->route('clubSlug')
+                ?? $request->route('slug')
+                ?? $request->input('clubSlug')
+                ?? $request->input('club_slug');
 
             if ($slug) {
                 $club = Club::whereHas('translations', function ($query) use ($slug) {

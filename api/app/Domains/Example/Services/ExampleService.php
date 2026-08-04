@@ -6,6 +6,7 @@ use App\Base\BaseService;
 use App\Domains\Example\Models\Example;
 use App\Domains\Example\Repositories\ExampleRepository;
 use App\Exceptions\ApiException;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,6 @@ use Illuminate\Support\Str;
 class ExampleService extends BaseService
 {
     protected string $notFoundMessage = 'domains/example.not_found';
-    protected object $repository;
 
     public function __construct(ExampleRepository $repository)
     {
@@ -29,27 +29,25 @@ class ExampleService extends BaseService
      * GET /api/v1/examples
      *   ?search=abc &is_active=1 &user_id=2 &sort_by=title &sort_dir=asc &limit=20 &page=1
      */
-    public function paginate(array $params = []): LengthAwarePaginator
+    public function paginate(array $filters = []): LengthAwarePaginator
     {
-        return $this->repository->paginate(
-            where: $this->buildExampleWhere($params),
-            orderBy: $this->buildOrderBy($params, ['id', 'title', 'sort_order', 'created_at']),
-            select: ['id', 'user_id', 'title', 'slug', 'is_active', 'sort_order', 'created_at'],
-            with: ['user:id,name'],
-            limit: (int) ($params['limit'] ?? 0),
-            page: (int) ($params['page']  ?? 0),
-        );
+        return $this->repository->getList($filters);
     }
 
     /**
-     * GET /api/v1/examples/active — dropdown
-     * Dùng scopeActive() trên Model → where is_active = true
+     * GET /api/v1/examples/cursor — infinite scroll.
      */
-    public function getActive(): Collection
+    public function cursorPaginate(array $filters = []): CursorPaginator
     {
-        return $this->repository->getActive(
-            select: ['id', 'title', 'slug'],
-        );
+        return $this->repository->getCursorList($filters);
+    }
+
+    /**
+     * GET /api/v1/examples/select — dropdown.
+     */
+    public function getForSelect(array $filters = []): Collection
+    {
+        return $this->repository->getForSelect($filters);
     }
 
     // -------------------------------------------------------------------------
@@ -57,8 +55,7 @@ class ExampleService extends BaseService
     // -------------------------------------------------------------------------
 
     /**
-     * find() kế thừa từ BaseService — không cần override
-     * BaseService::find() đã throw 404 với $this->notFoundMessage
+     * find() kế thừa từ BaseService — throw 404 với $this->notFoundMessage.
      */
     public function find($id): Example
     {
@@ -66,7 +63,7 @@ class ExampleService extends BaseService
     }
 
     /**
-     * Tìm kèm relations
+     * Tìm kèm relations.
      */
     public function findWithRelations(int $id, array $with = []): Example
     {
@@ -77,21 +74,22 @@ class ExampleService extends BaseService
         );
 
         if (!$example) {
-            throw new ApiException($this->notFoundMessage, 404);
+            throw new ApiException(__($this->notFoundMessage), 404);
         }
 
         return $example;
     }
 
     /**
-     * Tìm theo slug — throw 404 nếu không có
+     * Tìm theo slug — throw 404 nếu không có.
+     * findBySlug() kế thừa sẵn từ BaseRepository.
      */
     public function findBySlug(string $slug): Example
     {
         $example = $this->repository->findBySlug($slug);
 
         if (!$example) {
-            throw new ApiException($this->notFoundMessage, 404);
+            throw new ApiException(__($this->notFoundMessage), 404);
         }
 
         return $example;
@@ -103,10 +101,13 @@ class ExampleService extends BaseService
 
     public function create(array $data): Example
     {
-        if (empty($data['slug'])) {
+        // Sinh slug nếu client không truyền — Model boot() cũng tự sinh,
+        // nhưng đặt ở đây để dễ trace và test business rule.
+        if (empty($data['slug']) && !empty($data['title'])) {
             $data['slug'] = Str::slug($data['title']);
         }
 
+        // Auto sort_order = max + 1 nếu không truyền
         if (empty($data['sort_order'])) {
             $data['sort_order'] = $this->repository->getNextSortOrder();
         }
@@ -116,6 +117,7 @@ class ExampleService extends BaseService
 
     public function update(int $id, array $data): Example
     {
+        // Đổi title mà chưa truyền slug mới → sinh lại slug theo title
         if (isset($data['title']) && empty($data['slug'])) {
             $data['slug'] = Str::slug($data['title']);
         }
@@ -124,7 +126,7 @@ class ExampleService extends BaseService
     }
 
     /**
-     * Reorder khi kéo thả
+     * Reorder khi kéo thả.
      *
      * $data = [['id' => 1, 'sort_order' => 2], ['id' => 2, 'sort_order' => 1]]
      */
@@ -146,32 +148,5 @@ class ExampleService extends BaseService
             DB::rollBack();
             throw $e;
         }
-    }
-
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * FIX: đổi tên thành buildExampleWhere để tránh conflict P1038 với BaseService::buildWhere()
-     */
-    private function buildExampleWhere(array $params): array
-    {
-        // Equality + is_active
-        $where = $this->buildWhere($params, ['user_id']);
-
-        // is_active nhận '1','0',true,false — filter_var để convert đúng kiểu
-        if (isset($params['is_active']) && $params['is_active'] !== '') {
-            $active = filter_var($params['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-            if (!is_null($active)) {
-                $where['is_active'] = $active;
-            }
-        }
-
-        // Search theo title — dùng buildSearchWhere từ Base
-        return array_merge(
-            $where,
-            $this->buildSearchWhere($params, ['title']),
-        );
     }
 }

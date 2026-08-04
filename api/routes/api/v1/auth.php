@@ -13,5 +13,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::middleware('auth.jwt')->group(function () {
         Route::get('/profile', [AuthController::class, 'profile']);
+        Route::put('/update-profile', [AuthController::class, 'updateProfile']);
     });
 });

@@ -14,7 +14,8 @@ Route::prefix('v1')->group(function () {
     require __DIR__ . '/api/v1/club_member_role.php';
     require __DIR__ . '/api/v1/module.php';
     require __DIR__ . '/api/v1/role.php';
-    
+    require __DIR__ . '/api/v1/example.php';
+
 });
 
 

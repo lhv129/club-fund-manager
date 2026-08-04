@@ -27,4 +27,6 @@ return [
     'refresh_token_expired' => 'Refresh token has expired',
 
     'register_success' => 'Register successful! Please check your email :email to activate your account.',
+
+    'update_profile' => 'Update profile successful',
 ];

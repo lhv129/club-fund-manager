@@ -158,4 +158,10 @@ return [
 
     'unsupported_locales' => 'Unsupported locales: :locales.',
 
+    'custom' => [
+        'date_of_birth' => [
+            'before_or_equal' => 'You must be at least 8 years old.',
+            'after_or_equal' => 'Age cannot exceed 80.',
+        ],
+    ],
 ];

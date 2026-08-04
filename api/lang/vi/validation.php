@@ -157,4 +157,11 @@ return [
 
     'unsupported_locales' => 'Ngôn ngữ không được hỗ trợ: :locales.',
 
+    'custom' => [
+        'date_of_birth' => [
+            'before_or_equal' => 'Bạn phải từ 8 tuổi trở lên.',
+            'after_or_equal' => 'Tuổi không được vượt quá 80.',
+        ],
+    ],
+
 ];

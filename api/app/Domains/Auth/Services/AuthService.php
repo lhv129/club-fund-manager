@@ -70,4 +70,13 @@ class AuthService extends BaseService
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
         ];
     }
+
+    public function updateProfile(array $data): ProfileResource
+    {
+        $user = Auth::user();
+
+        $user = $this->userService->prepareUpdateData($user, $data);
+
+        return new ProfileResource($user);
+    }
 }

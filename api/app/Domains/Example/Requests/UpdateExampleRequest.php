@@ -13,11 +13,22 @@ class UpdateExampleRequest extends BaseRequest
         $id = $this->route('id');
 
         return [
-            'title'       => ['sometimes', 'string', 'max:255'],
-            'slug'        => ['sometimes', 'string', 'max:255', Rule::unique('examples', 'slug')->ignore($id)],
+            'title'       => ['sometimes', 'required', 'string', 'max:255'],
+            'slug'        => ['sometimes', 'required', 'string', 'max:255', Rule::unique('examples', 'slug')->ignore($id)],
             'description' => ['sometimes', 'nullable', 'string'],
             'is_active'   => ['sometimes', 'boolean'],
             'sort_order'  => ['sometimes', 'integer', 'min:0'],
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'title'       => __('domains/example.attributes.title'),
+            'slug'        => __('domains/example.attributes.slug'),
+            'description' => __('domains/example.attributes.description'),
+            'is_active'   => __('domains/example.attributes.is_active'),
+            'sort_order'  => __('domains/example.attributes.sort_order'),
         ];
     }
 }

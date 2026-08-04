@@ -10,14 +10,17 @@ class ProfileResource extends JsonResource
     {
         return [
             'id'           => $this->id,
-            'fullname'         => $this->fullname,
+            'first_name'   => $this->first_name,
+            'last_name'    => $this->last_name,
+            'fullname' => $this->fullname,
             'email'        => $this->email,
             'phone'        => $this->phone,
             'avatar'       => $this->avatar,
+            'date_of_birth' => $this->date_of_birth,
+            'gender' => $this->gender,
+            'address' => $this->address,
             'is_superadmin'  => $this->isSuperAdmin(),
             'is_system_admin'=> $this->isSystemAdmin(),
-            'is_active'    => $this->is_active,
-
             /*
              * SuperAdmin           → ['*']
              * Admin (system)       → { "club": [...], "member": [...], "user": [...] }  (FLAT, key = module slug)

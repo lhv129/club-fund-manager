@@ -17,11 +17,11 @@ class ExampleResource extends JsonResource
             'is_active'   => $this->is_active,
             'sort_order'  => $this->sort_order,
 
-            // Chỉ hiện user nếu đã được eager load — tránh N+1
-            // Controller phải gọi ->with('user') hoặc paginate with: ['user:id,name']
+            // Chỉ hiện user nếu đã được eager load — tránh N+1.
+            // User model dùng cột `fullname` (không có `name`).
             'user' => $this->whenLoaded('user', fn() => [
-                'id'   => $this->user->id,
-                'name' => $this->user->name,
+                'id'       => $this->user->id,
+                'fullname' => $this->user->fullname,
             ]),
 
             'created_at' => $this->created_at?->toISOString(),

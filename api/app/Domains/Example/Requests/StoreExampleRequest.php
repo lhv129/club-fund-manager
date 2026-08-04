@@ -6,9 +6,6 @@ use App\Base\BaseRequest;
 
 class StoreExampleRequest extends BaseRequest
 {
-    // authorize() đã có sẵn trong BaseRequest (return true)
-    // Nếu cần check quyền → override authorize() ở đây
-
     public function rules(): array
     {
         return [
@@ -18,17 +15,21 @@ class StoreExampleRequest extends BaseRequest
             'is_active'   => ['nullable', 'boolean'],
             'sort_order'  => ['nullable', 'integer', 'min:0'],
 
-            // user_id thường lấy từ Auth::id() trong controller, không cần validate
-            // Nhưng nếu admin tạo cho user khác thì cần:
-            // 'user_id' => ['required', 'integer', 'exists:users,id'],
+            // user_id lấy từ JWTAuth::user()->id trong Controller, không validate ở đây.
         ];
     }
 
-    public function messages(): array
+    /**
+     * Attribute label theo domain — hiển thị đúng label tiếng Việt/Anh khi validate fail.
+     */
+    public function attributes(): array
     {
         return [
-            'title.required' => 'Tiêu đề không được để trống',
-            'slug.unique'    => 'Slug đã tồn tại, vui lòng chọn slug khác',
+            'title'       => __('domains/example.attributes.title'),
+            'slug'        => __('domains/example.attributes.slug'),
+            'description' => __('domains/example.attributes.description'),
+            'is_active'   => __('domains/example.attributes.is_active'),
+            'sort_order'  => __('domains/example.attributes.sort_order'),
         ];
     }
 }
