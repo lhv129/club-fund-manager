@@ -14,4 +14,9 @@ return [
     'sync_role_success' => 'Sync role success',
     'not_found' => 'Club member role not found',
 
+    'attributes' => [
+        'club_member_role_id' => 'Club Member Role ID',
+        'role_slug' => 'Role Slug',
+        'club_slug' => 'Club Slug',
+    ],
 ];

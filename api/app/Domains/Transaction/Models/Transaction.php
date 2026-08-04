@@ -18,16 +18,18 @@ class Transaction extends Model
     protected $fillable = [
         'club_id',
         'bank_account_id',
-        'payment_code_id',     // MemberPaymentCode (nullable — nếu match được)
-        'user_id',             // nullable — nếu match được qua payment_code
+        'webhook_config_id',   // WebhookConfig (nullable — nếu match được)
+        'type', // income | expense
         'amount',
-        'type',                // 'income' | 'expense'
-        'description',         // nội dung gốc từ webhook / nhập tay
+        'balance',
+        'description',
+        'reference_code',
+        'sender_name',
+        'sender_account',
         'transaction_date',
-        'reference_code',      // mã tham chiếu từ ngân hàng
-        'status',              // 'pending' | 'confirmed' | 'rejected'
-        'note',                // ghi chú thêm của admin
-        'is_active',
+        'raw_payload',
+        'sort_order',
+        'is_active'
     ];
 
     protected function casts(): array

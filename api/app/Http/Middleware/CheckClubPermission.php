@@ -29,7 +29,9 @@ class CheckClubPermission
         }
 
         // Superadmin bypass — không cần check club_id
-        if ($user->is_superadmin) {
+        // Phải gọi method isSuperAdmin(), KHÔNG dùng $user->is_superadmin
+        // (User model không có property/accessor đó → luôn NULL → bypass không bao giờ chạy)
+        if ($user->isSuperAdmin()) {
             return $next($request);
         }
 

@@ -2,71 +2,68 @@
 
 namespace App\Domains\Webhook\Services;
 
-use App\Base\BaseService;
+use App\Domains\Transaction\Models\Transaction;
 use App\Domains\Webhook\Repositories\SePayWebhookRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class SePayWebhookService extends BaseService
+class SePayWebhookService
 {
-    protected object $repository;
-
     public function __construct(
-        SePayWebhookRepository $repository
+        protected SePayWebhookRepository $repository
     ) {
-        parent::__construct($repository);
+        // Không cần parent::__construct()
     }
 
-    public function handleWebhook(Request $request): void
+    public function handleWebhook(Request $request, string $token): Transaction
     {
-        if (! $this->verifySignature($request)) {
-            throw new UnauthorizedHttpException('', 'Invalid SePay signature.');
+        $config = $this->repository->findActiveConfigByToken($token);
+
+        if (! $config) {
+            throw new NotFoundHttpException('Webhook config not found or inactive.');
         }
+
+        if (! $this->verifySignature($request, $config->webhook_secret)) {
+            throw new HttpException(401, 'Invalid SePay signature.');
+        }
+
+        $payload = json_decode($request->getContent(), true);
 
         $this->repository->logWebhook(
             $request->headers->all(),
-            json_decode($request->getContent(), true)
+            $payload
         );
+
+        return $this->repository->createTransaction($config, $payload);
     }
 
-    /**
-     * Verify SePay Signature
-     */
-    private function verifySignature(Request $request): bool
+    private function verifySignature(Request $request, string $secret): bool
     {
         $signature = $request->header('X-SePay-Signature');
-        $timestamp = $request->header('X-SePay-Timestamp');
+        $timestamp  = $request->header('X-SePay-Timestamp');
 
-        if (
-            empty($signature) ||
-            empty($timestamp)
-        ) {
+        if (empty($signature) || empty($timestamp)) {
             return false;
         }
 
-        // Chống replay attack (5 phút)
         if (abs(time() - (int) $timestamp) > 300) {
             return false;
         }
 
-        $rawBody = $request->getContent();
-
-        $message = $timestamp . '.' . $rawBody;
-
-        $expectedSignature = 'sha256=' . hash_hmac(
-            'sha256',
-            $message,
-            config('services.sepay.webhook_secret')
-        );
+        $message  = $timestamp . '.' . $request->getContent();
+        $expected = 'sha256=' . hash_hmac('sha256', $message, $secret);
 
         Log::info([
-            'timestamp' => $timestamp,
-            'received_signature' => $signature,
-            'generated_signature' => $expectedSignature,
-            'verify_result' => hash_equals($expectedSignature, $signature),
+            'webhook_verify' => [
+                'timestamp'           => $timestamp,
+                'received_signature'  => $signature,
+                'generated_signature' => $expected,
+                'result'              => hash_equals($expected, $signature),
+            ],
         ]);
 
-        return hash_equals($expectedSignature, $signature);
+        return hash_equals($expected, $signature);
     }
 }

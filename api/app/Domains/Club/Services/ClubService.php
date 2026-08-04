@@ -10,6 +10,7 @@ use App\Exceptions\ApiException;
 use App\Helpers\ImageHelper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ClubService extends BaseService
 {
@@ -120,12 +121,15 @@ class ClubService extends BaseService
                 $this->repository->applySortOrder((int) $data['sort_order']);
             }
 
+            // Sinh storage_key
+            $data['storage_key'] = (string) Str::uuid7();
+
             $club = $this->repository->createWithTranslations($data, $translations);
 
             if ($logoFile) {
                 $logo = ImageHelper::uploadSingle(
                     file: $logoFile,
-                    folder: "clubs/{$club->id}/logo",
+                    folder: "{$club->storage_key}/logo",
                 );
 
                 $club->update([
@@ -154,7 +158,7 @@ class ClubService extends BaseService
             if (!empty($data['logo'])) {
                 $data['logo'] = ImageHelper::uploadSingle(
                     file: $data['logo'],
-                    folder: "clubs/{$club->id}/logo",
+                    folder: "{$club->storage_key}/logo",
                     oldFile: $club->logo,
                 );
             } else {
@@ -194,7 +198,7 @@ class ClubService extends BaseService
             $result = $this->deleteWithSortOrder($id);
 
             if ($result) {
-                ImageHelper::deleteFolder("clubs/{$club->id}");
+                ImageHelper::deleteFolder("{$club->storage_key}");
             }
 
             return $result;

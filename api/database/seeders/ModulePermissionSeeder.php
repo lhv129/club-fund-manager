@@ -26,7 +26,7 @@ class ModulePermissionSeeder extends Seeder
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
         [
-            'slug'       => 'member',
+            'slug'       => 'club_member',
             'sort_order' => 2,
             'translations' => [
                 'vi' => ['name' => 'Thành viên'],

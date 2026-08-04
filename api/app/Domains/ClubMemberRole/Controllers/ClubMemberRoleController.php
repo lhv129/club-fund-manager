@@ -20,6 +20,6 @@ class ClubMemberRoleController extends BaseController
     public function syncClubMemberRole(SyncClubMemberRoleRequest $request)
     {
         $data = $this->service->syncClubMemberRole($request->validated());
-        return $this->responseCommon(true, __('domains/clubMemberRole.sync_role_success'), new ClubMemberRoleResource($data), 200);
+        return $this->responseCommon(true, __('domains/club_member_role.sync_role_success'), new ClubMemberRoleResource($data), 200);
     }
 }

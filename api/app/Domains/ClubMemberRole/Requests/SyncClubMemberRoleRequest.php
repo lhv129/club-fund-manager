@@ -14,4 +14,13 @@ class SyncClubMemberRoleRequest extends BaseRequest
             'club_slug' => 'required|string|exists:club_translations,slug',
         ];
     }
+
+    public function attributes(): array
+    {
+        return [
+            'club_member_role_id'       => __('domains/club_member_role.attributes.club_member_role_id'),
+            'role_slug' => __('domains/club_member_role.attributes.role_slug'),
+            'club_slug' => __('domains/club_member_role.attributes.club_slug'),
+        ];
+    }
 }

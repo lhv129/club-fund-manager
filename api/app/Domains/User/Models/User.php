@@ -125,7 +125,7 @@ class User extends Authenticatable implements JWTSubject
             ->where('club_member_roles.user_id', $this->id)
             ->where('club_member_roles.is_active', 1)
             ->whereNull('club_member_roles.deleted_at')
-            ->where('club_member_roles.club_id')          // system scope
+            ->whereNull('club_member_roles.club_id')   // system scope
             ->where('roles.slug', 'superadmin')
             ->where('roles.is_active', 1)
             ->whereNull('roles.deleted_at')
@@ -136,6 +136,8 @@ class User extends Authenticatable implements JWTSubject
      * Admin:  club_id = null (system scope).
      * KHÔNG bypass — vẫn phải đi qua hasPermission(), nhưng ở system scope.
      * Quyền configurable do superadmin cấp qua POST /roles/{id}/permissions.
+     *
+     * Lưu ý: LOẠI TRỪ superadmin — superadmin chỉ được tính ở isSuperAdmin().
      */
     public function isSystemAdmin(): bool
     {
@@ -145,6 +147,7 @@ class User extends Authenticatable implements JWTSubject
             ->where('club_member_roles.is_active', 1)
             ->whereNull('club_member_roles.deleted_at')
             ->whereNull('club_member_roles.club_id')
+            ->where('roles.slug', '!=', 'superadmin')
             ->where('roles.is_active', 1)
             ->whereNull('roles.deleted_at')
             ->exists();
