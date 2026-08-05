@@ -43,7 +43,7 @@ class PlayingScheduleService extends BaseService
     // Single record
     // -------------------------------------------------------------------------
 
-    public function find($id): PlayingSchedule
+    public function find(int $id): PlayingSchedule
     {
         return parent::find($id);
     }
@@ -99,30 +99,10 @@ class PlayingScheduleService extends BaseService
 
     public function toggleStatus(int $id): PlayingSchedule
     {
-        $schedule              = $this->find($id);
+        $schedule = $this->find($id);
         $schedule->is_active   = !$schedule->is_active;
         $schedule->save();
 
         return $schedule->fresh('translations');
-    }
-
-    public function reorder(array $data): bool
-    {
-        DB::beginTransaction();
-
-        try {
-            foreach ($data as $item) {
-                $this->repository->editWhere(
-                    where: ['id' => $item['id']],
-                    data: ['sort_order' => $item['sort_order']],
-                );
-            }
-
-            DB::commit();
-            return true;
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            throw $e;
-        }
     }
 }

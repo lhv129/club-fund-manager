@@ -124,6 +124,24 @@ class ModulePermissionSeeder extends Seeder
             ],
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
+        [
+            'slug'       => 'modules',
+            'sort_order' => 13,
+            'translations' => [
+                'vi' => ['name' => 'Modules'],
+                'en' => ['name' => 'Modules'],
+            ],
+            'actions' => ['view', 'create', 'update', 'delete'],
+        ],
+        [
+            'slug'       => 'monthly_contribution',
+            'sort_order' => 14,
+            'translations' => [
+                'vi' => ['name' => 'Đóng quỹ hàng tháng'],
+                'en' => ['name' => 'Monthly Contribution'],
+            ],
+            'actions' => ['view', 'create', 'update', 'delete'],
+        ],
     ];
 
     public function run(): void

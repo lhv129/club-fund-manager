@@ -21,6 +21,7 @@ Route::prefix('v1')->group(function () {
     require __DIR__ . '/api/v1/exchange_session.php';
     require __DIR__ . '/api/v1/member_payment_code.php';
     require __DIR__ . '/api/v1/transaction.php';
+    require __DIR__ . '/api/v1/monthly_contribution.php';
     require __DIR__ . '/api/v1/example.php';
 });
 

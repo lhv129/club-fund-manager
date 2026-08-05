@@ -1,19 +1,18 @@
 <?php
 
 /**
- * WEBHOOK CONFIG DOMAIN LANGUAGE FILE
+ * WEBHOOK CONFIG DOMAIN LANGUAGE FILE lang/vi/domains/webhook_config.php
  */
 
 return [
     'attributes' => [
-        'type'            => 'loại nhà cung cấp',
-        'api_key'         => 'API key',
-        'webhook_secret' => 'webhook secret',
+        'type'            => 'Loại nhà cung cấp',
+        'webhook_secret' => 'Webhook secret',
         'webhook_url'    => 'URL webhook',
-        'is_verified'    => 'trạng thái xác minh',
-        'is_active'      => 'trạng thái hoạt động',
-        'sort_order'     => 'thứ tự sắp xếp',
-        'bank_account_id' => 'tài khoản ngân hàng',
+        'is_verified'    => 'Trạng thái xác minh',
+        'is_active'      => 'Trạng thái hoạt động',
+        'sort_order'     => 'Thứ tự sắp xếp',
+        'bank_account_id' => 'Tài khoản ngân hàng',
     ],
 
     'list'           => 'Lấy danh sách cấu hình webhook thành công.',

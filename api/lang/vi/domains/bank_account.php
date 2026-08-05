@@ -11,6 +11,7 @@ return [
         'bank_name'       => 'Tên ngân hàng',
         'account_name' => 'Tên tài khoản',
         'account_number' => 'Số tài khoản',
+        'is_default' => 'Tài khoản ngân hàng mặc định',
     ],
 
     'list'           => 'Lấy danh sách tài khoản ngân hàng thành công.',

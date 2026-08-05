@@ -8,11 +8,11 @@
 
 return [
     'attributes' => [
-        'title'       => 'tiêu đề',
-        'slug'        => 'đường dẫn tĩnh',
-        'description' => 'mô tả',
-        'is_active'   => 'trạng thái hoạt động',
-        'sort_order'  => 'thứ tự sắp xếp',
+        'title'       => 'Tiêu đề',
+        'slug'        => 'Đường dẫn tĩnh',
+        'description' => 'Mô tả',
+        'is_active'   => 'Trạng thái hoạt động',
+        'sort_order'  => 'Thứ tự sắp xếp',
     ],
 
     'list'           => 'Lấy danh sách ví dụ thành công.',

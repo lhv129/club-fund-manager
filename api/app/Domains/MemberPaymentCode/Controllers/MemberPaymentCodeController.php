@@ -27,7 +27,7 @@ class MemberPaymentCodeController extends BaseController
     /**
      * GET /api/v1/payment-codes/{id}
      */
-    public function show(int $id): JsonResponse
+    public function show(string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -40,7 +40,7 @@ class MemberPaymentCodeController extends BaseController
      * GET /api/v1/monthly-contributions/{contributionId}/payment-code
      * Lấy code đang active (pending & chưa hết hạn) của 1 contribution.
      */
-    public function showForContribution(int $contributionId): JsonResponse
+    public function showForContribution(string $clubSlug, int $contributionId): JsonResponse
     {
         $code = $this->service->findForContribution($contributionId);
 
@@ -63,7 +63,7 @@ class MemberPaymentCodeController extends BaseController
      * POST /api/v1/monthly-contributions/{contributionId}/payment-code
      * Sinh (hoặc làm mới) payment code cho contribution.
      */
-    public function generateForContribution(int $contributionId): JsonResponse
+    public function generateForContribution(string $clubSlug, int $contributionId): JsonResponse
     {
         return $this->responseCommon(
             true,

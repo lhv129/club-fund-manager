@@ -11,7 +11,7 @@ class StoreBankAccountRequest extends BaseRequest
     {
         return [
             'club_id' => ['required', 'integer', 'exists:clubs,id'],
-            
+
             'bank_name' => ['required', 'string', 'max:255'],
 
             'account_number' => [
@@ -43,6 +43,11 @@ class StoreBankAccountRequest extends BaseRequest
                 'nullable',
                 'boolean',
             ],
+
+            'is_default' => [
+                'nullable',
+                'boolean',
+            ],
         ];
     }
 
@@ -55,6 +60,7 @@ class StoreBankAccountRequest extends BaseRequest
             'bank_name'       => __('domains/bank_account.attributes.bank_name'),
             'account_name' => __('domains/bank_account.attributes.account_name'),
             'account_number' => __('domains/bank_account.attributes.account_number'),
+            'is_default' => __('domains/bank_account.attributes.is_default'),
         ];
     }
 }

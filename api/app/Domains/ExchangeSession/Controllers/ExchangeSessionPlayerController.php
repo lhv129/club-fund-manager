@@ -17,7 +17,7 @@ class ExchangeSessionPlayerController extends BaseController
     /**
      * GET /api/v1/exchange-sessions/{sessionId}/players?paid=1&checked_in=0&sort_by=sort_order&sort_dir=asc&limit=20&page=1
      */
-    public function index(int $sessionId, FilterExchangeSessionPlayerRequest $request): JsonResponse
+    public function index(string $clubSlug, int $sessionId, FilterExchangeSessionPlayerRequest $request): JsonResponse
     {
         return $this->paginateResponse(
             $this->service->paginate($sessionId, $request->validated()),
@@ -29,7 +29,7 @@ class ExchangeSessionPlayerController extends BaseController
     /**
      * GET /api/v1/exchange-sessions/{sessionId}/players/{id}
      */
-    public function show(int $sessionId, int $id): JsonResponse
+    public function show(string $clubSlug, int $sessionId, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -41,7 +41,7 @@ class ExchangeSessionPlayerController extends BaseController
     /**
      * POST /api/v1/exchange-sessions/{sessionId}/players
      */
-    public function store(int $sessionId, StoreExchangeSessionPlayerRequest $request): JsonResponse
+    public function store(string $clubSlug, int $sessionId, StoreExchangeSessionPlayerRequest $request): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -54,7 +54,7 @@ class ExchangeSessionPlayerController extends BaseController
     /**
      * PUT /api/v1/exchange-sessions/{sessionId}/players/{id}
      */
-    public function update(int $sessionId, int $id, UpdateExchangeSessionPlayerRequest $request): JsonResponse
+    public function update(string $clubSlug, int $sessionId, int $id, UpdateExchangeSessionPlayerRequest $request): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -66,7 +66,7 @@ class ExchangeSessionPlayerController extends BaseController
     /**
      * DELETE /api/v1/exchange-sessions/{sessionId}/players/{id}
      */
-    public function destroy(int $sessionId, int $id): JsonResponse
+    public function destroy(string $clubSlug, int $sessionId, int $id): JsonResponse
     {
         $this->service->delete($sessionId, $id);
 
@@ -76,7 +76,7 @@ class ExchangeSessionPlayerController extends BaseController
     /**
      * PATCH /api/v1/exchange-sessions/{sessionId}/players/{id}/toggle-paid
      */
-    public function togglePaid(int $sessionId, int $id): JsonResponse
+    public function togglePaid(string $clubSlug, int $sessionId, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -88,7 +88,7 @@ class ExchangeSessionPlayerController extends BaseController
     /**
      * PATCH /api/v1/exchange-sessions/{sessionId}/players/{id}/toggle-check-in
      */
-    public function toggleCheckIn(int $sessionId, int $id): JsonResponse
+    public function toggleCheckIn(string $clubSlug, int $sessionId, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,

@@ -69,7 +69,7 @@ abstract class BaseService
     /**
      * Tìm 1 bản ghi theo ID, throw 404 nếu không tìm thấy.
      */
-    public function find($id)
+    public function find(int $id)
     {
         $data = $this->repository->find($id);
 

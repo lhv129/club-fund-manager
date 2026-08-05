@@ -1,29 +1,14 @@
 <?php
 
-return [
-    'attributes' => [
-        'club_id' => 'club',
-        'bank_account_id' => 'bank account',
-        'type' => 'transaction type',
-        'amount' => 'amount',
-        'balance' => 'balance',
-        'description' => 'description',
-        'reference_code' => 'reference code',
-        'sender_name' => 'sender name',
-        'sender_account' => 'sender account',
-        'transaction_date' => 'transaction date',
-        'is_active' => 'active status',
-        'sort_order' => 'sort order',
-    ],
+use App\Domains\Transaction\Controllers\TransactionController;
+use Illuminate\Support\Facades\Route;
 
-    'list' => 'Transactions retrieved successfully.',
-    'detail' => 'Transaction retrieved successfully.',
-    'select' => 'Transaction list retrieved successfully.',
-    'created' => 'Transaction created successfully.',
-    'updated' => 'Transaction updated successfully.',
-    'deleted' => 'Transaction deleted successfully.',
-    'status_toggled' => 'Transaction status updated successfully.',
-    'reordered' => 'Transaction order updated successfully.',
+Route::middleware('auth.jwt')->group(function () {
 
-    'not_found' => 'Transaction not found.',
-];
+    // Transactions — nested dưới clubs/{clubSlug}, cần perm.club
+    Route::prefix('clubs/{clubSlug}/transactions')->group(function () {
+        // Dynamic routes
+        Route::get('/', [TransactionController::class, 'index'])
+            ->middleware('perm.club:transaction,view');
+    });
+});

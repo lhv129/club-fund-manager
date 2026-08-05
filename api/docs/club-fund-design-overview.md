@@ -93,8 +93,8 @@ Mỗi module tuân theo luồng `Request → Controller → Service → Reposito
 
 ```text
 fund_periods
- id | club_id | year | month | male_amount | female_amount | exchange_amount | is_locked | is_active
- 1  | 1       | 2026 | 8     | 200000      | 150000        | 100000          | 0         | 1
+ id | club_id | year | month | male_amount | female_amount | exchange_male_amount | exchange_female_amount | is_locked | is_active
+ 1  | 1       | 2026 | 8     | 200000      | 150000        | 100000               | 100000                 | 0         | 1
 
 fund_period_translations
  id | fund_period_id | locale | title           | description

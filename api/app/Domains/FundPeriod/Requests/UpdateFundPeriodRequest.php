@@ -5,7 +5,6 @@ namespace App\Domains\FundPeriod\Requests;
 use App\Base\BaseRequest;
 use App\Base\Rules\SupportedLocalesOnly;
 use App\Base\Rules\UniqueTranslation;
-use Illuminate\Validation\Rule;
 
 class UpdateFundPeriodRequest extends BaseRequest
 {
@@ -19,7 +18,8 @@ class UpdateFundPeriodRequest extends BaseRequest
             'month'             => ['sometimes', 'required', 'integer', 'min:1', 'max:12'],
             'male_amount'       => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'female_amount'     => ['sometimes', 'nullable', 'numeric', 'min:0'],
-            'exchange_amount'   => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'exchange_male_amount'   => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'exchange_female_amount'   => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'is_locked'         => ['sometimes', 'boolean'],
             'is_active'          => ['sometimes', 'boolean'],
             'sort_order'         => ['sometimes', 'integer', 'min:0'],
@@ -51,7 +51,8 @@ class UpdateFundPeriodRequest extends BaseRequest
                 'month'             => __('domains/fund_period.attributes.month'),
                 'male_amount'       => __('domains/fund_period.attributes.male_amount'),
                 'female_amount'     => __('domains/fund_period.attributes.female_amount'),
-                'exchange_amount'   => __('domains/fund_period.attributes.exchange_amount'),
+                'exchange_male_amount' => __('domains/fund_period.attributes.exchange_male_amount'),
+                'exchange_female_amount' => __('domains/fund_period.attributes.exchange_female_amount'),
                 'is_locked'         => __('domains/fund_period.attributes.is_locked'),
                 'is_active'          => __('domains/fund_period.attributes.is_active'),
                 'sort_order'         => __('domains/fund_period.attributes.sort_order'),

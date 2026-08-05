@@ -9,6 +9,7 @@ return [
         'bank_name'       => 'Bank Name',
         'account_name' => 'Account Holder',
         'account_number' => 'Account Number',
+        'is_default' => 'Default Bank Account',
     ],
 
     'list'           => 'Bank accounts retrieved successfully.',

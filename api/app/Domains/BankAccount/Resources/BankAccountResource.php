@@ -20,6 +20,7 @@ class BankAccountResource extends JsonResource
             'qr_image' => $this->qr_image,
             'sort_order'   => $this->sort_order,
             'is_active'  => $this->is_active,
+            'is_default'  => $this->is_default,
 
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

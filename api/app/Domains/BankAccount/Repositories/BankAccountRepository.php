@@ -44,15 +44,16 @@ class BankAccountRepository extends BaseRepository
         return $this->model
             ->select([
                 'id',
-                'user_id',
-                'title',
-                'slug',
-                'description',
+                'club_id',
+                'bank_code',
+                'bank_name',
+                'account_name',
+                'account_number',
+                'qr_image',
                 'is_active',
                 'sort_order',
                 'created_at',
-            ])
-            ->with(['user:id,fullname']);
+            ]);
     }
 
     /**
@@ -80,6 +81,9 @@ class BankAccountRepository extends BaseRepository
 
         if (!empty($filters['user_id'])) {
             $query->where('user_id', (int) $filters['user_id']);
+        }
+        if (!empty($filters['club_id'])) {
+            $query->where('club_id', (int) $filters['club_id']);
         }
     }
 

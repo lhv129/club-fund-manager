@@ -32,30 +32,24 @@ class WebhookConfigService extends BaseService
      *
      * Inject club_id từ clubSlug — business rule, không phải query builder.
      */
-    public function paginateWebhookConfigs(string $clubSlug, array $filters = []): LengthAwarePaginator
+    public function paginate(array $filters = []): LengthAwarePaginator
     {
-        $filters['club_id'] = $this->resolveClubId($clubSlug);
-
         return $this->repository->getList($filters);
     }
 
     /**
      * GET /api/v1/clubs/{clubSlug}/webhook-configs/cursor
      */
-    public function cursorPaginateWebhookConfigs(string $clubSlug, array $filters = []): CursorPaginator
+    public function cursorPaginate(array $filters = []): CursorPaginator
     {
-        $filters['club_id'] = $this->resolveClubId($clubSlug);
-
         return $this->repository->getCursorList($filters);
     }
 
     /**
      * GET /api/v1/clubs/{clubSlug}/webhook-configs/select — dropdown.
      */
-    public function getForSelectWithClubId(string $clubSlug, array $filters = []): Collection
+    public function getForSelect(array $filters = []): Collection
     {
-        $filters['club_id'] = $this->resolveClubId($clubSlug);
-
         return $this->repository->getForSelect($filters);
     }
 
@@ -63,7 +57,7 @@ class WebhookConfigService extends BaseService
     // Single record
     // -------------------------------------------------------------------------
 
-    public function find($id): WebhookConfig
+    public function find(int $id): WebhookConfig
     {
         return parent::find($id);
     }
@@ -94,9 +88,8 @@ class WebhookConfigService extends BaseService
      * Tạo webhook config cho club.
      * club_id inject từ clubSlug (business rule).
      */
-    public function createWebhookConfig(string $clubSlug, array $data): WebhookConfig
+    public function create(array $data): WebhookConfig
     {
-        $data['club_id'] = $this->resolveClubId($clubSlug);
         // Tự sinh token ngẫu nhiên 40 ký tự
         $token = Str::random(40);
         $data['webhook_token'] = $token;
@@ -111,28 +104,5 @@ class WebhookConfigService extends BaseService
     public function update(int $id, array $data): WebhookConfig
     {
         return parent::update($id, $data);
-    }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Resolve club_id từ clubSlug.
-     * Throw 404 nếu club không tồn tại.
-     */
-    protected function resolveClubId(string $clubSlug): int
-    {
-        $club = $this->clubRepository->findByTranslationSlug(
-            slug: $clubSlug,
-            columns: ['id'],
-            conditions: ['is_active' => true],
-        );
-
-        if (!$club) {
-            throw new ApiException(__('domains/club.not_found'), 404);
-        }
-
-        return $club->id;
     }
 }

@@ -2,13 +2,13 @@
 
 return [
     'attributes' => [
-        'monthly_contribution_id' => 'khoản đóng quỹ',
-        'payment_code'            => 'mã thanh toán',
-        'status'                  => 'trạng thái',
-        'expired_at'              => 'hết hạn lúc',
-        'used_at'                 => 'sử dụng lúc',
-        'is_active'               => 'trạng thái hoạt động',
-        'sort_order'             => 'thứ tự',
+        'monthly_contribution_id' => 'Khoản đóng quỹ',
+        'payment_code'            => 'Mã thanh toán',
+        'status'                  => 'Trạng thái',
+        'expired_at'              => 'Hết hạn lúc',
+        'used_at'                 => 'Sử dụng lúc',
+        'is_active'               => 'Trạng thái hoạt động',
+        'sort_order'             => 'Thứ tự',
     ],
 
     'list'                  => 'Lấy danh sách mã thanh toán thành công.',

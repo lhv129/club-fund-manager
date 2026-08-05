@@ -20,11 +20,9 @@ class WebhookConfigController extends BaseController
      */
     public function index(FilterWebhookConfigRequest $request, string $clubSlug): JsonResponse
     {
-        return $this->paginateResponse(
-            $this->service->paginateWebhookConfigs($clubSlug, $request->validated()),
-            __('domains/webhook_config.list'),
-            WebhookConfigResource::class,
-        );
+        $filters = $request->validated();
+        $filters['club_id'] = $request->attributes->get('club_id');
+        return $this->paginateResponse($this->service->paginate($filters), __('domains/webhook_config.list'), WebhookConfigResource::class,);
     }
 
     /**
@@ -32,11 +30,9 @@ class WebhookConfigController extends BaseController
      */
     public function cursorIndex(Request $request, string $clubSlug): JsonResponse
     {
-        return $this->cursorResponse(
-            $this->service->cursorPaginateWebhookConfigs($clubSlug, $request->only(['limit', 'search', 'type', 'is_active', 'is_verified', 'bank_account_id'])),
-            __('domains/webhook_config.list'),
-            WebhookConfigResource::class,
-        );
+        $filters = $request->only(['limit', 'search', 'type', 'is_active', 'is_verified', 'bank_account_id']);
+        $filters['club_id'] = $request->attributes->get('club_id');
+        return $this->cursorResponse($this->service->cursorPaginate($filters),__('domains/webhook_config.list'),WebhookConfigResource::class);
     }
 
     /**
@@ -44,11 +40,9 @@ class WebhookConfigController extends BaseController
      */
     public function select(Request $request, string $clubSlug): JsonResponse
     {
-        return $this->responseCommon(
-            true,
-            __('domains/webhook_config.select'),
-            $this->service->getForSelectWithClubId($clubSlug, $request->only(['search', 'type', 'is_active', 'limit'])),
-        );
+        $filters = $request->only(['search', 'type', 'is_active', 'limit']);
+        $filters['club_id'] = $request->attributes->get('club_id');
+        return $this->responseCommon(true,__('domains/webhook_config.select'),$this->service->getForSelect($filters));
     }
 
     /**
@@ -68,10 +62,12 @@ class WebhookConfigController extends BaseController
      */
     public function store(StoreWebhookConfigRequest $request, string $clubSlug): JsonResponse
     {
+        $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
         return $this->responseCommon(
             true,
             __('domains/webhook_config.created'),
-            new WebhookConfigResource($this->service->createWebhookConfig($clubSlug, $request->validated())),
+            new WebhookConfigResource($this->service->create($data)),
             201,
         );
     }

@@ -46,11 +46,25 @@ class CheckClubPermission
                 ?? $request->input('club_slug');
 
             if ($slug) {
-                $club = Club::whereHas('translations', function ($query) use ($slug) {
-                    $query->where('slug', $slug);
-                })->first();
+                $club = Club::query()
+                    ->whereHas('translations', function ($query) use ($slug) {
+                        $query->where('slug', $slug);
+                    })
+                    ->first();
 
-                $clubId = $club?->id;
+                if (!$club) {
+                    throw new ApiException(
+                        __('domains/club.not_found'),
+                        404,
+                        'CLUB_NOT_FOUND'
+                    );
+                }
+
+                $clubId = $club->id;
+
+                // Có thể lưu lại để các tầng sau dùng, tránh query lại
+                $request->attributes->set('club', $club);
+                $request->attributes->set('club_id', $clubId);
             }
         }
 

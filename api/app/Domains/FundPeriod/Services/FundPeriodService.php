@@ -5,6 +5,7 @@ namespace App\Domains\FundPeriod\Services;
 use App\Base\BaseService;
 use App\Domains\FundPeriod\Models\FundPeriod;
 use App\Domains\FundPeriod\Repositories\FundPeriodRepository;
+use App\Domains\MonthlyContribution\Services\MonthlyContributionService;
 use App\Exceptions\ApiException;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -15,14 +16,14 @@ class FundPeriodService extends BaseService
 {
     protected string $notFoundMessage = 'domains/fund_period.not_found';
 
-    public function __construct(FundPeriodRepository $repository)
-    {
+    public function __construct(
+        FundPeriodRepository $repository,
+        protected MonthlyContributionService $contributionService,
+    ) {
         parent::__construct($repository);
     }
 
-    // -------------------------------------------------------------------------
-    // List / Search
-    // -------------------------------------------------------------------------
+    // ── List / Search ────────────────────────────────────────────────────────
 
     public function paginate(array $filters = []): LengthAwarePaginator
     {
@@ -39,9 +40,7 @@ class FundPeriodService extends BaseService
         return $this->repository->getForSelect($filters);
     }
 
-    // -------------------------------------------------------------------------
-    // Single record
-    // -------------------------------------------------------------------------
+    // ── Single record ────────────────────────────────────────────────────────
 
     public function find($id): FundPeriod
     {
@@ -63,10 +62,11 @@ class FundPeriodService extends BaseService
         return $fundPeriod;
     }
 
-    // -------------------------------------------------------------------------
-    // Write
-    // -------------------------------------------------------------------------
+    // ── Write ────────────────────────────────────────────────────────────────
 
+    /**
+     * Tạo FundPeriod + tự động sinh MonthlyContribution cho tất cả member active.
+     */
     public function create(array $data): FundPeriod
     {
         return DB::transaction(function () use ($data) {
@@ -77,58 +77,32 @@ class FundPeriodService extends BaseService
                 $data['sort_order'] = $this->repository->getNextSortOrder();
             }
 
-            return $this->repository->createWithTranslations($data, $translations);
+            $fundPeriod = $this->repository->createWithTranslations($data, $translations);
+
+            // Tự động sinh contribution cho tất cả member approved + active của club
+            $this->contributionService->generateForPeriod($fundPeriod);
+
+            return $fundPeriod;
         });
     }
 
     public function update(int $id, array $data): FundPeriod
     {
         return DB::transaction(function () use ($id, $data) {
-            $fundPeriod = $this->find($id);
-
+            $fundPeriod   = $this->find($id);
             $translations = $data['translations'] ?? [];
             unset($data['translations']);
 
-            return $this->repository->updateWithTranslations(
-                $fundPeriod,
-                $data,
-                $translations
-            );
+            return $this->repository->updateWithTranslations($fundPeriod, $data, $translations);
         });
     }
 
-    /**
-     * Toggle is_active, trả về fund period kèm translations.
-     */
     public function toggleStatus(int $id): FundPeriod
     {
-        $fundPeriod          = $this->find($id);
+        $fundPeriod            = $this->find($id);
         $fundPeriod->is_active = !$fundPeriod->is_active;
         $fundPeriod->save();
 
         return $fundPeriod->fresh('translations');
-    }
-
-    /**
-     * Reorder khi kéo thả.
-     */
-    public function reorder(array $data): bool
-    {
-        DB::beginTransaction();
-
-        try {
-            foreach ($data as $item) {
-                $this->repository->editWhere(
-                    where: ['id' => $item['id']],
-                    data: ['sort_order' => $item['sort_order']],
-                );
-            }
-
-            DB::commit();
-            return true;
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            throw $e;
-        }
     }
 }

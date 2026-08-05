@@ -6,14 +6,13 @@
 
 return [
     'attributes' => [
-        'type'            => 'provider type',
-        'api_key'         => 'API key',
-        'webhook_secret' => 'webhook secret',
-        'webhook_url'    => 'webhook URL',
-        'is_verified'    => 'verification status',
-        'is_active'      => 'active status',
-        'sort_order'     => 'sort order',
-        'bank_account_id' => 'bank account',
+        'type' => 'Provider Type',
+        'webhook_secret' => 'Webhook Secret',
+        'webhook_url'    => 'Webhook URL',
+        'is_verified'    => 'Verification Status',
+        'is_active'      => 'Active Status',
+        'sort_order'     => 'Sort Order',
+        'bank_account_id' => 'Bank Account',
     ],
 
     'list'           => 'Webhook configs retrieved successfully.',

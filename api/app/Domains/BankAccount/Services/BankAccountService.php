@@ -7,11 +7,8 @@ use App\Domains\BankAccount\Models\BankAccount;
 use App\Domains\BankAccount\Repositories\BankAccountRepository;
 use App\Domains\BankAccount\Services\BankProviderService;
 use App\Domains\Club\Repositories\ClubRepository;
-use App\Exceptions\ApiException;
 use App\Helpers\ImageHelper;
-use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
@@ -45,67 +42,6 @@ class BankAccountService extends BaseService
         return $this->repository->getList($filters);
     }
 
-    /**
-     * GET /api/v1/bank-accounts/cursor — infinite scroll.
-     */
-    public function cursorPaginate(array $filters = []): CursorPaginator
-    {
-        return $this->repository->getCursorList($filters);
-    }
-
-    /**
-     * GET /api/v1/bank-accounts/select — dropdown.
-     */
-    public function getForSelect(array $filters = []): Collection
-    {
-        return $this->repository->getForSelect($filters);
-    }
-
-    // -------------------------------------------------------------------------
-    // Single record
-    // -------------------------------------------------------------------------
-
-    /**
-     * find() kế thừa từ BaseService — throw 404 với $this->notFoundMessage.
-     */
-    public function find($id): BankAccount
-    {
-        return parent::find($id);
-    }
-
-    /**
-     * Tìm kèm relations.
-     */
-    public function findWithRelations(int $id, array $with = []): BankAccount
-    {
-        $bankAccount = $this->repository->first(
-            where: ['id' => $id],
-            with: $with,
-            select: ['*'],
-        );
-
-        if (!$bankAccount) {
-            throw new ApiException(__($this->notFoundMessage), 404);
-        }
-
-        return $bankAccount;
-    }
-
-    /**
-     * Tìm theo slug — throw 404 nếu không có.
-     * findBySlug() kế thừa sẵn từ BaseRepository.
-     */
-    public function findBySlug(string $slug): BankAccount
-    {
-        $bankAccount = $this->repository->findBySlug($slug);
-
-        if (!$bankAccount) {
-            throw new ApiException(__($this->notFoundMessage), 404);
-        }
-
-        return $bankAccount;
-    }
-
     // -------------------------------------------------------------------------
     // Write
     // -------------------------------------------------------------------------
@@ -119,6 +55,8 @@ class BankAccountService extends BaseService
         try {
 
             $club = $this->clubRepository->find($data['club_id']);
+
+            $data['is_active'] = $data['is_active'] ?? true;
 
             $data['bank_code'] = $this->bankProviderService->code($data['bank_name']);
 
@@ -159,7 +97,7 @@ class BankAccountService extends BaseService
 
         $bankAccount = $this->find($id);
 
-        $club = $this->clubRepository->find($bankAccount->club_id);
+        $club = $data['club'];
 
         $newQrImage = null;
         $oldQrImage = $bankAccount->qr_image;

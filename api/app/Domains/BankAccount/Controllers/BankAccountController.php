@@ -10,8 +10,6 @@ use App\Domains\BankAccount\Requests\UpdateBankAccountRequest;
 use App\Domains\BankAccount\Resources\BankAccountResource;
 use App\Domains\BankAccount\Services\BankAccountService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class BankAccountController extends BaseController
 {
@@ -22,58 +20,14 @@ class BankAccountController extends BaseController
      */
     public function index(FilterBankAccountRequest $request): JsonResponse
     {
+        $filters = $request->validated();
+
+        $filters['club_id'] = $request->attributes->get('club_id');
+
         return $this->paginateResponse(
-            $this->service->paginate($request->validated()),
+            $this->service->paginate($filters),
             __('domains/bank_account.list'),
             BankAccountResource::class,
-        );
-    }
-
-    /**
-     * GET /api/v1/bank-accounts/cursor?limit=10&cursor=eyJpZCI6MTAwfQ
-     */
-    public function cursorIndex(Request $request): JsonResponse
-    {
-        return $this->cursorResponse(
-            $this->service->cursorPaginate($request->only(['limit', 'search', 'is_active', 'user_id'])),
-            __('domains/bank_account.list'),
-            BankAccountResource::class,
-        );
-    }
-
-    /**
-     * GET /api/v1/bank-accounts/select — dropdown, không Resource, không phân trang.
-     */
-    public function select(Request $request): JsonResponse
-    {
-        return $this->responseCommon(
-            true,
-            __('domains/bank_account.select'),
-            $this->service->getForSelect($request->only(['search', 'is_active', 'user_id', 'limit'])),
-        );
-    }
-
-    /**
-     * GET /api/v1/bank-accounts/slug/{slug}
-     */
-    public function showBySlug(string $slug): JsonResponse
-    {
-        return $this->responseCommon(
-            true,
-            __('domains/bank_account.detail'),
-            new BankAccountResource($this->service->findBySlug($slug)),
-        );
-    }
-
-    /**
-     * GET /api/v1/bank-accounts/{id}
-     */
-    public function show(int $id): JsonResponse
-    {
-        return $this->responseCommon(
-            true,
-            __('domains/bank_account.detail'),
-            new BankAccountResource($this->service->findWithRelations($id, ['user'])),
         );
     }
 
@@ -83,7 +37,7 @@ class BankAccountController extends BaseController
     public function store(StoreBankAccountRequest $request): JsonResponse
     {
         $data = $request->validated();
-        
+
         return $this->responseCommon(
             true,
             __('domains/bank_account.created'),
@@ -95,19 +49,21 @@ class BankAccountController extends BaseController
     /**
      * PUT /api/v1/bank-accounts/{id}
      */
-    public function update(UpdateBankAccountRequest $request, int $id): JsonResponse
+    public function update(UpdateBankAccountRequest $request, string $clubSlug, int $id): JsonResponse
     {
+        $data = $request->validated();
+        $data['club'] = $request->attributes->get('club');
         return $this->responseCommon(
             true,
             __('domains/bank_account.updated'),
-            new BankAccountResource($this->service->update($id, $request->validated())),
+            new BankAccountResource($this->service->update($id, $data)),
         );
     }
 
     /**
      * DELETE /api/v1/bank-accounts/{id} — xoá mềm + dồn sort_order.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $clubSlug, int $id): JsonResponse
     {
         $this->service->deleteWithSortOrder($id);
 
@@ -117,7 +73,7 @@ class BankAccountController extends BaseController
     /**
      * PATCH /api/v1/bank-accounts/{id}/toggle-status
      */
-    public function toggleStatus(int $id): JsonResponse
+    public function toggleStatus(string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,

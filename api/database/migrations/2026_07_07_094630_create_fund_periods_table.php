@@ -23,7 +23,8 @@ return new class extends Migration
 
             $table->decimal('male_amount', 15, 2)->default(0);
             $table->decimal('female_amount', 15, 2)->default(0);
-            $table->decimal('exchange_amount', 15, 2)->default(0);
+            $table->decimal('exchange_male_amount', 15, 2)->default(0);
+            $table->decimal('exchange_female_amount', 15, 2)->default(0);
 
             $table->boolean('is_locked')->default(false);
 

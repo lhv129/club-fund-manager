@@ -3,6 +3,7 @@
 namespace App\Domains\FundPeriod\Models;
 
 use App\Domains\Club\Models\Club;
+use App\Domains\FundPeriod\Models\FundPeriodTranslation;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -26,7 +27,8 @@ class FundPeriod extends Model
 
         'male_amount',
         'female_amount',
-        'exchange_amount',
+        'exchange_male_amount',
+        'exchange_female_amount',
 
         'is_locked',
 
@@ -41,7 +43,8 @@ class FundPeriod extends Model
             'month'           => 'integer',
             'male_amount'     => 'decimal:2',
             'female_amount'   => 'decimal:2',
-            'exchange_amount' => 'decimal:2',
+            'exchange_male_amount' => 'decimal:2',
+            'exchange_female_amount' => 'decimal:2',
             'is_locked'       => 'boolean',
             'sort_order'      => 'integer',
             'is_active'       => 'boolean',

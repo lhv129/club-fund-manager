@@ -4,7 +4,6 @@ namespace App\Domains\PlayingSchedule\Controllers;
 
 use App\Base\BaseController;
 use App\Domains\PlayingSchedule\Requests\FilterPlayingScheduleRequest;
-use App\Domains\PlayingSchedule\Requests\ReorderPlayingScheduleRequest;
 use App\Domains\PlayingSchedule\Requests\StorePlayingScheduleRequest;
 use App\Domains\PlayingSchedule\Requests\UpdatePlayingScheduleRequest;
 use App\Domains\PlayingSchedule\Resources\PlayingScheduleResource;
@@ -55,7 +54,7 @@ class PlayingScheduleController extends BaseController
     /**
      * GET /api/v1/playing-schedules/{id}
      */
-    public function show(int $id): JsonResponse
+    public function show(string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -80,7 +79,7 @@ class PlayingScheduleController extends BaseController
     /**
      * PUT /api/v1/playing-schedules/{id}
      */
-    public function update(UpdatePlayingScheduleRequest $request, int $id): JsonResponse
+    public function update(UpdatePlayingScheduleRequest $request, string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -92,7 +91,7 @@ class PlayingScheduleController extends BaseController
     /**
      * DELETE /api/v1/playing-schedules/{id} — xoá mềm + dồn sort_order.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $clubSlug, int $id): JsonResponse
     {
         $this->service->deleteWithSortOrder($id);
 
@@ -102,22 +101,12 @@ class PlayingScheduleController extends BaseController
     /**
      * PATCH /api/v1/playing-schedules/{id}/toggle-status
      */
-    public function toggleStatus(int $id): JsonResponse
+    public function toggleStatus(string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
             __('domains/playing_schedule.status_toggled'),
             new PlayingScheduleResource($this->service->toggleStatus($id)),
         );
-    }
-
-    /**
-     * POST /api/v1/playing-schedules/reorder — kéo thả sort_order.
-     */
-    public function reorder(ReorderPlayingScheduleRequest $request): JsonResponse
-    {
-        $this->service->reorder($request->validated());
-
-        return $this->responseCommon(true, __('domains/playing_schedule.reordered'));
     }
 }

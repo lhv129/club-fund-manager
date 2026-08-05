@@ -10,6 +10,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ClubMember extends Model
 {
     use HasFactory, SoftDeletes;
+
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_REMOVED = 'removed';
+
     protected $fillable = [
         'club_id',
         'user_id',

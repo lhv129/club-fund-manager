@@ -2,13 +2,13 @@
 
 return [
     'attributes' => [
-        'monthly_contribution_id' => 'monthly contribution',
-        'payment_code'            => 'payment code',
-        'status'                  => 'status',
-        'expired_at'              => 'expired at',
-        'used_at'                 => 'used at',
-        'is_active'               => 'active status',
-        'sort_order'             => 'sort order',
+        'monthly_contribution_id' => 'Monthly Contribution',
+        'payment_code'            => 'Payment Code',
+        'status'                  => 'Status',
+        'expired_at'              => 'Expired At',
+        'used_at'                 => 'Used At',
+        'is_active'               => 'Active Status',
+        'sort_order'             => 'Sort Order',
     ],
 
     'list'                  => 'Payment codes retrieved successfully.',

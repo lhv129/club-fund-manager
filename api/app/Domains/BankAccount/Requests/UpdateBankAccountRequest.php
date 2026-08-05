@@ -49,6 +49,11 @@ class UpdateBankAccountRequest extends BaseRequest
                 'sometimes',
                 'boolean',
             ],
+
+            'is_default' => [
+                'nullable',
+                'boolean',
+            ],
         ];
     }
 
@@ -58,6 +63,7 @@ class UpdateBankAccountRequest extends BaseRequest
             'bank_name' => __('domains/bank_account.attributes.bank_name'),
             'account_name' => __('domains/bank_account.attributes.account_name'),
             'account_number' => __('domains/bank_account.attributes.account_number'),
+            'is_default' => __('domains/bank_account.attributes.is_default'),
         ];
     }
 }

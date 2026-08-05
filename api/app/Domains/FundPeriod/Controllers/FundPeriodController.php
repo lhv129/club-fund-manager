@@ -4,7 +4,6 @@ namespace App\Domains\FundPeriod\Controllers;
 
 use App\Base\BaseController;
 use App\Domains\FundPeriod\Requests\FilterFundPeriodRequest;
-use App\Domains\FundPeriod\Requests\ReorderFundPeriodRequest;
 use App\Domains\FundPeriod\Requests\StoreFundPeriodRequest;
 use App\Domains\FundPeriod\Requests\UpdateFundPeriodRequest;
 use App\Domains\FundPeriod\Resources\FundPeriodResource;
@@ -55,7 +54,7 @@ class FundPeriodController extends BaseController
     /**
      * GET /api/v1/fund-periods/{id}
      */
-    public function show(int $id): JsonResponse
+    public function show(string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -80,7 +79,7 @@ class FundPeriodController extends BaseController
     /**
      * PUT /api/v1/fund-periods/{id}
      */
-    public function update(UpdateFundPeriodRequest $request, int $id): JsonResponse
+    public function update(UpdateFundPeriodRequest $request, string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -92,7 +91,7 @@ class FundPeriodController extends BaseController
     /**
      * DELETE /api/v1/fund-periods/{id} — xoá mềm + dồn sort_order.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $clubSlug, int $id): JsonResponse
     {
         $this->service->deleteWithSortOrder($id);
 
@@ -102,7 +101,7 @@ class FundPeriodController extends BaseController
     /**
      * PATCH /api/v1/fund-periods/{id}/toggle-status
      */
-    public function toggleStatus(int $id): JsonResponse
+    public function toggleStatus(string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -111,14 +110,4 @@ class FundPeriodController extends BaseController
         );
     }
 
-    /**
-     * POST /api/v1/fund-periods/reorder — kéo thả sort_order.
-     * Body: [{ id: 1, sort_order: 2 }, { id: 2, sort_order: 1 }]
-     */
-    public function reorder(ReorderFundPeriodRequest $request): JsonResponse
-    {
-        $this->service->reorder($request->validated());
-
-        return $this->responseCommon(true, __('domains/fund_period.reordered'));
-    }
 }

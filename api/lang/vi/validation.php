@@ -162,6 +162,10 @@ return [
             'before_or_equal' => 'Bạn phải từ 8 tuổi trở lên.',
             'after_or_equal' => 'Tuổi không được vượt quá 80.',
         ],
+
+        'bank_account_id' => [
+            'exists' => ':attribute không thuộc câu lạc bộ hiện tại.',
+        ],
     ],
 
 ];

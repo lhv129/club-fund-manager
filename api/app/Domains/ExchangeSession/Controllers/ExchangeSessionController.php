@@ -4,7 +4,6 @@ namespace App\Domains\ExchangeSession\Controllers;
 
 use App\Base\BaseController;
 use App\Domains\ExchangeSession\Requests\FilterExchangeSessionRequest;
-use App\Domains\ExchangeSession\Requests\ReorderExchangeSessionRequest;
 use App\Domains\ExchangeSession\Requests\StoreExchangeSessionRequest;
 use App\Domains\ExchangeSession\Requests\UpdateExchangeSessionRequest;
 use App\Domains\ExchangeSession\Resources\ExchangeSessionResource;
@@ -55,7 +54,7 @@ class ExchangeSessionController extends BaseController
     /**
      * GET /api/v1/exchange-sessions/{id}
      */
-    public function show(int $id): JsonResponse
+    public function show(string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -80,7 +79,7 @@ class ExchangeSessionController extends BaseController
     /**
      * PUT /api/v1/exchange-sessions/{id}
      */
-    public function update(UpdateExchangeSessionRequest $request, int $id): JsonResponse
+    public function update(UpdateExchangeSessionRequest $request, string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -92,7 +91,7 @@ class ExchangeSessionController extends BaseController
     /**
      * DELETE /api/v1/exchange-sessions/{id} — xoá mềm + dồn sort_order.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $clubSlug, int $id): JsonResponse
     {
         $this->service->deleteWithSortOrder($id);
 
@@ -102,22 +101,12 @@ class ExchangeSessionController extends BaseController
     /**
      * PATCH /api/v1/exchange-sessions/{id}/toggle-status
      */
-    public function toggleStatus(int $id): JsonResponse
+    public function toggleStatus(string $clubSlug, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
             __('domains/exchange_session.status_toggled'),
             new ExchangeSessionResource($this->service->toggleStatus($id)),
         );
-    }
-
-    /**
-     * POST /api/v1/exchange-sessions/reorder — kéo thả sort_order.
-     */
-    public function reorder(ReorderExchangeSessionRequest $request): JsonResponse
-    {
-        $this->service->reorder($request->validated());
-
-        return $this->responseCommon(true, __('domains/exchange_session.reordered'));
     }
 }

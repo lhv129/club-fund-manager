@@ -6,11 +6,11 @@
 
 return [
     'attributes' => [
-        'title'       => 'title',
-        'slug'        => 'slug',
-        'description' => 'description',
-        'is_active'   => 'active status',
-        'sort_order'  => 'sort order',
+        'title'       => 'Title',
+        'slug'        => 'Slug',
+        'description' => 'Description',
+        'is_active'   => 'Active Status',
+        'sort_order'  => 'Sort Order',
     ],
 
     'list'           => 'Examples retrieved successfully.',

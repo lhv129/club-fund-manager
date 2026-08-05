@@ -115,26 +115,6 @@ class ExchangeSessionService extends BaseService
         return $session->fresh('translations');
     }
 
-    public function reorder(array $data): bool
-    {
-        DB::beginTransaction();
-
-        try {
-            foreach ($data as $item) {
-                $this->repository->editWhere(
-                    where: ['id' => $item['id']],
-                    data: ['sort_order' => $item['sort_order']],
-                );
-            }
-
-            DB::commit();
-            return true;
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-
     /**
      * Đồng bộ player_count + total_amount + amount_per_player từ danh sách player.
      * Gọi sau khi thêm/sửa/xoá player trong ExchangeSessionPlayerService.
