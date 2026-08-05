@@ -54,9 +54,10 @@ class CheckClubPermission
             }
         }
 
-        // 3. Fallback: lấy từ request body (club_id)
+        // 3. Fallback: lấy từ request body
         if (!$clubId) {
-            $clubId = $request->input('club_id');
+            $clubId = $request->input('club_id')
+                ?? $request->input('clubId');
         }
 
         if (!$clubId) {

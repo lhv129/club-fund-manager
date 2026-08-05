@@ -1,0 +1,48 @@
+<?php
+
+return [
+    'attributes' => [
+        'club_id'              => 'câu lạc bộ',
+        'playing_schedule_id'   => 'lịch đánh',
+        'transaction_id'         => 'giao dịch',
+        'session_date'           => 'ngày đánh',
+        'court_name'             => 'tên sân',
+        'court_address'          => 'địa chỉ sân',
+        'start_time'             => 'giờ bắt đầu',
+        'end_time'               => 'giờ kết thúc',
+        'type'                   => 'loại',
+        'status'                 => 'trạng thái',
+        'player_count'           => 'số người chơi',
+        'amount_per_player'      => 'tiền mỗi người',
+        'total_amount'           => 'tổng tiền',
+        'is_active'               => 'trạng thái hoạt động',
+        'sort_order'             => 'thứ tự',
+        'title'                  => 'tiêu đề',
+        'note'                   => 'ghi chú',
+
+        'player_user_id'   => 'người chơi',
+        'player_name'      => 'tên người chơi',
+        'player_amount'    => 'số tiền người chơi',
+        'player_paid'      => 'đã thanh toán',
+        'player_checked_in' => 'đã check-in',
+    ],
+
+    'list'                    => 'Lấy danh sách buổi đánh thành công.',
+    'detail'                  => 'Lấy chi tiết buổi đánh thành công.',
+    'select'                  => 'Lấy danh sách buổi đánh (dropdown) thành công.',
+    'created'                 => 'Tạo buổi đánh thành công.',
+    'updated'                 => 'Cập nhật buổi đánh thành công.',
+    'deleted'                 => 'Xoá buổi đánh thành công.',
+    'status_toggled'          => 'Cập nhật trạng thái buổi đánh thành công.',
+    'reordered'               => 'Cập nhật thứ tự buổi đánh thành công.',
+    'not_found'               => 'Không tìm thấy buổi đánh.',
+
+    'player_list'              => 'Lấy danh sách người chơi của buổi đánh thành công.',
+    'player_detail'            => 'Lấy chi tiết người chơi của buổi đánh thành công.',
+    'player_created'           => 'Thêm người chơi vào buổi đánh thành công.',
+    'player_updated'           => 'Cập nhật người chơi của buổi đánh thành công.',
+    'player_deleted'           => 'Xoá người chơi khỏi buổi đánh thành công.',
+    'player_paid_toggled'      => 'Cập nhật trạng thái thanh toán của người chơi thành công.',
+    'player_check_in_toggled' => 'Cập nhật trạng thái check-in của người chơi thành công.',
+    'player_not_found'         => 'Không tìm thấy người chơi trong buổi đánh.',
+];

@@ -9,7 +9,7 @@
 return [
     'attributes' => [
         'bank_name'       => 'Tên ngân hàng',
-        'account_holder' => 'Tên tài khoản',
+        'account_name' => 'Tên tài khoản',
         'account_number' => 'Số tài khoản',
     ],
 

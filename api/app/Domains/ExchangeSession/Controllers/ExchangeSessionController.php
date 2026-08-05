@@ -1,0 +1,123 @@
+<?php
+
+namespace App\Domains\ExchangeSession\Controllers;
+
+use App\Base\BaseController;
+use App\Domains\ExchangeSession\Requests\FilterExchangeSessionRequest;
+use App\Domains\ExchangeSession\Requests\ReorderExchangeSessionRequest;
+use App\Domains\ExchangeSession\Requests\StoreExchangeSessionRequest;
+use App\Domains\ExchangeSession\Requests\UpdateExchangeSessionRequest;
+use App\Domains\ExchangeSession\Resources\ExchangeSessionResource;
+use App\Domains\ExchangeSession\Services\ExchangeSessionService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class ExchangeSessionController extends BaseController
+{
+    public function __construct(protected ExchangeSessionService $service) {}
+
+    /**
+     * GET /api/v1/exchange-sessions?search=abc&club_id=1&status=upcoming&type=scheduled&session_date_from=2026-08-01&sort_by=session_date&sort_dir=asc&limit=20&page=1
+     */
+    public function index(FilterExchangeSessionRequest $request): JsonResponse
+    {
+        return $this->paginateResponse(
+            $this->service->paginate($request->validated()),
+            __('domains/exchange_session.list'),
+            ExchangeSessionResource::class,
+        );
+    }
+
+    /**
+     * GET /api/v1/exchange-sessions/cursor?limit=10&cursor=eyJpZCI6MTAwfQ
+     */
+    public function cursorIndex(Request $request): JsonResponse
+    {
+        return $this->cursorResponse(
+            $this->service->cursorPaginate($request->only(['limit', 'search', 'club_id', 'status', 'type', 'is_active'])),
+            __('domains/exchange_session.list'),
+            ExchangeSessionResource::class,
+        );
+    }
+
+    /**
+     * GET /api/v1/exchange-sessions/select — dropdown, không Resource, không phân trang.
+     */
+    public function select(Request $request): JsonResponse
+    {
+        return $this->responseCommon(
+            true,
+            __('domains/exchange_session.select'),
+            $this->service->getForSelect($request->only(['search', 'club_id', 'status', 'is_active', 'limit'])),
+        );
+    }
+
+    /**
+     * GET /api/v1/exchange-sessions/{id}
+     */
+    public function show(int $id): JsonResponse
+    {
+        return $this->responseCommon(
+            true,
+            __('domains/exchange_session.detail'),
+            new ExchangeSessionResource($this->service->findWithRelations($id, ['translations', 'club', 'players', 'playingSchedule'])),
+        );
+    }
+
+    /**
+     * POST /api/v1/exchange-sessions
+     */
+    public function store(StoreExchangeSessionRequest $request): JsonResponse
+    {
+        return $this->responseCommon(
+            true,
+            __('domains/exchange_session.created'),
+            new ExchangeSessionResource($this->service->create($request->validated())),
+            201,
+        );
+    }
+
+    /**
+     * PUT /api/v1/exchange-sessions/{id}
+     */
+    public function update(UpdateExchangeSessionRequest $request, int $id): JsonResponse
+    {
+        return $this->responseCommon(
+            true,
+            __('domains/exchange_session.updated'),
+            new ExchangeSessionResource($this->service->update($id, $request->validated())),
+        );
+    }
+
+    /**
+     * DELETE /api/v1/exchange-sessions/{id} — xoá mềm + dồn sort_order.
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $this->service->deleteWithSortOrder($id);
+
+        return $this->responseCommon(true, __('domains/exchange_session.deleted'));
+    }
+
+    /**
+     * PATCH /api/v1/exchange-sessions/{id}/toggle-status
+     */
+    public function toggleStatus(int $id): JsonResponse
+    {
+        return $this->responseCommon(
+            true,
+            __('domains/exchange_session.status_toggled'),
+            new ExchangeSessionResource($this->service->toggleStatus($id)),
+        );
+    }
+
+    /**
+     * POST /api/v1/exchange-sessions/reorder — kéo thả sort_order.
+     */
+    public function reorder(ReorderExchangeSessionRequest $request): JsonResponse
+    {
+        $this->service->reorder($request->validated());
+
+        return $this->responseCommon(true, __('domains/exchange_session.reordered'));
+    }
+}

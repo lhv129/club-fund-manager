@@ -4,10 +4,7 @@ namespace App\Domains\WebhookConfig\Repositories;
 
 use App\Base\BaseRepository;
 use App\Domains\WebhookConfig\Models\WebhookConfig;
-use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 
 class WebhookConfigRepository extends BaseRepository
 {
@@ -51,7 +48,7 @@ class WebhookConfigRepository extends BaseRepository
                 'sort_order',
                 'created_at',
             ])
-            ->with(['bankAccount:id,club_id,bank_name,account_number,account_holder']);
+            ->with(['bankAccount:id,club_id,bank_name,account_number,account_name']);
     }
 
     /**
@@ -88,5 +85,15 @@ class WebhookConfigRepository extends BaseRepository
         if (!empty($filters['bank_account_id'])) {
             $query->where('bank_account_id', (int) $filters['bank_account_id']);
         }
+    }
+
+    /**
+     * Tìm WebhookConfig đang active theo token trong URL.
+     */
+    public function findActiveConfigByToken(string $token): ?WebhookConfig
+    {
+        return $this->model->where('webhook_token', $token)
+            ->where('is_active', true)
+            ->first();
     }
 }

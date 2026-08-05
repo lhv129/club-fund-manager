@@ -7,7 +7,7 @@
 return [
     'attributes' => [
         'bank_name'       => 'Bank Name',
-        'account_holder' => 'Account Holder',
+        'account_name' => 'Account Holder',
         'account_number' => 'Account Number',
     ],
 

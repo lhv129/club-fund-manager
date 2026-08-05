@@ -21,16 +21,18 @@ class BankAccount extends Model
         'bank_code',
         'bank_name',
         'account_number',
-        'account_holder',
+        'account_name',
         'qr_image',
         'sort_order',
         'is_active',
+        'is_default'
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_default' => 'boolean',
             'sort_order' => 'integer',
         ];
     }
@@ -63,5 +65,10 @@ class BankAccount extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeDefault(Builder $query): Builder
+    {
+        return $query->where('is_default', true);
     }
 }

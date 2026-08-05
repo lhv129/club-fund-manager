@@ -9,15 +9,6 @@ use Illuminate\Support\Facades\Log;
 class SePayWebhookRepository
 {
     /**
-     * Tìm WebhookConfig đang active theo token trong URL.
-     */
-    public function findActiveConfigByToken(string $token): ?WebhookConfig
-    {
-        return WebhookConfig::where('webhook_token', $token)
-            ->where('is_active', true)
-            ->first();
-    }
-    /**
      * Tạo bản ghi Transaction từ payload SePay.
      */
     public function createTransaction(WebhookConfig $config, array $payload): Transaction

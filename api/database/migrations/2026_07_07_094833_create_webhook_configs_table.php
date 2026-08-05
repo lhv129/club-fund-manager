@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('club_id')->constrained('clubs')->cascadeOnDelete();
             $table->foreignId('bank_account_id')->constrained('bank_accounts')->cascadeOnDelete();
             $table->enum('type', ['casso', 'sepay']);
-            $table->string('api_key')->nullable();
             $table->string('webhook_secret')->nullable();
             $table->string('webhook_url')->nullable();
             $table->boolean('is_verified')->default(false);

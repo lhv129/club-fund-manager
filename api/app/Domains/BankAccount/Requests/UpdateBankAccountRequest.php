@@ -24,7 +24,7 @@ class UpdateBankAccountRequest extends BaseRequest
                 'max:30',
             ],
 
-            'account_holder' => [
+            'account_name' => [
                 'sometimes',
                 'required',
                 'string',
@@ -56,7 +56,7 @@ class UpdateBankAccountRequest extends BaseRequest
     {
         return [
             'bank_name' => __('domains/bank_account.attributes.bank_name'),
-            'account_holder' => __('domains/bank_account.attributes.account_holder'),
+            'account_name' => __('domains/bank_account.attributes.account_name'),
             'account_number' => __('domains/bank_account.attributes.account_number'),
         ];
     }

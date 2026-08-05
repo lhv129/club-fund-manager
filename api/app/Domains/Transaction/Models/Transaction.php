@@ -4,11 +4,14 @@ namespace App\Domains\Transaction\Models;
 
 use App\Domains\BankAccount\Models\BankAccount;
 use App\Domains\Club\Models\Club;
-use App\Domains\MemberPaymentCode\Models\MemberPaymentCode;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\User\Models\User;
+use App\Domains\WebhookConfig\Models\WebhookConfig;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transaction extends Model
@@ -17,27 +20,37 @@ class Transaction extends Model
 
     protected $fillable = [
         'club_id',
+        'user_id',              // nullable - xác định sau khi match payment code
         'bank_account_id',
-        'webhook_config_id',   // WebhookConfig (nullable — nếu match được)
-        'type', // income | expense
+        'webhook_config_id',
+
+        'source',               // webhook | cash | manual
+        'type',                 // income | expense
+
         'amount',
         'balance',
-        'description',
+
         'reference_code',
         'sender_name',
         'sender_account',
+        'description',
+
         'transaction_date',
+
         'raw_payload',
+
         'sort_order',
-        'is_active'
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
-            'amount'           => 'decimal:2',
+            'amount' => 'decimal:2',
+            'balance' => 'decimal:2',
+            'raw_payload' => 'array',
             'transaction_date' => 'datetime',
-            'is_active'        => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -46,27 +59,28 @@ class Transaction extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
-    public function club()
+
+    public function club(): BelongsTo
     {
         return $this->belongsTo(Club::class);
     }
 
-    public function bankAccount()
-    {
-        return $this->belongsTo(BankAccount::class);
-    }
-
-    public function paymentCode()
-    {
-        return $this->belongsTo(MemberPaymentCode::class, 'payment_code_id');
-    }
-
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function monthlyContributions()
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
+
+    public function webhookConfig(): BelongsTo
+    {
+        return $this->belongsTo(WebhookConfig::class);
+    }
+
+    public function monthlyContributions(): HasMany
     {
         return $this->hasMany(MonthlyContribution::class);
     }
@@ -76,23 +90,29 @@ class Transaction extends Model
     | Scopes
     |--------------------------------------------------------------------------
     */
-    public function scopeIncome($query)
+
+    public function scopeIncome(Builder $query): Builder
     {
         return $query->where('type', 'income');
     }
 
-    public function scopeExpense($query)
+    public function scopeExpense(Builder $query): Builder
     {
         return $query->where('type', 'expense');
     }
 
-    public function scopeConfirmed($query)
+    public function scopeWebhook(Builder $query): Builder
     {
-        return $query->where('status', 'confirmed');
+        return $query->where('source', 'webhook');
     }
 
-    public function scopePending($query)
+    public function scopeCash(Builder $query): Builder
     {
-        return $query->where('status', 'pending');
+        return $query->where('source', 'cash');
+    }
+
+    public function scopeManual(Builder $query): Builder
+    {
+        return $query->where('source', 'manual');
     }
 }

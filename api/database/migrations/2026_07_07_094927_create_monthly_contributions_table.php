@@ -13,20 +13,56 @@ return new class extends Migration
     {
         Schema::create('monthly_contributions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('club_id')->constrained('clubs')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('transaction_id')->nullable()->constrained('transactions')->nullOnDelete();
-            $table->tinyInteger('month');
-            $table->smallInteger('year');
-            $table->decimal('amount', 15, 0);
-            $table->enum('status', ['pending', 'paid'])->default('pending');
-            $table->dateTime('payment_date')->nullable();
+
+            $table->foreignId('club_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('period_id')
+                ->constrained('fund_periods')
+                ->cascadeOnDelete();
+
+            $table->foreignId('transaction_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->decimal('amount', 15, 2);
+
+            $table->enum('status', [
+                'pending',
+                'paid',
+                'cancelled',
+            ])->default('pending');
+
+            $table->enum('paid_by', [
+                'bank',
+                'cash',
+                'manual',
+            ])->nullable();
+
+            $table->timestamp('payment_date')->nullable();
+
             $table->integer('sort_order')->default(0);
+
             $table->boolean('is_active')->default(true);
+
             $table->timestamps();
             $table->softDeletes();
-            $table->unique(['club_id', 'user_id', 'month', 'year']);
-            $table->index(['club_id', 'month', 'year']);
+
+            $table->unique([
+                'club_id',
+                'user_id',
+                'period_id',
+            ]);
+
+            $table->index('period_id');
+            $table->index('status');
+            $table->index('payment_date');
         });
     }
 

@@ -2,24 +2,37 @@
 
 namespace App\Domains\Webhook\Services;
 
+use App\Base\BaseService;
 use App\Domains\Transaction\Models\Transaction;
+use App\Domains\Transaction\Services\TransactionService;
 use App\Domains\Webhook\Repositories\SePayWebhookRepository;
+use App\Domains\WebhookConfig\Repositories\WebhookConfigRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class SePayWebhookService
+class SePayWebhookService extends BaseService
 {
+    protected object $repository;
+    protected object $webhookConfigRepository;
+
+    protected object $transactionService;
+
     public function __construct(
-        protected SePayWebhookRepository $repository
+        SePayWebhookRepository $repository,
+        WebhookConfigRepository $webhookConfigRepository,
+
+        TransactionService $transactionService
     ) {
-        // Không cần parent::__construct()
+        parent::__construct($repository);
+        $this->webhookConfigRepository = $webhookConfigRepository;
+        $this->transactionService = $transactionService;
     }
 
     public function handleWebhook(Request $request, string $token): Transaction
     {
-        $config = $this->repository->findActiveConfigByToken($token);
+        $config = $this->webhookConfigRepository->findActiveConfigByToken($token);
 
         if (! $config) {
             throw new NotFoundHttpException('Webhook config not found or inactive.');
@@ -36,7 +49,7 @@ class SePayWebhookService
             $payload
         );
 
-        return $this->repository->createTransaction($config, $payload);
+        return $this->transactionService->createTransaction($config, $payload);
     }
 
     private function verifySignature(Request $request, string $secret): bool

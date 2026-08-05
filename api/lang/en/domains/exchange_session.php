@@ -1,0 +1,48 @@
+<?php
+
+return [
+    'attributes' => [
+        'club_id'              => 'club',
+        'playing_schedule_id'   => 'playing schedule',
+        'transaction_id'         => 'transaction',
+        'session_date'           => 'session date',
+        'court_name'             => 'court name',
+        'court_address'          => 'court address',
+        'start_time'             => 'start time',
+        'end_time'               => 'end time',
+        'type'                   => 'type',
+        'status'                 => 'status',
+        'player_count'           => 'player count',
+        'amount_per_player'      => 'amount per player',
+        'total_amount'           => 'total amount',
+        'is_active'               => 'active status',
+        'sort_order'             => 'sort order',
+        'title'                  => 'title',
+        'note'                   => 'note',
+
+        'player_user_id'   => 'player',
+        'player_name'      => 'player name',
+        'player_amount'    => 'player amount',
+        'player_paid'      => 'paid',
+        'player_checked_in' => 'checked in',
+    ],
+
+    'list'                    => 'Exchange sessions retrieved successfully.',
+    'detail'                  => 'Exchange session retrieved successfully.',
+    'select'                  => 'Exchange sessions (select) retrieved successfully.',
+    'created'                 => 'Exchange session created successfully.',
+    'updated'                 => 'Exchange session updated successfully.',
+    'deleted'                 => 'Exchange session deleted successfully.',
+    'status_toggled'          => 'Exchange session status updated successfully.',
+    'reordered'               => 'Exchange session order updated successfully.',
+    'not_found'               => 'Exchange session not found.',
+
+    'player_list'              => 'Session players retrieved successfully.',
+    'player_detail'            => 'Session player retrieved successfully.',
+    'player_created'           => 'Player added to session successfully.',
+    'player_updated'           => 'Session player updated successfully.',
+    'player_deleted'           => 'Player removed from session successfully.',
+    'player_paid_toggled'      => 'Player paid status updated successfully.',
+    'player_check_in_toggled' => 'Player check-in status updated successfully.',
+    'player_not_found'         => 'Session player not found.',
+];

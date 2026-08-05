@@ -20,7 +20,7 @@ class StoreBankAccountRequest extends BaseRequest
                 'max:30',
             ],
 
-            'account_holder' => [
+            'account_name' => [
                 'required',
                 'string',
                 'max:255',
@@ -53,7 +53,7 @@ class StoreBankAccountRequest extends BaseRequest
     {
         return [
             'bank_name'       => __('domains/bank_account.attributes.bank_name'),
-            'account_holder' => __('domains/bank_account.attributes.account_holder'),
+            'account_name' => __('domains/bank_account.attributes.account_name'),
             'account_number' => __('domains/bank_account.attributes.account_number'),
         ];
     }

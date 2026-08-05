@@ -16,6 +16,11 @@ Route::prefix('v1')->group(function () {
     require __DIR__ . '/api/v1/role.php';
     require __DIR__ . '/api/v1/bank_account.php';
     require __DIR__ . '/api/v1/webhook_config.php';
+    require __DIR__ . '/api/v1/fund_period.php';
+    require __DIR__ . '/api/v1/playing_schedule.php';
+    require __DIR__ . '/api/v1/exchange_session.php';
+    require __DIR__ . '/api/v1/member_payment_code.php';
+    require __DIR__ . '/api/v1/transaction.php';
     require __DIR__ . '/api/v1/example.php';
 });
 

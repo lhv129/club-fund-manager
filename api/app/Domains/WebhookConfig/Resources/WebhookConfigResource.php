@@ -24,7 +24,7 @@ class WebhookConfigResource extends JsonResource
                 'id'             => $this->bankAccount->id,
                 'bank_name'      => $this->bankAccount->bank_name,
                 'account_number' => $this->bankAccount->account_number,
-                'account_holder' => $this->bankAccount->account_holder,
+                'account_name' => $this->bankAccount->account_name,
             ]),
 
             'created_at' => $this->created_at?->toISOString(),

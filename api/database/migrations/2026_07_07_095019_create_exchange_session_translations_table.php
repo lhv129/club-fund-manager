@@ -13,10 +13,21 @@ return new class extends Migration
     {
         Schema::create('exchange_session_translations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('exchange_session_id')->constrained('exchange_sessions')->cascadeOnDelete();
+
+            $table->foreignId('exchange_session_id')
+                ->constrained('exchange_sessions')
+                ->cascadeOnDelete();
+
             $table->string('locale', 5);
-            $table->text('notes')->nullable();
+            $table->string('title');
+            $table->text('note')->nullable();
+
+            $table->integer('sort_order')->default(0);
+            $table->boolean('is_active')->default(true);
+
             $table->timestamps();
+            $table->softDeletes();
+
             $table->unique(['exchange_session_id', 'locale']);
         });
     }

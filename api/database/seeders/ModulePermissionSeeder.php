@@ -44,11 +44,11 @@ class ModulePermissionSeeder extends Seeder
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
         [
-            'slug'       => 'fund',
+            'slug'       => 'fund_period',
             'sort_order' => 4,
             'translations' => [
-                'vi' => ['name' => 'Quỹ'],
-                'en' => ['name' => 'Fund'],
+                'vi' => ['name' => 'Kỳ quỹ'],
+                'en' => ['name' => 'Fund Period'],
             ],
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
@@ -71,8 +71,26 @@ class ModulePermissionSeeder extends Seeder
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
         [
-            'slug'       => 'webhook',
+            'slug'       => 'playing_schedule',
             'sort_order' => 7,
+            'translations' => [
+                'vi' => ['name' => 'Lịch đánh'],
+                'en' => ['name' => 'Playing Schedule'],
+            ],
+            'actions' => ['view', 'create', 'update', 'delete'],
+        ],
+        [
+            'slug'       => 'member_payment_code',
+            'sort_order' => 8,
+            'translations' => [
+                'vi' => ['name' => 'Mã thanh toán'],
+                'en' => ['name' => 'Payment Code'],
+            ],
+            'actions' => ['view', 'update'],
+        ],
+        [
+            'slug'       => 'webhook',
+            'sort_order' => 9,
             'translations' => [
                 'vi' => ['name' => 'Webhook'],
                 'en' => ['name' => 'Webhook'],
@@ -80,20 +98,32 @@ class ModulePermissionSeeder extends Seeder
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
         [
-            'slug'       => 'user',
-            'sort_order' => 8,
+            'slug'       => 'bank_account',
+            'sort_order' => 10,
             'translations' => [
-                'vi' => ['name' => 'Người dùng'],
-                'en' => ['name' => 'User'],
+                'vi' => ['name' => 'Tài khoản ngân hàng'],
+                'en' => ['name' => 'Bank Account'],
             ],
-            // Module hệ thống — chỉ superadmin/admin (system scope) được cấp.
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
-    ];
-
-    private array $actionLabels = [
-        'vi' => ['view' => 'Xem', 'create' => 'Tạo mới', 'update' => 'Chỉnh sửa', 'delete' => 'Xóa'],
-        'en' => ['view' => 'View', 'create' => 'Create', 'update' => 'Update', 'delete' => 'Delete'],
+        [
+            'slug'       => 'club_invite',
+            'sort_order' => 11,
+            'translations' => [
+                'vi' => ['name' => 'Mời thành viên'],
+                'en' => ['name' => 'Invite Member'],
+            ],
+            'actions' => ['view', 'create', 'update', 'delete'],
+        ],
+        [
+            'slug'       => 'webhook_config',
+            'sort_order' => 12,
+            'translations' => [
+                'vi' => ['name' => 'Cấu hình webhook'],
+                'en' => ['name' => 'Webhook Configuration'],
+            ],
+            'actions' => ['view', 'create', 'update', 'delete'],
+        ],
     ];
 
     public function run(): void
