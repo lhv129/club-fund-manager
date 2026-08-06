@@ -37,7 +37,8 @@ export const CLUB_SUBROUTES = {
   members: "members",
   invites: "invites",
   memberships: "memberships",
-  funds: "funds",
+  fundPeriods: "fund-periods",
+  monthlyContributions: "monthly-contributions",
   events: "events",
   settings: "settings",
 } as const;
@@ -97,8 +98,9 @@ export const MODULE_SLUGS = {
   // ── Club-scoped modules ───────────────────────────────────────────────────
   clubMember: "club_member",
   clubInvite: "club_invite",
-  fund: "fund",
+  fundPeriods: "fund-periods",
   transaction: "transaction",
   exchangeSession: "exchange_session",
   webhook: "webhook",
+  monthlyContributions: "monthly-contributions",
 } as const;

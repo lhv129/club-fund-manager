@@ -37,7 +37,7 @@ export default async function ClubDashboardPage({
 
   const stats = [
     { key: "totalMembers", value: "—", icon: "👥" },
-    { key: "totalFunds", value: "—", icon: "💰" },
+    { key: "totalFundPeriods", value: "—", icon: "💰" },
     { key: "activeEvents", value: "—", icon: "📅" },
     { key: "monthlyIncome", value: "—", icon: "📈" },
   ];

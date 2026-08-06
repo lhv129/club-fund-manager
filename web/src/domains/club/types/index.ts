@@ -5,6 +5,7 @@ import { Role } from "@/domains/role/types";
 /** Translation entry — shared shape across all translatable entities. */
 export interface Translation {
   locale: string;
+  title?: string;
   name: string;
   slug?: string;
   description?: string | null;

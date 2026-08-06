@@ -5,7 +5,8 @@ import {
     Wallet,
     Settings,
     LucideIcon,
-    UserCheck
+    UserCheck,
+    Banknote
 } from "lucide-react";
 
 import {
@@ -79,14 +80,21 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
         {
             labelKey: "funds",
             icon: Wallet,
-            module: MODULE_SLUGS.fund,
+            module: MODULE_SLUGS.fundPeriods,
             action: PERMISSION_ACTIONS.view,
             children: [
                 {
-                    href: clubRoute(slug, CLUB_SUBROUTES.funds),
-                    labelKey: "funds",
+                    href: clubRoute(slug, CLUB_SUBROUTES.fundPeriods),
+                    labelKey: "fundPeriods",
                     icon: Wallet,
-                    module: MODULE_SLUGS.fund,
+                    module: MODULE_SLUGS.fundPeriods,
+                    action: PERMISSION_ACTIONS.view,
+                },
+                {
+                    href: clubRoute(slug, CLUB_SUBROUTES.monthlyContributions),
+                    labelKey: "monthlyContributions",
+                    icon: Wallet,
+                    module: MODULE_SLUGS.monthlyContributions,
                     action: PERMISSION_ACTIONS.view,
                 },
             ],

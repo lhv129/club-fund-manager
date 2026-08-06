@@ -124,6 +124,10 @@
     "invites": {
       "title": "Invitations",
       "description": "Manage club invitations and their statuses."
+    },
+    "fundPeriod": {
+      "title": "Fund Periods",
+      "description": "Manage the club's fund periods"
     }
   },
   "header": {
@@ -185,7 +189,9 @@
     "events": "Events",
     "clubSettings": "Club Settings",
     "memberships": "Memberships",
-    "detail": "Detail"
+    "detail": "Detail",
+    "fundPeriods": "Fund Periods",
+    "monthlyContributions": "Monthly Contributions"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -234,7 +240,7 @@
     "viewingAsSuperAdmin": "Super Admin",
     "dashboard": "Club dashboard",
     "totalMembers": "Total members",
-    "totalFunds": "Total funds",
+    "totalFundPeriods": "Total funds",
     "activeEvents": "Active events",
     "monthlyIncome": "Monthly income",
     "viewingAsSystemAdmin": "System Admin",
@@ -460,5 +466,41 @@
     "statusExpired": "Expired",
     "copyJoinLink": "Copy Join Link",
     "copyJoinLinkSuccess": "Successfully copied join link!"
+  },
+  "fundPeriod": {
+    "title": "Fund Period Management",
+    "totalCount": "{count} fund periods",
+    "year": "Year",
+    "month": "Month",
+    "period": "Fund Period",
+    "periodValue": "Month {month}/{year}",
+    "maleAmount": "Male Fund Amount",
+    "femaleAmount": "Female Fund Amount",
+    "exchangeMaleAmount": "Male Exchange Fund",
+    "exchangeFemaleAmount": "Female Exchange Fund",
+    "isLocked": "Lock Fund Period",
+    "locked": "Locked",
+    "unlocked": "Unlocked",
+    "create": "Create Fund Period",
+    "edit": "Edit Fund Period",
+    "notFound": "No fund periods found.",
+    "deleteConfirmMsg": "Are you sure you want to delete the fund period <b>{title}</b>? This action cannot be undone."
+  },
+  "monthlyContribution": {
+    "title": "Monthly Contributions",
+    "notFound": "No contributions found",
+    "totalCount": "{count} contributions",
+    "member": "Member",
+    "period": "Fund Period",
+    "amount": "Amount",
+    "status": "Status",
+    "paidBy": "Payment Method",
+    "paymentDate": "Payment Date",
+    "status_pending": "Pending",
+    "status_paid": "Paid",
+    "status_cancelled": "Cancelled",
+    "paid_by_bank": "Bank Transfer",
+    "paid_by_cash": "Cash",
+    "paid_by_manual": "Manual"
   }
 }

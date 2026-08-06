@@ -20,6 +20,14 @@ export function getTranslatedName<T extends Translation>(
     return getTranslation(translations, locale)?.name ?? "";
 }
 
+/** Lấy title theo locale */
+export function getTranslatedTitle<T extends Translation>(
+    translations: T[] | undefined,
+    locale: string
+): string {
+    return getTranslation(translations, locale)?.title ?? "";
+}
+
 /** Lấy slug theo locale */
 export function getTranslatedSlug<T extends Translation>(
     translations: T[] | undefined,

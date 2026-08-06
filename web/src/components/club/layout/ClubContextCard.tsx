@@ -6,6 +6,7 @@ import { Crown, Shield, User } from 'lucide-react';
 import { cn } from '@/utils';
 import { getTranslation } from '@/lib/translations';
 import type { Club } from '@/domains/club/types';
+import CustomImage from '@/components/shared/media/CustomImage';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -96,7 +97,7 @@ function ClubAvatar({
             style={{ width: size, height: size }}
         >
             {logoUrl && !imgError ? (
-                <img
+                <CustomImage
                     src={logoUrl}
                     alt={name ?? 'Club'}
                     className="h-full w-full object-cover"

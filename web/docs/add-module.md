@@ -7,7 +7,7 @@ Ví dụ: module Example — có nội dung đa ngôn ngữ (translatable), dùn
 ```ts
 export interface Translation {
   locale: string;
-  name: string;
+  name: string; // hoặc title
   slug?: string;
   description?: string | null;
 }
@@ -27,6 +27,26 @@ export type ExampleFilters = {
   is_active: 0 | 1 | undefined;
 };
 ```
+
+> **Lưu ý quan trọng — Translation dùng `title` thay vì `name`:**
+>
+> Base `Translation` (`@/domains/club/types`) đã có `title?: string` (optional).
+> Nếu entity BE trả về `title` trong translations (thay vì `name`), **không tạo custom type riêng** —
+> dùng thẳng `Translation[]` từ `@/domains/club/types`:
+>
+> ```ts
+> import type { Translation } from "@/domains/club/types";
+>
+> export interface FundPeriod {
+>   // ...
+>   translations?: Translation[]; // Translation đã có title?: string
+> }
+> ```
+>
+> Dùng `getTranslatedTitle(row.translations, locale)` từ `@/lib/translations` để đọc.
+> **Không tạo hàm inline `getXxxTitle()` riêng cho từng module.**
+
+---
 
 ## Bước 2: Tạo service
 
@@ -73,6 +93,8 @@ export const exampleServiceClient = new ExampleServiceClient();
 > `toggleStatus` — cột `is_active` (boolean, BE tự đảo, không nhận payload).
 > `updateStatus` — cột `status` (enum, caller truyền status mới muốn set).
 
+---
+
 ## Bước 3: Tạo page (Server Component)
 
 **System module** → `src/app/[locale]/admin/(system)/examples/page.tsx`
@@ -92,6 +114,8 @@ export default async function AdminExamplesPage({
 
 **Club-scoped module** → `src/app/[locale]/club/[slug]/examples/page.tsx`
 — params có thêm `slug`. Lấy club từ clubStore (đã hydrate ở layout).
+
+---
 
 ## Bước 4: Tạo custom hook
 
@@ -113,6 +137,7 @@ import type {
     SubmitResult,
     ServerErrorResponse,
 } from "@/components/shared/forms/FormModal";
+import type { useListParams } from "@/hooks/useListParams";
 
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
@@ -139,7 +164,14 @@ function buildPayload(
     );
     (translations ?? []).forEach((entry) => {
         formData.append(`translations[${entry.locale}][locale]`, entry.locale);
+
+        // Nếu translatable field dùng "name" (mặc định):
         formData.append(`translations[${entry.locale}][name]`, entry.name ?? "");
+
+        // Nếu translatable field dùng "title" (ví dụ: FundPeriod):
+        // const e = entry as Record<string, string>;
+        // formData.append(`translations[${entry.locale}][title]`, e["title"] ?? "");
+
         formData.append(
             `translations[${entry.locale}][description]`,
             entry.description ?? ""
@@ -151,7 +183,9 @@ function buildPayload(
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useExamples(
-    params: ReturnType<typeof import("@/hooks/useListParams").useListParams<ExampleFilters>>["params"]
+    // ✅ Dùng ReturnType — đồng bộ exact type với useListParams
+    // Tránh lỗi: "sort_dir: string" không assignable to "asc" | "desc" | undefined
+    params: ReturnType<typeof useListParams<ExampleFilters>>["params"]
 ) {
     const queryClient = useQueryClient();
     const t = useTranslations("common");
@@ -294,6 +328,8 @@ export function useExamples(
 }
 ```
 
+---
+
 ## Bước 5: Tạo Client Component
 
 `src/app/[locale]/admin/(system)/examples/ExamplesPageClient.tsx`
@@ -325,7 +361,6 @@ import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import { useListParams } from "@/hooks/useListParams";
 import { useExamples } from "@/domains/example/hooks/useExamples";
 import type { Example, ExampleFilters } from "@/domains/example/types";
-import { getTranslatedName, getTranslatedDescription } from "@/lib/translations";
 
 export function ExamplesPageClient() {
     // ❌ KHÔNG cần useLocale()
@@ -495,12 +530,12 @@ export function ExamplesPageClient() {
 ```tsx
 "use client";
 
-import { useMemo, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";   // thêm useLocale
+import { useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
 import { Table, ColumnDef } from "@/components/shared/ui/Table";
-import { FilterBar } from "@/components/shared/ui/FilterBar";
+import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
 import { Pagination } from "@/components/shared/ui/Pagination";
 import {
     FormModal,
@@ -511,9 +546,12 @@ import {
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
+import Select from "@/components/shared/ui/Select";
+import { ToggleSwitch } from "@/components/shared/ui/ToggleSwitch";
 import { useListParams } from "@/hooks/useListParams";
 import { useExamples } from "@/domains/example/hooks/useExamples";
 import type { Example, ExampleFilters } from "@/domains/example/types";
+import { getTranslatedName } from "@/lib/translations";
 
 
 // Map translations array → object { vi: {...}, en: {...} } cho FormModal
@@ -543,6 +581,12 @@ export function ExamplesPageClient() {
             defaultSortDir: "desc",
         });
 
+    // ── Draft state cho extra filters ─────────────────────────────────────────
+    // Khai báo draft state riêng cho mỗi extra filter
+    // KHÔNG bind Select.value trực tiếp vào params — dùng draft + sync qua useEffect
+    const [draftIsActive, setDraftIsActive] = useState<0 | 1 | undefined>(params.is_active);
+    useEffect(() => { setDraftIsActive(params.is_active); }, [params.is_active]);
+
     const {
         data, total, isLoading, togglingIds,
         isCreating, isUpdating, isDeleting,
@@ -569,6 +613,23 @@ export function ExamplesPageClient() {
 
         if (!result) closeModal();
         return result;
+    };
+
+    // ── FilterBar handlers ────────────────────────────────────────────────────
+    // Khi có extra filters: dùng custom handler thay vì onApply trực tiếp
+    const handleApplyFilters = (filters: AppliedFilters) => {
+        updateMany({
+            search: filters.search,
+            sort_by: filters.sort_by,
+            sort_dir: filters.sort_dir,
+            is_active: draftIsActive,   // inject draft values vào đây
+            // thêm các draft khác nếu có
+        });
+    };
+
+    const handleReset = () => {
+        setDraftIsActive(undefined);    // reset tất cả draft
+        reset();                        // reset params
     };
 
     // ── Form config ───────────────────────────────────────────────────────────
@@ -598,6 +659,27 @@ export function ExamplesPageClient() {
         is_active:  "1",
     };
 
+    // ── Extra filters JSX ─────────────────────────────────────────────────────
+    // Render bằng <Select> từ @/components/shared/ui/Select
+    // Truyền vào FilterBar qua prop extraFilters={extraFilters}
+    const activeOptions = [
+        { value: "1", label: t("active") },
+        { value: "0", label: t("inactive") },
+    ];
+
+    const extraFilters = (
+        <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-fg-muted">{t("status")}</span>
+            <Select
+                label={t("status")}
+                options={activeOptions}
+                value={draftIsActive !== undefined ? String(draftIsActive) : ""}
+                onChange={(v) => setDraftIsActive(v === "" ? undefined : (Number(v) as 0 | 1))}
+                placeholder={t("all")}
+            />
+        </div>
+    );
+
     // ── Columns ───────────────────────────────────────────────────────────────
     const columns: ColumnDef<Example>[] = [
         {
@@ -610,9 +692,11 @@ export function ExamplesPageClient() {
         },
         {
             key: "name", label: t("name"),
-            // Phải dùng helper, không đọc row.name trực tiếp
+            // ✅ Phải dùng helper — KHÔNG đọc row.name trực tiếp
             render: (row) => <span className="text-sm text-foreground">{getTranslatedName(row.translations, locale) || "—"}</span>,
         },
+        // Nếu entity dùng "title" (không phải "name"):
+        // render: (row) => <span>{getTranslatedTitle(row.translations, locale) || "—"}</span>,
         {
             key: "is_active", label: t("status"), className: "text-center w-28",
             render: (row) => (
@@ -647,15 +731,17 @@ export function ExamplesPageClient() {
                 </div>
 
                 <div className="space-y-4">
+                    {/* ✅ Khi có extra filters: showStatusFilter={false} + custom handler + extraFilters */}
                     <FilterBar
                         search={params.search}
-                        isActive={params.is_active}
                         sortBy={params.sort_by}
                         sortDir={params.sort_dir}
                         sortOptions={sortOptions}
+                        showStatusFilter={false}
                         loading={isLoading}
-                        onApply={(filters) => updateMany(filters as Partial<typeof params>)}
-                        onReset={reset}
+                        onApply={handleApplyFilters}
+                        onReset={handleReset}
+                        extraFilters={extraFilters}
                     />
                     <Table
                         columns={columns}
@@ -702,8 +788,7 @@ export function ExamplesPageClient() {
                 isOpen={!!deleteTarget}
                 title={t("deleteConfirmTitle")}
                 description={t("deleteConfirmDesc")}
-                {/* Dùng helper để lấy tên theo locale */}
-                message={deleteTarget ? te("deleteConfirmMsg", { name: getTranslatedName(deleteTarget, locale) }) : ""}
+                message={deleteTarget ? te("deleteConfirmMsg", { name: getTranslatedName(deleteTarget.translations, locale) }) : ""}
                 confirmText={t("delete")}
                 cancelText={t("cancel")}
                 onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.id); setDeleteTarget(null); } }}
@@ -721,12 +806,14 @@ export function ExamplesPageClient() {
 
 | | **Pattern A** (không có translations) | **Pattern B** (có translations) |
 |---|---|---|
-| `useLocale()` | ❌ | |
-| `getTranslatedName(row, locale)` | ❌ — đọc `row.name` trực tiếp | — bắt buộc |
-| `toInitialTranslations()` | ❌ | |
+| `useLocale()` | ❌ | ✅ |
+| `getTranslatedName(row.translations, locale)` | ❌ — đọc `row.name` trực tiếp | ✅ bắt buộc |
+| `getTranslatedTitle(row.translations, locale)` | ❌ | ✅ khi entity dùng `title` thay `name` |
+| `toInitialTranslations()` | ❌ | ✅ |
 | `handleSubmit` | `(values)` | `(values, translations?)` |
 | `FormModal` | `fields` + `initialValues` | Thêm `translatableFields` + `initialTranslations` |
-| Columns | `row.name` | `getTranslatedName(row, locale)` |
+| Extra filters | `onApply` trực tiếp | Draft state + `handleApplyFilters` + `handleReset` |
+| Columns | `row.name` trực tiếp | `getTranslatedName(row.translations, locale)` |
 
 ### Cách xác định nên dùng pattern nào?
 
@@ -740,7 +827,7 @@ type Example = {
   is_active: boolean;
 }
 
-// Có translations[] → Pattern B
+// ✅ Có translations[] → Pattern B
 type Example = {
   id: string;
   is_active: boolean;
@@ -751,6 +838,9 @@ type Example = {
   }>;
 }
 ```
+
+---
+
 ## Bước 6: Thêm i18n keys
 
 ```json
@@ -779,6 +869,8 @@ type Example = {
 }
 ```
 
+---
+
 ## Bước 7: Thêm constants
 
 ```ts
@@ -789,6 +881,8 @@ export const MODULE_SLUGS = {
 // System module: thêm vào APP_ROUTES →  adminExamples: "/admin/examples"
 // Club module:   thêm vào CLUB_SUBROUTES → examples: "examples"
 ```
+
+---
 
 ## Bước 8: Thêm nav item
 
@@ -801,6 +895,8 @@ export const MODULE_SLUGS = {
 ```ts
 { sub: CLUB_SUBROUTES.examples, labelKey: "examples", module: MODULE_SLUGS.example, action: PERMISSION_ACTIONS.view, icon: ExampleIcon },
 ```
+
+---
 
 ## Tóm tắt file cần tạo/sửa
 
@@ -817,14 +913,106 @@ export const MODULE_SLUGS = {
 | `components/layout/club-nav-config.ts` | CLUB_NAV_ITEMS |
 | `messages/vi.json + messages/en.json` | i18n keys |
 
+---
+
 ## Checklist
 
-- Hook `handleCreate(values, translations)` và `handleEdit(id, values, translations)` — nhận values/translations, tự build FormData qua `buildPayload()`
+- Hook params type: dùng `ReturnType<typeof useListParams<Filters>>["params"]` — KHÔNG tự khai báo type thủ công
 - `handleCreate`/`handleEdit` trả `undefined` khi thành công → `FormModal` tự đóng; trả `{ success: false, ... }` khi lỗi → modal giữ nguyên hiển thị lỗi
-- Hai modal riêng biệt: `createOpen` + `editOpen` (không dùng 1 modal chung)
 - `toast.success(res.message || t("saveSuccess"))` — không để fallback là `""` (toast trống = vô hình)
 - `toast.error` trong mọi `onError` / catch
 - `data = listData?.data ?? []` — luôn fallback `[]`
 - Mọi string hiển thị đều qua `t()` — không hardcode tiếng Việt
 - Club-scoped page: permission check truyền `club.id`
 - `toggleStatus` cho cột `is_active`, `updateStatus` cho cột `status` enum — không nhầm
+- Entity dùng `title` (không phải `name`) trong translations: dùng `getTranslatedTitle()` từ `@/lib/translations`, KHÔNG tạo hàm inline riêng
+- Extra filters (year, month, status...): dùng draft state + `Select` component + `extraFilters` prop trên `FilterBar`
+- `formatAmount(value)` — dùng từ `@/utils`, không khai báo lại trong component
+- `buildPayload` với translatable field tên `"title"`: dùng `(entry as Record<string, string>)["title"]`
+
+---
+
+## Phụ lục: Utilities dùng chung (`src/utils/index.ts`)
+
+```ts
+/** Merge class names conditionally. */
+export function cn(...classes: (string | false | null | undefined)[]): string {
+  return classes.filter(Boolean).join(" ");
+}
+
+/** Format ISO date string to localized display. */
+export function formatDate(iso: string | null | undefined, locale: string = "vi"): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US", {
+    year: "numeric", month: "short", day: "numeric",
+  });
+}
+
+/** Format ISO datetime to localized display. */
+export function formatDateTime(iso: string | null | undefined, locale: string = "vi"): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString(locale === "vi" ? "vi-VN" : "en-US", {
+    year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+/** Format số tiền sang dạng hiển thị, ví dụ: 250,000 đ */
+export function formatAmount(
+  value: string | number | null | undefined,
+  currency: string = "đ",
+  locale: string = "vi",
+): string {
+  if (value === null || value === undefined || value === "") return "—";
+  const num = typeof value === "string" ? Number(value) : value;
+  if (isNaN(num)) return "—";
+  return num.toLocaleString(locale === "vi" ? "vi-VN" : "en-US") + " " + currency;
+}
+```
+
+---
+
+## Phụ lục: Translation helpers (`src/lib/translations.ts`)
+
+```ts
+import type { Translation } from "@/domains/club/types";
+
+/** Tìm translation theo locale hiện tại, fallback về phần tử đầu tiên. */
+export function getTranslation<T extends Translation>(
+    translations: T[] | undefined,
+    locale: string
+): T | undefined {
+    return translations?.find((t) => t.locale === locale) ?? translations?.[0];
+}
+
+/** Lấy name theo locale */
+export function getTranslatedName<T extends Translation>(
+    translations: T[] | undefined,
+    locale: string
+): string {
+    return getTranslation(translations, locale)?.name ?? "";
+}
+
+/** Lấy title theo locale — dùng khi entity translations có field "title" */
+export function getTranslatedTitle<T extends Translation>(
+    translations: T[] | undefined,
+    locale: string
+): string {
+    return getTranslation(translations, locale)?.title ?? "";
+}
+
+/** Lấy slug theo locale */
+export function getTranslatedSlug<T extends Translation>(
+    translations: T[] | undefined,
+    locale: string
+): string | undefined {
+    return getTranslation(translations, locale)?.slug;
+}
+
+/** Lấy description theo locale */
+export function getTranslatedDescription<T extends Translation>(
+    translations: T[] | undefined,
+    locale: string
+): string {
+    return getTranslation(translations, locale)?.description ?? "";
+}
+```

@@ -124,6 +124,10 @@
     "invites": {
       "title": "Lời mời",
       "description": "Quản lý lời mời tham gia câu lạc bộ và trạng thái của chúng."
+    },
+    "fundPeriod": {
+      "title": "Cấu hình quỹ",
+      "description": "Quản lý kỳ quỹ của câu lạc bộ"
     }
   },
   "header": {
@@ -181,10 +185,12 @@
     "settings": "Cài đặt",
     "members": "Thành viên",
     "invites": "Lời mời",
-    "funds": "Quỹ CLB",
+    "funds": "Qũy CLB",
     "events": "Sự kiện",
     "clubSettings": "Cài đặt CLB",
-    "memberships": "Quản lý tham gia"
+    "memberships": "Quản lý tham gia",
+    "fundPeriods": "Cấu hình quỹ",
+    "monthlyContributions": "Theo dõi đóng quỹ tháng"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
@@ -233,7 +239,7 @@
     "viewingAsSuperAdmin": "Super Admin",
     "dashboard": "Bảng điều khiển CLB",
     "totalMembers": "Tổng thành viên",
-    "totalFunds": "Tổng quỹ",
+    "totalFundPeriods": "Tổng quỹ",
     "activeEvents": "Sự kiện đang diễn ra",
     "monthlyIncome": "Thu tháng này",
     "viewingAsSystemAdmin": "System Admin",
@@ -457,5 +463,41 @@
     "statusExpired": "Hết hạn",
     "copyJoinLink": "Sao chép link tham gia",
     "copyJoinLinkSuccess": "Đã sao chép link tham gia!"
+  },
+  "fundPeriod": {
+    "title": "Quản lý kỳ quỹ",
+    "totalCount": "{count} kỳ quỹ",
+    "year": "Năm",
+    "month": "Tháng",
+    "period": "Kỳ quỹ",
+    "periodValue": "Tháng {month}/{year}",
+    "maleAmount": "Mức quỹ nam",
+    "femaleAmount": "Mức quỹ nữ",
+    "exchangeMaleAmount": "Quỹ giao lưu nam",
+    "exchangeFemaleAmount": "Quỹ giao lưu nữ",
+    "isLocked": "Khóa kỳ quỹ",
+    "locked": "Đã khóa",
+    "unlocked": "Chưa khóa",
+    "create": "Tạo kỳ quỹ",
+    "edit": "Chỉnh sửa kỳ quỹ",
+    "notFound": "Không có kỳ quỹ nào.",
+    "deleteConfirmMsg": "Bạn chắc chắn muốn xóa kỳ quỹ <b>{title}</b>? Hành động này không thể hoàn tác."
+  },
+  "monthlyContribution": {
+    "title": "Theo dõi đóng quỹ tháng",
+    "notFound": "Không tìm thấy khoản đóng quỹ nào",
+    "totalCount": "{count} khoản",
+    "member": "Thành viên",
+    "period": "Kỳ quỹ",
+    "amount": "Số tiền",
+    "status": "Trạng thái",
+    "paidBy": "Hình thức",
+    "paymentDate": "Ngày thanh toán",
+    "status_pending": "Chờ đóng",
+    "status_paid": "Đã đóng",
+    "status_cancelled": "Đã huỷ",
+    "paid_by_bank": "Chuyển khoản",
+    "paid_by_cash": "Tiền mặt",
+    "paid_by_manual": "Thủ công"
   }
 }
