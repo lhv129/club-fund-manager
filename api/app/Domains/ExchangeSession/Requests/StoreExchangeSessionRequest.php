@@ -12,14 +12,13 @@ class StoreExchangeSessionRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'club_id'             => ['required', 'integer', 'exists:clubs,id'],
             'playing_schedule_id'  => ['nullable', 'integer', 'exists:playing_schedules,id'],
-            'transaction_id'        => ['nullable', 'integer', 'exists:transactions,id'],
-            'session_date'          => ['required', 'date'],
+            'transaction_id' => ['nullable', 'integer', 'exists:transactions,id'],
+            'session_date' => ['required', 'date'],
             'court_name'            => ['nullable', 'string', 'max:255'],
             'court_address'         => ['nullable', 'string', 'max:500'],
-            'start_time'            => ['required', 'date_format:H:i'],
-            'end_time'              => ['required', 'date_format:H:i', 'after:start_time'],
+            'start_time' => ['required', 'date_format:H:i:s'],
+            'end_time'   => ['required', 'date_format:H:i:s', 'after:start_time'],
             'type'                  => ['nullable', 'in:scheduled,manual'],
             'status'                => ['nullable', 'in:upcoming,completed,cancelled'],
             'player_count'          => ['nullable', 'integer', 'min:0'],

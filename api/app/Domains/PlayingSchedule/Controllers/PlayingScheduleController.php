@@ -68,10 +68,12 @@ class PlayingScheduleController extends BaseController
      */
     public function store(StorePlayingScheduleRequest $request): JsonResponse
     {
+        $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
         return $this->responseCommon(
             true,
             __('domains/playing_schedule.created'),
-            new PlayingScheduleResource($this->service->create($request->validated())),
+            new PlayingScheduleResource($this->service->create($data)),
             201,
         );
     }
@@ -81,10 +83,12 @@ class PlayingScheduleController extends BaseController
      */
     public function update(UpdatePlayingScheduleRequest $request, string $clubSlug, int $id): JsonResponse
     {
+        $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
         return $this->responseCommon(
             true,
             __('domains/playing_schedule.updated'),
-            new PlayingScheduleResource($this->service->update($id, $request->validated())),
+            new PlayingScheduleResource($this->service->update($id, $data)),
         );
     }
 

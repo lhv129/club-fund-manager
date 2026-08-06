@@ -114,4 +114,22 @@ class MemberPaymentCodeRepository extends BaseRepository
             ->where('payment_code', $code)
             ->exists();
     }
+
+    /**
+     * Tìm payment code pending + chưa hết hạn theo code string.
+     * lockForUpdate() tránh race condition khi webhook đến nhiều lần cùng lúc.
+     */
+    public function findPendingByCode(string $code): ?MemberPaymentCode
+    {
+        return $this->model
+            ->where('payment_code', strtoupper($code))
+            ->where('status', 'pending')
+            ->where(function ($q) {
+                $q->whereNull('expired_at')
+                    ->orWhere('expired_at', '>=', now());
+            })
+            ->with('monthlyContribution')   // cần để update contribution ngay sau đó
+            ->lockForUpdate()               // SELECT ... FOR UPDATE — chặn concurrent webhook
+            ->first();
+    }
 }

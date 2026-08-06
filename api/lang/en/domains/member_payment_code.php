@@ -17,4 +17,5 @@ return [
     'no_active_code'        => 'No active payment code for this contribution.',
     'not_found'             => 'Payment code not found.',
     'contribution_not_found' => 'Monthly contribution not found.',
+    'forbidden' => 'You do not have permission to retrieve the payment code.',
 ];

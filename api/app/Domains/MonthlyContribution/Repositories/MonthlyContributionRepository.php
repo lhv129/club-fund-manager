@@ -41,14 +41,13 @@ class MonthlyContributionRepository extends BaseRepository
                 'status',
                 'paid_by',
                 'payment_date',
-                'note',
                 'sort_order',
                 'is_active',
                 'created_at',
             ])
             ->with([
-                'user:id,name,email,gender',
-                'period:id,year,month,male_amount,female_amount',
+                'user:id,fullname,email,gender',
+                'period:id,year,month,male_amount,female_amount,exchange_male_amount,exchange_female_amount',
                 'transaction:id,source,type,amount,reference_code,transaction_date',
                 'paymentCode:id,monthly_contribution_id,payment_code,status,expired_at,used_at',
             ]);

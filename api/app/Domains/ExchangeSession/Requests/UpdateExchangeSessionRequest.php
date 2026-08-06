@@ -13,14 +13,13 @@ class UpdateExchangeSessionRequest extends BaseRequest
         $id = (int) $this->route('id');
 
         return [
-            'club_id'             => ['sometimes', 'required', 'integer', 'exists:clubs,id'],
             'playing_schedule_id'  => ['sometimes', 'nullable', 'integer', 'exists:playing_schedules,id'],
             'transaction_id'        => ['sometimes', 'nullable', 'integer', 'exists:transactions,id'],
             'session_date'          => ['sometimes', 'required', 'date'],
             'court_name'            => ['sometimes', 'nullable', 'string', 'max:255'],
             'court_address'         => ['sometimes', 'nullable', 'string', 'max:500'],
-            'start_time'            => ['sometimes', 'required', 'date_format:H:i'],
-            'end_time'              => ['sometimes', 'required', 'date_format:H:i', 'after:start_time'],
+            'start_time' => ['somtimes', 'date_format:H:i:s'],
+            'end_time'   => ['somtimes', 'date_format:H:i:s', 'after:start_time'],
             'type'                  => ['sometimes', 'in:scheduled,manual'],
             'status'                => ['sometimes', 'in:upcoming,completed,cancelled'],
             'player_count'          => ['sometimes', 'integer', 'min:0'],

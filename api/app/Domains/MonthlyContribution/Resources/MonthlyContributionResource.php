@@ -30,8 +30,9 @@ class MonthlyContributionResource extends JsonResource
             // Relations — chỉ xuất khi đã được load
             'user' => $this->whenLoaded('user', fn() => [
                 'id'    => $this->user->id,
-                'name'  => $this->user->name,
+                'fullname'  => $this->user->fullname,
                 'email' => $this->user->email,
+                'gender' => $this->user->gender,
             ]),
 
             'period' => $this->whenLoaded('period', fn() => [

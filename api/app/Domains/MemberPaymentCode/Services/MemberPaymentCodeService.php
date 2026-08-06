@@ -5,15 +5,19 @@ namespace App\Domains\MemberPaymentCode\Services;
 use App\Base\BaseService;
 use App\Domains\MemberPaymentCode\Models\MemberPaymentCode;
 use App\Domains\MemberPaymentCode\Repositories\MemberPaymentCodeRepository;
+use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\MonthlyContribution\Repositories\MonthlyContributionRepository;
 use App\Exceptions\ApiException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class MemberPaymentCodeService extends BaseService
 {
     protected string $notFoundMessage = 'domains/member_payment_code.not_found';
+
+    // Bảng ký tự không có O/0, I/1 để tránh nhầm lẫn khi đọc
+    private const CODE_CHARS  = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    private const CODE_LENGTH = 8;
 
     public function __construct(
         MemberPaymentCodeRepository $repository,
@@ -91,24 +95,50 @@ class MemberPaymentCodeService extends BaseService
     }
 
     /**
-     * Sinh chuỗi 8 ký tự in hoa [A-Z0-9] unique trong bảng member_payment_codes.
+     * Trả về code đang pending chưa hết hạn, hoặc generate code mới.
+     *
+     * Guard:
+     *   - contribution.status = paid      → 422
+     *   - contribution.status = cancelled → 422
+     *   - code pending chưa hết hạn tồn tại → trả lại, không tạo mới
      */
+    public function generateOrReuse(MonthlyContribution $contribution): MemberPaymentCode
+    {
+        // ── Guard trạng thái contribution ────────────────────────────────────
+        if ($contribution->status === 'paid') {
+            throw new ApiException(__('domains/member_payment_code.already_paid'), 422);
+        }
+        if ($contribution->status === 'cancelled') {
+            throw new ApiException(__('domains/member_payment_code.already_cancelled'), 422);
+        }
+        // ── Idempotency: trả lại code cũ nếu còn hiệu lực ──────────────────
+        $existing = $this->repository->findActiveForContribution($contribution->id);
+        if ($existing) {
+            return $existing;
+        }
+        // ── Generate code mới ────────────────────────────────────────────────
+        return DB::transaction(function () use ($contribution) {
+            return $this->repository->create([
+                'monthly_contribution_id' => $contribution->id,
+                'payment_code'            => $this->generateUniqueCode(),
+                'status'                  => 'pending',
+                'expired_at'              => now()->endOfMonth()->endOfDay(),
+                'sort_order'              => $this->repository->getNextSortOrder(),
+                'is_active'               => true,
+            ]);
+        });
+    }
+    // ── Private helpers ──────────────────────────────────────────────────────
     private function generateUniqueCode(): string
     {
-        $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
-        for ($attempt = 0; $attempt < 10; $attempt++) {
+        $chars = self::CODE_CHARS;
+        $len   = strlen($chars);
+        do {
             $code = '';
-            for ($i = 0; $i < 8; $i++) {
-                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            for ($i = 0; $i < self::CODE_LENGTH; $i++) {
+                $code .= $chars[random_int(0, $len - 1)];
             }
-
-            if (!$this->repository->codeExists($code)) {
-                return $code;
-            }
-        }
-
-        // Fallback cực hiếm: thêm timestamp suffix
-        return Str::upper(Str::random(6)) . substr((string) time(), -2);
+        } while ($this->repository->codeExists($code));
+        return $code;
     }
 }

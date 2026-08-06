@@ -115,4 +115,15 @@ class PlayingScheduleRepository extends BaseRepository
             ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
             ->get();
     }
+
+    /**
+     * Lấy tất cả schedule đang active + bật auto_generate.
+     */
+    public function getAutoGenerateable(): Collection
+    {
+        return $this->model
+            ->active()          // is_active = true
+            ->autoGenerate()    // auto_generate = true
+            ->get();
+    }
 }

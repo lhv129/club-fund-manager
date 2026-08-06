@@ -20,5 +20,6 @@ Route::middleware('auth.jwt')->prefix('clubs/{clubSlug}/payment-codes')->group(f
 Route::middleware('auth.jwt')->prefix('clubs/{clubSlug}/monthly-contributions')->group(function () {
     // Sub-resource trên monthly-contributions: show + generate code
     Route::get('/{contributionId}/payment-code',  [MemberPaymentCodeController::class, 'showForContribution'])->middleware('perm.club:member_payment_code,view');
-    Route::post('/{contributionId}/payment-code', [MemberPaymentCodeController::class, 'generateForContribution'])->middleware('perm.club:member_payment_code,update');
+    // Endpoint sinh mã thanh toán — chỉ chủ sở hữu
+    Route::post('/{contributionId}/payment-code', [MemberPaymentCodeController::class, 'generateOrReuse'])->middleware('perm.club:member_payment_code,view');
 });

@@ -13,12 +13,11 @@ class UpdatePlayingScheduleRequest extends BaseRequest
         $id = (int) $this->route('id');
 
         return [
-            'club_id'        => ['sometimes', 'required', 'integer', 'exists:clubs,id'],
             'weekday'         => ['sometimes', 'required', 'integer', 'min:0', 'max:6'],
             'court_name'      => ['sometimes', 'nullable', 'string', 'max:255'],
             'court_address'   => ['sometimes', 'nullable', 'string', 'max:500'],
-            'start_time'      => ['sometimes', 'required', 'date_format:H:i'],
-            'end_time'        => ['sometimes', 'required', 'date_format:H:i', 'after:start_time'],
+            'start_time' => ['sometimes', 'date_format:H:i:s'],
+            'end_time'   => ['sometimes', 'date_format:H:i:s', 'after:start_time'],
             'auto_generate'   => ['sometimes', 'boolean'],
             'weeks_ahead'     => ['sometimes', 'integer', 'min:1', 'max:52'],
             'start_date'      => ['sometimes', 'nullable', 'date'],
@@ -48,7 +47,6 @@ class UpdatePlayingScheduleRequest extends BaseRequest
     {
         return array_merge(
             [
-                'club_id'       => __('domains/playing_schedule.attributes.club_id'),
                 'weekday'        => __('domains/playing_schedule.attributes.weekday'),
                 'court_name'     => __('domains/playing_schedule.attributes.court_name'),
                 'court_address'  => __('domains/playing_schedule.attributes.court_address'),

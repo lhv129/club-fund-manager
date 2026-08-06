@@ -4,6 +4,7 @@ namespace App\Domains\Webhook\Services;
 
 use App\Base\BaseService;
 use App\Domains\Transaction\Models\Transaction;
+use App\Domains\MemberPaymentCode\Services\PaymentMatchingService;
 use App\Domains\Transaction\Services\TransactionService;
 use App\Domains\Webhook\Repositories\SePayWebhookRepository;
 use App\Domains\WebhookConfig\Repositories\WebhookConfigRepository;
@@ -16,40 +17,44 @@ class SePayWebhookService extends BaseService
 {
     protected object $repository;
     protected object $webhookConfigRepository;
-
     protected object $transactionService;
+    protected object $paymentMatchingService;
 
     public function __construct(
-        SePayWebhookRepository $repository,
-        WebhookConfigRepository $webhookConfigRepository,
-
-        TransactionService $transactionService
+        SePayWebhookRepository    $repository,
+        WebhookConfigRepository   $webhookConfigRepository,
+        TransactionService        $transactionService,
+        PaymentMatchingService    $paymentMatchingService,   // ← inject mới
     ) {
         parent::__construct($repository);
         $this->webhookConfigRepository = $webhookConfigRepository;
-        $this->transactionService = $transactionService;
+        $this->transactionService      = $transactionService;
+        $this->paymentMatchingService  = $paymentMatchingService;
     }
 
     public function handleWebhook(Request $request, string $token): Transaction
     {
         $config = $this->webhookConfigRepository->findActiveConfigByToken($token);
 
-        if (! $config) {
+        if (!$config) {
             throw new NotFoundHttpException('Webhook config not found or inactive.');
         }
 
-        if (! $this->verifySignature($request, $config->webhook_secret)) {
+        if (!$this->verifySignature($request, $config->webhook_secret)) {
             throw new HttpException(401, 'Invalid SePay signature.');
         }
 
         $payload = json_decode($request->getContent(), true);
 
-        $this->repository->logWebhook(
-            $request->headers->all(),
-            $payload
-        );
+        $this->repository->logWebhook($request->headers->all(), $payload);
 
-        return $this->transactionService->createTransaction($config, $payload);
+        // Bước 1: Lưu transaction (không thay đổi)
+        $transaction = $this->transactionService->createTransaction($config, $payload);
+
+        // Bước 2: Tìm và settle payment code (nếu match)
+        $this->paymentMatchingService->matchAndSettle($transaction);
+
+        return $transaction;
     }
 
     private function verifySignature(Request $request, string $secret): bool

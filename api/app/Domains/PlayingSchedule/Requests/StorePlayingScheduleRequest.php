@@ -12,12 +12,11 @@ class StorePlayingScheduleRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'club_id'        => ['required', 'integer', 'exists:clubs,id'],
             'weekday'         => ['required', 'integer', 'min:0', 'max:6'],
             'court_name'      => ['nullable', 'string', 'max:255'],
             'court_address'   => ['nullable', 'string', 'max:500'],
-            'start_time'      => ['required', 'date_format:H:i'],
-            'end_time'        => ['required', 'date_format:H:i', 'after:start_time'],
+            'start_time' => ['required', 'date_format:H:i:s'],
+            'end_time'   => ['required', 'date_format:H:i:s', 'after:start_time'],
             'auto_generate'   => ['nullable', 'boolean'],
             'weeks_ahead'     => ['nullable', 'integer', 'min:1', 'max:52'],
             'start_date'      => ['nullable', 'date'],
@@ -42,7 +41,6 @@ class StorePlayingScheduleRequest extends BaseRequest
     {
         return array_merge(
             [
-                'club_id'       => __('domains/playing_schedule.attributes.club_id'),
                 'weekday'        => __('domains/playing_schedule.attributes.weekday'),
                 'court_name'     => __('domains/playing_schedule.attributes.court_name'),
                 'court_address'  => __('domains/playing_schedule.attributes.court_address'),

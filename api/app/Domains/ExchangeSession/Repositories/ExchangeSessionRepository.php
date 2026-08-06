@@ -122,4 +122,18 @@ class ExchangeSessionRepository extends BaseRepository
             ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
             ->get();
     }
+
+
+    /**
+     * Kiểm tra đã có session cho (schedule_id, session_date) chưa.
+     * withTrashed() để tránh tạo lại bản ghi đã soft-delete.
+     */
+    public function existsForScheduleAndDate(int $scheduleId, string $date): bool
+    {
+        return $this->model
+            ->withTrashed()
+            ->where('playing_schedule_id', $scheduleId)
+            ->whereDate('session_date', $date)
+            ->exists();
+    }
 }

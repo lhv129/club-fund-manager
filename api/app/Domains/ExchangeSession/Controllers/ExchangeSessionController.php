@@ -68,10 +68,12 @@ class ExchangeSessionController extends BaseController
      */
     public function store(StoreExchangeSessionRequest $request): JsonResponse
     {
+        $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
         return $this->responseCommon(
             true,
             __('domains/exchange_session.created'),
-            new ExchangeSessionResource($this->service->create($request->validated())),
+            new ExchangeSessionResource($this->service->create($data)),
             201,
         );
     }
@@ -81,10 +83,12 @@ class ExchangeSessionController extends BaseController
      */
     public function update(UpdateExchangeSessionRequest $request, string $clubSlug, int $id): JsonResponse
     {
+        $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
         return $this->responseCommon(
             true,
             __('domains/exchange_session.updated'),
-            new ExchangeSessionResource($this->service->update($id, $request->validated())),
+            new ExchangeSessionResource($this->service->update($id, $data)),
         );
     }
 
