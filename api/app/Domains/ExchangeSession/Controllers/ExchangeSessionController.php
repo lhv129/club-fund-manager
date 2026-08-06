@@ -113,4 +113,16 @@ class ExchangeSessionController extends BaseController
             new ExchangeSessionResource($this->service->toggleStatus($id)),
         );
     }
+
+    /**
+     * PATCH /api/v1/exchange-sessions/{id}/complete — chốt buổi đánh.
+     */
+    public function complete(string $clubSlug, int $id): JsonResponse
+    {
+        return $this->responseCommon(
+            true,
+            __('domains/exchange_session.completed'),
+            new ExchangeSessionResource($this->service->complete($id)),
+        );
+    }
 }

@@ -20,7 +20,7 @@ class ExchangeSessionPlayerController extends BaseController
     public function index(string $clubSlug, int $sessionId, FilterExchangeSessionPlayerRequest $request): JsonResponse
     {
         return $this->paginateResponse(
-            $this->service->paginate($sessionId, $request->validated()),
+            $this->service->paginateForSession($sessionId, $request->validated()),
             __('domains/exchange_session.player_list'),
             ExchangeSessionPlayerResource::class,
         );
@@ -46,7 +46,7 @@ class ExchangeSessionPlayerController extends BaseController
         return $this->responseCommon(
             true,
             __('domains/exchange_session.player_created'),
-            new ExchangeSessionPlayerResource($this->service->create($sessionId, $request->validated())),
+            new ExchangeSessionPlayerResource($this->service->createForSession($sessionId, $request->validated())),
             201,
         );
     }
@@ -59,7 +59,7 @@ class ExchangeSessionPlayerController extends BaseController
         return $this->responseCommon(
             true,
             __('domains/exchange_session.player_updated'),
-            new ExchangeSessionPlayerResource($this->service->update($sessionId, $id, $request->validated())),
+            new ExchangeSessionPlayerResource($this->service->updateForSession($sessionId, $id, $request->validated())),
         );
     }
 
@@ -68,13 +68,13 @@ class ExchangeSessionPlayerController extends BaseController
      */
     public function destroy(string $clubSlug, int $sessionId, int $id): JsonResponse
     {
-        $this->service->delete($sessionId, $id);
+        $this->service->deleteFromSession($sessionId, $id);
 
         return $this->responseCommon(true, __('domains/exchange_session.player_deleted'));
     }
 
     /**
-     * PATCH /api/v1/exchange-sessions/{sessionId}/players/{id}/toggle-paid
+     * PUT /api/v1/exchange-sessions/{sessionId}/players/{id}/toggle-paid
      */
     public function togglePaid(string $clubSlug, int $sessionId, int $id): JsonResponse
     {
@@ -85,15 +85,4 @@ class ExchangeSessionPlayerController extends BaseController
         );
     }
 
-    /**
-     * PATCH /api/v1/exchange-sessions/{sessionId}/players/{id}/toggle-check-in
-     */
-    public function toggleCheckIn(string $clubSlug, int $sessionId, int $id): JsonResponse
-    {
-        return $this->responseCommon(
-            true,
-            __('domains/exchange_session.player_check_in_toggled'),
-            new ExchangeSessionPlayerResource($this->service->toggleCheckIn($sessionId, $id)),
-        );
-    }
 }

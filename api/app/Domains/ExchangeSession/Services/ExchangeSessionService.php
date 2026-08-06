@@ -5,7 +5,9 @@ namespace App\Domains\ExchangeSession\Services;
 use App\Base\BaseService;
 use App\Domains\ExchangeSession\Models\ExchangeSession;
 use App\Domains\ExchangeSession\Repositories\ExchangeSessionRepository;
+use App\Domains\FundPeriod\Repositories\FundPeriodRepository;
 use App\Exceptions\ApiException;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -15,8 +17,10 @@ class ExchangeSessionService extends BaseService
 {
     protected string $notFoundMessage = 'domains/exchange_session.not_found';
 
-    public function __construct(ExchangeSessionRepository $repository)
-    {
+    public function __construct(
+        ExchangeSessionRepository $repository,
+        protected FundPeriodRepository $fundPeriodRepository,
+    ) {
         parent::__construct($repository);
     }
 
@@ -116,7 +120,20 @@ class ExchangeSessionService extends BaseService
     }
 
     /**
-     * Đồng bộ player_count + total_amount + amount_per_player từ danh sách player.
+     * Đồng bộ player_count + total_amount + amount_per_player từ danh sách
+     * các nhóm giao lưu (exchange_session_players) + đơn giá FundPeriod của
+     * tháng session_date.
+     *
+     * Luồng:
+     *   1. Tìm FundPeriod theo club_id + (year, month) của session_date.
+     *      - Nếu CÓ FundPeriod → snapshot exchange_male_amount / exchange_female_amount
+     *        lên session, tính lại amount mỗi nhóm giao lưu từ rates, rồi tổng
+     *        total_amount = sum(amount). player_count = sum(male + female).
+     *      - Nếu KHÔNG có FundPeriod → chỉ đếm player_count = sum(male+female),
+     *        để total_amount nguyên, KHÔNG throw (cho phép thêm/xoá player trước
+     *        khi tạo FundPeriod). Throw chỉ xảy ra ở complete().
+     *   2. amount_per_player = total_amount / max(player_count, 1) (trung bình).
+     *
      * Gọi sau khi thêm/sửa/xoá player trong ExchangeSessionPlayerService.
      */
     public function recalculateTotals(int $sessionId): void
@@ -125,20 +142,94 @@ class ExchangeSessionService extends BaseService
 
         $players = $session->players()->where('is_active', true)->get();
 
-        $playerCount = $players->count();
-        $totalAmount = (float) $players->sum('amount');
-        $amountPerPlayer = $playerCount > 0
-            ? round($totalAmount / $playerCount, 2)
-            : 0;
+        $playerCount = (int) $players->sum(fn ($p) => (int) $p->male + (int) $p->female);
+
+        $data = [
+            'player_count' => $playerCount,
+        ];
+
+        $fundPeriod = $this->fundPeriodRepository->findByClubAndDate(
+            (int) $session->club_id,
+            (int) Carbon::parse($session->session_date)->year,
+            (int) Carbon::parse($session->session_date)->month,
+        );
+
+        if ($fundPeriod) {
+            $exchangeMale   = (float) $fundPeriod->exchange_male_amount;
+            $exchangeFemale = (float) $fundPeriod->exchange_female_amount;
+
+            $data['exchange_male_amount']   = $exchangeMale;
+            $data['exchange_female_amount'] = $exchangeFemale;
+
+            // Tính lại amount mỗi nhóm giao lưu từ rates + tổng total_amount
+            $totalAmount = 0;
+            foreach ($players as $player) {
+                $rowAmount = ((int) $player->male * $exchangeMale)
+                    + ((int) $player->female * $exchangeFemale);
+                $player->amount = round($rowAmount, 2);
+                $player->save();
+                $totalAmount += $rowAmount;
+            }
+
+            $data['total_amount']      = round($totalAmount, 2);
+            $data['amount_per_player'] = $playerCount > 0
+                ? round($totalAmount / $playerCount, 2)
+                : 0;
+        } else {
+            // Không có FundPeriod → total = sum(amount) hiện có (thường 0)
+            $data['total_amount']      = round((float) $players->sum('amount'), 2);
+            $data['amount_per_player'] = $playerCount > 0
+                ? round((float) $players->sum('amount') / $playerCount, 2)
+                : 0;
+        }
 
         $this->repository->editWhere(
             where: ['id' => $sessionId],
-            data: [
-                'player_count'      => $playerCount,
-                'total_amount'      => $totalAmount,
-                'amount_per_player' => $amountPerPlayer,
-            ],
+            data: $data,
         );
+    }
+
+    /**
+     * Chốt buổi đánh — status upcoming → completed.
+     *
+     * Guards:
+     *   - status !== 'upcoming' → 422 "buổi đã chốt / đã huỷ".
+     *   - chưa có FundPeriod cho tháng session_date → 422 (phải tạo FundPeriod trước).
+     *
+     * Sau khi recalculate → set status=completed.
+     */
+    public function complete(int $sessionId): ExchangeSession
+    {
+        return DB::transaction(function () use ($sessionId) {
+            $session = $this->find($sessionId);
+
+            if ($session->status !== 'upcoming') {
+                throw new ApiException(
+                    __('domains/exchange_session.already_completed'),
+                    422,
+                );
+            }
+
+            $fundPeriod = $this->fundPeriodRepository->findByClubAndDate(
+                (int) $session->club_id,
+                (int) Carbon::parse($session->session_date)->year,
+                (int) Carbon::parse($session->session_date)->month,
+            );
+
+            if (!$fundPeriod) {
+                throw new ApiException(
+                    __('domains/exchange_session.missing_fund_period'),
+                    422,
+                );
+            }
+
+            // Recalculate (có FundPeriod → snapshot đơn giá + tính total)
+            $this->recalculateTotals($sessionId);
+
+            $this->repository->update($session, ['status' => 'completed']);
+
+            return $session->fresh(['translations', 'players']);
+        });
     }
 
     private function syncPlayerCount(ExchangeSession $session): void

@@ -136,4 +136,18 @@ class FundPeriodRepository extends BaseRepository
             ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
             ->get();
     }
+
+    /**
+     * Tìm FundPeriod theo club + (year, month).
+     * Dùng khi chốt ExchangeSession để snapshot đơn giá giao lưu
+     * (exchange_male_amount / exchange_female_amount) cho tháng của buổi đánh.
+     */
+    public function findByClubAndDate(int $clubId, int $year, int $month): ?FundPeriod
+    {
+        return $this->model
+            ->where('club_id', $clubId)
+            ->where('year', $year)
+            ->where('month', $month)
+            ->first();
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Domains\ExchangeSession\Models;
 
+use App\Domains\Transaction\Models\Transaction;
 use App\Domains\User\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,10 +18,13 @@ class ExchangeSessionPlayer extends Model
 
     protected $fillable = [
         'exchange_session_id',
-        'user_id',          // nullable — null khi khách ngoài
-        'player_name',
+        'user_id',          // nullable — member mang nhóm giao lưu đến; NULL = người lạ
+        'player_name',      // JSON mảng tên (dành cho người lạ / ghi chú)
+        'male',             // số lượng nam trong nhóm giao lưu
+        'female',           // số lượng nữ trong nhóm giao lưu
+        'transaction_id',   // nullable — admin gắn tay để set paid=1
 
-        'amount',
+        'amount',           // tự tính = male×exchange_male_amount + female×exchange_female_amount
         'paid',
         'checked_in',
 
@@ -31,6 +35,9 @@ class ExchangeSessionPlayer extends Model
     protected function casts(): array
     {
         return [
+            'player_name' => 'array',     // JSON ↔ PHP array
+            'male'         => 'integer',
+            'female'       => 'integer',
             'amount'     => 'decimal:2',
             'paid'       => 'boolean',
             'checked_in' => 'boolean',
@@ -53,6 +60,11 @@ class ExchangeSessionPlayer extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class);
     }
 
     /*

@@ -18,6 +18,7 @@ return [
         'sender_name' => 'Tên người chuyển',
         'sender_account' => 'Tài khoản người chuyển',
         'transaction_date' => 'Thời gian giao dịch',
+        'source' => 'Nguồn giao dịch',
         'is_active' => 'Trạng thái hoạt động',
         'sort_order' => 'Thứ tự sắp xếp',
     ],

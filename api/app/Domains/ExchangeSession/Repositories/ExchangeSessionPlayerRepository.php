@@ -16,7 +16,7 @@ class ExchangeSessionPlayerRepository extends BaseRepository
 
     protected array $allowedSortColumns = ['id', 'amount', 'sort_order', 'created_at'];
 
-    protected array $selectColumns = ['id', 'exchange_session_id', 'user_id', 'player_name', 'amount', 'paid', 'checked_in'];
+    protected array $selectColumns = ['id', 'exchange_session_id', 'user_id', 'player_name', 'male', 'female', 'transaction_id', 'amount', 'paid', 'checked_in'];
     protected array $selectWith    = [];
 
     public function __construct(ExchangeSessionPlayer $model)
@@ -32,6 +32,9 @@ class ExchangeSessionPlayerRepository extends BaseRepository
                 'exchange_session_id',
                 'user_id',
                 'player_name',
+                'male',
+                'female',
+                'transaction_id',
                 'amount',
                 'paid',
                 'checked_in',
@@ -39,7 +42,7 @@ class ExchangeSessionPlayerRepository extends BaseRepository
                 'sort_order',
                 'created_at',
             ])
-            ->with(['user:id,fullname']);
+            ->with(['user:id,fullname', 'transaction:id,source,type,amount,description,transaction_date']);
     }
 
     protected function applyFilters(Builder $query, array $filters): void
@@ -52,6 +55,10 @@ class ExchangeSessionPlayerRepository extends BaseRepository
 
         if (!empty($filters['user_id'])) {
             $query->where('user_id', (int) $filters['user_id']);
+        }
+
+        if (!empty($filters['transaction_id'])) {
+            $query->where('transaction_id', (int) $filters['transaction_id']);
         }
 
         if (array_key_exists('paid', $filters) && $filters['paid'] !== null && $filters['paid'] !== '') {

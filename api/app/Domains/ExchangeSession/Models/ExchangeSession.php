@@ -36,6 +36,8 @@ class ExchangeSession extends Model
         'player_count',
         'amount_per_player',
         'total_amount',
+        'exchange_male_amount',     // snapshot đơn giá giao lưu nam từ FundPeriod
+        'exchange_female_amount',   // snapshot đơn giá giao lưu nữ từ FundPeriod
 
         'sort_order',
         'is_active',
@@ -44,14 +46,16 @@ class ExchangeSession extends Model
     protected function casts(): array
     {
         return [
-            'session_date'       => 'date',
-            'start_time'         => 'datetime',
-            'end_time'           => 'datetime',
-            'player_count'       => 'integer',
-            'amount_per_player'  => 'decimal:2',
-            'total_amount'       => 'decimal:2',
-            'sort_order'         => 'integer',
-            'is_active'          => 'boolean',
+            'session_date'         => 'date',
+            'start_time'           => 'datetime',
+            'end_time'             => 'datetime',
+            'player_count'         => 'integer',
+            'amount_per_player'    => 'decimal:2',
+            'total_amount'         => 'decimal:2',
+            'exchange_male_amount'   => 'decimal:2',
+            'exchange_female_amount' => 'decimal:2',
+            'sort_order'           => 'integer',
+            'is_active'            => 'boolean',
         ];
     }
 

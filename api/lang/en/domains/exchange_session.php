@@ -15,6 +15,8 @@ return [
         'player_count'           => 'Player Count',
         'amount_per_player'      => 'Amount Per Player',
         'total_amount'           => 'Total Amount',
+        'exchange_male_amount'   => 'Exchange Male Amount',
+        'exchange_female_amount' => 'Exchange Female Amount',
         'is_active'               => 'Active Status',
         'sort_order'             => 'Sort Order',
         'title'                  => 'Title',
@@ -22,6 +24,9 @@ return [
 
         'player_user_id'   => 'Player',
         'player_name'      => 'Player Name',
+        'player_male'      => 'Male Count',
+        'player_female'    => 'Female Count',
+        'player_transaction_id' => 'Linked Transaction',
         'player_amount'    => 'Player Amount',
         'player_paid'      => 'Paid',
         'player_checked_in' => 'Checked In',
@@ -35,6 +40,9 @@ return [
     'deleted'                 => 'Exchange session deleted successfully.',
     'status_toggled'          => 'Exchange session status updated successfully.',
     'reordered'               => 'Exchange session order updated successfully.',
+    'completed'               => 'Exchange session completed successfully.',
+    'already_completed'       => 'Exchange session already completed or cancelled.',
+    'missing_fund_period'     => 'No FundPeriod found for the session month. Please create a fund period before completing.',
     'not_found'               => 'Exchange session not found.',
 
     'player_list'              => 'Session players retrieved successfully.',
@@ -45,4 +53,6 @@ return [
     'player_paid_toggled'      => 'Player paid status updated successfully.',
     'player_check_in_toggled' => 'Player check-in status updated successfully.',
     'player_not_found'         => 'Session player not found.',
+    'player_identifier_required' => 'Either user_id or player_name is required.',
+    'player_count_required'      => 'Total male/female count must be greater than 0.',
 ];

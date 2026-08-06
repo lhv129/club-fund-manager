@@ -1,6 +1,6 @@
 <?php
 
-//app/Console/Commands/GenerateExchangeSessionsCommand
+//app/Console/Commands/SyncExchangeSessionsCommand
 
 namespace App\Console\Commands;
 
@@ -9,26 +9,26 @@ use App\Domains\PlayingSchedule\Repositories\PlayingScheduleRepository;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
-class GenerateExchangeSessionsCommand extends Command
+class SyncExchangeSessionsCommand extends Command
 {
-    protected $signature = 'exchange-sessions:generate
-                            {--schedule-id= : Chỉ generate cho 1 PlayingSchedule cụ thể (dùng khi test tay)}';
+    protected $signature = 'exchange-sessions:sync
+                            {--schedule-id= : Chỉ sync cho 1 PlayingSchedule cụ thể (dùng khi test tay)}';
 
-    protected $description = 'Sinh ExchangeSession từ các PlayingSchedule active + auto_generate';
+    protected $description = 'Đồng bộ court/giờ từ PlayingSchedule sang các ExchangeSession upcoming + scheduled';
 
     public function __construct(
         protected ExchangeSessionGeneratorService $generator,
-        protected PlayingScheduleRepository       $scheduleRepository,
+        protected PlayingScheduleRepository $scheduleRepository,
     ) {
         parent::__construct();
     }
 
     public function handle(): int
     {
-        $this->rotateCronLogIfNeeded(); // ← thêm dòng này
+        $this->rotateCronLogIfNeeded();
 
-        $this->info('[ExchangeSession] Bắt đầu generate...');
-        $this->cronLog('[ExchangeSession] Bắt đầu generate...');
+        $this->info('[ExchangeSession] Bắt đầu sync...');
+        $this->cronLog('[ExchangeSession] Bắt đầu sync...');
 
         try {
             if ($scheduleId = $this->option('schedule-id')) {
@@ -39,7 +39,7 @@ class GenerateExchangeSessionsCommand extends Command
         } catch (\Throwable $e) {
             $this->error('[ExchangeSession] Lỗi: ' . $e->getMessage());
 
-            Log::error('[Cron] exchange-sessions:generate failed', [
+            Log::error('[Cron] exchange-sessions:sync failed', [
                 'message' => $e->getMessage(),
                 'trace'   => $e->getTraceAsString(),
             ]);
@@ -54,14 +54,10 @@ class GenerateExchangeSessionsCommand extends Command
 
     private function handleAll(): int
     {
-        $result = $this->generator->generateAll();
+        $result = $this->generator->syncAll();
 
-        $headers = ['Schedules xử lý', 'Session tạo mới', 'Session bỏ qua (đã tồn tại)'];
-        $rows    = [[
-            $result['total_schedules'],
-            $result['total_created'],
-            $result['total_skipped'],
-        ]];
+        $headers = ['Schedules xử lý', 'Session cập nhật'];
+        $rows    = [[$result['total_schedules'], $result['total_updated']]];
 
         $this->table($headers, $rows);
         $this->cronLog($this->buildAsciiTable($headers, $rows));
@@ -84,11 +80,10 @@ class GenerateExchangeSessionsCommand extends Command
             return Command::FAILURE;
         }
 
-        ['created' => $created, 'skipped' => $skipped] =
-            $this->generator->generateForSchedule($schedule);
+        $updated = $this->generator->syncUpcomingForSchedule($schedule);
 
-        $headers = ['Schedule ID', 'Weekday', 'Tạo mới', 'Bỏ qua'];
-        $rows    = [[$schedule->id, $schedule->weekday, $created, $skipped]];
+        $headers = ['Schedule ID', 'Weekday', 'Cập nhật'];
+        $rows    = [[$schedule->id, $schedule->weekday, $updated]];
 
         $this->table($headers, $rows);
         $this->cronLog($this->buildAsciiTable($headers, $rows));
@@ -102,7 +97,7 @@ class GenerateExchangeSessionsCommand extends Command
 
     private function rotateCronLogIfNeeded(): void
     {
-        $path = storage_path('logs/cron/GenerateExchangeSessionsCommand.log');
+        $path = storage_path('logs/cron/SyncExchangeSessionsCommand.log');
 
         if (file_exists($path) && now()->diffInDays(\Carbon\Carbon::createFromTimestamp(filemtime($path))) >= 14) {
             unlink($path);
@@ -111,7 +106,7 @@ class GenerateExchangeSessionsCommand extends Command
 
     private function cronLog(string $message, string $level = 'info'): void
     {
-        Log::channel('cron_generate_exchange_session')->{$level}($message);
+        Log::channel('cron_sync_exchange_session')->{$level}($message);
     }
 
     private function buildAsciiTable(array $headers, array $rows): string

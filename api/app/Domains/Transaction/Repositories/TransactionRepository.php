@@ -78,7 +78,8 @@ class TransactionRepository extends BaseRepository
     }
 
     /**
-     * Search theo title hoặc description.
+     * Search theo description hoặc reference_code.
+     * (Không có cột title trên transactions — fix bug cũ.)
      */
     protected function applySearch(Builder $query, array $filters): void
     {
@@ -86,15 +87,16 @@ class TransactionRepository extends BaseRepository
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                $q->where('description', 'like', "%{$search}%")
+                    ->orWhere('reference_code', 'like', "%{$search}%")
+                    ->orWhere('sender_name', 'like', "%{$search}%");
             });
         }
     }
 
     /**
-     * Filter đặc thù Transaction: is_active (boolean) + user_id.
-     * Thêm filter mới vào đây — getList / getCursorList / getForSelect tự áp dụng.
+     * Filter đặc thù Transaction: is_active + user_id + type + bank_account_id
+     * + khoảng ngày (from_date / to_date).
      */
     protected function applyFilters(Builder $query, array $filters): void
     {
@@ -102,6 +104,22 @@ class TransactionRepository extends BaseRepository
 
         if (!empty($filters['user_id'])) {
             $query->where('user_id', (int) $filters['user_id']);
+        }
+
+        if (!empty($filters['bank_account_id'])) {
+            $query->where('bank_account_id', (int) $filters['bank_account_id']);
+        }
+
+        if (!empty($filters['type']) && in_array($filters['type'], ['income', 'expense'], true)) {
+            $query->where('type', $filters['type']);
+        }
+
+        if (!empty($filters['from_date'])) {
+            $query->whereDate('transaction_date', '>=', $filters['from_date']);
+        }
+
+        if (!empty($filters['to_date'])) {
+            $query->whereDate('transaction_date', '<=', $filters['to_date']);
         }
     }
 

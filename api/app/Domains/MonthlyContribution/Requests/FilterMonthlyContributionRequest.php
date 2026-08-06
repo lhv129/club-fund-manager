@@ -10,7 +10,7 @@ class FilterMonthlyContributionRequest extends BaseRequest
     {
         return [
             'search'    => ['nullable', 'string', 'max:255'],
-            'club_id'   => ['nullable', 'integer', 'min:1'],
+            // 'club_id'   => ['nullable', 'integer', 'min:1'],
             'period_id' => ['nullable', 'integer', 'min:1'],
             'user_id'   => ['nullable', 'integer', 'min:1'],
             'status'    => ['nullable', 'string', 'in:pending,paid,cancelled'],
@@ -26,7 +26,7 @@ class FilterMonthlyContributionRequest extends BaseRequest
     public function attributes(): array
     {
         return [
-            'club_id'   => __('domains/monthly_contribution.attributes.club_id'),
+            // 'club_id'   => __('domains/monthly_contribution.attributes.club_id'),
             'period_id' => __('domains/monthly_contribution.attributes.period_id'),
             'user_id'   => __('domains/monthly_contribution.attributes.user_id'),
             'status'    => __('domains/monthly_contribution.attributes.status'),

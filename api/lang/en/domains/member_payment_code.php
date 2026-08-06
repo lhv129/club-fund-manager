@@ -18,4 +18,5 @@ return [
     'not_found'             => 'Payment code not found.',
     'contribution_not_found' => 'Monthly contribution not found.',
     'forbidden' => 'You do not have permission to retrieve the payment code.',
+    'already_paid' => 'You have already paid for this month.',
 ];

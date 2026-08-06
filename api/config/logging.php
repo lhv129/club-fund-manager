@@ -127,7 +127,6 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
-
         'casso_webhook' => [
             'driver' => 'single',
             'path' => storage_path('logs/webhook/casso.log'),
@@ -139,6 +138,22 @@ return [
             'driver' => 'single',
             'path' => storage_path('logs/webhook/sepay.log'),
             'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
+        // ── Cron Jobs ────────────────────────────────────────────────────────
+
+        'cron_generate_exchange_session' => [
+            'driver' => 'single',
+            'path'   => storage_path('logs/cron/GenerateExchangeSessionsCommand.log'),
+            'level'  => 'debug',
+            'replace_placeholders' => true,
+        ],
+
+        'cron_sync_exchange_session' => [
+            'driver' => 'single',
+            'path'   => storage_path('logs/cron/SyncExchangeSessionsCommand.log'),
+            'level'  => 'debug',
             'replace_placeholders' => true,
         ],
 

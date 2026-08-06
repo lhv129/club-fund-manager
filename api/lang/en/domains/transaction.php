@@ -12,6 +12,7 @@ return [
         'sender_name' => 'Sender Name',
         'sender_account' => 'Sender Account',
         'transaction_date' => 'Transaction Date',
+        'source' => 'Source',
         'is_active' => 'Active Status',
         'sort_order' => 'Sort Order',
     ],

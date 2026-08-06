@@ -3,6 +3,7 @@
 namespace App\Domains\PlayingSchedule\Services;
 
 use App\Base\BaseService;
+use App\Domains\ExchangeSession\Services\ExchangeSessionGeneratorService;
 use App\Domains\PlayingSchedule\Models\PlayingSchedule;
 use App\Domains\PlayingSchedule\Repositories\PlayingScheduleRepository;
 use App\Exceptions\ApiException;
@@ -10,13 +11,16 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PlayingScheduleService extends BaseService
 {
     protected string $notFoundMessage = 'domains/playing_schedule.not_found';
 
-    public function __construct(PlayingScheduleRepository $repository)
-    {
+    public function __construct(
+        PlayingScheduleRepository $repository,
+        protected ExchangeSessionGeneratorService $generator,
+    ) {
         parent::__construct($repository);
     }
 
@@ -89,11 +93,24 @@ class PlayingScheduleService extends BaseService
             $translations = $data['translations'] ?? [];
             unset($data['translations']);
 
-            return $this->repository->updateWithTranslations(
+            $schedule = $this->repository->updateWithTranslations(
                 $schedule,
                 $data,
                 $translations
             );
+
+            // Cascade: đồng bộ court/giờ cho các ExchangeSession upcoming + scheduled
+            // của schedule này. Lỗi sync không rollback update schedule (log warning).
+            try {
+                $this->generator->syncUpcomingForSchedule($schedule);
+            } catch (\Throwable $e) {
+                Log::warning('[PlayingSchedule] cascade sync failed', [
+                    'schedule_id' => $schedule->id,
+                    'error'       => $e->getMessage(),
+                ]);
+            }
+
+            return $schedule;
         });
     }
 

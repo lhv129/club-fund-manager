@@ -16,7 +16,8 @@ Route::middleware('auth.jwt')->group(function () {
         Route::post('/', [ExchangeSessionController::class, 'store'])->middleware('perm.club:exchange_session,create');
         Route::put('/{id}', [ExchangeSessionController::class, 'update'])->middleware('perm.club:exchange_session,update');
         Route::delete('/{id}', [ExchangeSessionController::class, 'destroy'])->middleware('perm.club:exchange_session,delete');
-        Route::patch('/{id}/toggle-status', [ExchangeSessionController::class, 'toggleStatus'])->middleware('perm.club:exchange_session,update');
+        Route::put('/{id}/toggle-status', [ExchangeSessionController::class, 'toggleStatus'])->middleware('perm.club:exchange_session,update');
+        Route::put('/{id}/complete', [ExchangeSessionController::class, 'complete'])->middleware('perm.club:exchange_session,update');
 
         // Sub-resource: players của 1 session
         Route::get('/{sessionId}/players', [ExchangeSessionPlayerController::class, 'index'])->middleware('perm.club:exchange_session,view');
@@ -24,7 +25,6 @@ Route::middleware('auth.jwt')->group(function () {
         Route::post('/{sessionId}/players', [ExchangeSessionPlayerController::class, 'store'])->middleware('perm.club:exchange_session,update');
         Route::put('/{sessionId}/players/{id}', [ExchangeSessionPlayerController::class, 'update'])->middleware('perm.club:exchange_session,update');
         Route::delete('/{sessionId}/players/{id}', [ExchangeSessionPlayerController::class, 'destroy'])->middleware('perm.club:exchange_session,update');
-        Route::patch('/{sessionId}/players/{id}/toggle-paid',   [ExchangeSessionPlayerController::class, 'togglePaid'])->middleware('perm.club:exchange_session,update');
-        Route::patch('/{sessionId}/players/{id}/toggle-check-in', [ExchangeSessionPlayerController::class, 'toggleCheckIn'])->middleware('perm.club:exchange_session,update');
+        Route::put('/{sessionId}/players/{id}/toggle-paid',   [ExchangeSessionPlayerController::class, 'togglePaid'])->middleware('perm.club:exchange_session,update');
     });
 });

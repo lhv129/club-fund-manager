@@ -28,13 +28,6 @@ class CheckClubPermission
             throw new ApiException(__('exception.unauthorized'), 401);
         }
 
-        // Superadmin bypass — không cần check club_id
-        // Phải gọi method isSuperAdmin(), KHÔNG dùng $user->is_superadmin
-        // (User model không có property/accessor đó → luôn NULL → bypass không bao giờ chạy)
-        if ($user->isSuperAdmin()) {
-            return $next($request);
-        }
-
         // 1. Ưu tiên lấy club_id từ route param {id}
         $clubId = $request->route('id') ?? $request->route('clubId');
 
@@ -67,6 +60,14 @@ class CheckClubPermission
                 $request->attributes->set('club_id', $clubId);
             }
         }
+
+        // Superadmin bypass — không cần check club_id
+        // Phải gọi method isSuperAdmin(), KHÔNG dùng $user->is_superadmin
+        // (User model không có property/accessor đó → luôn NULL → bypass không bao giờ chạy)
+        if ($user->isSuperAdmin()) {
+            return $next($request);
+        }
+
 
         // 3. Fallback: lấy từ request body
         if (!$clubId) {

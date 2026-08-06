@@ -43,6 +43,8 @@ class ExchangeSessionRepository extends BaseRepository
                 'player_count',
                 'amount_per_player',
                 'total_amount',
+                'exchange_male_amount',
+                'exchange_female_amount',
                 'is_active',
                 'sort_order',
                 'created_at',
@@ -131,9 +133,22 @@ class ExchangeSessionRepository extends BaseRepository
     public function existsForScheduleAndDate(int $scheduleId, string $date): bool
     {
         return $this->model
-            ->withTrashed()
+            // ->withTrashed()
             ->where('playing_schedule_id', $scheduleId)
             ->whereDate('session_date', $date)
             ->exists();
+    }
+
+    /**
+     * Lấy các session upcoming + scheduled của 1 schedule — dùng cho cascade sync
+     * khi admin sửa PlayingSchedule (giờ/sân). Không đè session completed/cancelled.
+     */
+    public function getUpcomingScheduledForSchedule(int $scheduleId): Collection
+    {
+        return $this->model
+            ->where('playing_schedule_id', $scheduleId)
+            ->where('type', 'scheduled')
+            ->where('status', 'upcoming')
+            ->get();
     }
 }

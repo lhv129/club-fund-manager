@@ -26,8 +26,9 @@ class ExchangeSessionPlayerService extends BaseService
 
     /**
      * Danh sách player của 1 session, phân trang offset.
+     * (Đặt tên khác paginate() để tránh xung đột signature với BaseService::paginate().)
      */
-    public function paginate(int $sessionId, array $filters = []): LengthAwarePaginator
+    public function paginateForSession(int $sessionId, array $filters = []): LengthAwarePaginator
     {
         $filters['exchange_session_id'] = $sessionId;
 
@@ -61,14 +62,25 @@ class ExchangeSessionPlayerService extends BaseService
     // -------------------------------------------------------------------------
     // Write
     // -------------------------------------------------------------------------
+    // Method đặt tên *ForSession / *FromSession để tránh xung đột signature
+    // với BaseService::create / update / delete (parent nhận (array | int, array)).
 
-    public function create(int $sessionId, array $data): ExchangeSessionPlayer
+    public function createForSession(int $sessionId, array $data): ExchangeSessionPlayer
     {
         return DB::transaction(function () use ($sessionId, $data) {
-            // Verify session tồn tại (throw 404 nếu không)
-            $this->sessionService->find($sessionId);
+            $session = $this->sessionService->find($sessionId);
 
             $data['exchange_session_id'] = $sessionId;
+
+            // Tự tính amount = male×exchange_male_amount + female×exchange_female_amount
+            // (lấy từ session đã snapshot, hoặc 0 nếu chưa chốt)
+            $male   = (int) ($data['male']   ?? 0);
+            $female = (int) ($data['female'] ?? 0);
+            $data['amount'] = round(
+                ($male * (float) $session->exchange_male_amount)
+                + ($female * (float) $session->exchange_female_amount),
+                2,
+            );
 
             if (!isset($data['sort_order'])) {
                 $data['sort_order'] = $this->repository->getNextSortOrder();
@@ -76,27 +88,44 @@ class ExchangeSessionPlayerService extends BaseService
 
             $player = $this->repository->create($data);
 
-            // Tính lại tổng số tiền / số player của session
+            // Tính lại tổng của session (sẽ tự recompute amount nếu có FundPeriod)
             $this->sessionService->recalculateTotals($sessionId);
 
             return $player->load('user:id,fullname');
         });
     }
 
-    public function update(int $sessionId, int $playerId, array $data): ExchangeSessionPlayer
+    public function updateForSession(int $sessionId, int $playerId, array $data): ExchangeSessionPlayer
     {
         return DB::transaction(function () use ($sessionId, $playerId, $data) {
             $player = $this->findBySession($sessionId, $playerId);
+            $session = $this->sessionService->find($sessionId);
+
+            // Nếu đổi male/female mà không gửi amount → tự tính lại
+            if ((isset($data['male']) || isset($data['female'])) && !isset($data['amount'])) {
+                $male   = (int) ($data['male']   ?? $player->male);
+                $female = (int) ($data['female'] ?? $player->female);
+                $data['amount'] = round(
+                    ($male * (float) $session->exchange_male_amount)
+                    + ($female * (float) $session->exchange_female_amount),
+                    2,
+                );
+            }
+
+            // Gắn transaction_id → tự set paid=1 (đối soát tay)
+            if (!empty($data['transaction_id']) && $player->transaction_id !== (int) $data['transaction_id']) {
+                $data['paid'] = true;
+            }
 
             $player = $this->repository->update($player, $data);
 
             $this->sessionService->recalculateTotals($sessionId);
 
-            return $player->load('user:id,fullname');
+            return $player->load('user:id,fullname', 'transaction:id,source,type,amount,description,transaction_date');
         });
     }
 
-    public function delete(int $sessionId, int $playerId): bool
+    public function deleteFromSession(int $sessionId, int $playerId): bool
     {
         return DB::transaction(function () use ($sessionId, $playerId) {
             $player = $this->findBySession($sessionId, $playerId);
@@ -110,32 +139,21 @@ class ExchangeSessionPlayerService extends BaseService
     }
 
     /**
-     * Đánh dấu đã thanh toán / chưa thanh toán.
+     * Đánh dấu đã thanh toán / chưa thanh toán (toggle tay).
      */
     public function togglePaid(int $sessionId, int $playerId): ExchangeSessionPlayer
     {
         return DB::transaction(function () use ($sessionId, $playerId) {
             $player       = $this->findBySession($sessionId, $playerId);
             $player->paid = !$player->paid;
+            // Khi unset paid → xoá link transaction_id (không đối soát nữa)
+            if (!$player->paid) {
+                $player->transaction_id = null;
+            }
             $player->save();
 
-            $this->sessionService->recalculateTotals($sessionId);
-
-            return $player->fresh('user:id,fullname');
+            return $player->fresh(['user:id,fullname', 'transaction:id,source,type,amount,description,transaction_date']);
         });
     }
 
-    /**
-     * Đánh dấu check-in / hủy check-in.
-     */
-    public function toggleCheckIn(int $sessionId, int $playerId): ExchangeSessionPlayer
-    {
-        return DB::transaction(function () use ($sessionId, $playerId) {
-            $player                = $this->findBySession($sessionId, $playerId);
-            $player->checked_in    = !$player->checked_in;
-            $player->save();
-
-            return $player->fresh('user:id,fullname');
-        });
-    }
 }

@@ -86,6 +86,80 @@ class ExchangeSessionGeneratorService
         return ['created' => $created, 'skipped' => $skipped];
     }
 
+    /**
+     * Đồng bộ court_name / court_address / start_time / end_time cho mọi
+     * ExchangeSession upcoming + scheduled của 1 PlayingSchedule.
+     *
+     * Dùng khi admin sửa PlayingSchedule (giờ/sân). Bỏ qua session đã
+     * completed/cancelled (đã chốt số liệu / đã huỷ) — tránh đè.
+     *
+     * @return int  số session đã được cập nhật
+     */
+    public function syncUpcomingForSchedule(PlayingSchedule $schedule): int
+    {
+        $sessions = $this->sessionRepository->getUpcomingScheduledForSchedule($schedule->id);
+
+        if ($sessions->isEmpty()) {
+            Log::info('[ExchangeSessionGenerator] syncUpcoming — no upcoming sessions', [
+                'schedule_id' => $schedule->id,
+            ]);
+            return 0;
+        }
+
+        $updated = 0;
+
+        foreach ($sessions as $session) {
+            // Ghép session_date hiện có của session + giờ mới từ schedule
+            $startTime = Carbon::parse($session->session_date)->setTimeFromTimeString(
+                Carbon::parse($schedule->start_time)->format('H:i:s')
+            );
+            $endTime = Carbon::parse($session->session_date)->setTimeFromTimeString(
+                Carbon::parse($schedule->end_time)->format('H:i:s')
+            );
+
+            $this->sessionRepository->update($session, [
+                'court_name'    => $schedule->court_name,
+                'court_address' => $schedule->court_address,
+                'start_time'    => $startTime,
+                'end_time'      => $endTime,
+            ]);
+            $updated++;
+        }
+
+        Log::info('[ExchangeSessionGenerator] syncUpcoming complete', [
+            'schedule_id' => $schedule->id,
+            'updated'     => $updated,
+        ]);
+
+        return $updated;
+    }
+
+    /**
+     * Sync tất cả schedule active + auto_generate — cho command chạy tay.
+     *
+     * @return array{total_schedules: int, total_updated: int}
+     */
+    public function syncAll(): array
+    {
+        $schedules = $this->scheduleRepository->getAutoGenerateable();
+
+        $totalUpdated = 0;
+
+        foreach ($schedules as $schedule) {
+            $totalUpdated += $this->syncUpcomingForSchedule($schedule);
+        }
+
+        Log::info('[ExchangeSessionGenerator] syncAll complete', [
+            'total_schedules' => $schedules->count(),
+            'total_updated'   => $totalUpdated,
+        ]);
+
+        return [
+            'total_schedules' => $schedules->count(),
+            'total_updated'   => $totalUpdated,
+        ];
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     /**

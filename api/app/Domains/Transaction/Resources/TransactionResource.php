@@ -47,11 +47,6 @@ class TransactionResource extends JsonResource
                 'type' => $this->webhookConfig->type,
             ]),
 
-            'payment_code' => $this->whenLoaded('paymentCode', fn() => [
-                'id' => $this->paymentCode->id,
-                'code' => $this->paymentCode->code,
-            ]),
-
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

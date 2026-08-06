@@ -17,13 +17,14 @@ class MonthlyContributionController extends BaseController
 
     /**
      * GET /api/v1/clubs/{clubSlug}/monthly-contributions
-     *     ?search=&club_id=1&period_id=1&status=pending&paid_by=bank&is_active=1
+     *     ?search=&period_id=1&status=pending&paid_by=bank&is_active=1
      *     &sort_by=payment_date&sort_dir=desc&limit=20&page=1
      */
     public function index(FilterMonthlyContributionRequest $request): JsonResponse
     {
+        $filters['club_id'] = $request->attributes->get('club_id');
         return $this->paginateResponse(
-            $this->service->paginate($request->validated()),
+            $this->service->paginate($filters),
             __('domains/monthly_contribution.list'),
             MonthlyContributionResource::class,
         );
