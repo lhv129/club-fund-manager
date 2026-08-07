@@ -249,3 +249,17 @@ export function useModules(params: ReturnType<typeof import("@/hooks/useListPara
         handleToggleStatus,
     };
 }
+
+// ─── Select hook (dùng bởi module khác cần dropdown module) ────────────────────
+export function useModuleSelect() {
+    const query = useQuery({
+        queryKey: ["modules-select"],
+        queryFn: () =>
+            moduleService.select() as Promise<ApiResponse<Module[]>>,
+    });
+
+    return {
+        data: query.data?.data ?? [],
+        isLoading: query.isLoading,
+    };
+}

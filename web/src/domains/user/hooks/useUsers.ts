@@ -215,3 +215,17 @@ export function useUsers(
         handleStatusChange,
     };
 }
+
+// ─── Select hook (dùng bởi module khác cần dropdown user) ──────────────────────
+export function useUserSelect() {
+    const query = useQuery({
+        queryKey: ["users-select"],
+        queryFn: () =>
+            userServiceClient.select() as Promise<ApiResponse<User[]>>,
+    });
+
+    return {
+        data: query.data?.data ?? [],
+        isLoading: query.isLoading,
+    };
+}

@@ -191,7 +191,8 @@
     "memberships": "Memberships",
     "detail": "Detail",
     "fundPeriods": "Fund Periods",
-    "monthlyContributions": "Monthly Contributions"
+    "monthlyContributions": "Monthly Contributions",
+    "bankAccounts": "Bank Accounts"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -502,5 +503,28 @@
     "paid_by_bank": "Bank Transfer",
     "paid_by_cash": "Cash",
     "paid_by_manual": "Manual"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for may have been removed, changed, or does not exist.",
+    "backHome": "Back to home"
+  },
+  "bankAccount": {
+    "search": "Search by bank name, account number, or account name...",
+    "title": "Bank Accounts",
+    "create": "Add Bank Account",
+    "edit": "Edit Bank Account",
+    "notFound": "No bank accounts found",
+    "totalCount": "{count} bank accounts",
+    "bankCode": "Bank Code",
+    "bankName": "Bank Name",
+    "bankNamePlaceholder": "Enter bank name",
+    "accountNumber": "Account Number",
+    "accountNumberPlaceholder": "Enter account number",
+    "accountName": "Account Holder",
+    "accountNamePlaceholder": "Enter account holder name",
+    "qrImage": "QR Code Image",
+    "isDefault": "Default Account",
+    "deleteConfirmMsg": "Are you sure you want to delete the bank account \"{name}\"?"
   }
 }

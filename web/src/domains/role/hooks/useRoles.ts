@@ -244,3 +244,17 @@ export function useRoles(
         handleToggleStatus,
     };
 }
+
+// ─── Select hook (dùng bởi module khác cần dropdown role) ──────────────────────
+export function useRoleSelect() {
+    const query = useQuery({
+        queryKey: ["roles-select"],
+        queryFn: () =>
+            roleService.select() as Promise<ApiResponse<Role[]>>,
+    });
+
+    return {
+        data: query.data?.data ?? [],
+        isLoading: query.isLoading,
+    };
+}

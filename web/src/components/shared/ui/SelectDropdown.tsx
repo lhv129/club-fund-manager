@@ -52,7 +52,9 @@ export default function SelectDropdown({
     const t = useTranslations("common");
     const [open, setOpen] = useState(false);
     const [keyword, setKeyword] = useState("");
-    const [dropStyle, setDropStyle] = useState<CSSProperties>({});
+    const [dropStyle, setDropStyle] =
+        useState<CSSProperties | null>(null);
+    const [dropReady, setDropReady] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     const wrapRef = useRef<HTMLDivElement>(null);
@@ -97,10 +99,20 @@ export default function SelectDropdown({
     };
 
     useEffect(() => {
-        if (!open) return;
+        if (!open) {
+            setDropReady(false);
+            setDropStyle(null);
+            return;
+        }
+
+        setDropReady(false);
 
         calcPosition();
-        const rafId = requestAnimationFrame(() => calcPosition());
+
+        const rafId = requestAnimationFrame(() => {
+            calcPosition();
+            setDropReady(true);
+        });
 
         window.addEventListener("resize", calcPosition);
         window.visualViewport?.addEventListener("resize", calcPosition);
@@ -168,7 +180,11 @@ export default function SelectDropdown({
     }, [keyword, options]);
 
     const handleSelect = (val: string) => { onChange(val); setOpen(false); };
-    const handleClear = (e: MouseEvent) => { e.stopPropagation(); onChange(""); };
+    const handleClear = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onChange("");
+    };
 
     const buttonLabel = selectedOption?.label ?? placeholder ?? label;
     const hasValue = !!value;
@@ -207,8 +223,9 @@ export default function SelectDropdown({
                 <span className="flex items-center gap-1 shrink-0">
                     {hasValue && !disabled && (
                         <span
-                            role="button"
-                            tabIndex={0}
+                            onMouseDown={(event) => {
+                                event.preventDefault();
+                            }}
                             onClick={handleClear}
                             aria-label={t("clearSelection")}
                             className="inline-flex items-center justify-center w-4 h-4 rounded-full
@@ -227,7 +244,17 @@ export default function SelectDropdown({
             {open && mounted && createPortal(
                 <div
                     ref={panelRef}
-                    style={dropStyle}
+                    style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        width: DROPDOWN_W,
+                        zIndex: 9999,
+                        visibility: dropReady
+                            ? "visible"
+                            : "hidden",
+                        ...dropStyle,
+                    }}
                     className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700
                         rounded-2xl shadow-xl overflow-hidden"
                 >
@@ -281,6 +308,9 @@ export default function SelectDropdown({
                                     <button
                                         key={opt.value}
                                         type="button"
+                                        onMouseDown={(event) => {
+                                            event.preventDefault();
+                                        }}
                                         onClick={() => handleSelect(opt.value)}
                                         className={[
                                             "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors",

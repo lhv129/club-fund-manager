@@ -53,5 +53,4 @@ export type MonthlyContributionFilters = {
     user_id: number | undefined;
     status: ContributionStatus | undefined;
     paid_by: ContributionPaidBy | undefined;
-    is_active: 0 | 1 | undefined;
 };

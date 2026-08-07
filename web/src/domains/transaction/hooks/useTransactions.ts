@@ -1,18 +1,21 @@
-// src/domains/monthlyContribution/hooks/useMonthlyContributions.ts
+// src/domains/transaction/hooks/useTransactions.ts
 "use client";
 
-import { useParams } from "next/navigation";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
-import { getMonthlyContributionService } from "@/domains/monthlyContribution/services/monthlyContributionService";
-import type { ApiResponse, PaginatedResponse } from "@/types/api";
+import { getTransactionService } from "@/domains/transaction/services/transactionService";
 import type {
-    MonthlyContribution,
-    MonthlyContributionFilters,
-} from "@/domains/monthlyContribution/types";
+    Transaction,
+    TransactionFilters,
+    TransactionSelect,
+} from "@/domains/transaction/types";
 import type { useListParams } from "@/hooks/useListParams";
+import type {
+    ApiResponse,
+    PaginatedResponse,
+} from "@/types/api";
 import type {
     SubmitResult,
     ServerErrorResponse,
@@ -41,46 +44,80 @@ function getServerError(err: unknown): ServerErrorResponse | null {
     return null;
 }
 
-function buildPayload(values: Record<string, string>): FormData {
+function buildCreatePayload(
+    values: Record<string, string>
+): FormData {
     const formData = new FormData();
 
-    formData.append("user_id", values.user_id ?? "");
-    formData.append("period_id", values.period_id ?? "");
-
-    if (values.transaction_id) {
-        formData.append("transaction_id", values.transaction_id);
+    if (values.bank_account_id) {
+        formData.append(
+            "bank_account_id",
+            values.bank_account_id
+        );
     }
 
-    formData.append("status", values.status || "pending");
+    formData.append("type", values.type || "income");
 
-    if (values.paid_by) {
-        formData.append("paid_by", values.paid_by);
+    if (values.source) {
+        formData.append("source", values.source);
     }
 
-    if (values.payment_date) {
-        formData.append("payment_date", values.payment_date);
+    formData.append("amount", values.amount ?? "");
+
+    if (values.description) {
+        formData.append("description", values.description);
+    }
+
+    if (values.reference_code) {
+        formData.append(
+            "reference_code",
+            values.reference_code
+        );
+    }
+
+    if (values.sender_name) {
+        formData.append("sender_name", values.sender_name);
+    }
+
+    if (values.sender_account) {
+        formData.append(
+            "sender_account",
+            values.sender_account
+        );
+    }
+
+    if (values.transaction_date) {
+        formData.append(
+            "transaction_date",
+            values.transaction_date
+        );
     }
 
     return formData;
 }
 
-export function useMonthlyContributions(
+function buildUpdatePayload(
+    values: Record<string, string>
+): FormData {
+    const formData = new FormData();
+
+    formData.append("description", values.description ?? "");
+
+    return formData;
+}
+
+export function useTransactions(
+    clubSlug: string,
     params: ReturnType<
-        typeof useListParams<MonthlyContributionFilters>
+        typeof useListParams<TransactionFilters>
     >["params"]
 ) {
     const queryClient = useQueryClient();
     const t = useTranslations("common");
 
-    const { slug: clubSlug } = useParams<{ slug: string }>();
+    const service = getTransactionService(clubSlug);
 
-    const service = getMonthlyContributionService(clubSlug);
-
-    const queryKey = [
-        "monthly-contributions",
-        clubSlug,
-        params,
-    ] as const;
+    const queryKey = ["transactions", clubSlug, params] as const;
 
     const { data: listData, isLoading } = useQuery({
         queryKey,
@@ -88,8 +125,21 @@ export function useMonthlyContributions(
         enabled: !!clubSlug,
     });
 
+    const {
+        data: selectResponse,
+        isLoading: isSelectLoading,
+    } = useQuery({
+        queryKey: ["transactions-select", clubSlug],
+        queryFn: () =>
+            service.select() as Promise<
+                ApiResponse<TransactionSelect[]>
+            >,
+        enabled: !!clubSlug,
+    });
+
     const data = listData?.data ?? [];
     const total = listData?.meta?.total ?? 0;
+    const selectData = selectResponse?.data ?? [];
 
     const createMutation = useMutation({
         mutationFn: (payload: FormData) => service.create(payload),
@@ -105,56 +155,15 @@ export function useMonthlyContributions(
         }) => service.update(id, payload),
     });
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: number) => service.destroy(id),
-
-        onSuccess: (res, deletedId) => {
-            if (!res.success) return;
-
-            queryClient.setQueryData(
-                queryKey,
-                (
-                    old:
-                        | PaginatedResponse<MonthlyContribution>
-                        | undefined
-                ) => {
-                    if (!old) return old;
-
-                    return {
-                        ...old,
-                        data: (old.data ?? []).filter(
-                            (item) => item.id !== deletedId
-                        ),
-                        meta: {
-                            ...old.meta,
-                            total: Math.max(
-                                0,
-                                (old.meta?.total ?? 1) - 1
-                            ),
-                        },
-                    };
-                }
-            );
-
-            toast.success(res.message || t("deleteSuccess"));
-        },
-
-        onError: (error: unknown) => {
-            toast.error(
-                (error as Error)?.message || t("loadError")
-            );
-        },
-    });
-
     const handleCreate = async (
         values: Record<string, string>
     ): Promise<SubmitResult> => {
         try {
             const raw = await createMutation.mutateAsync(
-                buildPayload(values)
+                buildCreatePayload(values)
             );
 
-            const res = raw as ApiResponse<MonthlyContribution>;
+            const res = raw as ApiResponse<Transaction>;
 
             if (!res.success) {
                 return {
@@ -165,7 +174,7 @@ export function useMonthlyContributions(
             }
 
             await queryClient.invalidateQueries({
-                queryKey: ["monthly-contributions", clubSlug],
+                queryKey: ["transactions", clubSlug],
             });
 
             toast.success(res.message || t("saveSuccess"));
@@ -193,10 +202,10 @@ export function useMonthlyContributions(
         try {
             const raw = await updateMutation.mutateAsync({
                 id,
-                payload: buildPayload(values),
+                payload: buildUpdatePayload(values),
             });
 
-            const res = raw as ApiResponse<MonthlyContribution>;
+            const res = raw as ApiResponse<Transaction>;
 
             if (!res.success) {
                 return {
@@ -207,7 +216,7 @@ export function useMonthlyContributions(
             }
 
             await queryClient.invalidateQueries({
-                queryKey: ["monthly-contributions", clubSlug],
+                queryKey: ["transactions", clubSlug],
             });
 
             toast.success(res.message || t("updateSuccess"));
@@ -228,37 +237,43 @@ export function useMonthlyContributions(
         }
     };
 
-    const handleDeleteConfirm = (id: number) => {
-        deleteMutation.mutate(id);
-    };
-
     return {
         data,
         total,
         isLoading,
 
+        selectData,
+        isSelectLoading,
+
         isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
-        isDeleting: deleteMutation.isPending,
 
         handleCreate,
         handleEdit,
-        handleDeleteConfirm,
     };
 }
 
-// ─── Select hook (dùng bởi module khác cần dropdown monthly-contribution) ────
-// Cùng query key với inline select (nếu có trong useMonthlyContributions) để share cache.
-export function useMonthlyContributionSelect(clubSlug?: string | null) {
+export function useTransactionSelect(
+    clubSlug?: string | null,
+    params?: Partial<TransactionFilters>
+) {
     const query = useQuery({
-        queryKey: ["monthly-contributions-select", clubSlug],
+        queryKey: [
+            "transactions-select",
+            clubSlug,
+            params,
+        ],
+
         queryFn: () => {
             if (!clubSlug) {
                 throw new Error("Club slug is required");
             }
 
-            return getMonthlyContributionService(clubSlug).select();
+            return getTransactionService(clubSlug).select(params) as Promise<
+                ApiResponse<TransactionSelect[]>
+            >;
         },
+
         enabled: Boolean(clubSlug),
     });
 

@@ -40,3 +40,15 @@ export type MemberHistoryFilters = {
 export interface RejectPayload {
     rejected_reason: string;
 }
+
+
+export interface ClubMemberSelect {
+    id: number;
+    user_id: number;
+    user: {
+        id: number;
+        fullname: string;
+        email: string;
+        phone: string | null;
+    };
+}

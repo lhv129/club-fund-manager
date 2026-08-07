@@ -1,0 +1,588 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import {
+    Pencil,
+    Plus,
+    Trash2,
+} from "lucide-react";
+
+import {
+    Table,
+    type ColumnDef,
+} from "@/components/shared/ui/Table";
+
+import {
+    FilterBar,
+    type AppliedFilters,
+} from "@/components/shared/ui/FilterBar";
+
+import { Pagination } from "@/components/shared/ui/Pagination";
+
+import Select from "@/components/shared/ui/Select";
+
+import {
+    FormModalWithMedia,
+    type FormFieldDef,
+    type SubmitResult,
+} from "@/components/shared/forms/FormModalWithMedia";
+
+import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
+
+import { TableActions } from "@/components/shared/ui/TableActions";
+import { TableActionItem } from "@/components/shared/ui/TableActionItem";
+import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
+
+import { useListParams } from "@/hooks/useListParams";
+import { useClub } from "@/domains/club/hooks/useClub";
+import { useAuth } from "@/domains/auth/hooks/useAuth";
+
+import { useBankAccounts } from "@/domains/bankAccount/hooks/useBankAccounts";
+import type {
+    BankAccount,
+    BankAccountFilters,
+} from "@/domains/bankAccount/types";
+
+import { formatDateTime } from "@/utils";
+import CustomImage from "@/components/shared/media/CustomImage";
+
+export function BankAccountsPageClient() {
+    const t = useTranslations("common");
+    const tb = useTranslations("bankAccount");
+
+    const { club } = useClub();
+    const { hasPermission, isSuperAdmin } = useAuth();
+
+    const canCreate =
+        isSuperAdmin ||
+        hasPermission(
+            "bank_account",
+            "create",
+            club?.id
+        );
+
+    const canUpdate =
+        isSuperAdmin ||
+        hasPermission(
+            "bank_account",
+            "update",
+            club?.id
+        );
+
+    const canDelete =
+        isSuperAdmin ||
+        hasPermission(
+            "bank_account",
+            "delete",
+            club?.id
+        );
+
+    const {
+        params,
+        setPage,
+        setLimit,
+        updateMany,
+        reset,
+    } = useListParams<BankAccountFilters>({
+        defaultFilters: {
+            search: "",
+            is_active: undefined,
+        },
+        defaultSortBy: "sort_order",
+        defaultSortDir: "asc",
+    });
+
+    const [draftIsActive, setDraftIsActive] =
+        useState<0 | 1 | undefined>(
+            params.is_active
+        );
+
+    useEffect(() => {
+        setDraftIsActive(params.is_active);
+    }, [params.is_active]);
+
+    const {
+        data,
+        total,
+        isLoading,
+        isCreating,
+        isUpdating,
+        isDeleting,
+        isTogglingStatus,
+        isTogglingDefault,
+        handleCreate,
+        handleEdit,
+        handleDeleteConfirm,
+        handleToggleStatus,
+        handleToggleDefault,
+    } = useBankAccounts(params);
+
+    const [modalOpen, setModalOpen] =
+        useState(false);
+
+    const [selected, setSelected] =
+        useState<BankAccount | null>(null);
+
+    const [deleteTarget, setDeleteTarget] =
+        useState<BankAccount | null>(null);
+
+    const openCreate = () => {
+        setSelected(null);
+        setModalOpen(true);
+    };
+
+    const openEdit = (row: BankAccount) => {
+        setSelected(row);
+        setModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setModalOpen(false);
+        setSelected(null);
+    };
+
+    const handleSubmit = async (
+        formData: FormData
+    ): Promise<SubmitResult> => {
+        const result = selected
+            ? await handleEdit(
+                selected.id,
+                formData
+            )
+            : await handleCreate(formData);
+
+        if (!result) {
+            closeModal();
+        }
+
+        return result;
+    };
+
+    const handleApplyFilters = (
+        filters: AppliedFilters
+    ) => {
+        updateMany({
+            search: filters.search,
+            sort_by: filters.sort_by,
+            sort_dir: filters.sort_dir,
+            is_active: draftIsActive,
+        });
+    };
+
+    const handleReset = () => {
+        setDraftIsActive(undefined);
+        reset();
+    };
+
+    const sortOptions = [
+        {
+            value: "sort_order",
+            label: t("sortOrder"),
+        },
+        {
+            value: "created_at",
+            label: t("createdAt"),
+        },
+    ];
+
+    const activeOptions = [
+        {
+            value: "1",
+            label: t("active"),
+        },
+        {
+            value: "0",
+            label: t("inactive"),
+        },
+    ];
+
+    const extraFilters = (
+        <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-foreground-muted">
+                {t("status")}
+            </span>
+
+            <Select
+                label={t("status")}
+                options={activeOptions}
+                value={
+                    draftIsActive !== undefined
+                        ? String(draftIsActive)
+                        : ""
+                }
+                onChange={(value) => {
+                    setDraftIsActive(
+                        value === ""
+                            ? undefined
+                            : (Number(value) as 0 | 1)
+                    );
+                }}
+                placeholder={t("all")}
+            />
+        </div>
+    );
+
+    const formFields: FormFieldDef[] =
+        useMemo(
+            () => [
+                {
+                    name: "bank_name",
+                    label: tb("bankName"),
+                    type: "text",
+                    required: true,
+                    placeholder: tb(
+                        "bankNamePlaceholder"
+                    ),
+                },
+                {
+                    name: "account_number",
+                    label: tb("accountNumber"),
+                    type: "text",
+                    required: true,
+                    placeholder: tb(
+                        "accountNumberPlaceholder"
+                    ),
+                },
+                {
+                    name: "account_name",
+                    label: tb("accountName"),
+                    type: "text",
+                    required: true,
+                    placeholder: tb(
+                        "accountNamePlaceholder"
+                    ),
+                },
+                {
+                    name: "sort_order",
+                    label: t("sortOrder"),
+                    type: "number",
+                    placeholder: "0",
+                },
+                {
+                    name: "is_active",
+                    label: t("active"),
+                    type: "toggle",
+                },
+                {
+                    name: "is_default",
+                    label: tb("isDefault"),
+                    type: "toggle",
+                },
+            ],
+            [t, tb]
+        );
+
+    const initialValues = selected
+        ? {
+            bank_name: selected.bank_name,
+            account_number:
+                selected.account_number,
+            account_name: selected.account_name,
+            sort_order: String(
+                selected.sort_order ?? 0
+            ),
+            is_active: selected.is_active
+                ? "1"
+                : "0",
+            is_default: selected.is_default
+                ? "1"
+                : "0",
+        }
+        : {
+            bank_name: "",
+            account_number: "",
+            account_name: "",
+            sort_order: "0",
+            is_active: "1",
+            is_default: "0",
+        };
+
+    const imageFields = [
+        {
+            name: "qr_image",
+            label: tb("qrImage"),
+            initialUrl: selected?.qr_image ?? null,
+            required: !selected,
+        },
+    ];
+
+    const columns: ColumnDef<BankAccount>[] = [
+        {
+            key: "stt",
+            label: t("no"),
+            className: "w-12",
+            render: (_row, index) => (
+                <span className="text-xs text-foreground-muted">
+                    {(params.page - 1) *
+                        params.limit +
+                        index +
+                        1}
+                </span>
+            ),
+        },
+        {
+            key: "bank",
+            label: tb("bankName"),
+            render: (row) => (
+                <div>
+                    <p className="text-sm font-medium text-foreground">
+                        {row.bank_name ||
+                            t("noData")}
+                    </p>
+
+                    {row.bank_code && (
+                        <p className="text-xs text-foreground-muted">
+                            {row.bank_code}
+                        </p>
+                    )}
+                </div>
+            ),
+        },
+        {
+            key: "account_number",
+            label: tb("accountNumber"),
+            render: (row) => (
+                <span className="text-sm tabular-nums text-foreground">
+                    {row.account_number ||
+                        t("noData")}
+                </span>
+            ),
+        },
+        {
+            key: "account_name",
+            label: tb("accountName"),
+            render: (row) => (
+                <span className="text-sm text-foreground">
+                    {row.account_name ||
+                        t("noData")}
+                </span>
+            ),
+        },
+        {
+            key: "qr_image",
+            label: tb("qrImage"),
+            className: "w-20 text-center",
+            render: (row) =>
+                row.qr_image ? (
+                    <a
+                        href={row.qr_image}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex"
+                    >
+                        <CustomImage
+                            src={row.qr_image}
+                            alt={tb("qrImage")}
+                            className="h-10 w-10 rounded-lg border border-border object-cover"
+                        />
+                    </a>
+                ) : (
+                    <span className="text-xs text-foreground-muted">
+                        {t("noData")}
+                    </span>
+                ),
+        },
+        {
+            key: "is_active",
+            label: t("status"),
+            className: "w-28 text-center",
+            render: (row) => (
+                <div className="flex justify-center">
+                    <ToggleSwitch
+                        checked={Boolean(
+                            row.is_active
+                        )}
+                        loading={
+                            isTogglingStatus
+                        }
+                        disabled={!canUpdate}
+                        onChange={() =>
+                            handleToggleStatus(
+                                row.id
+                            )
+                        }
+                    />
+                </div>
+            ),
+        },
+        {
+            key: "is_default",
+            label: tb("isDefault"),
+            className: "w-28 text-center",
+            render: (row) => (
+                <div className="flex justify-center">
+                    <ToggleSwitch
+                        checked={Boolean(
+                            row.is_default
+                        )}
+                        loading={
+                            isTogglingDefault
+                        }
+                        disabled={!canUpdate}
+                        onChange={() =>
+                            handleToggleDefault(
+                                row.id
+                            )
+                        }
+                    />
+                </div>
+            ),
+        },
+        {
+            key: "created_at",
+            label: t("createdAt"),
+            className: "w-40",
+            render: (row) => (
+                <span className="text-xs text-foreground-muted">
+                    {formatDateTime(
+                        row.created_at
+                    )}
+                </span>
+            ),
+        },
+    ];
+
+    return (
+        <>
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-xl font-semibold text-foreground">
+                            {tb("title")}
+                        </h1>
+
+                        <p className="mt-0.5 text-sm text-foreground-muted">
+                            {tb("totalCount", {
+                                count: total.toLocaleString(),
+                            })}
+                        </p>
+                    </div>
+
+                    {canCreate && (
+                        <button
+                            type="button"
+                            onClick={openCreate}
+                            className="flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+                        >
+                            <Plus className="h-4 w-4" />
+                            {tb("create")}
+                        </button>
+                    )}
+                </div>
+
+                <div className="space-y-4">
+                    <FilterBar
+                        search={params.search}
+                        sortBy={params.sort_by}
+                        sortDir={params.sort_dir}
+                        sortOptions={sortOptions}
+                        showStatusFilter={false}
+                        loading={isLoading}
+                        onApply={handleApplyFilters}
+                        onReset={handleReset}
+                        extraFilters={extraFilters}
+                        searchPlaceholder={tb('search')}
+                    />
+
+                    <Table
+                        columns={columns}
+                        data={data}
+                        loading={isLoading}
+                        keyExtractor={(row) => row.id}
+                        renderActions={(row) => (
+                            <TableActions>
+                                {canUpdate && (
+                                    <TableActionItem
+                                        icon={
+                                            <Pencil className="h-4 w-4" />
+                                        }
+                                        label={t("edit")}
+                                        onClick={() =>
+                                            openEdit(row)
+                                        }
+                                    />
+                                )}
+
+                                {canDelete && (
+                                    <TableActionItem
+                                        icon={
+                                            <Trash2 className="h-4 w-4" />
+                                        }
+                                        label={t("delete")}
+                                        variant="danger"
+                                        onClick={() =>
+                                            setDeleteTarget(
+                                                row
+                                            )
+                                        }
+                                    />
+                                )}
+                            </TableActions>
+                        )}
+                        emptyText={tb("notFound")}
+                    />
+
+                    <Pagination
+                        page={params.page}
+                        limit={params.limit}
+                        total={total}
+                        onPageChange={setPage}
+                        onLimitChange={setLimit}
+                    />
+                </div>
+            </div>
+
+            <FormModalWithMedia
+                isOpen={modalOpen}
+                onClose={closeModal}
+                onSubmit={handleSubmit}
+                title={
+                    selected
+                        ? tb("edit")
+                        : tb("create")
+                }
+                submitting={
+                    selected
+                        ? isUpdating
+                        : isCreating
+                }
+                isEdit={Boolean(selected)}
+                fields={formFields}
+                initialValues={initialValues}
+                imageFields={imageFields}
+            />
+
+            <DeleteConfirmModal
+                isOpen={Boolean(deleteTarget)}
+                title={t("deleteConfirmTitle")}
+                description={t("deleteConfirmDesc")}
+                message={
+                    deleteTarget
+                        ? tb("deleteConfirmMsg", {
+                            name:
+                                deleteTarget.account_name,
+                        })
+                        : ""
+                }
+                confirmText={t("delete")}
+                cancelText={t("cancel")}
+                onConfirm={() => {
+                    if (!deleteTarget) {
+                        return;
+                    }
+
+                    handleDeleteConfirm(
+                        deleteTarget.id
+                    );
+
+                    setDeleteTarget(null);
+                }}
+                onCancel={() =>
+                    setDeleteTarget(null)
+                }
+                loading={isDeleting}
+            />
+        </>
+    );
+}

@@ -4,9 +4,9 @@ import {
     Mail,
     Wallet,
     Settings,
-    LucideIcon,
     UserCheck,
-    Banknote
+    Banknote,
+    Landmark,
 } from "lucide-react";
 
 import {
@@ -80,21 +80,28 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
         {
             labelKey: "funds",
             icon: Wallet,
-            module: MODULE_SLUGS.fundPeriods,
+            module: MODULE_SLUGS.fundPeriod,
             action: PERMISSION_ACTIONS.view,
             children: [
                 {
                     href: clubRoute(slug, CLUB_SUBROUTES.fundPeriods),
                     labelKey: "fundPeriods",
                     icon: Wallet,
-                    module: MODULE_SLUGS.fundPeriods,
+                    module: MODULE_SLUGS.fundPeriod,
                     action: PERMISSION_ACTIONS.view,
                 },
                 {
                     href: clubRoute(slug, CLUB_SUBROUTES.monthlyContributions),
                     labelKey: "monthlyContributions",
-                    icon: Wallet,
-                    module: MODULE_SLUGS.monthlyContributions,
+                    icon: Banknote,
+                    module: MODULE_SLUGS.monthlyContribution,
+                    action: PERMISSION_ACTIONS.view,
+                },
+                {
+                    href: clubRoute(slug, CLUB_SUBROUTES.bankAccounts),
+                    labelKey: "bankAccounts",
+                    icon: Landmark,
+                    module: MODULE_SLUGS.bankAccount,
                     action: PERMISSION_ACTIONS.view,
                 },
             ],

@@ -173,3 +173,17 @@ export function useClubsQuery(
         handleToggle,
     };
 }
+
+// ─── Select hook (dùng bởi module khác cần dropdown club) ─────────────────────
+export function useClubSelect() {
+    const query = useQuery({
+        queryKey: ["clubs-select"],
+        queryFn: () =>
+            clubServiceClient.select() as Promise<ApiResponse<Club[]>>,
+    });
+
+    return {
+        data: query.data?.data ?? [],
+        isLoading: query.isLoading,
+    };
+}

@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 
 import { getClubMemberService } from "@/domains/members/services/ClubMemberService";
 import type { PaginatedResponse } from "@/types/api";
-import type { ClubMember, MemberFilters, MemberHistoryFilters, RejectPayload } from "@/domains/members/types/member";
+import type { ClubMemberSelect, MemberFilters, MemberHistoryFilters, RejectPayload } from "@/domains/members/types/member";
 
 // ─── Members hook (tổng quan) ─────────────────────────────────────────────────
 
@@ -136,5 +136,26 @@ export function useClubMemberHistory(
         handleApprove,
         handleReject,
         handleDeleteConfirm,
+    };
+}
+
+export function useClubMemberSelect(
+    clubSlug?: string | null
+) {
+    const query = useQuery({
+        queryKey: ["club-members-select", clubSlug],
+        queryFn: () => {
+            if (!clubSlug) {
+                throw new Error("Club slug is required");
+            }
+
+            return getClubMemberService(clubSlug).select();
+        },
+        enabled: Boolean(clubSlug),
+    });
+
+    return {
+        data: query.data?.data ?? [],
+        isLoading: query.isLoading,
     };
 }

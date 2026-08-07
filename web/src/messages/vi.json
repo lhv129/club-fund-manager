@@ -190,7 +190,8 @@
     "clubSettings": "Cài đặt CLB",
     "memberships": "Quản lý tham gia",
     "fundPeriods": "Cấu hình quỹ",
-    "monthlyContributions": "Theo dõi đóng quỹ tháng"
+    "monthlyContributions": "Theo dõi đóng quỹ tháng",
+    "bankAccounts": "Tài khoản ngân hàng"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
@@ -499,5 +500,28 @@
     "paid_by_bank": "Chuyển khoản",
     "paid_by_cash": "Tiền mặt",
     "paid_by_manual": "Thủ công"
+  },
+  "notFound": {
+    "title": "Trang bạn tìm không tồn tại",
+    "description": "Trang bạn đang tìm kiếm có thể đã bị xóa, thay đổi hoặc không tồn tại.",
+    "backHome": "Về trang chủ"
+  },
+  "bankAccount": {
+    "search": "Tìm kiếm theo ngân hàng, stk, tên chủ tài khoản...",
+    "title": "Tài khoản ngân hàng",
+    "create": "Thêm tài khoản ngân hàng",
+    "edit": "Sửa tài khoản ngân hàng",
+    "notFound": "Không tìm thấy tài khoản ngân hàng nào",
+    "totalCount": "{count} tài khoản",
+    "bankCode": "Mã ngân hàng",
+    "bankName": "Tên ngân hàng",
+    "bankNamePlaceholder": "Nhập tên ngân hàng",
+    "accountNumber": "Số tài khoản",
+    "accountNumberPlaceholder": "Nhập số tài khoản",
+    "accountName": "Tên chủ tài khoản",
+    "accountNamePlaceholder": "Nhập tên chủ tài khoản",
+    "qrImage": "Ảnh mã QR",
+    "isDefault": "Tài khoản mặc định",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa tài khoản ngân hàng của {name}?"
   }
 }

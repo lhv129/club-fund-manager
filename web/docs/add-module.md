@@ -328,6 +328,84 @@ export function useExamples(
 }
 ```
 
+### 4.1. Select hook — dropdown cho module khác
+
+Khi BE có endpoint `GET /{resource}/select` (xem `BaseRepository.select()`), và entity này có thể được module khác dùng làm dropdown (vd: monthly-contribution cần fund-period / member / transaction làm dropdown), **thêm một standalone hook select** ngay trong cùng file `useExamples.ts`:
+
+```ts
+// ─── Select hook (dùng bởi module khác cần dropdown example) ──────────────────
+export function useExampleSelect() {
+    const query = useQuery({
+        queryKey: ["examples-select"],
+        queryFn: () =>
+            exampleServiceClient.select() as Promise<ApiResponse<Example[]>>,
+    });
+
+    return {
+        data: query.data?.data ?? [],
+        isLoading: query.isLoading,
+    };
+}
+```
+
+> **Quy ước đặt tên:** `use{Entity}Select` — ví dụ `useModuleSelect`, `useRoleSelect`, `useUserSelect`, `useClubSelect`, `useMonthlyContributionSelect`, `useFundPeriodSelect`, `useTransactionSelect`, `useClubMemberSelect`.
+
+> **Vị trí:** luôn đặt trong cùng file `use{Entity}s.ts` (KHÔNG tạo file `select.ts` riêng) để share query key/cache với inline select (nếu hook chính có fetch select inline).
+
+#### Hai biến thể theo scope
+
+**System module** (resource không phụ thuộc club — vd: module, role, user, club):
+```ts
+export function useExampleSelect() {
+    const query = useQuery({
+        queryKey: ["examples-select"],
+        queryFn: () =>
+            exampleServiceClient.select() as Promise<ApiResponse<Example[]>>,
+    });
+    return { data: query.data?.data ?? [], isLoading: query.isLoading };
+}
+```
+
+**Club-scoped module** (resource nằm dưới `clubs/{slug}/...` — vd: monthly-contribution, fund-period, transaction, member):
+```ts
+export function useExampleSelect(clubSlug?: string | null) {
+    const query = useQuery({
+        queryKey: ["examples-select", clubSlug],
+        queryFn: () => {
+            if (!clubSlug) throw new Error("Club slug is required");
+            return getExampleService(clubSlug).select();
+        },
+        enabled: Boolean(clubSlug),
+    });
+    return { data: query.data?.data ?? [], isLoading: query.isLoading };
+}
+```
+
+#### Cách dùng ở PageClient khác module
+
+```tsx
+import { useExampleSelect } from "@/domains/example/hooks/useExamples";
+
+// Club-scoped: truyền slug (lấy từ useParams)
+const { data: examples, isLoading: examplesLoading } = useExampleSelect(slug);
+
+// System: không truyền gì
+const { data: examples, isLoading: examplesLoading } = useExampleSelect();
+```
+
+#### Khi nào cần thêm?
+
+| Trường hợp | Có cần select hook? |
+|---|---|
+| BE có `/select` VÀ entity được module khác tham chiếu (dropdown/foreign key) | ✅ Thêm |
+| BE có `/select` NHƯNG entity không bao giờ là dropdown (vd: setting) | Tùy — vẫn thêm cho đồng bộ, hoặc bỏ qua |
+| BE KHÔNG có `/select` | ❌ Bỏ qua — `BaseRepository.select()` sẽ 404 |
+
+> **Lưu ý:** nếu type select khác entity thường (vd: `TransactionSelect` chỉ `{id, label}` thay vì full `Transaction`), khai báo type riêng `XxxSelect` trong `types/index.ts` và cast:
+> ```ts
+> queryFn: () => service.select() as Promise<ApiResponse<TransactionSelect[]>>,
+> ```
+
 ---
 
 ## Bước 5: Tạo Client Component
@@ -547,7 +625,7 @@ import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import Select from "@/components/shared/ui/Select";
-import { ToggleSwitch } from "@/components/shared/ui/ToggleSwitch";
+import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
 import { useListParams } from "@/hooks/useListParams";
 import { useExamples } from "@/domains/example/hooks/useExamples";
 import type { Example, ExampleFilters } from "@/domains/example/types";
@@ -905,7 +983,7 @@ export const MODULE_SLUGS = {
 | `domains/example/types/index.ts` | Interface + ExampleFilters type |
 | `domains/example/services/exampleServiceServer.ts` | Server service |
 | `domains/example/services/exampleService.ts` | Client service |
-| `domains/example/hooks/useExamples.ts` | Custom hook — TanStack Query |
+| `domains/example/hooks/useExamples.ts` | Custom hook — TanStack Query **+ `useExampleSelect` (nếu có endpoint /select)** |
 | `app/[locale]/admin/(system)/examples/page.tsx` | Server Component |
 | `app/[locale]/admin/(system)/examples/ExamplesPageClient.tsx` | Client Component (UI only) |
 | `constants/index.ts` | MODULE_SLUGS + APP_ROUTES / CLUB_SUBROUTES |
@@ -929,6 +1007,7 @@ export const MODULE_SLUGS = {
 - Extra filters (year, month, status...): dùng draft state + `Select` component + `extraFilters` prop trên `FilterBar`
 - `formatAmount(value)` — dùng từ `@/utils`, không khai báo lại trong component
 - `buildPayload` với translatable field tên `"title"`: dùng `(entry as Record<string, string>)["title"]`
+- Select hook: nếu BE có `GET /{resource}/select` → export `use{Entity}Select` trong cùng file `use{Entity}s.ts` (KHÔNG tạo file `select.ts` riêng); club-scoped thì nhận `clubSlug?` + `enabled: Boolean(clubSlug)`, system thì không cần
 
 ---
 

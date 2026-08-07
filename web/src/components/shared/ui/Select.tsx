@@ -51,7 +51,9 @@ export default function Select({
 }: SelectProps) {
     const t = useTranslations("common");
     const [open, setOpen] = useState(false);
-    const [dropStyle, setDropStyle] = useState<CSSProperties>({});
+    const [dropStyle, setDropStyle] =
+        useState<CSSProperties | null>(null);
+    const [dropReady, setDropReady] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     const wrapRef = useRef<HTMLDivElement>(null);
@@ -94,33 +96,70 @@ export default function Select({
     };
 
     useEffect(() => {
-        if (!open) return;
+        if (!open) {
+            setDropReady(false);
+            setDropStyle(null);
+            return;
+        }
+
+        setDropReady(false);
 
         calcPosition();
-        const rafId = requestAnimationFrame(() => calcPosition());
 
-        // Scroll BÊN NGOÀI panel → đóng dropdown (tránh panel "rượt đuổi" trigger gây nhảy).
-        // Scroll BÊN TRONG panel (danh sách options) → bỏ qua, giữ mở.
+        const rafId = requestAnimationFrame(() => {
+            calcPosition();
+            setDropReady(true);
+        });
+
         const handleScroll = (e: Event) => {
             const target = e.target as Node | null;
-            if (target && panelRef.current?.contains(target)) return;
-            if (target && wrapRef.current?.contains(target)) return;
+
+            if (target && panelRef.current?.contains(target)) {
+                return;
+            }
+
+            if (target && wrapRef.current?.contains(target)) {
+                return;
+            }
+
             setOpen(false);
         };
+
         window.addEventListener("scroll", handleScroll, true);
-
         window.addEventListener("resize", calcPosition);
-        window.visualViewport?.addEventListener("resize", calcPosition);
+        window.visualViewport?.addEventListener(
+            "resize",
+            calcPosition
+        );
 
-        const observer = new ResizeObserver(() => calcPosition());
-        if (triggerRef.current) observer.observe(triggerRef.current);
-        if (panelRef.current) observer.observe(panelRef.current);
+        const observer = new ResizeObserver(() => {
+            calcPosition();
+        });
+
+        if (triggerRef.current) {
+            observer.observe(triggerRef.current);
+        }
+
+        if (panelRef.current) {
+            observer.observe(panelRef.current);
+        }
 
         return () => {
             cancelAnimationFrame(rafId);
-            window.removeEventListener("scroll", handleScroll, true);
+
+            window.removeEventListener(
+                "scroll",
+                handleScroll,
+                true
+            );
+
             window.removeEventListener("resize", calcPosition);
-            window.visualViewport?.removeEventListener("resize", calcPosition);
+
+            window.visualViewport?.removeEventListener(
+                "resize",
+                calcPosition
+            );
+
             observer.disconnect();
         };
     }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -153,7 +192,11 @@ export default function Select({
     );
 
     const handleSelect = (val: string) => { onChange(val); setOpen(false); };
-    const handleClear = (e: MouseEvent) => { e.stopPropagation(); onChange(""); };
+    const handleClear = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onChange("");
+    };
 
     const buttonLabel = selectedOption?.label ?? placeholder ?? label;
     const hasValue = !!value;
@@ -188,12 +231,12 @@ export default function Select({
                 <span className="flex items-center gap-1 shrink-0">
                     {hasValue && !disabled && (
                         <span
-                            role="button"
-                            tabIndex={0}
+                            onMouseDown={(event) => {
+                                event.preventDefault();
+                            }}
                             onClick={handleClear}
                             aria-label={t("clearSelection")}
-                            className="inline-flex items-center justify-center w-4 h-4 rounded-full
-                                bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                            className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                         >
                             <X className="w-3 h-3" />
                         </span>
@@ -205,74 +248,88 @@ export default function Select({
             </button>
 
             {/* ── Dropdown (fixed — không bao giờ tràn ra ngoài màn hình) ─────── */}
-            {open && mounted && createPortal(
-                <div
-                    ref={panelRef}
-                    style={dropStyle}
-                    className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700
-                        rounded-2xl shadow-xl overflow-hidden"
-                >
-                    <div className="px-3 pt-3 pb-2 border-b border-gray-100 dark:border-gray-800
+            {open &&
+                mounted &&
+                createPortal(
+                    <div
+                        ref={panelRef}
+                        style={{
+                            position: "fixed",
+                            top: 0,
+                            left: 0,
+                            width: DROPDOWN_MIN_W,
+                            zIndex: 9999,
+                            visibility: dropReady
+                                ? "visible"
+                                : "hidden",
+                            ...dropStyle,
+                        }}
+                        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden"
+                    >
+                        <div className="px-3 pt-3 pb-2 border-b border-gray-100 dark:border-gray-800
                         flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {label}
-                        </p>
-                        {hasValue && (
-                            <button
-                                type="button"
-                                onClick={() => { onChange(""); setOpen(false); }}
-                                className="text-xs font-medium text-gray-400 hover:text-rose-500 transition-colors"
-                            >
-                                {t("clearSelection")}
-                            </button>
-                        )}
-                    </div>
-
-                    {loading ? (
-                        <div className="px-3 py-2 space-y-2">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-4 rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
-                            ))}
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                {label}
+                            </p>
+                            {hasValue && (
+                                <button
+                                    type="button"
+                                    onClick={() => { onChange(""); setOpen(false); }}
+                                    className="text-xs font-medium text-gray-400 hover:text-rose-500 transition-colors"
+                                >
+                                    {t("clearSelection")}
+                                </button>
+                            )}
                         </div>
-                    ) : options.length === 0 ? (
-                        <p className="px-3 py-6 text-center text-xs text-gray-400 italic">
-                            {t("noOptionsFound")}
-                        </p>
-                    ) : (
-                        <div className="max-h-60 overflow-y-auto py-1.5">
-                            {options.map((opt) => {
-                                const selected = opt.value === value;
-                                return (
-                                    <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() => handleSelect(opt.value)}
-                                        className={[
-                                            "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors",
-                                            selected
-                                                ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"
-                                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
-                                        ].join(" ")}
-                                    >
-                                        <div
+
+                        {loading ? (
+                            <div className="px-3 py-2 space-y-2">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="h-4 rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                                ))}
+                            </div>
+                        ) : options.length === 0 ? (
+                            <p className="px-3 py-6 text-center text-xs text-gray-400 italic">
+                                {t("noOptionsFound")}
+                            </p>
+                        ) : (
+                            <div className="max-h-60 overflow-y-auto py-1.5">
+                                {options.map((opt) => {
+                                    const selected = opt.value === value;
+                                    return (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onMouseDown={(event) => {
+                                                event.preventDefault();
+                                            }}
+                                            onClick={() => handleSelect(opt.value)}
                                             className={[
-                                                "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                                                "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors",
                                                 selected
-                                                    ? "bg-indigo-600 border-indigo-600"
-                                                    : "border-gray-300 dark:border-gray-600",
+                                                    ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"
+                                                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
                                             ].join(" ")}
                                         >
-                                            {selected && <Check className="w-2.5 h-2.5 text-white" />}
-                                        </div>
-                                        <span className="line-clamp-2 leading-snug">{opt.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>,
-                document.body,
-            )}
+                                            <div
+                                                className={[
+                                                    "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                                                    selected
+                                                        ? "bg-indigo-600 border-indigo-600"
+                                                        : "border-gray-300 dark:border-gray-600",
+                                                ].join(" ")}
+                                            >
+                                                {selected && <Check className="w-2.5 h-2.5 text-white" />}
+                                            </div>
+                                            <span className="line-clamp-2 leading-snug">{opt.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>,
+                    document.body,
+                )}
         </div>
     );
 }
