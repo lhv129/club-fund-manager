@@ -10,6 +10,8 @@ Route::middleware('auth.jwt')->group(function () {
         // Dynamic routes
         Route::get('/', [TransactionController::class, 'index'])
             ->middleware('perm.club:transaction,view');
+        Route::get('/select', [TransactionController::class, 'select'])
+            ->middleware('perm.club:transaction,view');
         Route::get('/{id}', [TransactionController::class, 'show'])
             ->middleware('perm.club:transaction,view');
         Route::post('/', [TransactionController::class, 'store'])

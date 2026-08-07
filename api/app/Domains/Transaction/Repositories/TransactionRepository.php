@@ -33,6 +33,7 @@ class TransactionRepository extends BaseRepository
     protected array $selectColumns = [
         'id',
         'description',
+        'created_at'
     ];
 
     protected array $selectWith = [];

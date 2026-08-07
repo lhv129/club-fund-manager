@@ -24,4 +24,5 @@ return [
     'reordered'      => 'Cập nhật thứ tự tài khoản ngân hàng thành công.',
     'not_found'      => 'Không tìm thấy tài khoản ngân hàng.',
     'bank_not_supported' => 'Ngân hàng không được hỗ trợ.',
+    'default_updated' => 'Cập nhật thành ngân hàng mặc định'
 ];

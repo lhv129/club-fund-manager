@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\BankAccount\Requests;
+namespace App\Domains\Bank\Requests;
 
 use App\Base\BaseRequest;
 
@@ -14,21 +14,11 @@ class FilterBankAccountRequest extends BaseRequest
         return [
             'search'    => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
-            'user_id'   => ['nullable', 'integer', 'min:1'],
             'limit'     => ['nullable', 'integer', 'min:1', 'max:100'],
             'page'      => ['nullable', 'integer', 'min:1'],
-            'sort_by'   => ['nullable', 'string', 'in:id,title,sort_order,created_at'],
+            'sort_by'   => ['nullable', 'string', 'in:sort_order,created_at'],
             'sort_dir'  => ['nullable', 'string', 'in:asc,desc'],
         ];
     }
 
-    public function attributes(): array
-    {
-        return [
-            'title'       => __('domains/bank_account.attributes.title'),
-            'description' => __('domains/bank_account.attributes.description'),
-            'is_active'   => __('domains/bank_account.attributes.is_active'),
-            'user_id'     => 'user',
-        ];
-    }
 }

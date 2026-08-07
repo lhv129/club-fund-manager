@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Domains\BankAccount\Services;
+namespace App\Domains\Bank\Services;
 
 use App\Base\BaseService;
-use App\Domains\BankAccount\Models\BankAccount;
-use App\Domains\BankAccount\Repositories\BankAccountRepository;
-use App\Domains\BankAccount\Services\BankProviderService;
+use App\Domains\Bank\Models\BankAccount;
+use App\Domains\Bank\Repositories\BankAccountRepository;
+use App\Domains\Bank\Services\BankProviderService;
 use App\Domains\Club\Repositories\ClubRepository;
 use App\Helpers\ImageHelper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -64,6 +64,10 @@ class BankAccountService extends BaseService
                 $data['sort_order'] = $this->repository->getNextSortOrder();
             }
 
+            if (!empty($data['is_default'])) {
+                $this->repository->clearDefault($data['club_id']);
+            }
+
             if (
                 isset($data['qr_image'])
                 && $data['qr_image'] instanceof UploadedFile
@@ -108,6 +112,10 @@ class BankAccountService extends BaseService
                 $data['bank_code'] = $this->bankProviderService->code($data['bank_name']);
             }
 
+            if (!empty($data['is_default'])) {
+                $this->repository->clearDefault($bankAccount->club_id);
+            }
+
             if (
                 isset($data['qr_image']) &&
                 $data['qr_image'] instanceof UploadedFile
@@ -144,27 +152,38 @@ class BankAccountService extends BaseService
         }
     }
 
-    /**
-     * Reorder khi kéo thả.
-     *
-     * $data = [['id' => 1, 'sort_order' => 2], ['id' => 2, 'sort_order' => 1]]
-     */
-    public function reorder(array $data): bool
+    public function toggleDefault(int $id): BankAccount
     {
         DB::beginTransaction();
 
         try {
-            foreach ($data as $item) {
-                $this->repository->editWhere(
-                    where: ['id' => $item['id']],
-                    data: ['sort_order' => $item['sort_order']],
-                );
+
+            /** @var BankAccount $bankAccount */
+            $bankAccount = $this->find($id);
+
+            // Nếu đang là default thì không làm gì
+            if ($bankAccount->is_default) {
+                DB::commit();
+                return $bankAccount;
             }
 
+            // Bỏ default của các tài khoản khác trong cùng club
+            $this->repository->clearDefault($bankAccount->club_id);
+
+            // Set default cho tài khoản hiện tại
+            $bankAccount = parent::update($id, [
+                'is_default' => true,
+            ]);
+
+            $bankAccount->fresh();
+
             DB::commit();
-            return true;
+
+            return $bankAccount;
         } catch (\Throwable $e) {
+
             DB::rollBack();
+
             throw $e;
         }
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\BankAccount\Models;
+namespace App\Domains\Bank\Models;
 
 use App\Domains\Club\Models\Club;
 use App\Domains\Transaction\Models\Transaction;
@@ -18,8 +18,7 @@ class BankAccount extends Model
 
     protected $fillable = [
         'club_id',
-        'bank_code',
-        'bank_name',
+        'bank_id',
         'account_number',
         'account_name',
         'qr_image',
@@ -55,6 +54,11 @@ class BankAccount extends Model
     public function webhookConfigs(): HasMany
     {
         return $this->hasMany(WebhookConfig::class);
+    }
+
+    public function bank(): BelongsTo
+    {
+        return $this->belongsTo(Bank::class);
     }
 
     /*

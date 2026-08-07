@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\BankAccount\Services;
+namespace App\Domains\Bank\Services;
 use App\Exceptions\ApiException;
 
 class BankProviderService

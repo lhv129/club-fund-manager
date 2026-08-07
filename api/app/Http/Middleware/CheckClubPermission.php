@@ -55,24 +55,22 @@ class CheckClubPermission
 
                 $clubId = $club->id;
 
-                // Có thể lưu lại để các tầng sau dùng, tránh query lại
+                // Lưu lại để các tầng sau dùng, tránh query lại
                 $request->attributes->set('club', $club);
                 $request->attributes->set('club_id', $clubId);
             }
         }
 
-        // Superadmin bypass — không cần check club_id
-        // Phải gọi method isSuperAdmin(), KHÔNG dùng $user->is_superadmin
-        // (User model không có property/accessor đó → luôn NULL → bypass không bao giờ chạy)
-        if ($user->isSuperAdmin()) {
-            return $next($request);
-        }
-
-
         // 3. Fallback: lấy từ request body
         if (!$clubId) {
             $clubId = $request->input('club_id')
                 ?? $request->input('clubId');
+        }
+
+        // Superadmin bypass — đặt SAU khi resolve club_id
+        // để controller vẫn nhận được club_id
+        if ($user->isSuperAdmin()) {
+            return $next($request);
         }
 
         if (!$clubId) {

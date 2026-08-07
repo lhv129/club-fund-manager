@@ -6,6 +6,7 @@ use App\Base\BaseService;
 use App\Domains\FundPeriod\Models\FundPeriod;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\MonthlyContribution\Repositories\MonthlyContributionRepository;
+use App\Domains\User\Repositories\UserRepository;
 use App\Exceptions\ApiException;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -16,9 +17,16 @@ class MonthlyContributionService extends BaseService
 {
     protected string $notFoundMessage = 'domains/monthly_contribution.not_found';
 
-    public function __construct(MonthlyContributionRepository $repository)
-    {
+    protected object $userRepository;
+    protected object $fundPeriod;
+    public function __construct(
+        MonthlyContributionRepository $repository,
+        UserRepository $userRepository,
+        FundPeriod $fundPeriod,
+    ) {
         parent::__construct($repository);
+        $this->userRepository = $userRepository;
+        $this->fundPeriod = $fundPeriod;
     }
 
     // ── List / Search ────────────────────────────────────────────────────────
@@ -64,10 +72,32 @@ class MonthlyContributionService extends BaseService
 
     public function create(array $data): MonthlyContribution
     {
+        $exists = $this->repository->exists([
+            'club_id' => $data['club_id'],
+            'user_id' => $data['user_id'],
+            'period_id' => $data['period_id'],
+        ]);
+
+        if ($exists) {
+            throw new ApiException(
+                __('domains/monthly_contribution.already_exists'),
+                422
+            );
+        }
+
         return DB::transaction(function () use ($data) {
-            if (!isset($data['sort_order'])) {
-                $data['sort_order'] = $this->repository->getNextSortOrder();
-            }
+
+            $user = $this->userRepository->find($data['user_id']);
+
+            $period = $this->fundPeriod->find($data['period_id']);
+
+            $data['amount'] = match ($user->gender) {
+                'male' => $period->male_amount,
+                'female' => $period->female_amount,
+                default => throw new ApiException(
+                    __('domains/monthly_contribution.invalid_gender')
+                ),
+            };
 
             return $this->repository->create($data);
         });
@@ -78,9 +108,40 @@ class MonthlyContributionService extends BaseService
         return DB::transaction(function () use ($id, $data) {
             $contribution = $this->find($id);
 
+            $userId = $data['user_id'] ?? $contribution->user_id;
+            $periodId = $data['period_id'] ?? $contribution->period_id;
+
+            $exists = $this->repository->exists([
+                'club_id' => $contribution->club_id,
+                'user_id' => $userId,
+                'period_id' => $periodId,
+            ], $contribution->id);
+
+            if ($exists) {
+                throw new ApiException(
+                    __('domains/monthly_contribution.invalid_gender'),
+                    422
+                );
+            }
+
+            $user = $this->userRepository->find($userId);
+            $period = $this->fundPeriod->find($periodId);
+
+            $data['amount'] = match ($user->gender) {
+                'male' => $period->male_amount,
+                'female' => $period->female_amount,
+                default => throw new ApiException(
+                    __('domains/monthly_contribution.gender_not_selected')
+                ),
+            };
+
+            // Xoá club_id khỏi $data để không bị ghi null
+            unset($data['club_id']);
+
             return $this->repository->update($contribution, $data);
         });
     }
+
 
     public function toggleStatus(int $id): MonthlyContribution
     {

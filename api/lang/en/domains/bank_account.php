@@ -22,4 +22,5 @@ return [
     'reordered'      => 'Bank account order updated successfully.',
     'not_found'      => 'Bank account not found.',
     'bank_not_supported' => 'Bank not supported.',
+    'default_updated' => 'Updated bank default'
 ];

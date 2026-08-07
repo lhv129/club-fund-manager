@@ -9,6 +9,8 @@ return [
     'deleted'        => 'Monthly contribution deleted successfully.',
     'not_found'      => 'Monthly contribution not found.',
     'status_toggled' => 'Monthly contribution status updated successfully.',
+    'invalid_gender' => 'Invalid user gender.',
+    'already_exists' => 'This member has already made a contribution for this period.',
 
     'attributes' => [
         'club_id'        => 'Club',

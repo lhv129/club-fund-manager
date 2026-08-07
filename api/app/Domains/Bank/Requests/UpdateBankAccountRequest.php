@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\BankAccount\Requests;
+namespace App\Domains\Bank\Requests;
 
 use App\Base\BaseRequest;
 
@@ -9,7 +9,6 @@ class UpdateBankAccountRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'club_id' => ['required', 'integer', 'exists:clubs,id'],
             'bank_name' => [
                 'sometimes',
                 'required',

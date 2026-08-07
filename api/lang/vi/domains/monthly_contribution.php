@@ -9,6 +9,8 @@ return [
     'deleted'        => 'Xoá khoản đóng quỹ tháng thành công.',
     'not_found'      => 'Không tìm thấy khoản đóng quỹ tháng.',
     'status_toggled' => 'Đã cập nhật trạng thái khoản đóng quỹ.',
+    'invalid_gender' => 'Người dùng chưa chọn giới tính.',
+    'already_exists' => 'Thành viên đã có khoản đóng góp cho kỳ này.',
 
     'attributes' => [
         'club_id'        => 'CLB',

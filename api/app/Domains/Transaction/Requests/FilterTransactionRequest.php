@@ -14,7 +14,6 @@ class FilterTransactionRequest extends BaseRequest
         return [
             'search' => ['nullable', 'string', 'max:255'],
 
-            'club_id' => ['nullable', 'integer', 'min:1'],
             'bank_account_id' => ['nullable', 'integer', 'min:1'],
 
             'type' => ['nullable', 'in:income,expense'],
@@ -30,7 +29,7 @@ class FilterTransactionRequest extends BaseRequest
             'sort_by' => [
                 'nullable',
                 'string',
-                'in:id,transaction_date,amount,balance,type,sort_order,created_at'
+                'in:transaction_date,amount,balance,type,sort_order,created_at'
             ],
 
             'sort_dir' => ['nullable', 'string', 'in:asc,desc'],

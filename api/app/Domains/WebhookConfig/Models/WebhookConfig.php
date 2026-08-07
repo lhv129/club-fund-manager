@@ -2,7 +2,7 @@
 
 namespace App\Domains\WebhookConfig\Models;
 
-use App\Domains\BankAccount\Models\BankAccount;
+use App\Domains\Bank\Models\BankAccount;
 use App\Domains\Club\Models\Club;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

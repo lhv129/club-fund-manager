@@ -47,6 +47,8 @@ return [
     'after' => ':attribute phải sau ngày :date.',
     'after_or_equal' => ':attribute phải sau hoặc bằng ngày :date.',
 
+    'required_if' => ':attribute là bắt buộc khi :other có giá trị :value.',
+
     /*
     |--------------------------------------------------------------------------
     | Size Rules
@@ -142,6 +144,16 @@ return [
             'active' => 'Hoạt động',
             'inactive' => 'Ngừng hoạt động',
             'locked' => 'Đã khóa',
+
+            'pending' => 'Chờ thanh toán',
+            'paid' => 'Đã thanh toán',
+            'cancelled' => 'Đã hủy',
+        ],
+
+        'paid_by' => [
+            'bank' => 'Chuyển khoản',
+            'cash' => 'Tiền mặt',
+            'manual' => 'Thủ công',
         ],
     ],
 

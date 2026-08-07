@@ -2,7 +2,7 @@
 
 namespace App\Domains\Transaction\Models;
 
-use App\Domains\BankAccount\Models\BankAccount;
+use App\Domains\Bank\Models\BankAccount;
 use App\Domains\Club\Models\Club;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\User\Models\User;

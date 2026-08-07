@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\BankAccount\Requests;
+namespace App\Domains\Bank\Requests;
 
 use App\Base\BaseRequest;
 

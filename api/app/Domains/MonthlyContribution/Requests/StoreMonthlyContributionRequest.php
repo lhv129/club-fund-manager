@@ -9,16 +9,12 @@ class StoreMonthlyContributionRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'club_id'        => ['required', 'integer', 'min:1', 'exists:clubs,id'],
             'user_id'        => ['required', 'integer', 'min:1', 'exists:users,id'],
             'period_id'      => ['required', 'integer', 'min:1', 'exists:fund_periods,id'],
             'transaction_id' => ['nullable', 'integer', 'min:1', 'exists:transactions,id'],
-            'amount'         => ['required', 'numeric', 'min:0'],
             'status'         => ['nullable', 'string', 'in:pending,paid,cancelled'],
             'paid_by'        => ['nullable', 'string', 'in:bank,cash,manual', 'required_if:status,paid'],
-            'payment_date'   => ['nullable', 'date', 'required_if:status,paid'],
-            'sort_order'     => ['nullable', 'integer', 'min:0'],
-            'is_active'      => ['nullable', 'boolean'],
+            'payment_date'   => ['nullable', 'date', 'required_if:status,paid']
         ];
     }
 

@@ -41,6 +41,21 @@ class TransactionController extends BaseController
     }
 
     /**
+    * GET /api/v1/clubs/{clubSlug}/transactions/select
+    */
+
+    public function select(FilterTransactionRequest $request): JsonResponse
+    {
+        $filters = $request->validated();
+        $filters['club_id'] =  $request->attributes->get('club_id');
+        return $this->responseCommon(
+            true,
+            __('domains/transaction.list'),
+            $this->service->getForSelect($filters),
+        );
+    }
+
+    /**
      * POST /api/v1/transactions — chỉ income manual (thu giao lưu).
      */
     public function store(StoreTransactionRequest $request, string $clubSlug): JsonResponse

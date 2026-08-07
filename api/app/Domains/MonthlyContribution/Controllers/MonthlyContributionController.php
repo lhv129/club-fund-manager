@@ -22,6 +22,7 @@ class MonthlyContributionController extends BaseController
      */
     public function index(FilterMonthlyContributionRequest $request): JsonResponse
     {
+        $filters = $request->validated();
         $filters['club_id'] = $request->attributes->get('club_id');
         return $this->paginateResponse(
             $this->service->paginate($filters),
@@ -88,10 +89,12 @@ class MonthlyContributionController extends BaseController
      */
     public function store(StoreMonthlyContributionRequest $request): JsonResponse
     {
+        $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
         return $this->responseCommon(
             true,
             __('domains/monthly_contribution.created'),
-            new MonthlyContributionResource($this->service->create($request->validated())),
+            new MonthlyContributionResource($this->service->create($data)),
             201,
         );
     }
@@ -101,10 +104,14 @@ class MonthlyContributionController extends BaseController
      */
     public function update(UpdateMonthlyContributionRequest $request, string $clubSlug, int $id): JsonResponse
     {
+        $data = $request->validated();
+
         return $this->responseCommon(
             true,
             __('domains/monthly_contribution.updated'),
-            new MonthlyContributionResource($this->service->update($id, $request->validated())),
+            new MonthlyContributionResource(
+                $this->service->update($id, $data)
+            ),
         );
     }
 
@@ -116,17 +123,5 @@ class MonthlyContributionController extends BaseController
         $this->service->deleteWithSortOrder($id);
 
         return $this->responseCommon(true, __('domains/monthly_contribution.deleted'));
-    }
-
-    /**
-     * PATCH /api/v1/clubs/{clubSlug}/monthly-contributions/{id}/toggle-status
-     */
-    public function toggleStatus(string $clubSlug, int $id): JsonResponse
-    {
-        return $this->responseCommon(
-            true,
-            __('domains/monthly_contribution.status_toggled'),
-            new MonthlyContributionResource($this->service->toggleStatus($id)),
-        );
     }
 }

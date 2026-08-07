@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Domains\BankAccount\Repositories;
+namespace App\Domains\Bank\Repositories;
 
 use App\Base\BaseRepository;
-use App\Domains\BankAccount\Models\BankAccount;
+use App\Domains\Bank\Models\BankAccount;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,6 +51,7 @@ class BankAccountRepository extends BaseRepository
                 'account_number',
                 'qr_image',
                 'is_active',
+                'is_default',
                 'sort_order',
                 'created_at',
             ]);
@@ -61,14 +62,18 @@ class BankAccountRepository extends BaseRepository
      */
     protected function applySearch(Builder $query, array $filters): void
     {
-        if (!empty($filters['search'])) {
-            $search = $filters['search'];
-
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
+        if (empty($filters['search'])) {
+            return;
         }
+
+        $search = trim($filters['search']);
+
+        $query->where(function (Builder $q) use ($search) {
+            $q->where('bank_name', 'like', "%{$search}%")
+                ->orWhere('bank_code', 'like', "%{$search}%")
+                ->orWhere('account_number', 'like', "%{$search}%")
+                ->orWhere('account_name', 'like', "%{$search}%");
+        });
     }
 
     /**
@@ -142,5 +147,15 @@ class BankAccountRepository extends BaseRepository
         return $query
             ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
             ->get();
+    }
+
+    public function clearDefault(int $clubId): void
+    {
+        $this->model
+            ->where('club_id', $clubId)
+            ->where('is_default', true)
+            ->update([
+                'is_default' => false,
+            ]);
     }
 }

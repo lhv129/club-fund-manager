@@ -61,6 +61,12 @@ class ClubMemberService extends BaseService
         return $member;
     }
 
+
+    public function getForSelect(array $filters = [])
+    {
+        return $this->repository->getForSelect($filters);
+    }
+
     // -------------------------------------------------------------------------
     // Join via invite link
     // -------------------------------------------------------------------------

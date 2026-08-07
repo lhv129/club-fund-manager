@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Domains\BankAccount\Controllers;
+namespace App\Domains\Bank\Controllers;
 
 use App\Base\BaseController;
-use App\Domains\BankAccount\Requests\FilterBankAccountRequest;
-use App\Domains\BankAccount\Requests\ReorderBankAccountRequest;
-use App\Domains\BankAccount\Requests\StoreBankAccountRequest;
-use App\Domains\BankAccount\Requests\UpdateBankAccountRequest;
-use App\Domains\BankAccount\Resources\BankAccountResource;
-use App\Domains\BankAccount\Services\BankAccountService;
+use App\Domains\Bank\Requests\FilterBankAccountRequest;
+use App\Domains\Bank\Requests\StoreBankAccountRequest;
+use App\Domains\Bank\Requests\UpdateBankAccountRequest;
+use App\Domains\Bank\Resources\BankAccountResource;
+use App\Domains\Bank\Services\BankAccountService;
 use Illuminate\Http\JsonResponse;
 
 class BankAccountController extends BaseController
@@ -37,6 +36,7 @@ class BankAccountController extends BaseController
     public function store(StoreBankAccountRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
 
         return $this->responseCommon(
             true,
@@ -83,13 +83,16 @@ class BankAccountController extends BaseController
     }
 
     /**
-     * POST /api/v1/bank-accounts/reorder — kéo thả sort_order.
-     * Body: [{ id: 1, sort_order: 2 }, { id: 2, sort_order: 1 }]
+     * POST /api/v1/clubs/{clubSlug}/bank-accounts/{id}/toggle-default
      */
-    public function reorder(ReorderBankAccountRequest $request): JsonResponse
+    public function toggleDefault(string $clubSlug, int $id): JsonResponse
     {
-        $this->service->reorder($request->validated());
-
-        return $this->responseCommon(true, __('domains/bank_account.reordered'));
+        return $this->responseCommon(
+            true,
+            __('domains/bank_account.default_updated'),
+            new BankAccountResource(
+                $this->service->toggleDefault($id)
+            ),
+        );
     }
 }

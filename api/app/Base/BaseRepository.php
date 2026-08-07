@@ -766,4 +766,16 @@ abstract class BaseRepository
         }
         return $translations;
     }
+
+    // Kiểm tra trùng
+    public function exists(array $conditions, ?int $ignoreId = null): bool
+    {
+        $query = $this->model->where($conditions);
+
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        return $query->exists();
+    }
 }

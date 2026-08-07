@@ -16,6 +16,5 @@ Route::middleware('auth.jwt')->group(function () {
         Route::post('/',[MonthlyContributionController::class, 'store'])->middleware('perm.club:monthly_contribution,create');
         Route::put('/{id}',[MonthlyContributionController::class, 'update'])->middleware('perm.club:monthly_contribution,update');
         Route::delete('/{id}',[MonthlyContributionController::class, 'destroy'])->middleware('perm.club:monthly_contribution,delete');
-        Route::patch('/{id}/toggle-status',[MonthlyContributionController::class, 'toggleStatus'])->middleware('perm.club:monthly_contribution,update');
     });
 });

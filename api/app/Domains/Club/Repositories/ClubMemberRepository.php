@@ -13,6 +13,12 @@ class ClubMemberRepository extends BaseRepository
     protected string $defaultOrderBy = 'created_at';
     protected string $defaultOrderDirection = 'desc';
 
+    /** Cột cho getForSelect() — dropdown trả [{id, user_id}] */
+    protected array $selectColumns = ['id', 'user_id'];
+    protected array $selectWith = [
+        'user:id,fullname,email,phone',
+    ];
+
     public function __construct(ClubMember $model)
     {
         parent::__construct($model);
