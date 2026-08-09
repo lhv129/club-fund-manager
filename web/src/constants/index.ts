@@ -42,6 +42,7 @@ export const CLUB_SUBROUTES = {
   monthlyContributions: "monthly-contributions",
   bankAccounts: "bank-accounts",
   playingSchedules: "playing-schedules",
+  exchangeSessions: "exchange-sessions",
   events: "events",
   settings: "settings",
 } as const;
@@ -109,4 +110,5 @@ export const MODULE_SLUGS = {
   monthlyContribution: "monthly_contribution",
   bankAccount: "bank_account"
   ,playingSchedule: "playing_schedule"
+  ,exchangeSessionPlayer: "exchange_session_player"
 } as const;

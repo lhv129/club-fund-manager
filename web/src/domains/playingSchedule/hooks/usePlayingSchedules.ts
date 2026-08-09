@@ -22,4 +22,9 @@ export function usePlayingSchedules(slug: string, params: ReturnType<typeof useL
     return { data:query.data?.data??[], total:query.data?.meta?.total??0, isLoading:query.isLoading, isCreating:create.isPending,isUpdating:update.isPending,isDeleting:remove.isPending,togglingIds, handleCreate:(v:Record<string,string>,tr?:TranslationEntry[])=>submit(()=>create.mutateAsync(payload(v,tr)),"saveSuccess"), handleEdit:(id:number,v:Record<string,string>,tr?:TranslationEntry[])=>submit(()=>update.mutateAsync({id,payload:payload(v,tr)}),"updateSuccess"), handleDeleteConfirm:(id:number)=>remove.mutate(id), handleToggleStatus:(id:number)=>{if(togglingIds.has(id))return;setTogglingIds(s=>new Set(s).add(id));toggle.mutate(id,{onSettled:()=>setTogglingIds(s=>{const n=new Set(s);n.delete(id);return n;})});} };
 }
 
+export function usePlayingScheduleSelect(slug?: string | null) {
+    const query = useQuery({ queryKey: ["playing-schedules-select", slug], queryFn: () => { if (!slug) throw new Error("Club slug is required"); return getPlayingScheduleService(slug).select() as Promise<ApiResponse<PlayingSchedule[]>>; }, enabled: Boolean(slug) });
+    return { data: query.data?.data ?? [], isLoading: query.isLoading };
+}
+
 

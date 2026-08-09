@@ -47,19 +47,11 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
 
         // ── Thành viên (group) ────────────────────────────────────────────────
         {
-            href: clubRoute(slug, CLUB_SUBROUTES.members),
-            labelKey: "members",
-            icon: Users,
-            module: MODULE_SLUGS.clubMember,
+            labelKey: "playingSchedulesMenu",
+            icon: CalendarDays,
+            module: MODULE_SLUGS.playingSchedule,
             action: PERMISSION_ACTIONS.view,
             children: [
-                {
-                    href: clubRoute(slug, CLUB_SUBROUTES.members),
-                    labelKey: "clubMembers",
-                    icon: Users,
-                    module: MODULE_SLUGS.clubMember,
-                    action: PERMISSION_ACTIONS.view,
-                },
                 {
                     href: clubRoute(slug, CLUB_SUBROUTES.playingSchedules),
                     labelKey: "playingSchedules",
@@ -67,6 +59,19 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
                     module: MODULE_SLUGS.playingSchedule,
                     action: PERMISSION_ACTIONS.view,
                 },
+                {
+                    href: clubRoute(slug, CLUB_SUBROUTES.exchangeSessions),
+                    labelKey: "exchangeSessions",
+                    icon: CalendarDays,
+                    module: MODULE_SLUGS.exchangeSession,
+                    action: PERMISSION_ACTIONS.view,
+                },
+            ],
+        },
+        {
+            href: clubRoute(slug, CLUB_SUBROUTES.members), labelKey: "members", icon: Users, module: MODULE_SLUGS.clubMember, action: PERMISSION_ACTIONS.view,
+            children: [
+                { href: clubRoute(slug, CLUB_SUBROUTES.members), labelKey: "clubMembers", icon: Users, module: MODULE_SLUGS.clubMember, action: PERMISSION_ACTIONS.view },
                 {
                     href: clubRoute(slug, CLUB_SUBROUTES.memberships),
                     labelKey: "memberships",

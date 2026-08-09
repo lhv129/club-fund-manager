@@ -202,6 +202,8 @@
     "monthlyContributions": "Theo dõi đóng quỹ tháng",
     "bankAccounts": "Tài khoản ngân hàng"
     ,"playingSchedules": "Lịch đánh"
+    ,"playingSchedulesMenu": "Lịch đánh"
+    ,"exchangeSessions": "Buổi đánh"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
@@ -579,4 +581,5 @@
     "startDate": "Ngày bắt đầu",
     "endDate": "Ngày kết thúc"
   }
+  ,"exchangeSession": {"title":"Buổi đánh","totalCount":"{count} buổi đánh","create":"Thêm buổi đánh","edit":"Sửa buổi đánh","players":"Người chơi","sessionDate":"Ngày đánh","courtName":"Tên sân","courtAddress":"Địa chỉ sân","startTime":"Giờ bắt đầu","endTime":"Giờ kết thúc","schedule":"Lịch đánh","type":"Loại","scheduled":"Theo lịch","manual":"Thủ công","upcoming":"Sắp diễn ra","completed":"Đã hoàn thành","cancelled":"Đã hủy","complete":"Hoàn thành","titleField":"Tiêu đề","note":"Ghi chú","notFound":"Không tìm thấy buổi đánh","deleteConfirmMsg":"Bạn có chắc muốn xóa \"{name}\"?","user":"Người dùng","playerName":"Tên người chơi","male":"Nam","female":"Nữ","amount":"Số tiền","paid":"Đã đóng","checkedIn":"Đã điểm danh","noPlayers":"Chưa có người chơi","createPlayer":"Thêm người chơi","editPlayer":"Sửa người chơi","deletePlayerConfirm":"Bạn có chắc muốn xóa người chơi này?"}
 }

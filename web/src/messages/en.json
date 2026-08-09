@@ -203,6 +203,8 @@
     "monthlyContributions": "Monthly Contributions",
     "bankAccounts": "Bank Accounts"
     ,"playingSchedules": "Playing Schedules"
+    ,"playingSchedulesMenu": "Playing Schedules"
+    ,"exchangeSessions": "Sessions"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -582,4 +584,5 @@
     "startDate": "Start date",
     "endDate": "End date"
   }
+  ,"exchangeSession": {"title":"Sessions","totalCount":"{count} sessions","create":"Add session","edit":"Edit session","players":"Players","sessionDate":"Session date","courtName":"Court name","courtAddress":"Court address","startTime":"Start time","endTime":"End time","schedule":"Playing schedule","type":"Type","scheduled":"Scheduled","manual":"Manual","upcoming":"Upcoming","completed":"Completed","cancelled":"Cancelled","complete":"Complete","titleField":"Title","note":"Note","notFound":"No sessions found","deleteConfirmMsg":"Are you sure you want to delete \"{name}\"?","user":"User","playerName":"Player name","male":"Male","female":"Female","amount":"Amount","paid":"Paid","checkedIn":"Checked in","noPlayers":"No players","createPlayer":"Add player","editPlayer":"Edit player","deletePlayerConfirm":"Are you sure you want to delete this player?"}
 }
