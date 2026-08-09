@@ -13,7 +13,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
 
 export interface SelectOption {
     label: string;
@@ -51,6 +51,7 @@ export default function Select({
 }: SelectProps) {
     const t = useTranslations("common");
     const [open, setOpen] = useState(false);
+    const [keyword, setKeyword] = useState("");
     const [dropStyle, setDropStyle] =
         useState<CSSProperties | null>(null);
     const [dropReady, setDropReady] = useState(false);
@@ -190,6 +191,10 @@ export default function Select({
         () => options.find((o) => o.value === value) ?? null,
         [options, value],
     );
+    const filteredOptions = useMemo(() => {
+        const q = keyword.trim().toLowerCase();
+        return q ? options.filter((o) => `${o.label} ${o.value}`.toLowerCase().includes(q)) : options;
+    }, [keyword, options]);
 
     const handleSelect = (val: string) => { onChange(val); setOpen(false); };
     const handleClear = (e: MouseEvent) => {
@@ -282,19 +287,24 @@ export default function Select({
                             )}
                         </div>
 
+                        {!loading && options.length > 0 && (
+                            <div className="border-b border-gray-100 p-3 dark:border-gray-800">
+                                <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t("quickSearch")} className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm dark:border-gray-700 dark:bg-gray-800" /></div>
+                            </div>
+                        )}
                         {loading ? (
                             <div className="px-3 py-2 space-y-2">
                                 {[1, 2, 3].map((i) => (
                                     <div key={i} className="h-4 rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
                                 ))}
                             </div>
-                        ) : options.length === 0 ? (
+                        ) : filteredOptions.length === 0 ? (
                             <p className="px-3 py-6 text-center text-xs text-gray-400 italic">
                                 {t("noOptionsFound")}
                             </p>
                         ) : (
                             <div className="max-h-60 overflow-y-auto py-1.5">
-                                {options.map((opt) => {
+                                {filteredOptions.map((opt) => {
                                     const selected = opt.value === value;
                                     return (
                                         <button

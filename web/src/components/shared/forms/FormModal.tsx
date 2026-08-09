@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { LOCALES, DEFAULT_LOCALE } from "@/lib/locales";
 import { splitTranslationErrors, buildEmptyTranslationValues } from "@/lib/formTranslations";
 import DatePicker from "@/components/shared/ui/DatePicker";
+import TimeSelect from "@/components/shared/ui/TimeSelect";
 import Select from "@/components/shared/ui/Select";
 import { RichEditor } from "@/components/shared/ui/RichEditor";
 import CheckBox from "@/components/shared/ui/CheckBox";
@@ -27,6 +28,7 @@ export interface FormFieldDef {
     | "richtext"
     | "select"
     | "datepicker"
+    | "time-select"
     | "checkbox"
     | "toggle"
     | "icon-picker"
@@ -353,7 +355,7 @@ export function FormModal({
         );
 
         // ── DatePicker ────────────────────────────────────────────────────────
-        if (field.type === "datepicker") return (
+      if (field.type === "datepicker") return (
             <>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
                     {field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}
@@ -366,7 +368,15 @@ export function FormModal({
                 />
                 {renderError(err)}
             </>
-        );
+      );
+
+      if (field.type === "time-select") return (
+          <>
+              <label className="block text-sm font-medium text-foreground mb-1.5">{field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}</label>
+              <TimeSelect label={field.label} value={val} onChange={(v) => handleChange(field.name, v)} error={!!err} placeholder={field.placeholder} />
+              {renderError(err)}
+          </>
+      );
 
         // ── RichText ──────────────────────────────────────────────────────────
         if (field.type === "richtext") return (

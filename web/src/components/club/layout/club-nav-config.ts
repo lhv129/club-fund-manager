@@ -6,6 +6,7 @@ import {
     Settings,
     UserCheck,
     Banknote,
+    CalendarDays,
     Landmark,
 } from "lucide-react";
 
@@ -57,6 +58,13 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
                     labelKey: "clubMembers",
                     icon: Users,
                     module: MODULE_SLUGS.clubMember,
+                    action: PERMISSION_ACTIONS.view,
+                },
+                {
+                    href: clubRoute(slug, CLUB_SUBROUTES.playingSchedules),
+                    labelKey: "playingSchedules",
+                    icon: CalendarDays,
+                    module: MODULE_SLUGS.playingSchedule,
                     action: PERMISSION_ACTIONS.view,
                 },
                 {

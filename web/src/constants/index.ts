@@ -26,6 +26,7 @@ export const APP_ROUTES = {
   adminModules: "/admin/modules",
   adminSettings: "/admin/settings",
   adminClubs: "/admin/clubs",
+  adminBanks: "/admin/banks",
 
   // ── Club workspace (route prefix; slug được ghép bằng clubRoute()) ────────
   club: "/club",
@@ -40,6 +41,7 @@ export const CLUB_SUBROUTES = {
   fundPeriods: "fund-periods",
   monthlyContributions: "monthly-contributions",
   bankAccounts: "bank-accounts",
+  playingSchedules: "playing-schedules",
   events: "events",
   settings: "settings",
 } as const;
@@ -93,6 +95,7 @@ export const MODULE_SLUGS = {
   role: "role",
   permission: "permission",
   module: "module",
+  bank: "bank",
   clubs: "clubs",
   // ── Shared module (cả system + club scope) ───────────────────────────────
   club: "club",
@@ -105,4 +108,5 @@ export const MODULE_SLUGS = {
   webhook: "webhook",
   monthlyContribution: "monthly_contribution",
   bankAccount: "bank_account"
+  ,playingSchedule: "playing_schedule"
 } as const;

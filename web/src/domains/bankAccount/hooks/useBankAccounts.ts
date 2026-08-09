@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import {
     useMutation,
@@ -10,6 +11,7 @@ import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
 import { getBankAccountService } from "@/domains/bankAccount/services/bankAccountService";
+import { useBankSelect } from "@/domains/bank/hooks/useBanks";
 
 import type {
     BankAccount,
@@ -79,6 +81,8 @@ export function useBankAccounts(
 ) {
     const queryClient = useQueryClient();
     const t = useTranslations("common");
+    const [togglingStatusIds, setTogglingStatusIds] = useState<Set<number>>(new Set());
+    const [togglingDefaultIds, setTogglingDefaultIds] = useState<Set<number>>(new Set());
 
     const { slug } = useParams<{
         slug: string;
@@ -88,6 +92,8 @@ export function useBankAccounts(
 
     const service =
         getBankAccountService(clubSlug);
+
+    const { data: banks, isLoading: isBanksLoading } = useBankSelect();
 
     /**
      * Query key phải được dùng thống nhất khi đọc
@@ -669,27 +675,58 @@ export function useBankAccounts(
     };
 
     const handleToggleStatus = (id: number) => {
-        toggleStatusMutation.mutate(id);
+        if (togglingStatusIds.has(id)) {
+            return;
+        }
+
+        setTogglingStatusIds((previous) =>
+            new Set(previous).add(id)
+        );
+
+        toggleStatusMutation.mutate(id, {
+            onSettled: () => {
+                setTogglingStatusIds((previous) => {
+                    const next = new Set(previous);
+                    next.delete(id);
+                    return next;
+                });
+            },
+        });
     };
 
     const handleToggleDefault = (id: number) => {
-        toggleDefaultMutation.mutate(id);
+        if (togglingDefaultIds.has(id)) {
+            return;
+        }
+
+        setTogglingDefaultIds((previous) =>
+            new Set(previous).add(id)
+        );
+
+        toggleDefaultMutation.mutate(id, {
+            onSettled: () => {
+                setTogglingDefaultIds((previous) => {
+                    const next = new Set(previous);
+                    next.delete(id);
+                    return next;
+                });
+            },
+        });
     };
 
     return {
         data,
         total,
         isLoading,
+        banks,
+        isBanksLoading,
 
         isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
         isDeleting: deleteMutation.isPending,
 
-        isTogglingStatus:
-            toggleStatusMutation.isPending,
-
-        isTogglingDefault:
-            toggleDefaultMutation.isPending,
+        togglingStatusIds,
+        togglingDefaultIds,
 
         handleCreate,
         handleEdit,

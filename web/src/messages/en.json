@@ -105,6 +105,10 @@
       "title": "Module Management",
       "description": "Manage modules in the system"
     },
+    "banks": {
+      "title": "Bank Management",
+      "description": "Manage banks in the system"
+    },
     "joinClub": {
       "title": "Join club",
       "description": "Search and join clubs that match your interests."
@@ -128,6 +132,10 @@
     "fundPeriod": {
       "title": "Fund Periods",
       "description": "Manage the club's fund periods"
+    },
+    "playingSchedules": {
+      "title": "Playing Schedules",
+      "description": "Manage the club's playing schedules"
     }
   },
   "header": {
@@ -179,6 +187,7 @@
     "roles": "Roles",
     "permissions": "Permissions",
     "clubs": "Clubs",
+    "banks": "Banks",
     "clubMembers": "Club Members",
     "clubInvites": "Club Invites",
     "modules": "Modules",
@@ -193,6 +202,7 @@
     "fundPeriods": "Fund Periods",
     "monthlyContributions": "Monthly Contributions",
     "bankAccounts": "Bank Accounts"
+    ,"playingSchedules": "Playing Schedules"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -526,5 +536,50 @@
     "qrImage": "QR Code Image",
     "isDefault": "Default Account",
     "deleteConfirmMsg": "Are you sure you want to delete the bank account \"{name}\"?"
+  }
+  ,"bank": {
+    "title": "Banks",
+    "create": "Add bank",
+    "edit": "Edit bank",
+    "notFound": "No banks found",
+    "totalCount": "{count} banks",
+    "deleteConfirmMsg": "Are you sure you want to delete bank \"{name}\"?",
+    "code": "Bank code",
+    "codePlaceholder": "Enter bank code",
+    "name": "Bank name",
+    "namePlaceholder": "Enter bank name",
+    "shortName": "Short name",
+    "shortNamePlaceholder": "Enter short name",
+    "bin": "BIN",
+    "binPlaceholder": "Enter BIN",
+    "swiftCode": "SWIFT code",
+    "swiftCodePlaceholder": "Enter SWIFT code"
+    ,"logo": "Bank logo"
+  }
+  ,"playingSchedule": {
+    "title": "Playing Schedules",
+    "create": "Add Schedule",
+    "edit": "Edit Schedule",
+    "notFound": "No playing schedules found",
+    "totalCount": "{count} schedules",
+    "deleteConfirmMsg": "Are you sure you want to delete schedule \"{title}\"?",
+    "titleField": "Title",
+    "note": "Note",
+    "weekday": "Weekday",
+    "weekday_0": "Sunday",
+    "weekday_1": "Monday",
+    "weekday_2": "Tuesday",
+    "weekday_3": "Wednesday",
+    "weekday_4": "Thursday",
+    "weekday_5": "Friday",
+    "weekday_6": "Saturday",
+    "courtName": "Court name",
+    "courtAddress": "Court address",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "autoGenerate": "Auto generate",
+    "weeksAhead": "Weeks ahead",
+    "startDate": "Start date",
+    "endDate": "End date"
   }
 }

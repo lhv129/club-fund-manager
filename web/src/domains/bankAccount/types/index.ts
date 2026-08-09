@@ -1,8 +1,13 @@
 export interface BankAccount {
     id: number;
     club_id: number;
-    bank_code: string | null;
-    bank_name: string;
+    bank_id: number;
+    bank: {
+        id: number;
+        code: string;
+        name: string;
+        logo: string | null;
+    } | null;
     account_number: string;
     account_name: string;
     qr_image: string | null;

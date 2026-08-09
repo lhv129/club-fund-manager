@@ -105,6 +105,10 @@
       "title": "Quản lý phân hệ",
       "description": "Danh sách và quản lý các phân hệ trong hệ thống"
     },
+    "banks": {
+      "title": "Quản lý ngân hàng",
+      "description": "Danh sách và quản lý ngân hàng"
+    },
     "joinClub": {
       "title": "Tham gia câu lạc bộ",
       "description": "Tìm kiếm và tham gia câu lạc bộ phù hợp với bạn."
@@ -128,6 +132,10 @@
     "fundPeriod": {
       "title": "Cấu hình quỹ",
       "description": "Quản lý kỳ quỹ của câu lạc bộ"
+    },
+    "playingSchedules": {
+      "title": "Lịch đánh",
+      "description": "Quản lý lịch đánh của câu lạc bộ"
     }
   },
   "header": {
@@ -179,6 +187,7 @@
     "roles": "Chức vụ",
     "permissions": "Quyền hạn",
     "clubs": "Câu lạc bộ",
+    "banks": "Ngân hàng",
     "clubMembers": "Thành viên CLB",
     "clubInvites": "Lời mời CLB",
     "modules": "Phân hệ",
@@ -192,6 +201,7 @@
     "fundPeriods": "Cấu hình quỹ",
     "monthlyContributions": "Theo dõi đóng quỹ tháng",
     "bankAccounts": "Tài khoản ngân hàng"
+    ,"playingSchedules": "Lịch đánh"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
@@ -523,5 +533,50 @@
     "qrImage": "Ảnh mã QR",
     "isDefault": "Tài khoản mặc định",
     "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa tài khoản ngân hàng của {name}?"
+  }
+  ,"bank": {
+    "title": "Danh sách ngân hàng",
+    "create": "Thêm ngân hàng",
+    "edit": "Sửa ngân hàng",
+    "notFound": "Không tìm thấy ngân hàng nào",
+    "totalCount": "{count} ngân hàng",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa ngân hàng \"{name}\"?",
+    "code": "Mã ngân hàng",
+    "codePlaceholder": "Nhập mã ngân hàng",
+    "name": "Tên ngân hàng",
+    "namePlaceholder": "Nhập tên ngân hàng",
+    "shortName": "Tên viết tắt",
+    "shortNamePlaceholder": "Nhập tên viết tắt",
+    "bin": "Mã BIN",
+    "binPlaceholder": "Nhập mã BIN",
+    "swiftCode": "Mã SWIFT",
+    "swiftCodePlaceholder": "Nhập mã SWIFT"
+    ,"logo": "Logo ngân hàng"
+  }
+  ,"playingSchedule": {
+    "title": "Lịch đánh",
+    "create": "Thêm lịch đánh",
+    "edit": "Sửa lịch đánh",
+    "notFound": "Không tìm thấy lịch đánh",
+    "totalCount": "{count} lịch đánh",
+    "deleteConfirmMsg": "Bạn có chắc muốn xóa lịch \"{title}\"?",
+    "titleField": "Tiêu đề",
+    "note": "Ghi chú",
+    "weekday": "Thứ trong tuần",
+    "weekday_0": "Chủ nhật",
+    "weekday_1": "Thứ 2",
+    "weekday_2": "Thứ 3",
+    "weekday_3": "Thứ 4",
+    "weekday_4": "Thứ 5",
+    "weekday_5": "Thứ 6",
+    "weekday_6": "Thứ 7",
+    "courtName": "Tên sân",
+    "courtAddress": "Địa chỉ sân",
+    "startTime": "Giờ bắt đầu",
+    "endTime": "Giờ kết thúc",
+    "autoGenerate": "Tự động tạo lịch",
+    "weeksAhead": "Số tuần tạo trước",
+    "startDate": "Ngày bắt đầu",
+    "endDate": "Ngày kết thúc"
   }
 }

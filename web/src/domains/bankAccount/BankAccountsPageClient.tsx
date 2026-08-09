@@ -109,13 +109,14 @@ export function BankAccountsPageClient() {
         isCreating,
         isUpdating,
         isDeleting,
-        isTogglingStatus,
-        isTogglingDefault,
+        togglingStatusIds,
+        togglingDefaultIds,
         handleCreate,
         handleEdit,
         handleDeleteConfirm,
         handleToggleStatus,
         handleToggleDefault,
+        banks,
     } = useBankAccounts(params);
 
     const [modalOpen, setModalOpen] =
@@ -227,13 +228,12 @@ export function BankAccountsPageClient() {
         useMemo(
             () => [
                 {
-                    name: "bank_name",
+                    name: "bank_id",
                     label: tb("bankName"),
-                    type: "text",
+                    type: "select",
                     required: true,
-                    placeholder: tb(
-                        "bankNamePlaceholder"
-                    ),
+                    options: banks.map((bank) => ({ value: String(bank.id), label: bank.name })),
+                    placeholder: tb("bankNamePlaceholder"),
                 },
                 {
                     name: "account_number",
@@ -270,12 +270,12 @@ export function BankAccountsPageClient() {
                     type: "toggle",
                 },
             ],
-            [t, tb]
+            [banks, t, tb]
         );
 
     const initialValues = selected
         ? {
-            bank_name: selected.bank_name,
+            bank_id: String(selected.bank_id),
             account_number:
                 selected.account_number,
             account_name: selected.account_name,
@@ -290,7 +290,7 @@ export function BankAccountsPageClient() {
                 : "0",
         }
         : {
-            bank_name: "",
+            bank_id: "",
             account_number: "",
             account_name: "",
             sort_order: "0",
@@ -325,17 +325,25 @@ export function BankAccountsPageClient() {
             key: "bank",
             label: tb("bankName"),
             render: (row) => (
-                <div>
-                    <p className="text-sm font-medium text-foreground">
-                        {row.bank_name ||
-                            t("noData")}
-                    </p>
-
-                    {row.bank_code && (
-                        <p className="text-xs text-foreground-muted">
-                            {row.bank_code}
-                        </p>
+                <div className="flex items-center gap-3">
+                    {row.bank?.logo && (
+                        <CustomImage
+                            src={row.bank.logo}
+                            alt={row.bank.name}
+                            className="h-9 w-9 rounded-lg border border-border object-contain"
+                        />
                     )}
+                    <div>
+                        <p className="text-sm font-medium text-foreground">
+                            {row.bank?.name || t("noData")}
+                        </p>
+
+                        {row.bank?.code && (
+                            <p className="text-xs text-foreground-muted">
+                                {row.bank.code}
+                            </p>
+                        )}
+                    </div>
                 </div>
             ),
         },
@@ -393,9 +401,7 @@ export function BankAccountsPageClient() {
                         checked={Boolean(
                             row.is_active
                         )}
-                        loading={
-                            isTogglingStatus
-                        }
+                        loading={togglingStatusIds.has(row.id)}
                         disabled={!canUpdate}
                         onChange={() =>
                             handleToggleStatus(
@@ -416,9 +422,7 @@ export function BankAccountsPageClient() {
                         checked={Boolean(
                             row.is_default
                         )}
-                        loading={
-                            isTogglingDefault
-                        }
+                        loading={togglingDefaultIds.has(row.id)}
                         disabled={!canUpdate}
                         onChange={() =>
                             handleToggleDefault(
