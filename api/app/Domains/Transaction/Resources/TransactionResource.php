@@ -35,12 +35,7 @@ class TransactionResource extends JsonResource
                 'name' => $this->club->name,
             ]),
 
-            'bank_account' => $this->whenLoaded('bankAccount', fn() => [
-                'id' => $this->bankAccount->id,
-                'bank_name' => $this->bankAccount->bank_name,
-                'account_number' => $this->bankAccount->account_number,
-                'account_name' => $this->bankAccount->account_name,
-            ]),
+            'bank_account' => $this->whenLoaded('bankAccount', fn() => ['id' => $this->bankAccount->id, 'account_number' => $this->bankAccount->account_number, 'account_name' => $this->bankAccount->account_name, 'bank' => $this->bankAccount->relationLoaded('bank') ? ['id' => $this->bankAccount->bank->id, 'code' => $this->bankAccount->bank->code, 'name' => $this->bankAccount->bank->name, 'short_name' => $this->bankAccount->bank->short_name, 'logo' => $this->bankAccount->bank->logo,] : null,]),
 
             'webhook_config' => $this->whenLoaded('webhookConfig', fn() => [
                 'id' => $this->webhookConfig->id,

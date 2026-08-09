@@ -6,6 +6,8 @@
 
 return [
 
+    'attributes' => ['first_name' => 'First name', 'last_name' => 'Last name', 'username' => 'Username', 'gender' => 'Gender', 'email' => 'Email', 'password' => 'Password', 'phone' => 'Phone number', 'date_of_birth' => 'Date of birth', 'avatar' => 'Avatar', 'address' => 'Address',],
+
     'login_success' => 'Login successful',
 
     'user_not_found' => 'Email or username not found',

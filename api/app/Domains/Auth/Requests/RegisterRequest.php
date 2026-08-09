@@ -20,7 +20,7 @@ class RegisterRequest extends BaseRequest
 
             // 'username' => 'nullable|string|max:255|unique:users,username',
 
-            'gender' => 'nullable|in:male,female,other',
+            'gender' => 'required|in:male,female',
 
             'email' => 'required|email|unique:users,email',
 
@@ -44,5 +44,11 @@ class RegisterRequest extends BaseRequest
 
             // 'address' => 'nullable|string|max:150'
         ];
+    }   
+
+
+    public function attributes(): array
+    {
+        return ['first_name' => __('domains/auth.attributes.first_name'), 'last_name' => __('domains/auth.attributes.last_name'), 'username' => __('domains/auth.attributes.username'), 'gender' => __('domains/auth.attributes.gender'), 'email' => __('domains/auth.attributes.email'), 'password' => __('domains/auth.attributes.password'), 'phone' => __('domains/auth.attributes.phone'), 'date_of_birth' => __('domains/auth.attributes.date_of_birth'), 'avatar' => __('domains/auth.attributes.avatar'), 'address' => __('domains/auth.attributes.address'),];
     }
 }

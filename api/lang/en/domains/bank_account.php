@@ -18,9 +18,11 @@ return [
     'created'        => 'Bank account created successfully.',
     'updated'        => 'Bank account updated successfully.',
     'deleted'        => 'Bank account deleted successfully.',
-    'status_toggled' => 'Bank account status updated successfully.',
+     'status_activated' => 'Bank account activated successfully.',
+    'status_deactivated' => 'Bank account deactivated successfully.',
     'reordered'      => 'Bank account order updated successfully.',
     'not_found'      => 'Bank account not found.',
     'bank_not_supported' => 'Bank not supported.',
-    'default_updated' => 'Updated bank default'
+    'default_set' => 'Default bank account set successfully.',
+    'default_unset' => 'Default bank account unset successfully.'
 ];

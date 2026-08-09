@@ -20,9 +20,13 @@ return [
     'created'        => 'Tạo tài khoản ngân hàng thành công.',
     'updated'        => 'Cập nhật tài khoản ngân hàng thành công.',
     'deleted'        => 'Xoá tài khoản ngân hàng thành công.',
-    'status_toggled' => 'Cập nhật trạng thái tài khoản ngân hàng thành công.',
+
+    // Trạng thái hoạt động 
+    'status_activated' => 'Đã bật tài khoản ngân hàng.',
+    'status_deactivated' => 'Đã tắt tài khoản ngân hàng.',
+
     'reordered'      => 'Cập nhật thứ tự tài khoản ngân hàng thành công.',
     'not_found'      => 'Không tìm thấy tài khoản ngân hàng.',
-    'bank_not_supported' => 'Ngân hàng không được hỗ trợ.',
-    'default_updated' => 'Cập nhật thành ngân hàng mặc định'
+    'default_set' => 'Đã đặt tài khoản này làm tài khoản ngân hàng mặc định.',
+    'default_unset' => 'Đã bỏ tài khoản này khỏi tài khoản ngân hàng mặc định.',
 ];

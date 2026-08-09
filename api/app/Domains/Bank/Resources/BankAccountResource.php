@@ -12,8 +12,15 @@ class BankAccountResource extends JsonResource
         return [
             'id'          => $this->id,
             'club_id'       => $this->club_id,
-            'bank_code'        => $this->bank_code,
-            'bank_name' => $this->bank_name,
+            'bank_id'       => $this->bank_id,
+            'bank'          => $this->whenLoaded('bank', function () {
+                return [
+                    'id'   => $this->bank->id,
+                    'code' => $this->bank->code,
+                    'name' => $this->bank->name,
+                    'logo' => $this->bank->logo,
+                ];
+            }),
             'account_number'   => $this->account_number,
             'account_name'  => $this->account_name,
 

@@ -45,8 +45,7 @@ class BankAccountRepository extends BaseRepository
             ->select([
                 'id',
                 'club_id',
-                'bank_code',
-                'bank_name',
+                'bank_id',
                 'account_name',
                 'account_number',
                 'qr_image',
@@ -54,6 +53,9 @@ class BankAccountRepository extends BaseRepository
                 'is_default',
                 'sort_order',
                 'created_at',
+            ])
+            ->with([
+                'bank:id,code,name,logo',
             ]);
     }
 
@@ -69,10 +71,14 @@ class BankAccountRepository extends BaseRepository
         $search = trim($filters['search']);
 
         $query->where(function (Builder $q) use ($search) {
-            $q->where('bank_name', 'like', "%{$search}%")
-                ->orWhere('bank_code', 'like', "%{$search}%")
-                ->orWhere('account_number', 'like', "%{$search}%")
-                ->orWhere('account_name', 'like', "%{$search}%");
+            $q->where('account_number', 'like', "%{$search}%")
+                ->orWhere('account_name', 'like', "%{$search}%")
+                ->orWhereHas('bank', function (Builder $bankQuery) use ($search) {
+                    $bankQuery
+                        ->where('code', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('short_name', 'like', "%{$search}%");
+                });
         });
     }
 

@@ -10,7 +10,11 @@ class StoreBankAccountRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'bank_name' => ['required', 'string', 'max:255'],
+            'bank_id' => [
+                'required',
+                'integer',
+                'exists:banks,id',
+            ],
 
             'account_number' => [
                 'required',
@@ -55,7 +59,7 @@ class StoreBankAccountRequest extends BaseRequest
     public function attributes(): array
     {
         return [
-            'bank_name'       => __('domains/bank_account.attributes.bank_name'),
+            'bank_id' => __('domains/bank_account.attributes.bank_id'),
             'account_name' => __('domains/bank_account.attributes.account_name'),
             'account_number' => __('domains/bank_account.attributes.account_number'),
             'is_default' => __('domains/bank_account.attributes.is_default'),

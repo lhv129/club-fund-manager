@@ -58,8 +58,6 @@ class BankAccountService extends BaseService
 
             $data['is_active'] = $data['is_active'] ?? true;
 
-            $data['bank_code'] = $this->bankProviderService->code($data['bank_name']);
-
             if (empty($data['sort_order'])) {
                 $data['sort_order'] = $this->repository->getNextSortOrder();
             }
@@ -107,10 +105,6 @@ class BankAccountService extends BaseService
         $oldQrImage = $bankAccount->qr_image;
 
         try {
-
-            if (isset($data['bank_name'])) {
-                $data['bank_code'] = $this->bankProviderService->code($data['bank_name']);
-            }
 
             if (!empty($data['is_default'])) {
                 $this->repository->clearDefault($bankAccount->club_id);

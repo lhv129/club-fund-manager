@@ -12,6 +12,8 @@
 
 return [
 
+    'attributes' => ['first_name' => 'Tên', 'last_name' => 'Họ', 'username' => 'Tên đăng nhập', 'gender' => 'Giới tính', 'email' => 'Email', 'password' => 'Mật khẩu', 'phone' => 'Số điện thoại', 'date_of_birth' => 'Ngày sinh', 'avatar' => 'Ảnh đại diện', 'address' => 'Địa chỉ',],
+
     'login_success' => 'Đăng nhập thành công',
 
     'user_not_found' => 'Email hoặc tên đăng nhập không tồn tại',

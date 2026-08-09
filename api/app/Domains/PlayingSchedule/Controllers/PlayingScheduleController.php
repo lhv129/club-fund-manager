@@ -84,7 +84,6 @@ class PlayingScheduleController extends BaseController
     public function update(UpdatePlayingScheduleRequest $request, string $clubSlug, int $id): JsonResponse
     {
         $data = $request->validated();
-        $data['club_id'] = $request->attributes->get('club_id');
         return $this->responseCommon(
             true,
             __('domains/playing_schedule.updated'),

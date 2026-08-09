@@ -73,7 +73,8 @@ class TransactionRepository extends BaseRepository
                 'updated_at',
             ])
             ->with([
-                'bankAccount:id,bank_name,account_number,account_name',
+                'bankAccount:id,account_number,account_name,bank_id',
+                'bankAccount.bank:id,code,name,short_name,logo',
                 'webhookConfig:id,type',
             ]);
     }

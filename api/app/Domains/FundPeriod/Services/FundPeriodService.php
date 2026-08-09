@@ -99,7 +99,7 @@ class FundPeriodService extends BaseService
 
     public function toggleStatus(int $id): FundPeriod
     {
-        $fundPeriod            = $this->find($id);
+        $fundPeriod = $this->find($id);
         $fundPeriod->is_active = !$fundPeriod->is_active;
         $fundPeriod->save();
 

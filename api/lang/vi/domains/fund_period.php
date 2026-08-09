@@ -22,7 +22,10 @@ return [
     'created'        => 'Tạo kỳ quỹ thành công.',
     'updated'        => 'Cập nhật kỳ quỹ thành công.',
     'deleted'        => 'Xoá kỳ quỹ thành công.',
-    'status_toggled' => 'Cập nhật trạng thái kỳ quỹ thành công.',
+
+    'status_activated' => 'Đã kích hoạt quỹ.', 
+    'status_deactivated' => 'Đã ngừng hoạt động quỹ.',
+
     'reordered'      => 'Cập nhật thứ tự kỳ quỹ thành công.',
     'not_found'      => 'Không tìm thấy kỳ quỹ.',
 ];

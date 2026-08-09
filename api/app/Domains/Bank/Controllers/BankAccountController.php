@@ -71,15 +71,12 @@ class BankAccountController extends BaseController
     }
 
     /**
-     * PATCH /api/v1/bank-accounts/{id}/toggle-status
+     * POST /api/v1/bank-accounts/{id}/toggle-status
      */
     public function toggleStatus(string $clubSlug, int $id): JsonResponse
     {
-        return $this->responseCommon(
-            true,
-            __('domains/bank_account.status_toggled'),
-            new BankAccountResource($this->service->toggleStatus($id)),
-        );
+        $bankAccount = $this->service->toggleStatus($id);
+        return $this->responseCommon(true, $bankAccount->is_active ? __('domains/bank_account.status_activated') : __('domains/bank_account.status_deactivated'), new BankAccountResource($bankAccount));
     }
 
     /**
@@ -87,12 +84,14 @@ class BankAccountController extends BaseController
      */
     public function toggleDefault(string $clubSlug, int $id): JsonResponse
     {
+        $bankAccount = $this->service->toggleDefault($id);
+
         return $this->responseCommon(
             true,
-            __('domains/bank_account.default_updated'),
-            new BankAccountResource(
-                $this->service->toggleDefault($id)
-            ),
+            $bankAccount->is_default
+                ? __('domains/bank_account.default_set')
+                : __('domains/bank_account.default_unset'),
+            new BankAccountResource($bankAccount),
         );
     }
 }

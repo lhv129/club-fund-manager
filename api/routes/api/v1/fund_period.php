@@ -16,6 +16,6 @@ Route::middleware('auth.jwt')->group(function () {
     Route::post('/', [FundPeriodController::class, 'store'])->middleware('perm.club:fund_period,create');
     Route::put('/{id}',[FundPeriodController::class, 'update'])->middleware('perm.club:fund_period,update');
     Route::delete('/{id}',[FundPeriodController::class, 'destroy'])->middleware('perm.club:fund_period,delete');
-    Route::patch('/{id}/toggle-status', [FundPeriodController::class, 'toggleStatus'])->middleware('perm.club:fund_period,update');
+    Route::post('/{id}/toggle-status', [FundPeriodController::class, 'toggleStatus'])->middleware('perm.club:fund_period,update');
     });
 });

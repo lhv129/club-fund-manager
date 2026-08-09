@@ -21,7 +21,6 @@ class StoreMonthlyContributionRequest extends BaseRequest
     public function attributes(): array
     {
         return [
-            'club_id'        => __('domains/monthly_contribution.attributes.club_id'),
             'user_id'        => __('domains/monthly_contribution.attributes.user_id'),
             'period_id'      => __('domains/monthly_contribution.attributes.period_id'),
             'transaction_id' => __('domains/monthly_contribution.attributes.transaction_id'),

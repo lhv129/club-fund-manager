@@ -22,7 +22,10 @@ return [
     'created'        => 'Fund period created successfully.',
     'updated'        => 'Fund period updated successfully.',
     'deleted'        => 'Fund period deleted successfully.',
-    'status_toggled' => 'Fund period status updated successfully.',
+
+    'status_activated' => 'Fund period activated successfully.', 
+    'status_deactivated' => 'Fund period deactivated successfully.',
+
     'reordered'      => 'Fund period order updated successfully.',
     'not_found'      => 'Fund period not found.',
 ];

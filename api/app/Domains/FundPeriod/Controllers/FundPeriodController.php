@@ -68,10 +68,12 @@ class FundPeriodController extends BaseController
      */
     public function store(StoreFundPeriodRequest $request): JsonResponse
     {
+        $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
         return $this->responseCommon(
             true,
             __('domains/fund_period.created'),
-            new FundPeriodResource($this->service->create($request->validated())),
+            new FundPeriodResource($this->service->create($data)),
             201,
         );
     }
@@ -99,15 +101,18 @@ class FundPeriodController extends BaseController
     }
 
     /**
-     * PATCH /api/v1/fund-periods/{id}/toggle-status
+     * POST /api/v1/fund-periods/{id}/toggle-status
      */
     public function toggleStatus(string $clubSlug, int $id): JsonResponse
     {
+        $fundPeriod = $this->service->toggleStatus($id);
+
         return $this->responseCommon(
             true,
-            __('domains/fund_period.status_toggled'),
-            new FundPeriodResource($this->service->toggleStatus($id)),
+            $fundPeriod->is_active
+                ? __('domains/fund_period.status_activated')
+                : __('domains/fund_period.status_deactivated'),
+            new FundPeriodResource($fundPeriod),
         );
     }
-
 }
