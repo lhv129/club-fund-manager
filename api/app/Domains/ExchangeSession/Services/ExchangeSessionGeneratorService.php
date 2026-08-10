@@ -3,6 +3,7 @@
 namespace App\Domains\ExchangeSession\Services;
 
 use App\Domains\ExchangeSession\Repositories\ExchangeSessionRepository;
+use App\Domains\FundPeriod\Repositories\FundPeriodRepository;
 use App\Domains\PlayingSchedule\Models\PlayingSchedule;
 use App\Domains\PlayingSchedule\Repositories\PlayingScheduleRepository;
 use Carbon\Carbon;
@@ -14,6 +15,7 @@ class ExchangeSessionGeneratorService
     public function __construct(
         protected PlayingScheduleRepository $scheduleRepository,
         protected ExchangeSessionRepository $sessionRepository,
+        protected FundPeriodRepository $fundPeriodRepository,
     ) {}
 
     // ── Public API ───────────────────────────────────────────────────────────
@@ -38,14 +40,14 @@ class ExchangeSessionGeneratorService
 
         Log::info('[ExchangeSessionGenerator] generateAll complete', [
             'total_schedules' => $schedules->count(),
-            'total_created'   => $totalCreated,
-            'total_skipped'   => $totalSkipped,
+            'total_created' => $totalCreated,
+            'total_skipped' => $totalSkipped,
         ]);
 
         return [
             'total_schedules' => $schedules->count(),
-            'total_created'   => $totalCreated,
-            'total_skipped'   => $totalSkipped,
+            'total_created' => $totalCreated,
+            'total_skipped' => $totalSkipped,
         ];
     }
 
@@ -57,14 +59,15 @@ class ExchangeSessionGeneratorService
     public function generateForSchedule(PlayingSchedule $schedule): array
     {
         // Guard: schedule phải active + auto_generate
-        if (!$schedule->is_active || !$schedule->auto_generate) {
+        if (! $schedule->is_active || ! $schedule->auto_generate) {
             Log::info('[ExchangeSessionGenerator] Schedule skipped (inactive or auto_generate=false)', [
                 'schedule_id' => $schedule->id,
             ]);
+
             return ['created' => 0, 'skipped' => 0];
         }
 
-        $dates   = $this->getTargetDates($schedule);
+        $dates = $this->getTargetDates($schedule);
         $created = 0;
         $skipped = 0;
 
@@ -76,11 +79,11 @@ class ExchangeSessionGeneratorService
 
         Log::info('[ExchangeSessionGenerator] Schedule processed', [
             'schedule_id' => $schedule->id,
-            'club_id'     => $schedule->club_id,
-            'weekday'     => $schedule->weekday,
+            'club_id' => $schedule->club_id,
+            'weekday' => $schedule->weekday,
             'dates_count' => count($dates),
-            'created'     => $created,
-            'skipped'     => $skipped,
+            'created' => $created,
+            'skipped' => $skipped,
         ]);
 
         return ['created' => $created, 'skipped' => $skipped];
@@ -93,7 +96,7 @@ class ExchangeSessionGeneratorService
      * Dùng khi admin sửa PlayingSchedule (giờ/sân). Bỏ qua session đã
      * completed/cancelled (đã chốt số liệu / đã huỷ) — tránh đè.
      *
-     * @return int  số session đã được cập nhật
+     * @return int số session đã được cập nhật
      */
     public function syncUpcomingForSchedule(PlayingSchedule $schedule): int
     {
@@ -103,6 +106,7 @@ class ExchangeSessionGeneratorService
             Log::info('[ExchangeSessionGenerator] syncUpcoming — no upcoming sessions', [
                 'schedule_id' => $schedule->id,
             ]);
+
             return 0;
         }
 
@@ -118,17 +122,17 @@ class ExchangeSessionGeneratorService
             );
 
             $this->sessionRepository->update($session, [
-                'court_name'    => $schedule->court_name,
+                'court_name' => $schedule->court_name,
                 'court_address' => $schedule->court_address,
-                'start_time'    => $startTime,
-                'end_time'      => $endTime,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
             ]);
             $updated++;
         }
 
         Log::info('[ExchangeSessionGenerator] syncUpcoming complete', [
             'schedule_id' => $schedule->id,
-            'updated'     => $updated,
+            'updated' => $updated,
         ]);
 
         return $updated;
@@ -151,12 +155,12 @@ class ExchangeSessionGeneratorService
 
         Log::info('[ExchangeSessionGenerator] syncAll complete', [
             'total_schedules' => $schedules->count(),
-            'total_updated'   => $totalUpdated,
+            'total_updated' => $totalUpdated,
         ]);
 
         return [
             'total_schedules' => $schedules->count(),
-            'total_updated'   => $totalUpdated,
+            'total_updated' => $totalUpdated,
         ];
     }
 
@@ -166,46 +170,57 @@ class ExchangeSessionGeneratorService
      * Tính danh sách ngày cần generate.
      *
      * Quy tắc:
-     *   - Từ today đến today + weeks_ahead tuần
+     *   - Bắt đầu từ đầu kỳ quỹ active mới nhất của CLB (fallback: today)
+     *   - Luôn duy trì đủ weeks_ahead session upcoming
+     *   - Session completed/cancelled không chiếm quota; tiếp tục sinh tuần kế tiếp
      *   - Cắt theo start_date (nếu có) và end_date (nếu có)
      *   - Chỉ lấy ngày khớp weekday
      *   - Nếu khoảng không hợp lệ → trả []
      */
     private function getTargetDates(PlayingSchedule $schedule): array
     {
-        $today    = Carbon::today();
-        $rangeEnd = $today->copy()->addWeeks($schedule->weeks_ahead);
-        // Thay Carbon::max() bằng ternary — tránh lỗi non-static
+        $fundPeriod = $this->fundPeriodRepository->findLatestActiveForClub($schedule->club_id);
+        $anchor = $fundPeriod
+            ? Carbon::create($fundPeriod->year, $fundPeriod->month, 1)->startOfDay()
+            : Carbon::today();
+
         $from = $schedule->start_date
-            ? ($today->gte(Carbon::parse($schedule->start_date))
-                ? $today->copy()
+            ? ($anchor->gte(Carbon::parse($schedule->start_date))
+                ? $anchor->copy()
                 : Carbon::parse($schedule->start_date))
-            : $today->copy();
-        $to = $schedule->end_date
-            ? ($rangeEnd->lte(Carbon::parse($schedule->end_date))
-                ? $rangeEnd->copy()
-                : Carbon::parse($schedule->end_date))
-            : $rangeEnd->copy();
-        if ($to->lt($from)) {
-            return [];
-        }
-        $dates  = [];
+            : $anchor->copy();
+        $to = $schedule->end_date ? Carbon::parse($schedule->end_date)->endOfDay() : null;
+
+        $dates = [];
+        $upcomingQuota = 0;
         $cursor = $from->copy()->startOfDay();
-        while ($cursor->lte($to)) {
+
+        while ($upcomingQuota < $schedule->weeks_ahead) {
+            if ($to && $cursor->gt($to)) {
+                break;
+            }
+
             if ($cursor->dayOfWeek === $schedule->weekday) {
-                $dates[] = $cursor->toDateString();
+                $date = $cursor->toDateString();
+                $existing = $this->sessionRepository->findForScheduleAndDate($schedule->id, $date);
+
+                // Completed/cancelled là lịch sử, không tính vào số buổi cần duy trì.
+                if (! $existing || $existing->status === 'upcoming') {
+                    $dates[] = $date;
+                    $upcomingQuota++;
+                }
             }
             $cursor->addDay();
         }
+
         return $dates;
     }
-
 
     /**
      * Tạo ExchangeSession nếu chưa tồn tại.
      * DB::transaction tránh duplicate khi 2 cron instance chạy song song.
      *
-     * @return bool  true = đã tạo, false = đã tồn tại (skip)
+     * @return bool true = đã tạo, false = đã tồn tại (skip)
      */
     private function createSessionIfNotExists(PlayingSchedule $schedule, string $date): bool
     {
@@ -221,22 +236,23 @@ class ExchangeSessionGeneratorService
                 Carbon::parse($schedule->end_time)->format('H:i:s')
             );
             $this->sessionRepository->create([
-                'club_id'             => $schedule->club_id,
+                'club_id' => $schedule->club_id,
                 'playing_schedule_id' => $schedule->id,
-                'transaction_id'      => null,
-                'session_date'  => $date,
-                'court_name'    => $schedule->court_name,
+                'transaction_id' => null,
+                'session_date' => $date,
+                'court_name' => $schedule->court_name,
                 'court_address' => $schedule->court_address,
-                'start_time'    => $startTime,   // 2026-08-12 19:00:00
-                'end_time'      => $endTime,     // 2026-08-12 21:00:00
-                'type'   => 'scheduled',
+                'start_time' => $startTime,   // 2026-08-12 19:00:00
+                'end_time' => $endTime,     // 2026-08-12 21:00:00
+                'type' => 'scheduled',
                 'status' => 'upcoming',
-                'player_count'      => 0,
+                'player_count' => 0,
                 'amount_per_player' => 0,
-                'total_amount'      => 0,
+                'total_amount' => 0,
                 'sort_order' => 0,
-                'is_active'  => true,
+                'is_active' => true,
             ]);
+
             return true;
         });
     }

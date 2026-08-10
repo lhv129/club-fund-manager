@@ -12,6 +12,7 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ExchangeSessionService extends BaseService
 {
@@ -60,7 +61,7 @@ class ExchangeSessionService extends BaseService
             select: ['*'],
         );
 
-        if (!$session) {
+        if (! $session) {
             throw new ApiException(__($this->notFoundMessage), 404);
         }
 
@@ -77,7 +78,7 @@ class ExchangeSessionService extends BaseService
             $translations = $data['translations'] ?? [];
             unset($data['translations']);
 
-            if (!isset($data['sort_order'])) {
+            if (! isset($data['sort_order'])) {
                 $data['sort_order'] = $this->repository->getNextSortOrder();
             }
 
@@ -112,8 +113,8 @@ class ExchangeSessionService extends BaseService
 
     public function toggleStatus(int $id): ExchangeSession
     {
-        $session             = $this->find($id);
-        $session->is_active   = !$session->is_active;
+        $session = $this->find($id);
+        $session->is_active = ! $session->is_active;
         $session->save();
 
         return $session->fresh('translations');
@@ -155,10 +156,10 @@ class ExchangeSessionService extends BaseService
         );
 
         if ($fundPeriod) {
-            $exchangeMale   = (float) $fundPeriod->exchange_male_amount;
+            $exchangeMale = (float) $fundPeriod->exchange_male_amount;
             $exchangeFemale = (float) $fundPeriod->exchange_female_amount;
 
-            $data['exchange_male_amount']   = $exchangeMale;
+            $data['exchange_male_amount'] = $exchangeMale;
             $data['exchange_female_amount'] = $exchangeFemale;
 
             // Tính lại amount mỗi nhóm giao lưu từ rates + tổng total_amount
@@ -171,13 +172,13 @@ class ExchangeSessionService extends BaseService
                 $totalAmount += $rowAmount;
             }
 
-            $data['total_amount']      = round($totalAmount, 2);
+            $data['total_amount'] = round($totalAmount, 2);
             $data['amount_per_player'] = $playerCount > 0
                 ? round($totalAmount / $playerCount, 2)
                 : 0;
         } else {
             // Không có FundPeriod → total = sum(amount) hiện có (thường 0)
-            $data['total_amount']      = round((float) $players->sum('amount'), 2);
+            $data['total_amount'] = round((float) $players->sum('amount'), 2);
             $data['amount_per_player'] = $playerCount > 0
                 ? round((float) $players->sum('amount') / $playerCount, 2)
                 : 0;
@@ -216,7 +217,7 @@ class ExchangeSessionService extends BaseService
                 (int) Carbon::parse($session->session_date)->month,
             );
 
-            if (!$fundPeriod) {
+            if (! $fundPeriod) {
                 throw new ApiException(
                     __('domains/exchange_session.missing_fund_period'),
                     422,
@@ -230,6 +231,37 @@ class ExchangeSessionService extends BaseService
 
             return $session->fresh(['translations', 'players']);
         });
+    }
+
+    /**
+     * Chốt tự động các buổi đã qua giờ kết thúc.
+     *
+     * Mỗi buổi được xử lý độc lập để một bản ghi lỗi (ví dụ thiếu FundPeriod)
+     * không làm dừng toàn bộ cron.
+     *
+     * @return array{completed: int, failed: int}
+     */
+    public function completeExpiredUpcoming(?int $scheduleId = null): array
+    {
+        $sessions = $this->repository->getExpiredUpcoming($scheduleId);
+        $completed = 0;
+        $failed = 0;
+
+        foreach ($sessions as $session) {
+            try {
+                $this->complete($session->id);
+                $completed++;
+            } catch (\Throwable $e) {
+                $failed++;
+                Log::warning('[ExchangeSession] auto-complete failed', [
+                    'session_id' => $session->id,
+                    'schedule_id' => $session->playing_schedule_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return ['completed' => $completed, 'failed' => $failed];
     }
 
     private function syncPlayerCount(ExchangeSession $session): void

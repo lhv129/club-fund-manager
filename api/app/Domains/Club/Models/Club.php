@@ -2,6 +2,7 @@
 
 namespace App\Domains\Club\Models;
 
+use App\Domains\ClubFund\Models\ClubFund;
 use App\Domains\ClubMemberRole\Models\ClubMemberRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ class Club extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['logo', 'max_members','storage_key','sort_order', 'is_active'];
+    protected $fillable = ['logo', 'max_members', 'storage_key', 'sort_order', 'is_active'];
 
     protected function casts(): array
     {
@@ -28,9 +29,10 @@ class Club extends Model
         return $this->hasMany(ClubTranslation::class);
     }
 
-    public function translation(string $locale = null)
+    public function translation(?string $locale = null)
     {
         $locale = $locale ?? app()->getLocale();
+
         return $this->hasOne(ClubTranslation::class)->where('locale', $locale);
     }
 
@@ -42,5 +44,10 @@ class Club extends Model
     public function memberRoles()
     {
         return $this->hasMany(ClubMemberRole::class);
+    }
+
+    public function fund()
+    {
+        return $this->hasOne(ClubFund::class);
     }
 }

@@ -60,7 +60,7 @@ class PlayingScheduleService extends BaseService
             select: ['*'],
         );
 
-        if (!$schedule) {
+        if (! $schedule) {
             throw new ApiException(__($this->notFoundMessage), 404);
         }
 
@@ -77,11 +77,18 @@ class PlayingScheduleService extends BaseService
             $translations = $data['translations'] ?? [];
             unset($data['translations']);
 
-            if (!isset($data['sort_order'])) {
+            if (! isset($data['sort_order'])) {
                 $data['sort_order'] = $this->repository->getNextSortOrder();
             }
 
-            return $this->repository->createWithTranslations($data, $translations);
+            $schedule = $this->repository->createWithTranslations($data, $translations);
+
+            // Không chờ cron: lịch bật auto_generate được sinh ngay trong luồng tạo.
+            if ($schedule->is_active && $schedule->auto_generate) {
+                $this->generator->generateForSchedule($schedule);
+            }
+
+            return $schedule;
         });
     }
 
@@ -106,7 +113,7 @@ class PlayingScheduleService extends BaseService
             } catch (\Throwable $e) {
                 Log::warning('[PlayingSchedule] cascade sync failed', [
                     'schedule_id' => $schedule->id,
-                    'error'       => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
 
@@ -117,7 +124,7 @@ class PlayingScheduleService extends BaseService
     public function toggleStatus(int $id): PlayingSchedule
     {
         $schedule = $this->find($id);
-        $schedule->is_active   = !$schedule->is_active;
+        $schedule->is_active = ! $schedule->is_active;
         $schedule->save();
 
         return $schedule->fresh('translations');

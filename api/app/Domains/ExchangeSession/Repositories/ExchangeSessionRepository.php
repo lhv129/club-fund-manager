@@ -12,13 +12,15 @@ use Illuminate\Database\Eloquent\Collection;
 class ExchangeSessionRepository extends BaseRepository
 {
     /** ExchangeSession mặc định sort theo session_date desc (buổi gần nhất trước) */
-    protected string $defaultOrderBy        = 'session_date';
+    protected string $defaultOrderBy = 'session_date';
+
     protected string $defaultOrderDirection = 'desc';
 
     protected array $allowedSortColumns = ['id', 'session_date', 'status', 'type', 'sort_order', 'created_at'];
 
     protected array $selectColumns = ['id', 'club_id', 'session_date', 'status', 'is_active'];
-    protected array $selectWith    = ['translations:id,exchange_session_id,locale,title'];
+
+    protected array $selectWith = ['translations:id,exchange_session_id,locale,title'];
 
     public function __construct(ExchangeSession $model)
     {
@@ -54,7 +56,7 @@ class ExchangeSessionRepository extends BaseRepository
 
     protected function applySearch(Builder $query, array $filters): void
     {
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search) {
@@ -71,11 +73,11 @@ class ExchangeSessionRepository extends BaseRepository
     {
         $this->applyActiveFilter($query, $filters);
 
-        if (!empty($filters['club_id'])) {
+        if (! empty($filters['club_id'])) {
             $query->where('club_id', (int) $filters['club_id']);
         }
 
-        if (!empty($filters['playing_schedule_id'])) {
+        if (! empty($filters['playing_schedule_id'])) {
             $query->where('playing_schedule_id', (int) $filters['playing_schedule_id']);
         }
 
@@ -125,7 +127,6 @@ class ExchangeSessionRepository extends BaseRepository
             ->get();
     }
 
-
     /**
      * Kiểm tra đã có session cho (schedule_id, session_date) chưa.
      * withTrashed() để tránh tạo lại bản ghi đã soft-delete.
@@ -139,6 +140,14 @@ class ExchangeSessionRepository extends BaseRepository
             ->exists();
     }
 
+    public function findForScheduleAndDate(int $scheduleId, string $date): ?ExchangeSession
+    {
+        return $this->model
+            ->where('playing_schedule_id', $scheduleId)
+            ->whereDate('session_date', $date)
+            ->first();
+    }
+
     /**
      * Lấy các session upcoming + scheduled của 1 schedule — dùng cho cascade sync
      * khi admin sửa PlayingSchedule (giờ/sân). Không đè session completed/cancelled.
@@ -149,6 +158,29 @@ class ExchangeSessionRepository extends BaseRepository
             ->where('playing_schedule_id', $scheduleId)
             ->where('type', 'scheduled')
             ->where('status', 'upcoming')
+            ->get();
+    }
+
+    /**
+     * Các buổi vẫn upcoming nhưng thời gian kết thúc đã qua.
+     */
+    public function getExpiredUpcoming(?int $scheduleId = null): Collection
+    {
+        $now = now();
+
+        return $this->model
+            ->where('status', 'upcoming')
+            ->where('is_active', true)
+            ->where(function (Builder $query) use ($now) {
+                $query->whereDate('session_date', '<', $now->toDateString())
+                    ->orWhere(function (Builder $sameDay) use ($now) {
+                        $sameDay->whereDate('session_date', $now->toDateString())
+                            ->whereTime('end_time', '<', $now->format('H:i:s'));
+                    });
+            })
+            ->when($scheduleId, fn (Builder $query) => $query->where('playing_schedule_id', $scheduleId))
+            ->orderBy('session_date')
+            ->orderBy('end_time')
             ->get();
     }
 }

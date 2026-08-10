@@ -14,6 +14,7 @@
 
 ```text
 Club
+├── ClubFund (số dư quỹ hiện tại, 1 bản ghi/CLB)
 ├── BankAccounts
 │    └── WebhookConfigs
 ├── FundPeriods
@@ -65,9 +66,12 @@ Mỗi module tuân theo luồng `Request → Controller → Service → Reposito
 
 ```text
 [Admin]  tạo PlayingSchedule (mẫu: weekday, court, start/end time, auto_generate, weeks_ahead)
-   │
+   │     └── nếu auto_generate=true + is_active=true: sinh ExchangeSession ngay, không chờ cron
    ▼
-[Cron]   mỗi tuần sinh ExchangeSession (8 tuần tới) từ PlayingSchedule
+[System] lấy đầu tháng của FundPeriod active mới nhất làm mốc, sinh đúng weeks_ahead buổi
+   │     (start_date muộn hơn thì dùng start_date; end_date vẫn là giới hạn trên)
+   ▼
+[Cron]   complete buổi đã qua trước, sau đó sinh bù để luôn đủ weeks_ahead buổi upcoming
    │     type=scheduled, status=upcoming, playing_schedule_id NOT NULL
    ▼
 [Admin]  có thể sửa từng ExchangeSession riêng, hoặc tạo tay (type=manual, playing_schedule_id=NULL)
@@ -133,6 +137,21 @@ fund_period_translations
 
 → Transaction 55 match code XY99ZW88 → gắn vào MonthlyContribution 3.
 → Transaction 60 do admin tạo tay (cash), chờ gắn vào MonthlyContribution 1.
+
+### club_funds
+
+```text
+ id | club_id | balance
+ 1  | 1       | 5000000.00
+```
+
+→ Mỗi CLB có đúng 1 dòng số dư. Khi tạo Transaction income, hệ thống cộng `amount`; expense thì trừ
+`amount`. Việc ghi Transaction và cập nhật `club_funds.balance` chạy trong cùng database transaction
+và khóa dòng quỹ để tránh sai số dư khi nhiều webhook đến đồng thời.
+
+→ `transactions.balance` vẫn được snapshot từ số dư vừa tính để tương thích API cũ. Hệ thống không
+còn phụ thuộc vào trường `accumulated`/balance của webhook. Khi chạy migration, số dư CLB hiện có
+được backfill bằng `SUM(income) - SUM(expense)` của các Transaction chưa bị xóa mềm.
 
 ### bank_accounts + webhook_configs (đã hoạt động)
 
@@ -210,3 +229,13 @@ exchange_session_translations
 - `period_id` thay cho `year`/`month` trong MonthlyContribution (FK tới fund_periods).
 - `court_name` / `court_address` lưu trực tiếp trên ExchangeSession để có thể chỉnh riêng từng buổi.
 - MemberPaymentCode do hệ thống sinh, không có endpoint tạo/sửa thủ công qua API.
+- `club_funds.balance` là nguồn số dư chuẩn của CLB; không lấy số dư webhook làm nguồn chuẩn.
+- Kỳ quỹ active mới nhất (`year`/`month`) là mốc sinh lịch. Ví dụ kỳ quỹ 8/2026, lịch thứ Ba và
+  `weeks_ahead=4` sẽ sinh 04/08, 11/08, 18/08, 25/08 kể cả khi lịch được tạo giữa tháng.
+- Cron `exchange-sessions:generate` đồng thời chốt các session `upcoming`, active khi
+  `session_date < today` hoặc `session_date = today AND end_time < current_time`.
+  Cron dùng đúng luồng `complete`: snapshot đơn giá FundPeriod, tính lại player/amount rồi mới đổi
+  status. Một session lỗi không làm dừng các session khác và được ghi log để xử lý.
+- `weeks_ahead` là số buổi upcoming cần luôn duy trì, không phải tổng số bản ghi lịch sử. Ví dụ
+  lịch thứ Ba có 04/08 completed và 11/08, 18/08, 25/08 upcoming với `weeks_ahead=4`, cron sẽ sinh
+  thêm 01/09.

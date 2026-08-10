@@ -3,6 +3,7 @@
 namespace App\Domains\Transaction\Services;
 
 use App\Base\BaseService;
+use App\Domains\ClubFund\Services\ClubFundService;
 use App\Domains\Transaction\Models\Transaction;
 use App\Domains\Transaction\Repositories\TransactionRepository;
 use App\Domains\WebhookConfig\Models\WebhookConfig;
@@ -15,8 +16,10 @@ class TransactionService extends BaseService
 {
     protected string $notFoundMessage = 'domains/transaction.not_found';
 
-    public function __construct(TransactionRepository $repository)
-    {
+    public function __construct(
+        TransactionRepository $repository,
+        protected ClubFundService $clubFundService,
+    ) {
         parent::__construct($repository);
     }
 
@@ -44,7 +47,7 @@ class TransactionService extends BaseService
     {
         $data = $this->repository->findDetail($id);
 
-        if (!$data) {
+        if (! $data) {
             throw new ApiException(__($this->notFoundMessage), 404);
         }
 
@@ -60,10 +63,10 @@ class TransactionService extends BaseService
         array $payload
     ): Transaction {
 
-        return $this->repository->create([
-            'club_id'            => $config->club_id,
-            'bank_account_id'    => $config->bank_account_id,
-            'webhook_config_id'  => $config->id,
+        return $this->clubFundService->recordTransaction([
+            'club_id' => $config->club_id,
+            'bank_account_id' => $config->bank_account_id,
+            'webhook_config_id' => $config->id,
 
             'source' => 'webhook',
             'type' => ($payload['transferType'] ?? 'in') === 'in'
@@ -71,8 +74,6 @@ class TransactionService extends BaseService
                 : 'expense',
 
             'amount' => $payload['transferAmount'],
-            'balance' => $payload['accumulated'] ?? null,
-
             // Nội dung đã được chuẩn hóa
             'description' => $this->normalizeDescription($payload),
 
@@ -108,7 +109,7 @@ class TransactionService extends BaseService
 
         foreach ($prefixes as $prefix) {
             $content = preg_replace(
-                '/^' . preg_quote($prefix, '/') . '\s+/i',
+                '/^'.preg_quote($prefix, '/').'\s+/i',
                 '',
                 $content
             );
@@ -155,7 +156,7 @@ class TransactionService extends BaseService
     {
         return DB::transaction(function () use ($data) {
 
-            return $this->repository->create([
+            return $this->clubFundService->recordTransaction([
                 'club_id' => $data['club_id'],
                 'bank_account_id' => $data['bank_account_id'] ?? null,
                 'webhook_config_id' => null,
@@ -164,25 +165,28 @@ class TransactionService extends BaseService
                 'type' => $data['type'] ?? 'income',
 
                 'amount' => $data['amount'],
-                'balance' => null,
-
                 'description' => $data['description'] ?? null,
                 'reference_code' => $data['reference_code'] ?? null,
 
                 'sender_name' => $data['sender_name'] ?? null,
                 'sender_account' => $data['sender_account'] ?? null,
 
-                'transaction_date' => !empty($payload['transaction_date'])
-                    ? Carbon::createFromFormat(
-                        'Y-m-d H:i:s',
-                        $payload['transaction_date']
-                    )
+                'transaction_date' => ! empty($data['transaction_date'])
+                    ? Carbon::parse($data['transaction_date'])
                     : now(),
 
                 'sort_order' => 0,
                 'is_active' => true,
             ]);
         });
+    }
+
+    public function create(array $data): Transaction
+    {
+        // API manual đi qua cùng một luồng cập nhật quỹ.
+        $data['type'] = 'income';
+
+        return $this->createManual($data);
     }
 
     // -------------------------------------------------------------------------
@@ -198,7 +202,7 @@ class TransactionService extends BaseService
         $transaction->save();
 
         return $transaction->fresh([
-            'bankAccount:id,account_number,account_name'
+            'bankAccount:id,account_number,account_name',
         ]);
     }
 }

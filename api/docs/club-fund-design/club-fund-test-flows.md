@@ -109,7 +109,7 @@ Response `201`:
 
 ---
 
-## Bước 3 — Tạo PlayingSchedule + sinh ExchangeSession qua cron
+## Bước 3 — Tạo PlayingSchedule + sinh ExchangeSession ngay
 
 ### 3.1 Tạo PlayingSchedule
 
@@ -140,7 +140,12 @@ Response `201`:
 }
 ```
 
-### 3.2 Chạy cron sinh ExchangeSession
+> Nếu `auto_generate=true` và `is_active=true`, response chỉ trả về sau khi hệ thống đã sinh lịch.
+> Không cần chờ cron. Mốc sinh là ngày đầu tháng của FundPeriod active mới nhất, không phải ngày hiện
+> tại. Ví dụ tạo schedule ngày 18/08/2026 với kỳ quỹ 8/2026, `weekday=2`, `weeks_ahead=4` thì sinh:
+> `2026-08-04`, `2026-08-11`, `2026-08-18`, `2026-08-25`.
+
+### 3.2 Chạy cron bù (tuỳ chọn)
 
 ```bash
 php artisan exchange-sessions:generate
@@ -151,9 +156,18 @@ Output:
 +-----------------+------------------+--------------------------+
 | Schedules xử lý | Session tạo mới  | Session bỏ qua (đã tồn tại) |
 +-----------------+------------------+--------------------------+
-| 1               | 8                | 0                        |
+| 1               | 0                | 8                        |
 +-----------------+------------------+--------------------------+
 ```
+
+> Cron vẫn giữ lại để chạy bù/idempotent. Sau khi API đã sinh đủ, cron sẽ skip các ngày tồn tại.
+> Trong cùng lần chạy, cron tìm session `upcoming` có ngày đã qua, hoặc đúng hôm nay nhưng
+> `end_time` đã qua, rồi chạy luồng complete
+> (snapshot đơn giá, tính totals, chuyển `status=completed`). Bảng output có thêm `Đã complete` và
+> `Complete lỗi`. Session lỗi được log riêng, không chặn các session còn lại.
+>
+> Cron complete trước rồi generate. `weeks_ahead` là quota session upcoming: khi 04/08 completed,
+> ba buổi 11/08, 18/08, 25/08 chỉ còn quota 3/4 nên cron sinh thêm 01/09.
 
 ### 3.3 Kiểm tra session đã sinh
 
@@ -495,6 +509,9 @@ Response `200`:
 > Expense không match payment code — chỉ lưu Transaction. Admin vào sửa mô tả để biết
 > lý do chi.
 
+> Webhook không cần trả `accumulated`. Sau giao dịch, hệ thống tự trừ `350000` khỏi
+> `club_funds.balance`; `transactions.balance` là snapshot số dư mới để tương thích response cũ.
+
 ### 7.2 Admin sửa description (lý do chi)
 
 `PATCH /clubs/hanoi-bc/transactions/2`
@@ -733,3 +750,6 @@ SePay webhook (expense) ──▶ Transaction (expense, source=webhook)
 Admin tạo Transaction income manual ──▶ PUT /players/{id} {transaction_id} → paid=1
                                       (hoặc toggle-paid tay)
 ```
+
+Luồng mới chính xác là `PlayingSchedule --(create, auto_generate)--> ExchangeSession`; cron chỉ chạy
+bù. Mọi Transaction income/expense đồng thời cộng/trừ `club_funds.balance` trong cùng transaction.

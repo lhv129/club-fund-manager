@@ -16,7 +16,8 @@ class FundPeriodRepository extends BaseRepository
     // ------------------------------------------------------------------
 
     /** FundPeriod mặc định sort theo year desc, month desc (kỳ mới nhất trước) */
-    protected string $defaultOrderBy        = 'year';
+    protected string $defaultOrderBy = 'year';
+
     protected string $defaultOrderDirection = 'desc';
 
     /** Whitelist cột sort cho getList() — chống cột lạ xuống Query Builder */
@@ -24,7 +25,8 @@ class FundPeriodRepository extends BaseRepository
 
     /** Cột cho getForSelect() — dropdown trả [{id, year, month, ...}] */
     protected array $selectColumns = ['id', 'club_id', 'year', 'month', 'is_active'];
-    protected array $selectWith    = ['translations:id,fund_period_id,locale,title'];
+
+    protected array $selectWith = ['translations:id,fund_period_id,locale,title'];
 
     public function __construct(FundPeriod $model)
     {
@@ -63,7 +65,7 @@ class FundPeriodRepository extends BaseRepository
      */
     protected function applySearch(Builder $query, array $filters): void
     {
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search) {
@@ -81,11 +83,11 @@ class FundPeriodRepository extends BaseRepository
     {
         $this->applyActiveFilter($query, $filters);
 
-        if (!empty($filters['club_id'])) {
+        if (! empty($filters['club_id'])) {
             $query->where('club_id', (int) $filters['club_id']);
         }
 
-        if (!empty($filters['year'])) {
+        if (! empty($filters['year'])) {
             $query->where('year', (int) $filters['year']);
         }
 
@@ -148,6 +150,19 @@ class FundPeriodRepository extends BaseRepository
             ->where('club_id', $clubId)
             ->where('year', $year)
             ->where('month', $month)
+            ->first();
+    }
+
+    /**
+     * Kỳ quỹ active mới nhất là mốc nghiệp vụ để sinh lịch của CLB.
+     */
+    public function findLatestActiveForClub(int $clubId): ?FundPeriod
+    {
+        return $this->model
+            ->where('club_id', $clubId)
+            ->where('is_active', true)
+            ->orderByDesc('year')
+            ->orderByDesc('month')
             ->first();
     }
 }

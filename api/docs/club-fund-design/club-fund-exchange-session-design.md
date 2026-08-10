@@ -30,10 +30,14 @@
 
 ```text
 [Admin]  tạo PlayingSchedule (mẫu: weekday, court, giờ, auto_generate, weeks_ahead)
-   │
+   │  └── auto_generate=true + active → sinh ExchangeSession ngay trong request tạo
    ▼
-[Cron]   hàng ngày 00:05 → exchange-sessions:generate
-   │     sinh ExchangeSession (8 tuần tới) — type=scheduled, status=upcoming
+[System] mốc = đầu tháng FundPeriod active mới nhất; sinh đúng weeks_ahead buổi
+   │     start_date/end_date (nếu có) vẫn giới hạn khoảng sinh
+   ▼
+[Cron]   hàng ngày 00:05 → exchange-sessions:generate (chạy bù/idempotent)
+   │     └── complete session upcoming + active có ngày/giờ kết thúc đã qua
+   │     └── sinh tiếp cho đến khi đủ weeks_ahead session upcoming
    ▼
 [Admin]  SỬA PlayingSchedule (giờ/sân)
    │  └─▶ CASCADE: đồng bộ court/giờ cho mọi ExchangeSession upcoming + scheduled
@@ -87,6 +91,18 @@ checked_in     boolean
 Chi sân = expense qua webhook, admin chỉ sửa `description`. Thu giao lưu = income
 manual, gắn vào `exchange_session_players.transaction_id` (FK đã thêm ở bảng player).
 
+### `club_funds` — số dư quỹ do hệ thống tự quản lý
+
+```text
+club_id  unique FK clubs
+balance  decimal(15,2) default 0
+```
+
+- Income: `balance += transaction.amount`; expense: `balance -= transaction.amount`.
+- Cập nhật balance và tạo Transaction trong cùng database transaction, có row lock.
+- Migration backfill số dư các CLB cũ bằng tổng thu trừ tổng chi.
+- `transactions.balance` là snapshot tương thích; không phụ thuộc `payload.accumulated`.
+
 ## 3. Quyết định từng câu hỏi
 
 ### Câu 2 — Cron update khi sửa schedule ✅
@@ -94,6 +110,18 @@ Sửa PlayingSchedule (giờ/sân) → cascade đồng bộ `court_name/court_ad
 cho mọi session `type=scheduled, status=upcoming`. Không đè `completed`/`cancelled`.
 Đổi `weekday` KHÔNG tự dời `session_date` session cũ (an toàn). Có command
 `exchange-sessions:sync {--schedule-id=}` chạy tay.
+
+### Bổ sung — Sinh lịch ngay và lấy mốc từ kỳ quỹ ✅
+Tạo PlayingSchedule có `auto_generate=true` và `is_active=true` sẽ gọi generator ngay. Generator lấy
+ngày đầu tháng của FundPeriod active mới nhất thuộc CLB làm mốc thay vì `today`, rồi sinh đúng
+`weeks_ahead` ngày khớp `weekday`. Nếu không có FundPeriod thì fallback về `today`.
+
+Cron generate còn gọi `completeExpiredUpcoming()`. Mỗi session quá hạn dùng lại nghiệp vụ
+`ExchangeSessionService::complete()` để snapshot rates và tính totals. Xử lý độc lập từng session;
+thiếu FundPeriod hoặc lỗi khác sẽ tăng bộ đếm lỗi + ghi warning, không rollback cả cron.
+
+Cron chạy complete trước generate. Session `completed`/`cancelled` là lịch sử và không chiếm quota
+`weeks_ahead`; vì vậy cửa sổ lịch tự cuốn sang tuần kế tiếp sau mỗi buổi hoàn thành.
 
 ### Câu 3 — Nguồn đơn giá giao lưu ✅
 Lấy từ `fund_periods.exchange_male_amount/exchange_female_amount` → **snapshot** lên
