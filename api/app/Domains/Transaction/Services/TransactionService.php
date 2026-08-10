@@ -6,6 +6,8 @@ use App\Base\BaseService;
 use App\Domains\Transaction\Models\Transaction;
 use App\Domains\Transaction\Repositories\TransactionRepository;
 use App\Domains\WebhookConfig\Models\WebhookConfig;
+use App\Exceptions\ApiException;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -33,6 +35,20 @@ class TransactionService extends BaseService
     public function getForSelect(array $filters = [])
     {
         return $this->repository->getForSelect($filters);
+    }
+
+    // -------------------------------------------------------------------------
+    // Detail
+    // -------------------------------------------------------------------------
+    public function findDetail(int $id): Transaction
+    {
+        $data = $this->repository->findDetail($id);
+
+        if (!$data) {
+            throw new ApiException(__($this->notFoundMessage), 404);
+        }
+
+        return $data;
     }
 
     // -------------------------------------------------------------------------
@@ -156,7 +172,12 @@ class TransactionService extends BaseService
                 'sender_name' => $data['sender_name'] ?? null,
                 'sender_account' => $data['sender_account'] ?? null,
 
-                'transaction_date' => $data['transaction_date'] ?? now(),
+                'transaction_date' => !empty($payload['transaction_date'])
+                    ? Carbon::createFromFormat(
+                        'Y-m-d H:i:s',
+                        $payload['transaction_date']
+                    )
+                    : now(),
 
                 'sort_order' => 0,
                 'is_active' => true,
@@ -177,7 +198,7 @@ class TransactionService extends BaseService
         $transaction->save();
 
         return $transaction->fresh([
-            'bankAccount:id,bank_name,account_number,account_name'
+            'bankAccount:id,account_number,account_name'
         ]);
     }
 }

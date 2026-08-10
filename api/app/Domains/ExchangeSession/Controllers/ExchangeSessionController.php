@@ -20,8 +20,13 @@ class ExchangeSessionController extends BaseController
      */
     public function index(FilterExchangeSessionRequest $request): JsonResponse
     {
+        $filters = $request->validated();
+
+        if (!array_key_exists('club_id', $filters)) {
+            $filters['club_id'] = $request->attributes->get('club_id');
+        }
         return $this->paginateResponse(
-            $this->service->paginate($request->validated()),
+            $this->service->paginate($filters),
             __('domains/exchange_session.list'),
             ExchangeSessionResource::class,
         );

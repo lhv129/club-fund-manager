@@ -20,8 +20,10 @@ class FundPeriodController extends BaseController
      */
     public function index(FilterFundPeriodRequest $request): JsonResponse
     {
+        $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
         return $this->paginateResponse(
-            $this->service->paginate($request->validated()),
+            $this->service->paginate($data),
             __('domains/fund_period.list'),
             FundPeriodResource::class,
         );

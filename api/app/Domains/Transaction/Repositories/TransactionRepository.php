@@ -104,6 +104,10 @@ class TransactionRepository extends BaseRepository
     {
         $this->applyActiveFilter($query, $filters);
 
+        if (!empty($filters['club_id'])) {
+            $query->where('club_id', (int) $filters['club_id']);
+        }
+
         if (!empty($filters['user_id'])) {
             $query->where('user_id', (int) $filters['user_id']);
         }
@@ -180,5 +184,16 @@ class TransactionRepository extends BaseRepository
         return $query
             ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
             ->get();
+    }
+
+    public function findDetail(int $id): ?Transaction
+    {
+        return $this->model
+            ->with([
+                'bankAccount:id,account_number,account_name,bank_id',
+                'bankAccount.bank:id,code,name,short_name,logo',
+                'webhookConfig:id,type',
+            ])
+            ->find($id);
     }
 }

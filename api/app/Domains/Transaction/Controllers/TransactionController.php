@@ -21,8 +21,11 @@ class TransactionController extends BaseController
      */
     public function index(FilterTransactionRequest $request): JsonResponse
     {
+        $filters = $request->validated();
+        $filters['club_id'] = $request->attributes->get('club_id');
+
         return $this->paginateResponse(
-            $this->service->paginate($request->validated()),
+            $this->service->paginate($filters),
             __('domains/transaction.list'),
             TransactionResource::class,
         );
@@ -36,13 +39,15 @@ class TransactionController extends BaseController
         return $this->responseCommon(
             true,
             __('domains/transaction.detail'),
-            new TransactionResource($this->service->find($id)),
+            new TransactionResource(
+                $this->service->findDetail($id)
+            ),
         );
     }
 
     /**
-    * GET /api/v1/clubs/{clubSlug}/transactions/select
-    */
+     * GET /api/v1/clubs/{clubSlug}/transactions/select
+     */
 
     public function select(FilterTransactionRequest $request): JsonResponse
     {
