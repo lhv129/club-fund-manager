@@ -13,6 +13,7 @@ import { FormModal, type SubmitResult } from "@/components/shared/forms/FormModa
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
 import { Forbidden } from "@/components/shared/ui/Forbidden";
 import { StatusDropdown } from "@/components/shared/ui/StatusDropdown";
 import Select from "@/components/shared/ui/Select";
@@ -231,7 +232,10 @@ export function ClubInvitesPageClient() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
-            <Breadcrumb homeHref={club ? clubRoute(slug) : APP_ROUTES.home} />
+            <Breadcrumb
+                navItems={CLUB_NAV_ITEMS(slug)}
+                homeHref={club ? clubRoute(slug) : APP_ROUTES.home}
+            />
 
             {/* Header */}
             <div className="flex items-center justify-between">

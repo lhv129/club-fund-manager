@@ -1,2 +1,246 @@
-"use client";import{useMemo,useState}from"react";import{useParams}from"next/navigation";import{useTranslations}from"next-intl";import{Plus,Pencil,Trash2}from"lucide-react";import{Table,type ColumnDef}from"@/components/shared/ui/Table";import{Pagination}from"@/components/shared/ui/Pagination";import{FormModal,type FormFieldDef}from"@/components/shared/forms/FormModal";import{DeleteConfirmModal}from"@/components/shared/forms/DeleteConfirmModal";import{TableActions}from"@/components/shared/ui/TableActions";import{TableActionItem}from"@/components/shared/ui/TableActionItem";import ToggleSwitch from"@/components/shared/ui/ToggleSwitch";import{useListParams}from"@/hooks/useListParams";import{useExchangeSessionPlayers}from"./hooks/useExchangeSessionPlayers";import type{ExchangeSessionPlayerFilters,ExchangeSessionPlayer}from"./types";import{useUserSelect}from"@/domains/user/hooks/useUsers";
-export function ExchangeSessionPlayersPageClient(){const{slug,sessionId}=useParams<{slug:string;sessionId:string}>(),t=useTranslations("common"),x=useTranslations("exchangeSession"),id=Number(sessionId),{params,setPage,setLimit}=useListParams<ExchangeSessionPlayerFilters>({defaultFilters:{paid:undefined,checked_in:undefined,is_active:undefined},defaultSortBy:"sort_order",defaultSortDir:"asc"}),h=useExchangeSessionPlayers(slug,id,params),users=useUserSelect(),[open,setOpen]=useState(false),[selected,setSelected]=useState<ExchangeSessionPlayer|null>(null),[del,setDel]=useState<ExchangeSessionPlayer|null>(null);const fields:FormFieldDef[]=useMemo(()=>[{name:"user_id",label:x("user"),type:"select",options:users.data.map(u=>({value:String(u.id),label:u.fullname}))},{name:"player_name",label:x("playerName"),type:"text"},{name:"male",label:x("male"),type:"number"},{name:"female",label:x("female"),type:"number"}], [users.data,x]);const init=selected?{user_id:selected.user_id?String(selected.user_id):"",player_name:selected.player_name??"",male:String(selected.male),female:String(selected.female)}:{user_id:"",player_name:"",male:"0",female:"0"};const cols:ColumnDef<ExchangeSessionPlayer>[]=[{key:"user",label:x("user"),render:r=>r.user?.fullname||r.player_name||"—"},{key:"amount",label:x("amount"),render:r=>r.amount},{key:"paid",label:x("paid"),render:r=><ToggleSwitch checked={r.paid} loading={false} onChange={()=>h.handleTogglePaid(r.id)}/>},{key:"checked",label:x("checkedIn"),render:r=>r.checked_in?t("active"):t("inactive")}];return <div className="space-y-6"><div className="flex justify-between"><h1 className="text-xl font-semibold">{x("players")}</h1><button onClick={()=>{setSelected(null);setOpen(true)}} className="flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-primary-foreground"><Plus className="h-4 w-4"/>{t("create")}</button></div><Table columns={cols} data={h.data} loading={h.isLoading} keyExtractor={r=>r.id} emptyText={x("noPlayers")} renderActions={r=><TableActions><TableActionItem icon={<Pencil className="h-4 w-4"/>} label={t("edit")} onClick={()=>{setSelected(r);setOpen(true)}}/><TableActionItem icon={<Trash2 className="h-4 w-4"/>} label={t("delete")} variant="danger" onClick={()=>setDel(r)}/></TableActions>}/><Pagination page={params.page} limit={params.limit} total={h.total} onPageChange={setPage} onLimitChange={setLimit}/><FormModal isOpen={open} onClose={()=>setOpen(false)} onSubmit={v=>{const z=selected?h.handleEdit(selected.id,v):h.handleCreate(v);if(!z)setOpen(false);return z}} title={selected?x("editPlayer"):x("createPlayer")} fields={fields} initialValues={init} isEdit={!!selected} submitting={selected?h.isUpdating:h.isCreating}/><DeleteConfirmModal isOpen={!!del} title={t("deleteConfirmTitle")} description={t("deleteConfirmDesc")} message={x("deletePlayerConfirm")} confirmText={t("delete")} cancelText={t("cancel")} onConfirm={()=>{if(del)h.handleDelete(del.id);setDel(null)}} onCancel={()=>setDel(null)} loading={h.isDeleting}/></div>}
+"use client";
+
+import { useMemo, useState } from "react";
+import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+
+import { Table, type ColumnDef } from "@/components/shared/ui/Table";
+import { Pagination } from "@/components/shared/ui/Pagination";
+import {
+    FormModal,
+    type FormFieldDef,
+} from "@/components/shared/forms/FormModal";
+import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
+import { TableActions } from "@/components/shared/ui/TableActions";
+import { TableActionItem } from "@/components/shared/ui/TableActionItem";
+import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
+
+import { useListParams } from "@/hooks/useListParams";
+import { useExchangeSessionPlayers } from "./hooks/useExchangeSessionPlayers";
+import type {
+    ExchangeSessionPlayerFilters,
+    ExchangeSessionPlayer,
+} from "./types";
+import { useUserSelect } from "@/domains/user/hooks/useUsers";
+
+export function ExchangeSessionPlayersPageClient() {
+    const { slug, sessionId } = useParams<{
+        slug: string;
+        sessionId: string;
+    }>();
+
+    const t = useTranslations("common");
+    const x = useTranslations("exchangeSession");
+
+    const id = Number(sessionId);
+
+    const {
+        params,
+        setPage,
+        setLimit,
+    } = useListParams<ExchangeSessionPlayerFilters>({
+        defaultFilters: {
+            paid: undefined,
+            checked_in: undefined,
+            is_active: undefined,
+        },
+        defaultSortBy: "sort_order",
+        defaultSortDir: "asc",
+    });
+
+    const players = useExchangeSessionPlayers(slug, id, params);
+    const users = useUserSelect();
+
+    const [isOpen, setIsOpen] = useState(false);
+    const [selected, setSelected] =
+        useState<ExchangeSessionPlayer | null>(null);
+    const [deleteTarget, setDeleteTarget] =
+        useState<ExchangeSessionPlayer | null>(null);
+
+    const fields: FormFieldDef[] = useMemo(
+        () => [
+            {
+                name: "user_id",
+                label: x("user"),
+                placeholder: x("placeholderUser"),
+                type: "select",
+                options: users.data.map((user) => ({
+                    value: String(user.id),
+                    label: user.fullname,
+                })),
+            },
+            {
+                name: "player_name",
+                label: x("playerName"),
+                type: "text",
+            },
+            {
+                name: "male",
+                label: x("male"),
+                type: "number",
+            },
+            {
+                name: "female",
+                label: x("female"),
+                type: "number",
+            },
+        ],
+        [users.data, x]
+    );
+
+    const initialValues = selected
+        ? {
+            user_id: selected.user_id ? String(selected.user_id) : "",
+            player_name: selected.player_name ?? "",
+            male: String(selected.male),
+            female: String(selected.female),
+        }
+        : {
+            user_id: "",
+            player_name: "",
+            male: "0",
+            female: "0",
+        };
+
+    const columns: ColumnDef<ExchangeSessionPlayer>[] = [
+        {
+            key: "user",
+            label: x("user"),
+            render: (row) => row.user?.fullname || row.player_name || "—",
+        },
+        {
+            key: "amount",
+            label: x("amount"),
+            render: (row) => row.amount,
+        },
+        {
+            key: "paid",
+            label: x("paid"),
+            render: (row) => (
+                <ToggleSwitch
+                    checked={row.paid}
+                    loading={false}
+                    onChange={() => players.handleTogglePaid(row.id)}
+                />
+            ),
+        },
+        {
+            key: "checked",
+            label: x("checkedIn"),
+            render: (row) =>
+                row.checked_in ? t("active") : t("inactive"),
+        },
+    ];
+
+    const handleCreate = () => {
+        setSelected(null);
+        setIsOpen(true);
+    };
+
+    const handleEdit = (row: ExchangeSessionPlayer) => {
+        setSelected(row);
+        setIsOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsOpen(false);
+        setSelected(null);
+    };
+
+    const handleSubmit = (values: Record<string, string>) => {
+        const result = selected
+            ? players.handleEdit(selected.id, values)
+            : players.handleCreate(values);
+
+        if (!result) {
+            handleCloseModal();
+        }
+
+        return result;
+    };
+
+    const handleDelete = () => {
+        if (deleteTarget) {
+            players.handleDelete(deleteTarget.id);
+        }
+
+        setDeleteTarget(null);
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between">
+                <h1 className="text-xl font-semibold">
+                    {x("players")}
+                </h1>
+
+                <button
+                    type="button"
+                    onClick={handleCreate}
+                    className="flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-primary-foreground"
+                >
+                    <Plus className="h-4 w-4" />
+                    {t("create")}
+                </button>
+            </div>
+
+            <Table
+                columns={columns}
+                data={players.data}
+                loading={players.isLoading}
+                keyExtractor={(row) => row.id}
+                emptyText={x("noPlayers")}
+                renderActions={(row) => (
+                    <TableActions>
+                        <TableActionItem
+                            icon={<Pencil className="h-4 w-4" />}
+                            label={t("edit")}
+                            onClick={() => handleEdit(row)}
+                        />
+
+                        <TableActionItem
+                            icon={<Trash2 className="h-4 w-4" />}
+                            label={t("delete")}
+                            variant="danger"
+                            onClick={() => setDeleteTarget(row)}
+                        />
+                    </TableActions>
+                )}
+            />
+
+            <Pagination
+                page={params.page}
+                limit={params.limit}
+                total={players.total}
+                onPageChange={setPage}
+                onLimitChange={setLimit}
+            />
+
+            <FormModal
+                isOpen={isOpen}
+                onClose={handleCloseModal}
+                onSubmit={handleSubmit}
+                title={selected ? x("editPlayer") : x("createPlayer")}
+                fields={fields}
+                initialValues={initialValues}
+                isEdit={!!selected}
+                submitting={
+                    selected ? players.isUpdating : players.isCreating
+                }
+            />
+
+            <DeleteConfirmModal
+                isOpen={!!deleteTarget}
+                title={t("deleteConfirmTitle")}
+                description={t("deleteConfirmDesc")}
+                message={x("deletePlayerConfirm")}
+                confirmText={t("delete")}
+                cancelText={t("cancel")}
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteTarget(null)}
+                loading={players.isDeleting}
+            />
+        </div>
+    );
+}

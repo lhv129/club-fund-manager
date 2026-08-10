@@ -41,6 +41,7 @@ export const CLUB_SUBROUTES = {
   fundPeriods: "fund-periods",
   monthlyContributions: "monthly-contributions",
   bankAccounts: "bank-accounts",
+  transactions: "transactions",
   playingSchedules: "playing-schedules",
   exchangeSessions: "exchange-sessions",
   events: "events",

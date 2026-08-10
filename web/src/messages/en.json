@@ -136,6 +136,10 @@
     "playingSchedules": {
       "title": "Playing Schedules",
       "description": "Manage the club's playing schedules"
+    },
+    "transactions": {
+      "title": "Income and Expenses",
+      "description": "Track and manage the club's income and expense transactions"
     }
   },
   "header": {
@@ -201,10 +205,11 @@
     "detail": "Detail",
     "fundPeriods": "Fund Periods",
     "monthlyContributions": "Monthly Contributions",
-    "bankAccounts": "Bank Accounts"
-    ,"playingSchedules": "Playing Schedules"
-    ,"playingSchedulesMenu": "Playing Schedules"
-    ,"exchangeSessions": "Sessions"
+    "bankAccounts": "Bank Accounts",
+    "playingSchedules": "Playing Schedules",
+    "playingSchedulesMenu": "Playing Schedules",
+    "exchangeSessions": "Sessions",
+    "transactions": "Income & Expenses"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -516,6 +521,44 @@
     "paid_by_cash": "Cash",
     "paid_by_manual": "Manual"
   },
+  "transaction": {
+    "title": "Income and Expenses",
+    "totalCount": "{count} transactions",
+    "create": "Add transaction",
+    "edit": "Edit transaction",
+    "notFound": "No transactions found",
+    "detailTitle": "Transaction details",
+    "detailDescription": "Complete income or expense transaction information",
+    "detailNotFound": "The transaction could not be found or has been deleted.",
+    "backToList": "Back to income and expenses",
+    "income": "Income",
+    "expense": "Expense",
+    "type": "Transaction type",
+    "amount": "Amount",
+    "balance": "Balance",
+    "source": "Transaction source",
+    "sourceCash": "Cash",
+    "sourceManual": "Manual entry",
+    "transactionDate": "Transaction time",
+    "fromDate": "From date",
+    "toDate": "To date",
+    "bankAccount": "Bank account",
+    "bank": "Bank",
+    "accountNumber": "Account number",
+    "accountName": "Account holder",
+    "referenceCode": "Reference code",
+    "senderName": "Sender name",
+    "senderAccount": "Sender account",
+    "webhookSource": "Sync source",
+    "transactionInformation": "Transaction information",
+    "bankInformation": "Bank information",
+    "senderInformation": "Sender information",
+    "systemInformation": "System information",
+    "sortOrder": "Sort order",
+    "updatedAt": "Updated at",
+    "descriptionPlaceholder": "Enter transaction content or notes...",
+    "deleteConfirmMsg": "Are you sure you want to delete transaction #{id}?"
+  },
   "notFound": {
     "title": "Page not found",
     "description": "The page you are looking for may have been removed, changed, or does not exist.",
@@ -538,8 +581,8 @@
     "qrImage": "QR Code Image",
     "isDefault": "Default Account",
     "deleteConfirmMsg": "Are you sure you want to delete the bank account \"{name}\"?"
-  }
-  ,"bank": {
+  },
+  "bank": {
     "title": "Banks",
     "create": "Add bank",
     "edit": "Edit bank",
@@ -555,10 +598,10 @@
     "bin": "BIN",
     "binPlaceholder": "Enter BIN",
     "swiftCode": "SWIFT code",
-    "swiftCodePlaceholder": "Enter SWIFT code"
-    ,"logo": "Bank logo"
-  }
-  ,"playingSchedule": {
+    "swiftCodePlaceholder": "Enter SWIFT code",
+    "logo": "Bank logo"
+  },
+  "playingSchedule": {
     "title": "Playing Schedules",
     "create": "Add Schedule",
     "edit": "Edit Schedule",
@@ -583,6 +626,40 @@
     "weeksAhead": "Weeks ahead",
     "startDate": "Start date",
     "endDate": "End date"
+  },
+  "exchangeSession": {
+    "title": "Sessions",
+    "totalCount": "{count} sessions",
+    "create": "Add session",
+    "edit": "Edit session",
+    "players": "Guests",
+    "sessionDate": "Session date",
+    "courtName": "Court name",
+    "courtAddress": "Court address",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "schedule": "Playing schedule",
+    "type": "Type",
+    "scheduled": "Scheduled",
+    "manual": "Manual",
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "complete": "Complete",
+    "titleField": "Title",
+    "note": "Note",
+    "notFound": "No sessions found",
+    "deleteConfirmMsg": "Are you sure you want to delete \"{name}\"?",
+    "user": "User",
+    "playerName": "Guest name",
+    "male": "Male",
+    "female": "Female",
+    "amount": "Amount",
+    "paid": "Paid",
+    "checkedIn": "Checked in",
+    "noPlayers": "No guests",
+    "createPlayer": "Add guest",
+    "editPlayer": "Edit guest",
+    "deletePlayerConfirm": "Are you sure you want to delete this guest?"
   }
-  ,"exchangeSession": {"title":"Sessions","totalCount":"{count} sessions","create":"Add session","edit":"Edit session","players":"Players","sessionDate":"Session date","courtName":"Court name","courtAddress":"Court address","startTime":"Start time","endTime":"End time","schedule":"Playing schedule","type":"Type","scheduled":"Scheduled","manual":"Manual","upcoming":"Upcoming","completed":"Completed","cancelled":"Cancelled","complete":"Complete","titleField":"Title","note":"Note","notFound":"No sessions found","deleteConfirmMsg":"Are you sure you want to delete \"{name}\"?","user":"User","playerName":"Player name","male":"Male","female":"Female","amount":"Amount","paid":"Paid","checkedIn":"Checked in","noPlayers":"No players","createPlayer":"Add player","editPlayer":"Edit player","deletePlayerConfirm":"Are you sure you want to delete this player?"}
 }

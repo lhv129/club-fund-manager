@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Card } from "@/components/shared/ui/Card";
+import { ClubBreadcrumb } from "@/components/club/layout/ClubBreadcrumb";
 
 type Props = {
   params: Promise<{
@@ -29,7 +30,7 @@ export async function generateMetadata({
 export default async function ClubDashboardPage({
   params,
 }: Props) {
-  const { locale } = await params;
+  const { locale, slug } = await params;
 
   setRequestLocale(locale);
 
@@ -44,6 +45,8 @@ export default async function ClubDashboardPage({
 
   return (
     <div className="space-y-6">
+      <ClubBreadcrumb slug={slug} />
+
       <div>
         <h1 className="text-2xl font-bold text-zinc-900">
           {tWorkspace("dashboard")}

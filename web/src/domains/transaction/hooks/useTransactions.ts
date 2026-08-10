@@ -44,7 +44,7 @@ function getServerError(err: unknown): ServerErrorResponse | null {
     return null;
 }
 
-function buildCreatePayload(
+function buildPayload(
     values: Record<string, string>
 ): FormData {
     const formData = new FormData();
@@ -68,40 +68,12 @@ function buildCreatePayload(
         formData.append("description", values.description);
     }
 
-    if (values.reference_code) {
-        formData.append(
-            "reference_code",
-            values.reference_code
-        );
-    }
-
-    if (values.sender_name) {
-        formData.append("sender_name", values.sender_name);
-    }
-
-    if (values.sender_account) {
-        formData.append(
-            "sender_account",
-            values.sender_account
-        );
-    }
-
     if (values.transaction_date) {
         formData.append(
             "transaction_date",
             values.transaction_date
         );
     }
-
-    return formData;
-}
-
-function buildUpdatePayload(
-    values: Record<string, string>
-): FormData {
-    const formData = new FormData();
-
-    formData.append("description", values.description ?? "");
 
     return formData;
 }
@@ -160,7 +132,7 @@ export function useTransactions(
     ): Promise<SubmitResult> => {
         try {
             const raw = await createMutation.mutateAsync(
-                buildCreatePayload(values)
+                buildPayload(values)
             );
 
             const res = raw as ApiResponse<Transaction>;
@@ -202,7 +174,7 @@ export function useTransactions(
         try {
             const raw = await updateMutation.mutateAsync({
                 id,
-                payload: buildUpdatePayload(values),
+                payload: buildPayload(values),
             });
 
             const res = raw as ApiResponse<Transaction>;
@@ -237,6 +209,17 @@ export function useTransactions(
         }
     };
 
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => service.destroy(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ["transactions", clubSlug] });
+            toast.success(t("deleteSuccess"));
+        },
+        onError: (error: unknown) => {
+            toast.error((error as Error)?.message || t("loadError"));
+        },
+    });
+
     return {
         data,
         total,
@@ -247,10 +230,20 @@ export function useTransactions(
 
         isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
+        isDeleting: deleteMutation.isPending,
 
         handleCreate,
         handleEdit,
+        handleDelete: (id: number) => deleteMutation.mutate(id),
     };
+}
+
+export function useTransaction(clubSlug: string, id: number) {
+    return useQuery({
+        queryKey: ["transactions", clubSlug, id],
+        queryFn: () => getTransactionService(clubSlug).show(id),
+        enabled: Boolean(clubSlug) && Number.isFinite(id) && id > 0,
+    });
 }
 
 export function useTransactionSelect(

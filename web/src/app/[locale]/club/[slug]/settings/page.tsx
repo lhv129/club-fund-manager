@@ -1,19 +1,22 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { Card } from "@/components/shared/ui/Card";
+import { ClubBreadcrumb } from "@/components/club/layout/ClubBreadcrumb";
 
 export default async function ClubSettingsPage({
   params,
 }: {
   params: Promise<{ locale: string; slug: string }>;
 }) {
-  const { locale } = await params;
+  const { locale, slug } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("menu");
   const tCommon = await getTranslations("common");
 
   return (
     <div className="space-y-6">
+      <ClubBreadcrumb slug={slug} />
+
       <h1 className="text-2xl font-bold text-zinc-900">{t("clubSettings")}</h1>
       <Card>
         <div className="flex flex-col items-center justify-center py-16 text-center">

@@ -36,6 +36,9 @@ import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
 
 import { useListParams } from "@/hooks/useListParams";
 import { useClub } from "@/domains/club/hooks/useClub";
+import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
+import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
+import { clubRoute } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 
 import { useBankAccounts } from "@/domains/bankAccount/hooks/useBankAccounts";
@@ -51,7 +54,7 @@ export function BankAccountsPageClient() {
     const t = useTranslations("common");
     const tb = useTranslations("bankAccount");
 
-    const { club } = useClub();
+    const { club, slug } = useClub();
     const { hasPermission, isSuperAdmin } = useAuth();
 
     const canCreate =
@@ -447,9 +450,13 @@ export function BankAccountsPageClient() {
         },
     ];
 
+    if (!club || !slug) return null;
+
     return (
         <>
             <div className="space-y-6">
+                <Breadcrumb navItems={CLUB_NAV_ITEMS(slug)} homeHref={clubRoute(slug)} />
+
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-xl font-semibold text-foreground">

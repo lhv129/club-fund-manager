@@ -136,6 +136,10 @@
     "playingSchedules": {
       "title": "Lịch đánh",
       "description": "Quản lý lịch đánh của câu lạc bộ"
+    },
+    "transactions": {
+      "title": "Quản lý thu chi",
+      "description": "Theo dõi và quản lý các giao dịch thu chi của câu lạc bộ"
     }
   },
   "header": {
@@ -200,10 +204,11 @@
     "memberships": "Quản lý tham gia",
     "fundPeriods": "Cấu hình quỹ",
     "monthlyContributions": "Theo dõi đóng quỹ tháng",
-    "bankAccounts": "Tài khoản ngân hàng"
-    ,"playingSchedules": "Lịch đánh"
-    ,"playingSchedulesMenu": "Lịch đánh"
-    ,"exchangeSessions": "Buổi đánh"
+    "bankAccounts": "Tài khoản ngân hàng",
+    "playingSchedules": "Lịch đánh",
+    "playingSchedulesMenu": "Lịch đánh",
+    "exchangeSessions": "Buổi đánh",
+    "transactions": "Thu chi"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
@@ -513,6 +518,44 @@
     "paid_by_cash": "Tiền mặt",
     "paid_by_manual": "Thủ công"
   },
+  "transaction": {
+    "title": "Quản lý thu chi",
+    "totalCount": "{count} giao dịch",
+    "create": "Thêm giao dịch",
+    "edit": "Chỉnh sửa giao dịch",
+    "notFound": "Chưa có giao dịch nào",
+    "detailTitle": "Chi tiết giao dịch",
+    "detailDescription": "Thông tin đầy đủ của giao dịch thu chi",
+    "detailNotFound": "Không tìm thấy giao dịch hoặc giao dịch đã bị xóa.",
+    "backToList": "Quay lại danh sách thu chi",
+    "income": "Khoản thu",
+    "expense": "Khoản chi",
+    "type": "Loại giao dịch",
+    "amount": "Số tiền",
+    "balance": "Số dư",
+    "source": "Nguồn giao dịch",
+    "sourceCash": "Tiền mặt",
+    "sourceManual": "Nhập thủ công",
+    "transactionDate": "Thời gian giao dịch",
+    "fromDate": "Từ ngày",
+    "toDate": "Đến ngày",
+    "bankAccount": "Tài khoản ngân hàng",
+    "bank": "Ngân hàng",
+    "accountNumber": "Số tài khoản",
+    "accountName": "Chủ tài khoản",
+    "referenceCode": "Mã tham chiếu",
+    "senderName": "Tên người gửi",
+    "senderAccount": "Tài khoản người gửi",
+    "webhookSource": "Nguồn đồng bộ",
+    "transactionInformation": "Thông tin giao dịch",
+    "bankInformation": "Thông tin ngân hàng",
+    "senderInformation": "Thông tin người gửi",
+    "systemInformation": "Thông tin hệ thống",
+    "sortOrder": "Thứ tự sắp xếp",
+    "updatedAt": "Ngày cập nhật",
+    "descriptionPlaceholder": "Nhập nội dung hoặc ghi chú giao dịch...",
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa giao dịch #{id}?"
+  },
   "notFound": {
     "title": "Trang bạn tìm không tồn tại",
     "description": "Trang bạn đang tìm kiếm có thể đã bị xóa, thay đổi hoặc không tồn tại.",
@@ -535,8 +578,8 @@
     "qrImage": "Ảnh mã QR",
     "isDefault": "Tài khoản mặc định",
     "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa tài khoản ngân hàng của {name}?"
-  }
-  ,"bank": {
+  },
+  "bank": {
     "title": "Danh sách ngân hàng",
     "create": "Thêm ngân hàng",
     "edit": "Sửa ngân hàng",
@@ -552,10 +595,10 @@
     "bin": "Mã BIN",
     "binPlaceholder": "Nhập mã BIN",
     "swiftCode": "Mã SWIFT",
-    "swiftCodePlaceholder": "Nhập mã SWIFT"
-    ,"logo": "Logo ngân hàng"
-  }
-  ,"playingSchedule": {
+    "swiftCodePlaceholder": "Nhập mã SWIFT",
+    "logo": "Logo ngân hàng"
+  },
+  "playingSchedule": {
     "title": "Lịch đánh",
     "create": "Thêm lịch đánh",
     "edit": "Sửa lịch đánh",
@@ -580,6 +623,41 @@
     "weeksAhead": "Số tuần tạo trước",
     "startDate": "Ngày bắt đầu",
     "endDate": "Ngày kết thúc"
+  },
+  "exchangeSession": {
+    "title": "Buổi đánh",
+    "totalCount": "{count} buổi đánh",
+    "create": "Thêm buổi đánh",
+    "edit": "Sửa buổi đánh",
+    "players": "Người chơi giao lưu",
+    "sessionDate": "Ngày đánh",
+    "courtName": "Tên sân",
+    "courtAddress": "Địa chỉ sân",
+    "startTime": "Giờ bắt đầu",
+    "endTime": "Giờ kết thúc",
+    "schedule": "Lịch đánh",
+    "type": "Loại",
+    "scheduled": "Theo lịch",
+    "manual": "Thủ công",
+    "upcoming": "Sắp diễn ra",
+    "completed": "Đã hoàn thành",
+    "cancelled": "Đã hủy",
+    "complete": "Hoàn thành",
+    "titleField": "Tiêu đề",
+    "note": "Ghi chú",
+    "notFound": "Không tìm thấy buổi đánh",
+    "deleteConfirmMsg": "Bạn có chắc muốn xóa \"{name}\"?",
+    "user": "Thành viên",
+    "placeholderUser": "Vui lòng chọn thành viên...",
+    "playerName": "Tên người chơi giao lưu",
+    "male": "Nam",
+    "female": "Nữ",
+    "amount": "Số tiền",
+    "paid": "Đã đóng",
+    "checkedIn": "Đã điểm danh",
+    "noPlayers": "Chưa có người chơi giao lưu",
+    "createPlayer": "Thêm người chơi giao lưu",
+    "editPlayer": "Sửa người chơi giao lưu",
+    "deletePlayerConfirm": "Bạn có chắc muốn xóa người chơi giao lưu này?"
   }
-  ,"exchangeSession": {"title":"Buổi đánh","totalCount":"{count} buổi đánh","create":"Thêm buổi đánh","edit":"Sửa buổi đánh","players":"Người chơi","sessionDate":"Ngày đánh","courtName":"Tên sân","courtAddress":"Địa chỉ sân","startTime":"Giờ bắt đầu","endTime":"Giờ kết thúc","schedule":"Lịch đánh","type":"Loại","scheduled":"Theo lịch","manual":"Thủ công","upcoming":"Sắp diễn ra","completed":"Đã hoàn thành","cancelled":"Đã hủy","complete":"Hoàn thành","titleField":"Tiêu đề","note":"Ghi chú","notFound":"Không tìm thấy buổi đánh","deleteConfirmMsg":"Bạn có chắc muốn xóa \"{name}\"?","user":"Người dùng","playerName":"Tên người chơi","male":"Nam","female":"Nữ","amount":"Số tiền","paid":"Đã đóng","checkedIn":"Đã điểm danh","noPlayers":"Chưa có người chơi","createPlayer":"Thêm người chơi","editPlayer":"Sửa người chơi","deletePlayerConfirm":"Bạn có chắc muốn xóa người chơi này?"}
 }

@@ -117,6 +117,13 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
                     module: MODULE_SLUGS.bankAccount,
                     action: PERMISSION_ACTIONS.view,
                 },
+                {
+                    href: clubRoute(slug, CLUB_SUBROUTES.transactions),
+                    labelKey: "transactions",
+                    icon: Banknote,
+                    module: MODULE_SLUGS.transaction,
+                    action: PERMISSION_ACTIONS.view,
+                },
             ],
         },
 
