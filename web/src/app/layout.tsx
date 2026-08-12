@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import Providers from "@/providers";
@@ -19,13 +20,6 @@ export const metadata: Metadata = {
   description: "Club Fund Management System",
 };
 
-/**
- * Root layout — renders <html> and <body>.
- * Locale-specific providers are in [locale]/layout.tsx.
- *
- * lang="vi" is the initial SSR value; the inline script updates it
- * to match the actual locale from the URL before hydration.
- */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -38,12 +32,20 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=location.pathname.match(/^\\/(vi|en)(\\/|$)/);if(m)document.documentElement.lang=m[1];}catch(e){}})();`,
-          }}
-        />
+        <Script id="set-locale">
+          {`
+                        (function () {
+                            try {
+                                var m = location.pathname.match(/^\\/(vi|en)(\\/|$)/);
+                                if (m) {
+                                    document.documentElement.lang = m[1];
+                                }
+                            } catch (e) {}
+                        })();
+                    `}
+        </Script>
       </head>
+
       <body className="min-h-full">
         <Providers>
           <Toaster position="top-right" />

@@ -61,7 +61,7 @@ export function MembersPageClient() {
         isLoading,
         isDeleting,
         handleDeleteConfirm,
-    } = useClubMembers(slug ?? "", params, { status: "approved" });
+    } = useClubMembers({ ...params, club_slug: slug }, { status: "approved" });
 
     // ── UI state ──────────────────────────────────────────────────────────────
     const [deleteTarget, setDeleteTarget] = useState<ClubMember | null>(null);

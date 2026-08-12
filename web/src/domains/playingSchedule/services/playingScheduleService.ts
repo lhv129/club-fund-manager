@@ -5,10 +5,9 @@ import type { PlayingSchedule } from "../types";
 import type { ApiResponse } from "@/types/api";
 
 class PlayingScheduleService extends BaseRepository<PlayingSchedule> {
-    protected resource: string;
+    protected resource = "playing-schedules";
     protected adapter = browserAdapter;
-    constructor(clubSlug: string) { super(); this.resource = `/clubs/${clubSlug}/playing-schedules`; }
-    toggleStatus(id: number) { return this.adapter.patch<ApiResponse<PlayingSchedule>>(`${this.resource}/${id}/toggle-status`); }
+    toggleStatus(id: number, data?: Record<string, unknown>) { return this.adapter.patch<ApiResponse<PlayingSchedule>>(`/${this.resource}/${id}/toggle-status`, data); }
 }
-const cache = new Map<string, PlayingScheduleService>();
-export function getPlayingScheduleService(slug: string) { if (!cache.has(slug)) cache.set(slug, new PlayingScheduleService(slug)); return cache.get(slug)!; }
+export const playingScheduleService = new PlayingScheduleService();
+export const getPlayingScheduleService = (_clubSlug?: string) => playingScheduleService;

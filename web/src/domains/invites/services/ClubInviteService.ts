@@ -6,34 +6,23 @@ import type { ClubInvite, CreateInvitePayload } from "@/domains/invites/types/in
 import type { ApiResponse } from "@/types/api";
 
 class ClubInviteService extends BaseRepository<ClubInvite> {
-  protected resource: string;
+  protected resource = "invites";
   protected adapter = browserAdapter;
 
-  constructor(clubSlug: string) {
-    super();
-    this.resource = `/clubs/${clubSlug}/invites`;
-  }
-
-  async create(payload: CreateInvitePayload): Promise<ApiResponse<ClubInvite>> {
+  async create(payload: CreateInvitePayload & { club_slug?: string }): Promise<ApiResponse<ClubInvite>> {
     return this.adapter.post<ApiResponse<ClubInvite>>(
-      this.resource,
+      `/${this.resource}`,
       payload
     );
   }
 
-  async toggleStatus(id: number): Promise<ApiResponse<ClubInvite>> {
+  async toggleStatus(id: number, data?: Record<string, unknown>): Promise<ApiResponse<ClubInvite>> {
     return this.adapter.post<ApiResponse<ClubInvite>>(
-      `${this.resource}/${id}/toggle-status`,
-      {}
+      `/${this.resource}/${id}/toggle-status`,
+      data
     );
   }
 }
 
-const serviceCache = new Map<string, ClubInviteService>();
-
-export function getClubInviteService(clubSlug: string): ClubInviteService {
-  if (!serviceCache.has(clubSlug)) {
-    serviceCache.set(clubSlug, new ClubInviteService(clubSlug));
-  }
-  return serviceCache.get(clubSlug)!;
-}
+export const clubInviteService = new ClubInviteService();
+export const getClubInviteService = (_clubSlug?: string) => clubInviteService;

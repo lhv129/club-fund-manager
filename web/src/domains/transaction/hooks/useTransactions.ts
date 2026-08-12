@@ -79,15 +79,15 @@ function buildPayload(
 }
 
 export function useTransactions(
-    clubSlug: string,
     params: ReturnType<
         typeof useListParams<TransactionFilters>
     >["params"]
 ) {
+    const clubSlug = params.club_slug as string | undefined;
     const queryClient = useQueryClient();
     const t = useTranslations("common");
 
-    const service = getTransactionService(clubSlug);
+    const service = getTransactionService();
 
     const queryKey = ["transactions", clubSlug, params] as const;
 
@@ -114,7 +114,7 @@ export function useTransactions(
     const selectData = selectResponse?.data ?? [];
 
     const createMutation = useMutation({
-        mutationFn: (payload: FormData) => service.create(payload),
+        mutationFn: (payload: FormData) => { if (clubSlug) payload.set("club_slug", clubSlug); return service.create(payload); },
     });
 
     const updateMutation = useMutation({
@@ -124,7 +124,7 @@ export function useTransactions(
         }: {
             id: number;
             payload: FormData;
-        }) => service.update(id, payload),
+        }) => { if (clubSlug) payload.set("club_slug", clubSlug); return service.update(id, payload); },
     });
 
     const handleCreate = async (
@@ -210,7 +210,7 @@ export function useTransactions(
     };
 
     const deleteMutation = useMutation({
-        mutationFn: (id: number) => service.destroy(id),
+        mutationFn: (id: number) => service.destroy(id, { club_slug: clubSlug }),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["transactions", clubSlug] });
             toast.success(t("deleteSuccess"));
@@ -241,15 +241,15 @@ export function useTransactions(
 export function useTransaction(clubSlug: string, id: number) {
     return useQuery({
         queryKey: ["transactions", clubSlug, id],
-        queryFn: () => getTransactionService(clubSlug).show(id),
+        queryFn: () => getTransactionService().show(id),
         enabled: Boolean(clubSlug) && Number.isFinite(id) && id > 0,
     });
 }
 
 export function useTransactionSelect(
-    clubSlug?: string | null,
-    params?: Partial<TransactionFilters>
+    params?: Partial<TransactionFilters> & { club_slug?: string | null }
 ) {
+    const clubSlug = params?.club_slug as string | undefined;
     const query = useQuery({
         queryKey: [
             "transactions-select",
@@ -262,12 +262,12 @@ export function useTransactionSelect(
                 throw new Error("Club slug is required");
             }
 
-            return getTransactionService(clubSlug).select(params) as Promise<
+            return getTransactionService().select(params) as Promise<
                 ApiResponse<TransactionSelect[]>
             >;
         },
 
-        enabled: Boolean(clubSlug),
+        enabled: true,
     });
 
     return {

@@ -4,24 +4,20 @@ import { BaseRepository } from "@/lib/baseRepository";
 import { browserAdapter } from "@/lib/http/browserAdapter";
 
 import type { BankAccount } from "../types";
+import type { ApiResponse } from "@/types/api";
 
 class BankAccountService extends BaseRepository<BankAccount> {
-    protected resource: string;
+    protected resource = "bank-accounts";
     protected adapter = browserAdapter;
-
-    constructor(clubSlug: string) {
-        super();
-        this.resource = `/clubs/${clubSlug}/bank-accounts`;
-    }
+    toggleStatus(id: number, data?: Record<string, unknown>): Promise<ApiResponse<BankAccount>> { return this.post<ApiResponse<BankAccount>>(`/${this.resource}/${id}/toggle-status`, data); }
 
     /**
      * POST /clubs/{clubSlug}/bank-accounts/{id}/toggle-default
      */
-    toggleDefault(id: number) {
-        return this.post(`${this.resource}/${id}/toggle-default`);
+    toggleDefault(id: number, data?: Record<string, unknown>) {
+        return this.post(`/${this.resource}/${id}/toggle-default`, data);
     }
 }
 
-export function getBankAccountService(clubSlug: string) {
-    return new BankAccountService(clubSlug);
-}
+export const bankAccountService = new BankAccountService();
+export const getBankAccountService = (_clubSlug?: string) => bankAccountService;

@@ -108,3 +108,39 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* ─────────────────────────────────────────────
+   TABLE HORIZONTAL SCROLLBAR
+   ───────────────────────────────────────────── */
+
+@layer utilities {
+  .table-scroll {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color:
+      var(--border-strong) transparent;
+  }
+
+  /* Chrome / Edge / Safari */
+  .table-scroll::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .table-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .table-scroll::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 9999px;
+  }
+
+  .table-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--foreground-muted);
+  }
+
+  .table-scroll::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}

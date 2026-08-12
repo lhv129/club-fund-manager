@@ -5,20 +5,8 @@ import { serverAdapter } from "@/lib/http/serverAdapter";
 import type { MonthlyContribution } from "../types";
 
 class MonthlyContributionServiceServer extends BaseRepository<MonthlyContribution> {
-    protected resource: string;
+    protected resource = "monthly-contributions";
     protected adapter = serverAdapter;
 
-    constructor(clubSlug: string) {
-        super();
-        this.resource = `clubs/${clubSlug}/monthly-contributions`;
-    }
 }
-
-const serverCache = new Map<string, MonthlyContributionServiceServer>();
-
-export function getMonthlyContributionServiceServer(clubSlug: string) {
-    if (!serverCache.has(clubSlug)) {
-        serverCache.set(clubSlug, new MonthlyContributionServiceServer(clubSlug));
-    }
-    return serverCache.get(clubSlug)!;
-}
+export const monthlyContributionServiceServer = new MonthlyContributionServiceServer();

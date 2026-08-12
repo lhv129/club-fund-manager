@@ -18,8 +18,7 @@ import {
     type AppliedFilters,
 } from "@/components/shared/ui/FilterBar";
 
-import { Pagination } from "@/components/shared/ui/Pagination";
-
+import { DataTable } from "@/components/shared/ui/DataTable";
 import Select from "@/components/shared/ui/Select";
 
 import {
@@ -109,6 +108,7 @@ export function BankAccountsPageClient() {
         data,
         total,
         isLoading,
+        isFetching,
         isCreating,
         isUpdating,
         isDeleting,
@@ -120,7 +120,7 @@ export function BankAccountsPageClient() {
         handleToggleStatus,
         handleToggleDefault,
         banks,
-    } = useBankAccounts(params);
+    } = useBankAccounts({ ...params, club_slug: slug });
 
     const [modalOpen, setModalOpen] =
         useState(false);
@@ -453,96 +453,103 @@ export function BankAccountsPageClient() {
     if (!club || !slug) return null;
 
     return (
-        <>
-            <div className="space-y-6">
-                <Breadcrumb navItems={CLUB_NAV_ITEMS(slug)} homeHref={clubRoute(slug)} />
+        <div className="space-y-6">
+            <Breadcrumb navItems={CLUB_NAV_ITEMS(slug)} homeHref={clubRoute(slug)} />
 
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-semibold text-foreground">
-                            {tb("title")}
-                        </h1>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-semibold text-foreground">
+                        {tb("title")}
+                    </h1>
 
-                        <p className="mt-0.5 text-sm text-foreground-muted">
-                            {tb("totalCount", {
-                                count: total.toLocaleString(),
-                            })}
-                        </p>
-                    </div>
-
-                    {canCreate && (
-                        <button
-                            type="button"
-                            onClick={openCreate}
-                            className="flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
-                        >
-                            <Plus className="h-4 w-4" />
-                            {tb("create")}
-                        </button>
-                    )}
+                    <p className="mt-0.5 text-sm text-foreground-muted">
+                        {tb("totalCount", {
+                            count: total.toLocaleString(),
+                        })}
+                    </p>
                 </div>
 
-                <div className="space-y-4">
-                    <FilterBar
-                        search={params.search}
-                        sortBy={params.sort_by}
-                        sortDir={params.sort_dir}
-                        sortOptions={sortOptions}
-                        showStatusFilter={false}
-                        loading={isLoading}
-                        onApply={handleApplyFilters}
-                        onReset={handleReset}
-                        extraFilters={extraFilters}
-                        searchPlaceholder={tb('search')}
-                    />
-
-                    <Table
-                        columns={columns}
-                        data={data}
-                        loading={isLoading}
-                        keyExtractor={(row) => row.id}
-                        renderActions={(row) => (
-                            <TableActions>
-                                {canUpdate && (
-                                    <TableActionItem
-                                        icon={
-                                            <Pencil className="h-4 w-4" />
-                                        }
-                                        label={t("edit")}
-                                        onClick={() =>
-                                            openEdit(row)
-                                        }
-                                    />
-                                )}
-
-                                {canDelete && (
-                                    <TableActionItem
-                                        icon={
-                                            <Trash2 className="h-4 w-4" />
-                                        }
-                                        label={t("delete")}
-                                        variant="danger"
-                                        onClick={() =>
-                                            setDeleteTarget(
-                                                row
-                                            )
-                                        }
-                                    />
-                                )}
-                            </TableActions>
-                        )}
-                        emptyText={tb("notFound")}
-                    />
-
-                    <Pagination
-                        page={params.page}
-                        limit={params.limit}
-                        total={total}
-                        onPageChange={setPage}
-                        onLimitChange={setLimit}
-                    />
-                </div>
+                {canCreate && (
+                    <button
+                        type="button"
+                        onClick={openCreate}
+                        className="flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+                    >
+                        <Plus className="h-4 w-4" />
+                        {tb("create")}
+                    </button>
+                )}
             </div>
+
+            <FilterBar
+                search={params.search ?? ""}
+                sortBy={params.sort_by}
+                sortDir={params.sort_dir}
+                sortOptions={sortOptions}
+                showStatusFilter={false}
+                loading={isFetching}
+                onApply={handleApplyFilters}
+                onReset={handleReset}
+                extraFilters={extraFilters}
+                searchPlaceholder={tb("search")}
+            />
+
+            <DataTable
+                table={{
+                    columns,
+                    data: data ?? [],
+
+                    // Skeleton chỉ hiển thị ở lần load đầu
+                    loading: isLoading,
+
+                    // Overlay loading khi đổi filter/page/sort
+                    fetching: isFetching,
+
+                    keyExtractor: (row) => row.id,
+
+                    showActions:
+                        canUpdate || canDelete,
+
+                    emptyText: tb("notFound"),
+
+                    renderActions: (row) => (
+                        <TableActions>
+                            {canUpdate && (
+                                <TableActionItem
+                                    icon={
+                                        <Pencil className="h-4 w-4" />
+                                    }
+                                    label={t("edit")}
+                                    onClick={() =>
+                                        openEdit(row)
+                                    }
+                                />
+                            )}
+
+                            {canDelete && (
+                                <TableActionItem
+                                    icon={
+                                        <Trash2 className="h-4 w-4" />
+                                    }
+                                    label={t("delete")}
+                                    variant="danger"
+                                    onClick={() =>
+                                        setDeleteTarget(row)
+                                    }
+                                />
+                            )}
+                        </TableActions>
+                    ),
+                }}
+                pagination={{
+                    page: params.page,
+                    limit: params.limit,
+                    total,
+                    onPageChange: setPage,
+                    onLimitChange: setLimit,
+                }}
+            />
+
 
             <FormModalWithMedia
                 isOpen={modalOpen}
@@ -594,6 +601,6 @@ export function BankAccountsPageClient() {
                 }
                 loading={isDeleting}
             />
-        </>
+        </div>
     );
 }

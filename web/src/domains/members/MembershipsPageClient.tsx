@@ -126,7 +126,7 @@ export function MembershipsPageClient() {
         handleApprove,
         handleReject,
         handleDeleteConfirm,
-    } = useClubMemberHistory(slug ?? "", params);
+    } = useClubMemberHistory({ ...params, club_slug: slug });
 
     // ── UI state ──────────────────────────────────────────────────────────────
     const [deleteTarget, setDeleteTarget] = useState<ClubMember | null>(null);

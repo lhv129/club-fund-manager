@@ -7,27 +7,9 @@ import { browserAdapter } from "@/lib/http/browserAdapter";
 import type { Transaction } from "../types";
 
 class TransactionServiceClient extends BaseRepository<Transaction> {
-    protected resource: string;
+    protected resource = "transactions";
     protected adapter = browserAdapter;
 
-    constructor(clubSlug: string) {
-        super();
-
-        this.resource = `/clubs/${clubSlug}/transactions`;
-    }
 }
-
-const serviceCache = new Map<string, TransactionServiceClient>();
-
-export function getTransactionService(
-    clubSlug: string
-): TransactionServiceClient {
-    if (!serviceCache.has(clubSlug)) {
-        serviceCache.set(
-            clubSlug,
-            new TransactionServiceClient(clubSlug)
-        );
-    }
-
-    return serviceCache.get(clubSlug)!;
-}
+export const transactionService = new TransactionServiceClient();
+export const getTransactionService = (_clubSlug?: string) => transactionService;

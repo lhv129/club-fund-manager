@@ -6,34 +6,23 @@ import type { ClubMember, RejectPayload } from "@/domains/members/types/member";
 import type { ApiResponse } from "@/types/api";
 
 class ClubMemberService extends BaseRepository<ClubMember> {
-  protected resource: string;
+  protected resource = "members";
   protected adapter = browserAdapter;
 
-  constructor(clubSlug: string) {
-    super();
-    this.resource = `/clubs/${clubSlug}/members`;
-  }
-
-  async approve(memberId: number): Promise<ApiResponse<ClubMember>> {
+  async approve(memberId: number, data?: Record<string, unknown>): Promise<ApiResponse<ClubMember>> {
     return this.adapter.post<ApiResponse<ClubMember>>(
-      `${this.resource}/${memberId}/approve`,
-      {}
+      `/${this.resource}/${memberId}/approve`,
+      data
     );
   }
 
-  async reject(memberId: number, payload: RejectPayload): Promise<ApiResponse<ClubMember>> {
+  async reject(memberId: number, payload: RejectPayload & { club_slug?: string }): Promise<ApiResponse<ClubMember>> {
     return this.adapter.post<ApiResponse<ClubMember>>(
-      `${this.resource}/${memberId}/reject`,
+      `/${this.resource}/${memberId}/reject`,
       payload
     );
   }
 }
 
-const serviceCache = new Map<string, ClubMemberService>();
-
-export function getClubMemberService(clubSlug: string): ClubMemberService {
-  if (!serviceCache.has(clubSlug)) {
-    serviceCache.set(clubSlug, new ClubMemberService(clubSlug));
-  }
-  return serviceCache.get(clubSlug)!;
-}
+export const clubMemberService = new ClubMemberService();
+export const getClubMemberService = (_clubSlug?: string) => clubMemberService;

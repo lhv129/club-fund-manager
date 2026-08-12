@@ -140,24 +140,25 @@ export function MonthlyContributionsPageClient() {
         handleCreate,
         handleEdit,
         handleDeleteConfirm,
-    } = useMonthlyContributions(params);
+    } = useMonthlyContributions({ ...params, club_slug: slug });
 
     const {
         data: fundPeriods,
         isLoading: isFundPeriodsLoading,
-    } = useFundPeriodSelect(slug);
+    } = useFundPeriodSelect({ club_slug: slug });
 
     const {
         data: transactions,
         isLoading: isTransactionsLoading,
-    } = useTransactionSelect(slug, {
+    } = useTransactionSelect({
+        club_slug: slug,
         type: "income",
     });
 
     const {
         data: members,
         isLoading: isMembersLoading,
-    } = useClubMemberSelect(slug, { status: "approved" });
+    } = useClubMemberSelect({ club_slug: slug, status: "approved" });
 
     const [modalOpen, setModalOpen] = useState(false);
     const [selected, setSelected] =

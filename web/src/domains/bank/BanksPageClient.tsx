@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Landmark, Pencil, Plus, Trash2 } from "lucide-react";
-import { Table, type ColumnDef } from "@/components/shared/ui/Table";
+import { type ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import Select from "@/components/shared/ui/Select";
 import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
 import { FormModalWithMedia, type FormFieldDef, type SubmitResult } from "@/components/shared/forms/FormModalWithMedia";
@@ -29,7 +29,7 @@ export function BanksPageClient() {
     const { params, setPage, setLimit, updateMany, reset } = useListParams<BankFilters>({ defaultFilters: { search: "", is_active: undefined }, defaultSortBy: "sort_order", defaultSortDir: "asc" });
     const [draftIsActive, setDraftIsActive] = useState<0 | 1 | undefined>(params.is_active);
     useEffect(() => setDraftIsActive(params.is_active), [params.is_active]);
-    const { data, total, isLoading, isCreating, isUpdating, isDeleting, togglingIds, handleCreate, handleEdit, handleDeleteConfirm, handleToggleStatus } = useBanks(params);
+    const { data, total, isLoading, isFetching, isCreating, isUpdating, isDeleting, togglingIds, handleCreate, handleEdit, handleDeleteConfirm, handleToggleStatus } = useBanks(params);
     const [modalOpen, setModalOpen] = useState(false);
     const [selected, setSelected] = useState<Bank | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Bank | null>(null);
@@ -87,11 +87,107 @@ export function BanksPageClient() {
     return <>
         <div className="space-y-6">
             <div className="flex items-center justify-between"><div><h1 className="text-xl font-semibold text-foreground">{tb("title")}</h1><p className="mt-0.5 text-sm text-foreground-muted">{tb("totalCount", { count: total.toLocaleString() })}</p></div>{canCreate && <button onClick={() => { setSelected(null); setModalOpen(true); }} className="flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"><Plus className="h-4 w-4" />{tb("create")}</button>}</div>
-            <div className="space-y-4"><FilterBar search={params.search} sortBy={params.sort_by} sortDir={params.sort_dir} sortOptions={[{ value: "sort_order", label: t("sortOrder") }, { value: "name", label: tb("name") }, { value: "code", label: tb("code") }, { value: "created_at", label: t("createdAt") }]} showStatusFilter={false} loading={isLoading} onApply={(filters: AppliedFilters) => updateMany({ search: filters.search, sort_by: filters.sort_by, sort_dir: filters.sort_dir, is_active: draftIsActive })} onReset={() => { setDraftIsActive(undefined); reset(); }} extraFilters={extraFilters} />
-                <Table columns={columns} data={data} loading={isLoading} keyExtractor={(row) => row.id} emptyText={tb("notFound")} renderActions={(row) => <TableActions>{canUpdate && <TableActionItem icon={<Pencil className="h-4 w-4" />} label={t("edit")} onClick={() => { setSelected(row); setModalOpen(true); }} />}{canDelete && <TableActionItem icon={<Trash2 className="h-4 w-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />}</TableActions>} />
-                <Pagination page={params.page} limit={params.limit} total={total} onPageChange={setPage} onLimitChange={setLimit} /></div>
+
+
+            <FilterBar
+                search={params.search ?? ""}
+                sortBy={params.sort_by}
+                sortDir={params.sort_dir}
+                sortOptions={[
+                    {
+                        value: "sort_order",
+                        label: t("sortOrder"),
+                    },
+                    {
+                        value: "name",
+                        label: tb("name"),
+                    },
+                    {
+                        value: "code",
+                        label: tb("code"),
+                    },
+                    {
+                        value: "created_at",
+                        label: t("createdAt"),
+                    },
+                ]}
+                showStatusFilter={false}
+                loading={isFetching}
+                onApply={(filters: AppliedFilters) => {
+                    updateMany({
+                        search: filters.search,
+                        sort_by: filters.sort_by,
+                        sort_dir: filters.sort_dir,
+                        is_active: draftIsActive,
+                    });
+                }}
+                onReset={() => {
+                    setDraftIsActive(undefined);
+                    reset();
+                }}
+                extraFilters={extraFilters}
+            />
+
+            <DataTable
+                table={{
+                    columns,
+                    data: data ?? [],
+
+                    // Skeleton chỉ hiển thị khi load lần đầu
+                    loading: isLoading,
+
+                    // Overlay khi đổi filter, sort hoặc pagination
+                    fetching: isFetching,
+
+                    keyExtractor: (row) => row.id,
+
+                    showActions:
+                        canUpdate || canDelete,
+
+                    emptyText: tb("notFound"),
+
+                    renderActions: (row) => (
+                        <TableActions>
+                            {canUpdate && (
+                                <TableActionItem
+                                    icon={
+                                        <Pencil className="h-4 w-4" />
+                                    }
+                                    label={t("edit")}
+                                    onClick={() => {
+                                        setSelected(row);
+                                        setModalOpen(true);
+                                    }}
+                                />
+                            )}
+
+                            {canDelete && (
+                                <TableActionItem
+                                    icon={
+                                        <Trash2 className="h-4 w-4" />
+                                    }
+                                    label={t("delete")}
+                                    variant="danger"
+                                    onClick={() => {
+                                        setDeleteTarget(row);
+                                    }}
+                                />
+                            )}
+                        </TableActions>
+                    ),
+                }}
+                pagination={{
+                    page: params.page,
+                    limit: params.limit,
+                    total,
+                    onPageChange: setPage,
+                    onLimitChange: setLimit,
+                }}
+            />
+
+            <FormModalWithMedia isOpen={modalOpen} onClose={closeModal} onSubmit={handleSubmit} title={selected ? tb("edit") : tb("create")} submitting={selected ? isUpdating : isCreating} isEdit={Boolean(selected)} fields={formFields} initialValues={{ code: selected?.code ?? "", name: selected?.name ?? "", short_name: selected?.short_name ?? "", bin: selected?.bin ?? "", swift_code: selected?.swift_code ?? "", sort_order: selected?.sort_order ?? 0, is_active: selected ? (selected.is_active ? "1" : "0") : "1" }} imageFields={[{ name: "logo", label: tb("logo"), initialUrl: selected?.logo ?? null }]} />
+            <DeleteConfirmModal isOpen={Boolean(deleteTarget)} title={t("deleteConfirmTitle")} description={t("deleteConfirmDesc")} message={deleteTarget ? tb("deleteConfirmMsg", { name: deleteTarget.name }) : ""} confirmText={t("delete")} cancelText={t("cancel")} onConfirm={() => { if (deleteTarget) handleDeleteConfirm(deleteTarget.id); setDeleteTarget(null); }} onCancel={() => setDeleteTarget(null)} loading={isDeleting} />
         </div>
-        <FormModalWithMedia isOpen={modalOpen} onClose={closeModal} onSubmit={handleSubmit} title={selected ? tb("edit") : tb("create")} submitting={selected ? isUpdating : isCreating} isEdit={Boolean(selected)} fields={formFields} initialValues={{ code: selected?.code ?? "", name: selected?.name ?? "", short_name: selected?.short_name ?? "", bin: selected?.bin ?? "", swift_code: selected?.swift_code ?? "", sort_order: selected?.sort_order ?? 0, is_active: selected ? (selected.is_active ? "1" : "0") : "1" }} imageFields={[{ name: "logo", label: tb("logo"), initialUrl: selected?.logo ?? null }]} />
-        <DeleteConfirmModal isOpen={Boolean(deleteTarget)} title={t("deleteConfirmTitle")} description={t("deleteConfirmDesc")} message={deleteTarget ? tb("deleteConfirmMsg", { name: deleteTarget.name }) : ""} confirmText={t("delete")} cancelText={t("cancel")} onConfirm={() => { if (deleteTarget) handleDeleteConfirm(deleteTarget.id); setDeleteTarget(null); }} onCancel={() => setDeleteTarget(null)} loading={isDeleting} />
+
     </>;
 }

@@ -217,11 +217,11 @@ export function useUsers(
 }
 
 // ─── Select hook (dùng bởi module khác cần dropdown user) ──────────────────────
-export function useUserSelect() {
+export function useUserSelect(params?: { club_slug?: string | null }) {
     const query = useQuery({
-        queryKey: ["users-select"],
+        queryKey: ["users-select", params],
         queryFn: () =>
-            userServiceClient.select() as Promise<ApiResponse<User[]>>,
+            userServiceClient.select(params) as Promise<ApiResponse<User[]>>,
     });
 
     return {

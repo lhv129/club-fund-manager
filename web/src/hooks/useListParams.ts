@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 export type BaseListParams = {
+    club_slug?: string | null;
     limit: number;
     page: number;
     sort_by?: string;

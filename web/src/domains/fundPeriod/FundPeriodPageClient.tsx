@@ -84,7 +84,7 @@ export function FundPeriodPageClient() {
         handleCreate,
         handleDeleteConfirm,
         handleToggleStatus,
-    } = useFundPeriods(slug ?? "", params);
+    } = useFundPeriods({ ...params, club_slug: slug });
 
     // ── UI state ──────────────────────────────────────────────────────────────
     const [modalOpen, setModalOpen] = useState(false);

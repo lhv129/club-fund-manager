@@ -12,13 +12,13 @@ import type { ClubMemberSelect, MemberFilters, MemberHistoryFilters, RejectPaylo
 // ─── Members hook (tổng quan) ─────────────────────────────────────────────────
 
 export function useClubMembers(
-    clubSlug: string,
-    params: MemberFilters & { page: number; limit: number },
+    params: MemberFilters & { page: number; limit: number; club_slug?: string | null },
     fixedParams?: Record<string, unknown>
 ) {
+    const clubSlug = params.club_slug as string | undefined;
     const queryClient = useQueryClient();
     const t = useTranslations("common");
-    const service = getClubMemberService(clubSlug);
+    const service = getClubMemberService();
     // fixedParams nằm trong queryKey để cache riêng theo từng bộ cố định
     const queryKey = ["club-members", clubSlug, params, fixedParams] as const;
     const mergedParams = fixedParams ? { ...params, ...fixedParams } : params;
@@ -34,7 +34,7 @@ export function useClubMembers(
 
     // ── Delete (thực chất là cập nhật trạng thái, API trả về member đã update) ─
     const deleteMutation = useMutation({
-        mutationFn: (id: number) => service.destroy(id),
+        mutationFn: (id: number) => service.destroy(id, { club_slug: clubSlug }),
         onSuccess: (res) => {
             if (!res.success) return;
             // Không filter xóa khỏi list — invalidate để refetch với trạng thái mới
@@ -60,12 +60,12 @@ export function useClubMembers(
 // ─── Member History hook (đầy đủ: approve, reject, delete) ───────────────────
 
 export function useClubMemberHistory(
-    clubSlug: string,
-    params: MemberHistoryFilters & { page: number; limit: number }
+    params: MemberHistoryFilters & { page: number; limit: number; club_slug?: string | null }
 ) {
+    const clubSlug = params.club_slug as string | undefined;
     const queryClient = useQueryClient();
     const t = useTranslations("common");
-    const service = getClubMemberService(clubSlug);
+    const service = getClubMemberService();
     const queryKey = ["club-members-history", clubSlug, params] as const;
 
     const { data: listData, isLoading } = useQuery({
@@ -79,7 +79,7 @@ export function useClubMemberHistory(
 
     // ── Approve ───────────────────────────────────────────────────────────────
     const approveMutation = useMutation({
-        mutationFn: (id: number) => service.approve(id),
+        mutationFn: (id: number) => service.approve(id, { club_slug: clubSlug }),
         onSuccess: (res) => {
             if (!res.success) return;
             queryClient.invalidateQueries({ queryKey: ["club-members-history", clubSlug] });
@@ -93,7 +93,7 @@ export function useClubMemberHistory(
     // ── Reject ────────────────────────────────────────────────────────────────
     const rejectMutation = useMutation({
         mutationFn: ({ id, payload }: { id: number; payload: RejectPayload }) =>
-            service.reject(id, payload),
+            service.reject(id, { ...payload, club_slug: clubSlug }),
         onSuccess: (res) => {
             if (!res.success) return;
             queryClient.invalidateQueries({ queryKey: ["club-members-history", clubSlug] });
@@ -106,7 +106,7 @@ export function useClubMemberHistory(
 
     // ── Delete (thực chất là cập nhật trạng thái, API trả về member đã update) ─
     const deleteMutation = useMutation({
-        mutationFn: (id: number) => service.destroy(id),
+        mutationFn: (id: number) => service.destroy(id, { club_slug: clubSlug }),
         onSuccess: (res) => {
             if (!res.success) return;
             // Không filter xóa khỏi list — invalidate để refetch với trạng thái mới
@@ -140,9 +140,9 @@ export function useClubMemberHistory(
 }
 
 export function useClubMemberSelect(
-    clubSlug?: string | null,
-    params?: Partial<MemberHistoryFilters>
+    params?: Partial<MemberHistoryFilters> & { club_slug?: string | null }
 ) {
+    const clubSlug = params?.club_slug as string | undefined;
     const query = useQuery({
         queryKey: [
             "club-members-select",
@@ -155,10 +155,10 @@ export function useClubMemberSelect(
                 throw new Error("Club slug is required");
             }
 
-            return getClubMemberService(clubSlug).select(params);
+            return getClubMemberService().select(params);
         },
 
-        enabled: Boolean(clubSlug),
+        enabled: true,
     });
 
     return {

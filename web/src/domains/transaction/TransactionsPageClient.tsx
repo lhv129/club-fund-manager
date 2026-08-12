@@ -18,7 +18,7 @@ import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import { clubRoute, CLUB_SUBROUTES } from "@/constants";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
-import { getBankAccountService } from "@/domains/bankAccount/services/bankAccountService";
+import { bankAccountService } from "@/domains/bankAccount/services/bankAccountService";
 import type { BankAccount } from "@/domains/bankAccount/types";
 import { useClub } from "@/domains/club/hooks/useClub";
 import { useTransactions } from "@/domains/transaction/hooks/useTransactions";
@@ -52,10 +52,10 @@ export function TransactionsPageClient() {
     const [selected, setSelected] = useState<Transaction | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
-    const transactions = useTransactions(slug ?? "", params);
+    const transactions = useTransactions({ ...params, club_slug: slug });
     const bankAccounts = useQuery<PaginatedResponse<BankAccount>>({
         queryKey: ["bank-accounts", slug, "transaction-options"],
-        queryFn: () => getBankAccountService(slug!).list({ limit: 100, is_active: 1 }),
+        queryFn: () => bankAccountService.list({ limit: 100, is_active: 1, club_slug: slug }),
         enabled: Boolean(slug),
     });
     const bankOptions = (bankAccounts.data?.data ?? []).map((account) => ({

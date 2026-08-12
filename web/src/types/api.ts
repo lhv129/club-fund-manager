@@ -58,6 +58,7 @@ export interface ValidationErrorResponse {
 
 /** Query params cho list/paginate endpoints. */
 export interface ListParams {
+  club_slug?: string | null;
   search?: string;
   sort_by?: string;
   sort_dir?: "asc" | "desc";

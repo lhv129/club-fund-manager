@@ -10,13 +10,13 @@ import type { PaginatedResponse } from "@/types/api";
 import type { ClubInvite, InviteFilters, CreateInvitePayload } from "@/domains/invites/types/invite";
 
 export function useClubInvites(
-    clubSlug: string,
-    params: InviteFilters & { page: number; limit: number }
+    params: InviteFilters & { page: number; limit: number; club_slug?: string | null }
 ) {
+    const clubSlug = params.club_slug as string | undefined;
     const queryClient = useQueryClient();
     const t = useTranslations("common");
     const ti = useTranslations("invite");
-    const service = getClubInviteService(clubSlug);
+    const service = getClubInviteService();
     const queryKey = ["club-invites", clubSlug, params] as const;
 
     const { data: listData, isLoading } = useQuery({
@@ -30,7 +30,7 @@ export function useClubInvites(
 
     // ── Create ────────────────────────────────────────────────────────────────
     const createMutation = useMutation({
-        mutationFn: (payload: CreateInvitePayload) => service.create(payload),
+        mutationFn: (payload: CreateInvitePayload) => service.create({ ...payload, club_slug: clubSlug }),
         onSuccess: (res) => {
             if (!res.success) return;
             queryClient.invalidateQueries({ queryKey: ["club-invites", clubSlug] });
@@ -43,7 +43,7 @@ export function useClubInvites(
 
     // ── Toggle status (is_active) ─────────────────────────────────────────────
     const toggleMutation = useMutation({
-        mutationFn: (id: number) => service.toggleStatus(id),
+        mutationFn: (id: number) => service.toggleStatus(id, { club_slug: clubSlug }),
         onSuccess: (res, id) => {
             if (!res.success) return;
             const saved = res.data;
@@ -71,7 +71,7 @@ export function useClubInvites(
 
     // ── Delete ────────────────────────────────────────────────────────────────
     const deleteMutation = useMutation({
-        mutationFn: (id: number) => service.destroy(id),
+        mutationFn: (id: number) => service.destroy(id, { club_slug: clubSlug }),
         onSuccess: (res, deletedId) => {
             if (!res.success) return;
             queryClient.setQueryData(queryKey, (old: PaginatedResponse<ClubInvite> | undefined) => {

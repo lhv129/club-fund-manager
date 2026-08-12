@@ -5,15 +5,9 @@ import { serverAdapter } from "@/lib/http/serverAdapter";
 import type { ClubMember } from "@/domains/members/types/member";
 
 class ClubMemberServiceServer extends BaseRepository<ClubMember> {
-    protected resource: string;
+    protected resource = "members";
     protected adapter = serverAdapter;
 
-    constructor(clubSlug: string) {
-        super();
-        this.resource = `clubs/${clubSlug}/members`;
-    }
 }
 
-export function createClubMemberServiceServer(clubSlug: string) {
-    return new ClubMemberServiceServer(clubSlug);
-}
+export const clubMemberServiceServer = new ClubMemberServiceServer();

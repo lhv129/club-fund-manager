@@ -1,4 +1,4 @@
-# Next.js Frontend — Club Fund Manager
+﻿# Next.js Frontend — Club Fund Manager
 Stack: Next.js 16, React 19, TypeScript, Tailwind v4, next-intl, zustand, **@tanstack/react-query**
 
 ## 1. Cấu trúc thư mục
@@ -265,6 +265,17 @@ queryClient.setQueryData(["modules", params], (old) => ({ ... }));
 ```
 
 ### 5.3. Custom hook — tách TanStack logic ra khỏi PageClient
+
+#### Scope dữ liệu bằng `club_slug`
+
+Các resource dùng chung như members, invites, bank accounts, fund periods, monthly contributions, transactions, playing schedules và exchange sessions gọi endpoint phẳng:
+
+```text
+GET /playing-schedules                    # admin
+GET /playing-schedules?club_slug=my-club  # club workspace
+```
+
+Hook chỉ nhận `params`; workspace page merge `{ ...params, club_slug: slug }`, còn admin truyền params không có slug. Create/update truyền slug trong body/FormData; delete/toggle/complete truyền `{ club_slug }`. Service không dùng constructor `clubSlug` hoặc URL `/clubs/{slug}`.
 
 Toàn bộ `useQuery` + `useMutation` + `setQueryData` / `invalidateQueries` + toast **không đặt trực tiếp trong PageClient** mà được tách vào một custom hook riêng theo domain:
 

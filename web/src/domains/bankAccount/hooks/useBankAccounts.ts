@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
 import {
+    keepPreviousData,
     useMutation,
     useQuery,
     useQueryClient,
@@ -84,16 +84,15 @@ export function useBankAccounts(
     const [togglingStatusIds, setTogglingStatusIds] = useState<Set<number>>(new Set());
     const [togglingDefaultIds, setTogglingDefaultIds] = useState<Set<number>>(new Set());
 
-    const { slug } = useParams<{
-        slug: string;
-    }>();
-
-    const clubSlug = slug;
+    const clubSlug = params.club_slug as string | undefined;
 
     const service =
-        getBankAccountService(clubSlug);
+        getBankAccountService();
 
-    const { data: banks, isLoading: isBanksLoading } = useBankSelect();
+    const {
+        data: banks,
+        isLoading: isBanksLoading
+    } = useBankSelect();
 
     /**
      * Query key phải được dùng thống nhất khi đọc
@@ -111,9 +110,8 @@ export function useBankAccounts(
     const {
         data: listData,
         isLoading,
-    } = useQuery<
-        PaginatedResponse<BankAccount>
-    >({
+        isFetching,
+    } = useQuery<PaginatedResponse<BankAccount>>({
         queryKey,
         queryFn: async () => {
             return service.list(params) as Promise<
@@ -121,6 +119,7 @@ export function useBankAccounts(
             >;
         },
         enabled: Boolean(clubSlug),
+        placeholderData: keepPreviousData,
     });
 
     const data = listData?.data ?? [];
@@ -131,7 +130,7 @@ export function useBankAccounts(
      */
     const createMutation = useMutation({
         mutationFn: async (payload: FormData) => {
-            return service.create(payload);
+            if (clubSlug) payload.set("club_slug", clubSlug); return service.create(payload);
         },
     });
 
@@ -146,7 +145,7 @@ export function useBankAccounts(
             id: number;
             payload: FormData;
         }) => {
-            return service.update(id, payload);
+            if (clubSlug) payload.set("club_slug", clubSlug); return service.update(id, payload);
         },
     });
 
@@ -155,7 +154,7 @@ export function useBankAccounts(
      */
     const deleteMutation = useMutation({
         mutationFn: async (id: number) => {
-            return service.destroy(id);
+            return service.destroy(id, { club_slug: clubSlug });
         },
 
         onSuccess: (result, deletedId) => {
@@ -227,7 +226,7 @@ export function useBankAccounts(
         ToggleMutationContext
     >({
         mutationFn: async (id: number) => {
-            return service.toggleStatus(id) as Promise<
+            return service.toggleStatus(id, { club_slug: clubSlug }) as Promise<
                 ApiResponse<BankAccount>
             >;
         },
@@ -372,7 +371,7 @@ export function useBankAccounts(
         ToggleMutationContext
     >({
         mutationFn: async (id: number) => {
-            return service.toggleDefault(id) as Promise<
+            return service.toggleDefault(id, { club_slug: clubSlug }) as Promise<
                 ApiResponse<BankAccount>
             >;
         },
@@ -718,6 +717,8 @@ export function useBankAccounts(
         data,
         total,
         isLoading,
+        isFetching,
+
         banks,
         isBanksLoading,
 

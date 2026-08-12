@@ -1,4 +1,4 @@
-# Hướng dẫn thêm module mới
+﻿# Hướng dẫn thêm module mới
 Ví dụ: module Example — có nội dung đa ngôn ngữ (translatable), dùng ở cả Server Component và Client Component.
 
 ## Bước 1: Tạo types
@@ -120,6 +120,21 @@ export default async function AdminExamplesPage({
 ## Bước 4: Tạo custom hook
 
 `src/domains/example/hooks/useExamples.ts`
+
+### Quy ước scope `club_slug`
+
+Hook dùng chung cho admin và club workspace chỉ nhận một đối số `params`. Service dùng endpoint phẳng (`/{resource}`), không nhận `clubSlug` trong constructor và không ghép `/clubs/{slug}`.
+
+```tsx
+// Admin
+const data = useExamples(params);
+
+// Club workspace: page thêm scope
+const data = useExamples({ ...params, club_slug: slug });
+const options = useExampleSelect({ club_slug: slug });
+```
+
+Trong hook, list/select truyền nguyên `params`; create/update thêm `club_slug` vào body hoặc `FormData`; delete/toggle/complete truyền `{ club_slug }` qua params hoặc body. Hook không tự đọc route params. Không có `club_slug` nghĩa là request admin/toàn hệ thống.
 
 ```ts
 "use client";

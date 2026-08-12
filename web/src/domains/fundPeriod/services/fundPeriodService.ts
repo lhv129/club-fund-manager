@@ -4,20 +4,9 @@ import { browserAdapter } from "@/lib/http/browserAdapter";
 import type { FundPeriod } from "@/domains/fundPeriod/types";
 
 class FundPeriodService extends BaseRepository<FundPeriod> {
-    protected resource: string;
+    protected resource = "fund-periods";
     protected adapter = browserAdapter;
 
-    constructor(clubSlug: string) {
-        super();
-        this.resource = `/clubs/${clubSlug}/fund-periods`;
-    }
 }
-
-const serviceCache = new Map<string, FundPeriodService>();
-
-export function getFundPeriodService(clubSlug: string): FundPeriodService {
-    if (!serviceCache.has(clubSlug)) {
-        serviceCache.set(clubSlug, new FundPeriodService(clubSlug));
-    }
-    return serviceCache.get(clubSlug)!;
-}
+export const fundPeriodService = new FundPeriodService();
+export const getFundPeriodService = (_clubSlug?: string) => fundPeriodService;

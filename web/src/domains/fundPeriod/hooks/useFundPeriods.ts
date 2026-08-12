@@ -92,11 +92,11 @@ function buildPayload(
 }
 
 export function useFundPeriods(
-    clubSlug: string,
     params: ReturnType<
         typeof useListParams<FundPeriodFilters>
     >["params"]
 ) {
+    const clubSlug = params.club_slug as string | undefined;
     const queryClient = useQueryClient();
     const t = useTranslations("common");
 
@@ -104,7 +104,7 @@ export function useFundPeriods(
         new Set()
     );
 
-    const service = getFundPeriodService(clubSlug);
+    const service = getFundPeriodService();
 
     const queryKey = ["fund-periods", clubSlug, params] as const;
 
@@ -353,18 +353,15 @@ export function useFundPeriods(
 }
 
 export function useFundPeriodSelect(
-    clubSlug?: string | null
+    params?: Partial<FundPeriodFilters> & { club_slug?: string | null }
 ) {
+    const clubSlug = params?.club_slug;
     const query = useQuery({
         queryKey: ["fund-periods-select", clubSlug],
         queryFn: () => {
-            if (!clubSlug) {
-                throw new Error("Club slug is required");
-            }
-
-            return getFundPeriodService(clubSlug).select();
+            return getFundPeriodService().select(params);
         },
-        enabled: Boolean(clubSlug),
+        enabled: true,
     });
 
     return {

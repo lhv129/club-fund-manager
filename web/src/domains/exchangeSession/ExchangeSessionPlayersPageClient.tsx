@@ -50,8 +50,8 @@ export function ExchangeSessionPlayersPageClient() {
         defaultSortDir: "asc",
     });
 
-    const players = useExchangeSessionPlayers(slug, id, params);
-    const users = useUserSelect();
+    const players = useExchangeSessionPlayers({ ...params, club_slug: slug, exchange_session_id: id });
+    const users = useUserSelect({ club_slug: slug });
 
     const [isOpen, setIsOpen] = useState(false);
     const [selected, setSelected] =

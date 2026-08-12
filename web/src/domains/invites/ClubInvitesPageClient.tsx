@@ -89,7 +89,7 @@ export function ClubInvitesPageClient() {
         handleCreate,
         handleToggle,
         handleDeleteConfirm,
-    } = useClubInvites(slug ?? "", params);
+    } = useClubInvites({ ...params, club_slug: slug });
 
     // ── UI state ──────────────────────────────────────────────────────────────
     const [deleteTarget, setDeleteTarget] = useState<ClubInvite | null>(null);

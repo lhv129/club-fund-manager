@@ -19,7 +19,6 @@ import {
     type ColumnDef,
 } from "@/components/shared/ui/Table";
 import { FilterBar } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
 import {
     FormModal,
     type FormFieldDef,
@@ -44,6 +43,7 @@ import type {
 } from "./types";
 
 import { getTranslatedTitle } from "@/lib/translations";
+import { Pagination } from "@/components/shared/ui/Pagination";
 
 export function ExchangeSessionsPageClient() {
     const locale = useLocale();
@@ -59,7 +59,7 @@ export function ExchangeSessionsPageClient() {
         hasPermission(
             "exchange_session",
             "create",
-            club?.id
+            club?.id,
         );
 
     const canUpdate =
@@ -67,7 +67,7 @@ export function ExchangeSessionsPageClient() {
         hasPermission(
             "exchange_session",
             "update",
-            club?.id
+            club?.id,
         );
 
     const canDelete =
@@ -75,7 +75,7 @@ export function ExchangeSessionsPageClient() {
         hasPermission(
             "exchange_session",
             "delete",
-            club?.id
+            club?.id,
         );
 
     const {
@@ -94,22 +94,32 @@ export function ExchangeSessionsPageClient() {
         defaultSortDir: "asc",
     });
 
-    const h = useExchangeSessions(
-        slug ?? "",
-        params
-    );
+    const h = useExchangeSessions({
+        ...params,
+        club_slug: slug,
+    });
 
-    const ps = usePlayingScheduleSelect(slug);
+    const ps = usePlayingScheduleSelect({
+        club_slug: slug,
+    });
 
     const [open, setOpen] = useState(false);
+
     const [selected, setSelected] =
         useState<ExchangeSession | null>(null);
+
     const [del, setDel] =
         useState<ExchangeSession | null>(null);
+
     const [draftType, setDraftType] =
-        useState<ExchangeSessionFilters["type"]>(params.type);
+        useState<ExchangeSessionFilters["type"]>(
+            params.type,
+        );
+
     const [draftStatus, setDraftStatus] =
-        useState<ExchangeSessionFilters["status"]>(params.status);
+        useState<ExchangeSessionFilters["status"]>(
+            params.status,
+        );
 
     const close = () => {
         setOpen(false);
@@ -127,7 +137,7 @@ export function ExchangeSessionsPageClient() {
                     label:
                         getTranslatedTitle(
                             v.translations,
-                            locale
+                            locale,
                         ) || v.court_name,
                 })),
             },
@@ -207,7 +217,7 @@ export function ExchangeSessionsPageClient() {
             ps.data,
             t,
             x,
-        ]
+        ],
     );
 
     const tf: TranslatableFieldDef[] = [
@@ -229,19 +239,23 @@ export function ExchangeSessionsPageClient() {
             playing_schedule_id:
                 selected.playing_schedule_id
                     ? String(
-                        selected.playing_schedule_id
+                        selected.playing_schedule_id,
                     )
                     : "",
-            session_date: selected.session_date,
-            court_name: selected.court_name,
+            session_date:
+                selected.session_date,
+            court_name:
+                selected.court_name,
             court_address:
                 selected.court_address ?? "",
-            start_time: selected.start_time,
-            end_time: selected.end_time,
+            start_time:
+                selected.start_time,
+            end_time:
+                selected.end_time,
             type: selected.type,
             status: selected.status,
             sort_order: String(
-                selected.sort_order
+                selected.sort_order,
             ),
         }
         : {
@@ -259,8 +273,11 @@ export function ExchangeSessionsPageClient() {
     const tr = selected
         ? Object.fromEntries(
             (selected.translations ?? []).map(
-                (v) => [v.locale, { ...v }]
-            )
+                (v) => [
+                    v.locale,
+                    { ...v },
+                ],
+            ),
         )
         : {
             vi: {
@@ -279,7 +296,8 @@ export function ExchangeSessionsPageClient() {
         {
             key: "date",
             label: x("sessionDate"),
-            render: (row) => row.session_date,
+            render: (row) =>
+                row.session_date,
         },
         {
             key: "title",
@@ -287,7 +305,7 @@ export function ExchangeSessionsPageClient() {
             render: (row) =>
                 getTranslatedTitle(
                     row.translations,
-                    locale
+                    locale,
                 ) || row.court_name,
         },
         {
@@ -296,8 +314,10 @@ export function ExchangeSessionsPageClient() {
             render: (row) => (
                 <div>
                     {row.court_name}
+
                     <p className="text-xs text-foreground-muted">
-                        {row.start_time} - {row.end_time}
+                        {row.start_time} -{" "}
+                        {row.end_time}
                     </p>
                 </div>
             ),
@@ -326,7 +346,8 @@ export function ExchangeSessionsPageClient() {
         {
             key: "players",
             label: x("players"),
-            render: (row) => row.player_count,
+            render: (row) =>
+                row.player_count,
         },
     ];
 
@@ -336,8 +357,9 @@ export function ExchangeSessionsPageClient() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
+            {/* Header */}
+            <div className="mb-6 flex items-center justify-between gap-4">
+                <div className="min-w-0">
                     <h1 className="text-xl font-semibold text-foreground">
                         {x("title")}
                     </h1>
@@ -352,81 +374,156 @@ export function ExchangeSessionsPageClient() {
                 {canCreate && (
                     <button
                         type="button"
-                        onClick={() => setOpen(true)}
-                        className="flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+                        onClick={() =>
+                            setOpen(true)
+                        }
+                        className="
+                            inline-flex
+                            shrink-0
+                            items-center
+                            gap-2
+                            rounded-xl
+                            bg-primary
+                            px-3.5
+                            py-2
+                            text-sm
+                            font-medium
+                            text-primary-foreground
+                            transition-colors
+                            hover:bg-primary-hover
+                            focus-visible:outline-none
+                            focus-visible:ring-2
+                            focus-visible:ring-primary/40
+                        "
                     >
                         <Plus className="h-3.5 w-3.5" />
+
                         {x("create")}
                     </button>
                 )}
             </div>
 
-            <FilterBar
-                search={params.search}
-                sortBy={params.sort_by}
-                sortDir={params.sort_dir}
-                sortOptions={[
-                    {
-                        value: "session_date",
-                        label: x("sessionDate"),
-                    },
-                    {
-                        value: "status",
-                        label: t("status"),
-                    },
-                    {
-                        value: "created_at",
-                        label: t("createdAt"),
-                    },
-                ]}
-                loading={h.isLoading}
-                showStatusFilter={false}
-                extraFilters={(
-                    <>
-                        <Select
-                            label={x("type")}
-                            options={[
-                                { value: "scheduled", label: x("scheduled") },
-                                { value: "manual", label: x("manual") },
-                            ]}
-                            value={draftType ?? ""}
-                            onChange={(value) => setDraftType(
-                                (value || undefined) as ExchangeSessionFilters["type"]
-                            )}
-                            placeholder={t("all")}
-                        />
-                        <Select
-                            label={t("status")}
-                            options={[
-                                { value: "upcoming", label: x("upcoming") },
-                                { value: "completed", label: x("completed") },
-                                { value: "cancelled", label: x("cancelled") },
-                            ]}
-                            value={draftStatus ?? ""}
-                            onChange={(value) => setDraftStatus(
-                                (value || undefined) as ExchangeSessionFilters["status"]
-                            )}
-                            placeholder={t("all")}
-                        />
-                    </>
-                )}
-                onApply={(filters) => updateMany({
-                    ...filters,
-                    type: draftType,
-                    status: draftStatus,
-                })}
-                onReset={() => {
-                    setDraftType(undefined);
-                    setDraftStatus(undefined);
-                    reset();
-                }}
-            />
+            {/* Filters */}
+            <div className="mb-6">
+                <FilterBar
+                    search={params.search}
+                    sortBy={params.sort_by}
+                    sortDir={params.sort_dir}
+                    sortOptions={[
+                        {
+                            value: "session_date",
+                            label: x("sessionDate"),
+                        },
+                        {
+                            value: "status",
+                            label: t("status"),
+                        },
+                        {
+                            value: "created_at",
+                            label: t("createdAt"),
+                        },
+                    ]}
+                    loading={h.isLoading}
+                    showStatusFilter={false}
+                    extraFilters={(
+                        <>
+                            <Select
+                                label={x("type")}
+                                options={[
+                                    {
+                                        value: "scheduled",
+                                        label: x(
+                                            "scheduled",
+                                        ),
+                                    },
+                                    {
+                                        value: "manual",
+                                        label: x(
+                                            "manual",
+                                        ),
+                                    },
+                                ]}
+                                value={
+                                    draftType ?? ""
+                                }
+                                onChange={(value) =>
+                                    setDraftType(
+                                        (value ||
+                                            undefined) as ExchangeSessionFilters["type"],
+                                    )
+                                }
+                                placeholder={t(
+                                    "all",
+                                )}
+                            />
 
+                            <Select
+                                label={t(
+                                    "status",
+                                )}
+                                options={[
+                                    {
+                                        value: "upcoming",
+                                        label: x(
+                                            "upcoming",
+                                        ),
+                                    },
+                                    {
+                                        value: "completed",
+                                        label: x(
+                                            "completed",
+                                        ),
+                                    },
+                                    {
+                                        value: "cancelled",
+                                        label: x(
+                                            "cancelled",
+                                        ),
+                                    },
+                                ]}
+                                value={
+                                    draftStatus ??
+                                    ""
+                                }
+                                onChange={(value) =>
+                                    setDraftStatus(
+                                        (value ||
+                                            undefined) as ExchangeSessionFilters["status"],
+                                    )
+                                }
+                                placeholder={t(
+                                    "all",
+                                )}
+                            />
+                        </>
+                    )}
+                    onApply={(filters) =>
+                        updateMany({
+                            ...filters,
+                            type: draftType,
+                            status: draftStatus,
+                        })
+                    }
+                    onReset={() => {
+                        setDraftType(
+                            undefined,
+                        );
+                        setDraftStatus(
+                            undefined,
+                        );
+                        reset();
+                    }}
+                />
+            </div>
+
+            {/* Table + Pagination */}
             <Table
                 columns={cols}
                 data={h.data}
                 loading={h.isLoading}
-                keyExtractor={(row) => row.id}
+                keyExtractor={(row) =>
+                    row.id
+                }
                 emptyText={x("notFound")}
                 renderActions={(row) => (
                     <TableActions>
@@ -437,21 +534,24 @@ export function ExchangeSessionsPageClient() {
                             label={x("players")}
                             onClick={() =>
                                 router.push(
-                                    `/club/${slug}/exchange-sessions/${row.id}/players`
+                                    `/club/${slug}/exchange-sessions/${row.id}/players`,
                                 )
                             }
                         />
 
                         {canUpdate &&
-                            row.status === "upcoming" && (
+                            row.status ===
+                            "upcoming" && (
                                 <TableActionItem
                                     icon={
                                         <CheckCircle2 className="h-4 w-4" />
                                     }
-                                    label={x("complete")}
+                                    label={x(
+                                        "complete",
+                                    )}
                                     onClick={() =>
                                         h.handleComplete(
-                                            row.id
+                                            row.id,
                                         )
                                     }
                                 />
@@ -462,10 +562,16 @@ export function ExchangeSessionsPageClient() {
                                 icon={
                                     <Pencil className="h-4 w-4" />
                                 }
-                                label={t("edit")}
+                                label={t(
+                                    "edit",
+                                )}
                                 onClick={() => {
-                                    setSelected(row);
-                                    setOpen(true);
+                                    setSelected(
+                                        row,
+                                    );
+                                    setOpen(
+                                        true,
+                                    );
                                 }}
                             />
                         )}
@@ -475,10 +581,14 @@ export function ExchangeSessionsPageClient() {
                                 icon={
                                     <Trash2 className="h-4 w-4" />
                                 }
-                                label={t("delete")}
+                                label={t(
+                                    "delete",
+                                )}
                                 variant="danger"
                                 onClick={() =>
-                                    setDel(row)
+                                    setDel(
+                                        row,
+                                    )
                                 }
                             />
                         )}
@@ -494,23 +604,25 @@ export function ExchangeSessionsPageClient() {
                 onLimitChange={setLimit}
             />
 
+            {/* Create / Edit */}
             <FormModal
                 isOpen={open}
                 onClose={close}
                 onSubmit={async (
                     values,
-                    translations?: TranslationEntry[]
+                    translations?: TranslationEntry[],
                 ) => {
-                    const result = selected
-                        ? await h.handleEdit(
-                            selected.id,
-                            values,
-                            translations
-                        )
-                        : await h.handleCreate(
-                            values,
-                            translations
-                        );
+                    const result =
+                        selected
+                            ? await h.handleEdit(
+                                selected.id,
+                                values,
+                                translations,
+                            )
+                            : await h.handleCreate(
+                                values,
+                                translations,
+                            );
 
                     if (!result) {
                         close();
@@ -535,32 +647,44 @@ export function ExchangeSessionsPageClient() {
                 }
             />
 
+            {/* Delete */}
             <DeleteConfirmModal
                 isOpen={!!del}
-                title={t("deleteConfirmTitle")}
-                description={t("deleteConfirmDesc")}
+                title={t(
+                    "deleteConfirmTitle",
+                )}
+                description={t(
+                    "deleteConfirmDesc",
+                )}
                 message={
                     del
-                        ? x("deleteConfirmMsg", {
-                            name:
-                                getTranslatedTitle(
-                                    del.translations,
-                                    locale
-                                ) ||
-                                del.court_name,
-                        })
+                        ? x(
+                            "deleteConfirmMsg",
+                            {
+                                name:
+                                    getTranslatedTitle(
+                                        del.translations,
+                                        locale,
+                                    ) ||
+                                    del.court_name,
+                            },
+                        )
                         : ""
                 }
                 confirmText={t("delete")}
                 cancelText={t("cancel")}
                 onConfirm={() => {
                     if (del) {
-                        h.handleDelete(del.id);
+                        h.handleDelete(
+                            del.id,
+                        );
                     }
 
                     setDel(null);
                 }}
-                onCancel={() => setDel(null)}
+                onCancel={() =>
+                    setDel(null)
+                }
                 loading={h.isDeleting}
             />
         </div>

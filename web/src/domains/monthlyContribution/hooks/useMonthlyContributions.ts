@@ -1,7 +1,6 @@
 // src/domains/monthlyContribution/hooks/useMonthlyContributions.ts
 "use client";
 
-import { useParams } from "next/navigation";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
@@ -72,9 +71,9 @@ export function useMonthlyContributions(
     const queryClient = useQueryClient();
     const t = useTranslations("common");
 
-    const { slug: clubSlug } = useParams<{ slug: string }>();
+    const clubSlug = params.club_slug as string | undefined;
 
-    const service = getMonthlyContributionService(clubSlug);
+    const service = getMonthlyContributionService();
 
     const queryKey = [
         "monthly-contributions",
@@ -249,17 +248,14 @@ export function useMonthlyContributions(
 
 // ─── Select hook (dùng bởi module khác cần dropdown monthly-contribution) ────
 // Cùng query key với inline select (nếu có trong useMonthlyContributions) để share cache.
-export function useMonthlyContributionSelect(clubSlug?: string | null) {
+export function useMonthlyContributionSelect(params?: Partial<MonthlyContributionFilters> & { club_slug?: string | null }) {
+    const clubSlug = params?.club_slug;
     const query = useQuery({
         queryKey: ["monthly-contributions-select", clubSlug],
         queryFn: () => {
-            if (!clubSlug) {
-                throw new Error("Club slug is required");
-            }
-
-            return getMonthlyContributionService(clubSlug).select();
+            return getMonthlyContributionService().select(params);
         },
-        enabled: Boolean(clubSlug),
+        enabled: true,
     });
 
     return {
