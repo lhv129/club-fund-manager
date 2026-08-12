@@ -16,7 +16,7 @@ class ClubInviteController extends BaseController
     ) {}
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/invites
+     * GET /api/v1/invites
      * Danh sách link invite của club
      */
     public function index(FilterClubInviteRequest $request): JsonResponse
@@ -30,7 +30,7 @@ class ClubInviteController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/invites/{id}
+     * GET /api/v1/invites/{id}
      */
     public function show(string $clubSlug, int $id): JsonResponse
     {
@@ -40,7 +40,7 @@ class ClubInviteController extends BaseController
     }
 
     /**
-     * POST /api/v1/clubs/{clubSlug}/invites
+     * POST /api/v1/invites
      * Tạo link invite mới cho club
      */
     public function store(StoreClubInviteRequest $request, string $clubSlug): JsonResponse
@@ -51,7 +51,7 @@ class ClubInviteController extends BaseController
     }
 
     /**
-     * DELETE /api/v1/clubs/{clubSlug}/invites/{id}
+     * DELETE /api/v1/invites/{id}
      * Thu hồi link invite
      */
     public function destroy(string $clubSlug, int $id): JsonResponse
@@ -62,7 +62,7 @@ class ClubInviteController extends BaseController
     }
 
     /**
-     * POST /api/v1/clubs/{clubSlug}/invites/{id}/toggle-status
+     * POST /api/v1/invites/{id}/toggle-status
      * Bật/tắt link invite
      */
     public function toggleStatus(string $clubSlug, int $id): JsonResponse

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
+use App\Services\PermissionCacheService;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
@@ -120,16 +121,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isSuperAdmin(): bool
     {
-        return DB::table('club_member_roles')
-            ->join('roles', 'roles.id', '=', 'club_member_roles.role_id')
-            ->where('club_member_roles.user_id', $this->id)
-            ->where('club_member_roles.is_active', 1)
-            ->whereNull('club_member_roles.deleted_at')
-            ->whereNull('club_member_roles.club_id')   // system scope
-            ->where('roles.slug', 'superadmin')
-            ->where('roles.is_active', 1)
-            ->whereNull('roles.deleted_at')
-            ->exists();
+        return app(PermissionCacheService::class)->isSuperAdmin($this);
     }
 
     /**
@@ -167,50 +159,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function hasPermission(string $module, string $action, ?int $clubId = null): bool
     {
-        // Superadmin [*] bypass tất cả
-        if ($this->isSuperAdmin()) {
-            return true;
-        }
-        $query = DB::table('club_member_roles')
-            ->join('roles', function ($j) {
-                $j->on('roles.id', '=', 'club_member_roles.role_id')
-                    ->where('roles.is_active', 1)
-                    ->whereNull('roles.deleted_at');
-            })
-            ->join('role_permissions', function ($j) {
-                $j->on('role_permissions.role_id', '=', 'roles.id')
-                    ->where('role_permissions.is_active', 1)
-                    ->whereNull('role_permissions.deleted_at');
-            })
-            ->join('permissions', function ($j) {
-                $j->on('permissions.id', '=', 'role_permissions.permission_id')
-                    ->where('permissions.is_active', 1)
-                    ->whereNull('permissions.deleted_at');
-            })
-            ->join('modules', function ($j) {
-                $j->on('modules.id', '=', 'permissions.module_id')
-                    ->where('modules.is_active', 1)
-                    ->whereNull('modules.deleted_at');
-            })
-            ->where('club_member_roles.user_id', $this->id)
-            ->where('club_member_roles.is_active', 1)
-            ->whereNull('club_member_roles.deleted_at')
-            ->where('modules.slug', $module)
-            ->where('permissions.action', $action);
-
-        // Phân tách scope — KHÔNG mix, KHÔNG fallback "any club":
-        //   null → SYSTEM SCOPE (admin/role/permission/user/...)  → club_id IS NULL
-        //   int  → CLUB SCOPE (chỉ club cụ thể)                    → club_id = $clubId
-        if ($clubId === null) {
-            $query->whereNull('club_member_roles.club_id');
-        } else {
-            $query->where(function ($q) use ($clubId) {
-                $q->where('club_member_roles.club_id', $clubId)
-                    ->orWhereNull('club_member_roles.club_id');
-            });
-        }
-
-        return $query->exists();
+        return app(PermissionCacheService::class)->hasPermission($this, $module, $action, $clubId);
     }
 
     /**

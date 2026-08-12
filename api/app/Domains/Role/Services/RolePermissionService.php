@@ -7,6 +7,7 @@ use App\Domains\Module\Repositories\ModuleRepository;
 use App\Domains\Role\Repositories\RolePermissionRepository;
 use App\Domains\Role\Repositories\RoleRepository;
 use App\Exceptions\ApiException;
+use App\Services\PermissionCacheService;
 
 
 class RolePermissionService extends BaseService
@@ -15,6 +16,7 @@ class RolePermissionService extends BaseService
         RolePermissionRepository $repository,
         protected RoleRepository $roleRepository,
         protected ModuleRepository $moduleRepository,
+        protected PermissionCacheService $permissionCache,
     ) {
         parent::__construct($repository);
     }
@@ -38,6 +40,7 @@ class RolePermissionService extends BaseService
             ->all();
 
         $this->roleRepository->syncPermissions($role, $permissionIds);
+        $this->permissionCache->forgetAll();
 
         // Assembly giống RoleService::getPermissionsBySlug
         $activeIds = $this->roleRepository->getActivePermissionIds($role->id);

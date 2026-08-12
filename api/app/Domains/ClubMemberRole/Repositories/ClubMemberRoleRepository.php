@@ -5,11 +5,15 @@ namespace App\Domains\ClubMemberRole\Repositories;
 use App\Base\BaseRepository;
 use App\Domains\Club\Models\ClubMember;
 use App\Domains\ClubMemberRole\Models\ClubMemberRole;
+use App\Services\PermissionCacheService;
 
 
 class ClubMemberRoleRepository extends BaseRepository
 {
-    public function __construct(ClubMemberRole $model)
+    public function __construct(
+        ClubMemberRole $model,
+        protected PermissionCacheService $permissionCache,
+    )
     {
         parent::__construct($model);
     }
@@ -37,15 +41,21 @@ class ClubMemberRoleRepository extends BaseRepository
                 'is_active' => true,
             ]);
 
+            $this->permissionCache->forgetUser($member->user_id);
+
             return $clubMemberRole;
         }
 
-        return $this->model->create([
+        $role = $this->model->create([
             'club_id'   => $member->club_id,
             'user_id'   => $member->user_id,
             'role_id'   => $roleId,
             'is_active' => true,
         ]);
+
+        $this->permissionCache->forgetUser($member->user_id);
+
+        return $role;
     }
 
     /**
@@ -64,6 +74,8 @@ class ClubMemberRoleRepository extends BaseRepository
             ->where('club_id', $member->club_id)
             ->where('user_id', $member->user_id)
             ->delete();
+
+        $this->permissionCache->forgetUser($member->user_id);
     }
 
     /**
@@ -84,6 +96,8 @@ class ClubMemberRoleRepository extends BaseRepository
                 'is_active' => true,
             ]);
         }
+
+        $this->permissionCache->forgetUser($member->user_id);
     }
 
     /**
@@ -106,6 +120,8 @@ class ClubMemberRoleRepository extends BaseRepository
             ->where('user_id', $member->user_id)
             ->where('role_id', $roleId)
             ->delete();
+
+        $this->permissionCache->forgetUser($member->user_id);
     }
 
     /**
@@ -131,6 +147,8 @@ class ClubMemberRoleRepository extends BaseRepository
         $role->update([
             'is_active' => true,
         ]);
+
+        $this->permissionCache->forgetUser($member->user_id);
 
         return $role;
     }

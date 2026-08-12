@@ -10,6 +10,7 @@ use App\Domains\Role\Repositories\RoleRepository;
 use App\Exceptions\ApiException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Services\PermissionCacheService;
 
 class RoleService extends BaseService
 {
@@ -19,6 +20,7 @@ class RoleService extends BaseService
         RoleRepository $repository,
         protected ModuleRepository $moduleRepository,
         protected RolePermissionRepository $rolePermissionRepository,
+        protected PermissionCacheService $permissionCache,
     ) {
         parent::__construct($repository);
     }
@@ -112,6 +114,8 @@ class RoleService extends BaseService
             );
         });
 
+        $this->permissionCache->forgetAll();
+
         return $role->load('translations');
     }
 
@@ -134,13 +138,18 @@ class RoleService extends BaseService
             $this->repository->delete($role);
         });
 
+        $this->permissionCache->forgetAll();
+
         return true;
     }
 
     public function toggleStatus(int $id): Role
     {
         /** @var Role */
-        return parent::toggleStatus($id);
+        $role = parent::toggleStatus($id);
+        $this->permissionCache->forgetAll();
+
+        return $role;
     }
 
     public function getForSelect(array $filters = []): Collection

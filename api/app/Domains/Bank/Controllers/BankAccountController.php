@@ -80,7 +80,7 @@ class BankAccountController extends BaseController
     }
 
     /**
-     * POST /api/v1/clubs/{clubSlug}/bank-accounts/{id}/toggle-default
+     * POST /api/v1/bank-accounts/{id}/toggle-default
      */
     public function toggleDefault(string $clubSlug, int $id): JsonResponse
     {

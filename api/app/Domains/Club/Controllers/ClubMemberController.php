@@ -30,7 +30,7 @@ class ClubMemberController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/members
+     * GET /api/v1/members
      * Danh sách thành viên của club (lọc theo status, join_type...)
      */
     public function index(FilterClubMemberRequest $request): JsonResponse
@@ -44,7 +44,7 @@ class ClubMemberController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/members/{memberId}
+     * GET /api/v1/members/{memberId}
      */
     public function show(string $clubSlug, int $memberId): JsonResponse
     {
@@ -54,7 +54,7 @@ class ClubMemberController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/members/select
+     * GET /api/v1/members/select
      */
 
     public function select(FilterClubMemberRequest $request): JsonResponse
@@ -69,7 +69,7 @@ class ClubMemberController extends BaseController
     }
 
     /**
-     * POST /api/v1/clubs/{clubSlug}/members/{memberId}/approve
+     * POST /api/v1/members/{memberId}/approve
      * Chủ club duyệt thành viên → tự động gán role "member"
      */
     public function approve(string $clubSlug, int $memberId): JsonResponse
@@ -80,7 +80,7 @@ class ClubMemberController extends BaseController
     }
 
     /**
-     * POST /api/v1/clubs/{clubSlug}/members/{memberId}/reject
+     * POST /api/v1/members/{memberId}/reject
      * Chủ club từ chối thành viên
      *
      * Body: { "rejected_reason": "..." }  (optional)
@@ -98,7 +98,7 @@ class ClubMemberController extends BaseController
     }
 
     /**
-     * DELETE /api/v1/clubs/{clubSlug}/members/{memberId}
+     * DELETE /api/v1/members/{memberId}
      * Xoá thành viên khỏi club
      */
     public function destroy(string $clubSlug, int $memberId): JsonResponse

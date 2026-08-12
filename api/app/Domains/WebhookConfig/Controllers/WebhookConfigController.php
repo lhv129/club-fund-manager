@@ -16,7 +16,7 @@ class WebhookConfigController extends BaseController
     public function __construct(protected WebhookConfigService $service) {}
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/webhook-configs
+     * GET /api/v1/webhook-configs
      */
     public function index(FilterWebhookConfigRequest $request): JsonResponse
     {
@@ -26,7 +26,7 @@ class WebhookConfigController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/webhook-configs/cursor
+     * GET /api/v1/webhook-configs/cursor
      */
     public function cursorIndex(Request $request): JsonResponse
     {
@@ -36,7 +36,7 @@ class WebhookConfigController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/webhook-configs/select — dropdown.
+     * GET /api/v1/webhook-configs/select — dropdown.
      */
     public function select(Request $request): JsonResponse
     {
@@ -46,7 +46,7 @@ class WebhookConfigController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/webhook-configs/{id}
+     * GET /api/v1/webhook-configs/{id}
      */
     public function show(string $clubSlug, int $id): JsonResponse
     {
@@ -58,7 +58,7 @@ class WebhookConfigController extends BaseController
     }
 
     /**
-     * POST /api/v1/clubs/{clubSlug}/webhook-configs
+     * POST /api/v1/webhook-configs
      */
     public function store(StoreWebhookConfigRequest $request, string $clubSlug): JsonResponse
     {
@@ -73,7 +73,7 @@ class WebhookConfigController extends BaseController
     }
 
     /**
-     * PUT /api/v1/clubs/{clubSlug}/webhook-configs/{id}
+     * PUT /api/v1/webhook-configs/{id}
      */
     public function update(UpdateWebhookConfigRequest $request, string $clubSlug, int $id): JsonResponse
     {
@@ -85,7 +85,7 @@ class WebhookConfigController extends BaseController
     }
 
     /**
-     * DELETE /api/v1/clubs/{clubSlug}/webhook-configs/{id} — xoá mềm + dồn sort_order.
+     * DELETE /api/v1/webhook-configs/{id} — xoá mềm + dồn sort_order.
      */
     public function destroy(string $clubSlug, int $id): JsonResponse
     {
@@ -95,7 +95,7 @@ class WebhookConfigController extends BaseController
     }
 
     /**
-     * PATCH /api/v1/clubs/{clubSlug}/webhook-configs/{id}/toggle-status
+     * PATCH /api/v1/webhook-configs/{id}/toggle-status
      */
     public function toggleStatus(string $clubSlug, int $id): JsonResponse
     {

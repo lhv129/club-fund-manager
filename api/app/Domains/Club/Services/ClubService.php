@@ -11,13 +11,17 @@ use App\Helpers\ImageHelper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\PermissionCacheService;
 
 class ClubService extends BaseService
 {
     protected string $notFoundMessage = 'domains/club.not_found';
     protected object $repository;
 
-    public function __construct(ClubRepository $repository)
+    public function __construct(
+        ClubRepository $repository,
+        protected PermissionCacheService $permissionCache,
+    )
     {
         parent::__construct($repository);
     }
@@ -214,6 +218,8 @@ class ClubService extends BaseService
         $club->is_active = !$club->is_active;
         $club->save();
 
+        $this->permissionCache->forgetClub($club->id);
+
         return $club->fresh('translations');
     }
 
@@ -228,6 +234,13 @@ class ClubService extends BaseService
     {
         $club = $this->find($clubId);
 
-        return $this->repository->updateOwner($club, $newOwnerId);
+        $oldOwnerId = (int) $club->user_id;
+        $updatedClub = $this->repository->updateOwner($club, $newOwnerId);
+
+        $this->permissionCache->forgetUser($oldOwnerId);
+        $this->permissionCache->forgetUser($newOwnerId);
+        $this->permissionCache->forgetClub($clubId);
+
+        return $updatedClub;
     }
 }

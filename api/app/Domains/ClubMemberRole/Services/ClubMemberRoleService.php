@@ -7,21 +7,25 @@ use App\Domains\Club\Repositories\ClubRepository;
 use App\Domains\ClubMemberRole\Repositories\ClubMemberRoleRepository;
 use App\Domains\Role\Models\Role;
 use App\Domains\Role\Repositories\RoleRepository;
+use App\Services\PermissionCacheService;
 
 class ClubMemberRoleService extends BaseService
 {
     protected object $repository;
     protected object $roleRepository;
     protected object $clubRepository;
+    protected PermissionCacheService $permissionCache;
 
     public function __construct(
         ClubMemberRoleRepository $repository,
         RoleRepository $roleRepository,
-        ClubRepository $clubRepository
+        ClubRepository $clubRepository,
+        PermissionCacheService $permissionCache,
     ) {
         $this->repository = $repository;
         $this->roleRepository = $roleRepository;
         $this->clubRepository = $clubRepository;
+        $this->permissionCache = $permissionCache;
     }
 
     public function syncClubMemberRole(array $data)
@@ -51,6 +55,7 @@ class ClubMemberRoleService extends BaseService
             );
         }
         $clubMemberRole->load('role', 'role.translation:id,role_id,locale,name');
+        $this->permissionCache->forgetUser((int) $clubMemberRole->user_id);
         return $clubMemberRole;
     }
 }

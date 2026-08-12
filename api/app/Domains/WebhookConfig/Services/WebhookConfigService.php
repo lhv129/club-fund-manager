@@ -28,7 +28,7 @@ class WebhookConfigService extends BaseService
     // -------------------------------------------------------------------------
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/webhook-configs
+     * GET /api/v1/webhook-configs
      *
      * Inject club_id từ clubSlug — business rule, không phải query builder.
      */
@@ -38,7 +38,7 @@ class WebhookConfigService extends BaseService
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/webhook-configs/cursor
+     * GET /api/v1/webhook-configs/cursor
      */
     public function cursorPaginate(array $filters = []): CursorPaginator
     {
@@ -46,7 +46,7 @@ class WebhookConfigService extends BaseService
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/webhook-configs/select — dropdown.
+     * GET /api/v1/webhook-configs/select — dropdown.
      */
     public function getForSelect(array $filters = []): Collection
     {

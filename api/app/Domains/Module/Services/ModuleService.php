@@ -2,6 +2,8 @@
 
 namespace App\Domains\Module\Services;
 
+use App\Services\PermissionCacheService;
+
 use App\Base\BaseService;
 use App\Domains\Module\Models\Module;
 use App\Domains\Module\Repositories\ModuleRepository;
@@ -18,6 +20,7 @@ class ModuleService extends BaseService
     public function __construct(
         ModuleRepository $repository,
         protected PermissionRepository $permissionRepository,
+        protected PermissionCacheService $permissionCache,
     ) {
         parent::__construct($repository);
     }
@@ -122,6 +125,8 @@ class ModuleService extends BaseService
             return $module;
         });
 
+        $this->permissionCache->forgetAll();
+
         return $this->find($module->id);
     }
 
@@ -152,6 +157,8 @@ class ModuleService extends BaseService
             }
         });
 
+        $this->permissionCache->forgetAll();
+
         return $this->find($id);
     }
 
@@ -172,6 +179,8 @@ class ModuleService extends BaseService
             $this->repository->delete($module);
         });
 
+        $this->permissionCache->forgetAll();
+
         return true;
     }
 
@@ -180,6 +189,8 @@ class ModuleService extends BaseService
         $module = $this->find($id);
         $module->is_active = !$module->is_active;
         $module->save();
+
+        $this->permissionCache->forgetAll();
 
         return $this->find($id);
     }

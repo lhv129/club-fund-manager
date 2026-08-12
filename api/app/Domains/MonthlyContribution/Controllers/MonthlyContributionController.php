@@ -16,7 +16,7 @@ class MonthlyContributionController extends BaseController
     public function __construct(protected MonthlyContributionService $service) {}
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/monthly-contributions
+     * GET /api/v1/monthly-contributions
      *     ?search=&period_id=1&status=pending&paid_by=bank&is_active=1
      *     &sort_by=payment_date&sort_dir=desc&limit=20&page=1
      */
@@ -32,7 +32,7 @@ class MonthlyContributionController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/monthly-contributions/cursor?limit=10&cursor=eyJpZCI6MTAwfQ
+     * GET /api/v1/monthly-contributions/cursor?limit=10&cursor=eyJpZCI6MTAwfQ
      */
     public function cursorIndex(Request $request): JsonResponse
     {
@@ -52,7 +52,7 @@ class MonthlyContributionController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/monthly-contributions/select — dropdown, không Resource, không phân trang.
+     * GET /api/v1/monthly-contributions/select — dropdown, không Resource, không phân trang.
      */
     public function select(Request $request): JsonResponse
     {
@@ -71,7 +71,7 @@ class MonthlyContributionController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/monthly-contributions/{id}
+     * GET /api/v1/monthly-contributions/{id}
      */
     public function show(string $clubSlug, int $id): JsonResponse
     {
@@ -85,7 +85,7 @@ class MonthlyContributionController extends BaseController
     }
 
     /**
-     * POST /api/v1/clubs/{clubSlug}/monthly-contributions
+     * POST /api/v1/monthly-contributions
      */
     public function store(StoreMonthlyContributionRequest $request): JsonResponse
     {
@@ -100,7 +100,7 @@ class MonthlyContributionController extends BaseController
     }
 
     /**
-     * PUT /api/v1/clubs/{clubSlug}/monthly-contributions/{id}
+     * PUT /api/v1/monthly-contributions/{id}
      */
     public function update(UpdateMonthlyContributionRequest $request, string $clubSlug, int $id): JsonResponse
     {
@@ -116,7 +116,7 @@ class MonthlyContributionController extends BaseController
     }
 
     /**
-     * DELETE /api/v1/clubs/{clubSlug}/monthly-contributions/{id} — xoá mềm + dồn sort_order.
+     * DELETE /api/v1/monthly-contributions/{id} — xoá mềm + dồn sort_order.
      */
     public function destroy(string $clubSlug, int $id): JsonResponse
     {

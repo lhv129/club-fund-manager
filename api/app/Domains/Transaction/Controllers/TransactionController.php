@@ -46,7 +46,7 @@ class TransactionController extends BaseController
     }
 
     /**
-     * GET /api/v1/clubs/{clubSlug}/transactions/select
+     * GET /api/v1/transactions/select
      */
 
     public function select(FilterTransactionRequest $request): JsonResponse
