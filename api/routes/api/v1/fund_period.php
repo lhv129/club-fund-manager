@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::middleware('auth.jwt')->group(function () {
-    Route::prefix('clubs/{clubSlug}/fund-periods')->group(function () {
+    Route::prefix('fund-periods')->group(function () {
        // Tĩnh trước — bắt buộc đứng trước /{id}
     Route::get('/cursor',   [FundPeriodController::class, 'cursorIndex'])->middleware('perm.club:fund_period,view');
     Route::get('/select',   [FundPeriodController::class, 'select'])->middleware('perm.club:fund_period,view');

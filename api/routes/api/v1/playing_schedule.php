@@ -4,7 +4,7 @@ use App\Domains\PlayingSchedule\Controllers\PlayingScheduleController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->group(function () {
-    Route::prefix('clubs/{clubSlug}/playing-schedules')->group(function () {
+    Route::prefix('playing-schedules')->group(function () {
         // Tĩnh trước — bắt buộc đứng trước /{id}
         Route::get('/cursor', [PlayingScheduleController::class, 'cursorIndex'])->middleware('perm.club:playing_schedule,view');
         Route::get('/select', [PlayingScheduleController::class, 'select'])->middleware('perm.club:playing_schedule,view');

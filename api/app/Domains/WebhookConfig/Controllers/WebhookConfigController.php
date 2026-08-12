@@ -18,7 +18,7 @@ class WebhookConfigController extends BaseController
     /**
      * GET /api/v1/clubs/{clubSlug}/webhook-configs
      */
-    public function index(FilterWebhookConfigRequest $request, string $clubSlug): JsonResponse
+    public function index(FilterWebhookConfigRequest $request): JsonResponse
     {
         $filters = $request->validated();
         $filters['club_id'] = $request->attributes->get('club_id');
@@ -28,7 +28,7 @@ class WebhookConfigController extends BaseController
     /**
      * GET /api/v1/clubs/{clubSlug}/webhook-configs/cursor
      */
-    public function cursorIndex(Request $request, string $clubSlug): JsonResponse
+    public function cursorIndex(Request $request): JsonResponse
     {
         $filters = $request->only(['limit', 'search', 'type', 'is_active', 'is_verified', 'bank_account_id']);
         $filters['club_id'] = $request->attributes->get('club_id');
@@ -38,7 +38,7 @@ class WebhookConfigController extends BaseController
     /**
      * GET /api/v1/clubs/{clubSlug}/webhook-configs/select — dropdown.
      */
-    public function select(Request $request, string $clubSlug): JsonResponse
+    public function select(Request $request): JsonResponse
     {
         $filters = $request->only(['search', 'type', 'is_active', 'limit']);
         $filters['club_id'] = $request->attributes->get('club_id');

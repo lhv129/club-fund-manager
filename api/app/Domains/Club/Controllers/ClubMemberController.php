@@ -33,7 +33,7 @@ class ClubMemberController extends BaseController
      * GET /api/v1/clubs/{clubSlug}/members
      * Danh sách thành viên của club (lọc theo status, join_type...)
      */
-    public function index(FilterClubMemberRequest $request, string $clubSlug): JsonResponse
+    public function index(FilterClubMemberRequest $request): JsonResponse
     {
         $filters = $request->validated();
         $filters['club_id'] = $request->attributes->get('club_id');

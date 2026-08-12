@@ -74,6 +74,10 @@ class WebhookConfigRepository extends BaseRepository
     {
         $this->applyActiveFilter($query, $filters);
 
+        if (!empty($filters['club_id'])) {
+            $query->where('club_id', (int) $filters['club_id']);
+        }
+
         if (!empty($filters['type'])) {
             $query->where('type', $filters['type']);
         }

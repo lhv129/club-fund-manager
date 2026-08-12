@@ -3,7 +3,7 @@
 use App\Domains\Club\Controllers\ClubInviteController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth.jwt')->prefix('clubs/{clubSlug}/invites')->group(function () {
+Route::middleware('auth.jwt')->prefix('invites')->group(function () {
     // ── Read ──────────────────────────────────────────────────────────────
     Route::get('/', [ClubInviteController::class, 'index'])->middleware('perm.club:club_invite,view');
     Route::get('/{id}', [ClubInviteController::class, 'show'])->middleware('perm.club:club_invite,view');

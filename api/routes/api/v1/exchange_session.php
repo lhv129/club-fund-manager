@@ -5,7 +5,7 @@ use App\Domains\ExchangeSession\Controllers\ExchangeSessionPlayerController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->group(function () {
-    Route::prefix('clubs/{clubSlug}/exchange-sessions')->group(function () {
+    Route::prefix('exchange-sessions')->group(function () {
         // Tĩnh trước — bắt buộc đứng trước /{id}
         Route::get('/cursor',   [ExchangeSessionController::class, 'cursorIndex'])->middleware('perm.club:exchange_session,view');
         Route::get('/select',   [ExchangeSessionController::class, 'select'])->middleware('perm.club:exchange_session,view');

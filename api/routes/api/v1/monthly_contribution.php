@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 // routes/api.php (thêm vào group auth.jwt)
 Route::middleware('auth.jwt')->group(function () {
-    Route::prefix('clubs/{clubSlug}/monthly-contributions')->group(function () {
+    Route::prefix('monthly-contributions')->group(function () {
         // Tĩnh trước
         Route::get('/cursor', [MonthlyContributionController::class, 'cursorIndex'])->middleware('perm.club:monthly_contribution,view');
         Route::get('/select', [MonthlyContributionController::class, 'select'])->middleware('perm.club:monthly_contribution,view');

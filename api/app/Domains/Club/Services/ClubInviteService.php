@@ -26,10 +26,8 @@ class ClubInviteService extends BaseService
     // List
     // -------------------------------------------------------------------------
 
-    public function paginateByClub(string $clubSlug, array $filters = []): LengthAwarePaginator
+    public function paginate(array $filters = []): LengthAwarePaginator
     {
-        $filters['club_slug'] = $clubSlug; // context param — không phải query
-
         return $this->repository->getList($filters);
     }
 

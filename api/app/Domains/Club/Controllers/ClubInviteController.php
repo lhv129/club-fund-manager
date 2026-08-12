@@ -19,9 +19,12 @@ class ClubInviteController extends BaseController
      * GET /api/v1/clubs/{clubSlug}/invites
      * Danh sách link invite của club
      */
-    public function index(FilterClubInviteRequest $request, string $clubSlug): JsonResponse
+    public function index(FilterClubInviteRequest $request): JsonResponse
     {
-        $invites = $this->inviteService->paginateByClub($clubSlug, $request->validated());
+        $filters = $request->validated();
+        $filters['club_id'] = $request->attributes->get('club_id');
+
+        $invites = $this->inviteService->paginate($filters);
 
         return $this->paginateResponse($invites, __('domains/club_invite.list'), ClubInviteResource::class);
     }
