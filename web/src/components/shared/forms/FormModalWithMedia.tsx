@@ -13,6 +13,7 @@ import MediaImage, { MediaImageState } from "@/components/shared/media/MediaImag
 import { LOCALES, DEFAULT_LOCALE } from "@/lib/locales";
 import { buildEmptyTranslationValues } from "@/lib/formTranslations";
 import DatePicker from "@/components/shared/ui/DatePicker";
+import DateTimePicker from "@/components/shared/ui/DateTimePicker";
 import TimeSelect from "@/components/shared/ui/TimeSelect";
 import Select from "@/components/shared/ui/Select";
 import { RichEditor } from "@/components/shared/ui/RichEditor";
@@ -27,12 +28,14 @@ export interface FormFieldDef {
     type:
     | "text"
     | "number"
+    | "currency"
     | "email"
     | "url"
     | "textarea"
     | "richtext"
     | "select"
     | "datepicker"
+    | "datetime-local"
     | "time-select"
     | "checkbox"
     | "toggle"
@@ -95,6 +98,9 @@ interface FormModalWithMediaProps {
 const EMPTY_INITIAL_VALUES: Record<string, string | number | boolean | null | undefined> = {};
 const EMPTY_IMAGE_FIELDS: SingleImageFieldDef[] = [];
 const EMPTY_TRANSLATABLE_FIELDS: TranslatableFieldDef[] = [];
+
+const formatCurrencyValue = (value: unknown) =>
+    String(value ?? "").replace(/[^\d]/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -234,7 +240,12 @@ export function FormModalWithMedia({
     useEffect(() => {
         if (!isOpen) return;
         setValues(Object.fromEntries(
-            fields.map((f) => [f.name, String(resolvedInitialValues[f.name] ?? "")])
+            fields.map((f) => [
+                f.name,
+                f.type === "currency"
+                    ? formatCurrencyValue(resolvedInitialValues[f.name])
+                    : String(resolvedInitialValues[f.name] ?? ""),
+            ])
         ));
         setErrors({});
         setImageErrors({});
@@ -297,6 +308,8 @@ export function FormModalWithMedia({
         fields.forEach((field) => {
             if (field.type === "checkbox") {
                 formData.append(field.name, isChecked(field.name) ? "1" : "0");
+            } else if (field.type === "currency") {
+                formData.append(field.name, (values[field.name] ?? "").replace(/,/g, ""));
             } else {
                 formData.append(field.name, values[field.name] ?? "");
             }
@@ -336,6 +349,9 @@ export function FormModalWithMedia({
         setValues((prev) => ({ ...prev, [name]: value }));
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
     };
+
+    const handleCurrencyChange = (name: string, value: string) =>
+        handleChange(name, value.replace(/[^\d]/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ","));
 
 
     const handleBoolChange = (name: string) => {
@@ -471,6 +487,8 @@ export function FormModalWithMedia({
             </>
         );
 
+        if (field.type === "datetime-local") return (<><label className="block text-sm font-medium text-foreground mb-1.5">{field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}</label><DateTimePicker value={val} onChange={(v) => handleChange(field.name, v)} /><>{renderError(err)}</></>);
+
         if (field.type === "time-select") return (
             <>
                 <label className="block text-sm font-medium text-foreground mb-1.5">{field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}</label>
@@ -511,9 +529,10 @@ export function FormModalWithMedia({
                     />
                 ) : (
                     <input
-                        type={field.type}
+                        type={field.type === "currency" ? "text" : field.type}
+                        inputMode={field.type === "currency" ? "numeric" : undefined}
                         value={val}
-                        onChange={(e) => handleChange(field.name, e.target.value)}
+                        onChange={(e) => field.type === "currency" ? handleCurrencyChange(field.name, e.target.value) : handleChange(field.name, e.target.value)}
                         {...(field.placeholder ? { placeholder: field.placeholder } : {})}
                         className={inputCls(!!err)}
                     />

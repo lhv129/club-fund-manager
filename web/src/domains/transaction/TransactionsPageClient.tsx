@@ -12,6 +12,7 @@ import { FormModal, type FormFieldDef } from "@/components/shared/forms/FormModa
 import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
 import { Pagination } from "@/components/shared/ui/Pagination";
 import Select from "@/components/shared/ui/Select";
+import DatePicker from "@/components/shared/ui/DatePicker";
 import { Table, type ColumnDef } from "@/components/shared/ui/Table";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
@@ -65,13 +66,13 @@ export function TransactionsPageClient() {
         { name: "bank_account_id", label: tt("bankAccount"), type: "select", required: true, options: bankOptions },
         { name: "source", label: tt("source"), type: "select", required: true, options: [{ value: "cash", label: tt("sourceCash") }, { value: "manual", label: tt("sourceManual") }] },
         { name: "type", label: tt("type"), type: "select", required: true, options: [{ value: "income", label: tt("income") }, { value: "expense", label: tt("expense") }] },
-        { name: "amount", label: tt("amount"), type: "number", required: true, placeholder: "0" },
-        { name: "transaction_date", label: tt("transactionDate"), type: "text", required: true, placeholder: "2026-08-06 14:59:45" },
+        { name: "amount", label: tt("amount"), type: "currency", required: true, placeholder: "0" },
+        { name: "transaction_date", label: tt("transactionDate"), type: "datetime-local", required: true },
         { name: "description", label: t("description"), type: "textarea", placeholder: tt("descriptionPlaceholder") },
     ], [bankOptions, t, tt]);
     const initialValues = selected ? {
         bank_account_id: String(selected.bank_account_id ?? ""), source: selected.source ?? "manual", type: selected.type,
-        amount: selected.amount, description: selected.description ?? "", transaction_date: selected.transaction_date ? selected.transaction_date.replace("T", " ").replace(/\.\d+Z$/, "") : "",
+        amount: Number(selected.amount).toLocaleString("en-US"), description: selected.description ?? "", transaction_date: selected.transaction_date ? selected.transaction_date.slice(0, 16) : "",
     } : { bank_account_id: "", source: "manual", type: "income", amount: "", description: "", transaction_date: "" };
     const columns: ColumnDef<Transaction>[] = [
         { key: "date", label: tt("transactionDate"), render: (row) => <span className="whitespace-nowrap text-sm">{formatDateTime(row.transaction_date, locale)}</span> },
@@ -88,10 +89,10 @@ export function TransactionsPageClient() {
         return result;
     };
     const extraFilters = <>
-        <Select label={tt("bankAccount")} options={bankOptions} value={draftBank === undefined ? "" : String(draftBank)} onChange={(v) => setDraftBank(v ? Number(v) : undefined)} placeholder={t("all")} />
-        <Select label={tt("type")} options={[{ value: "income", label: tt("income") }, { value: "expense", label: tt("expense") }]} value={draftType ?? ""} onChange={(v) => setDraftType((v || undefined) as TransactionType | undefined)} placeholder={t("all")} />
-        <label className="flex flex-col gap-1 text-xs font-medium text-foreground-muted">{tt("fromDate")}<input type="date" value={draftFrom} onChange={(e) => setDraftFrom(e.target.value)} className="h-10 rounded-xl border border-border bg-background px-3 text-sm text-foreground" /></label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-foreground-muted">{tt("toDate")}<input type="date" value={draftTo} onChange={(e) => setDraftTo(e.target.value)} className="h-10 rounded-xl border border-border bg-background px-3 text-sm text-foreground" /></label>
+        <div><label className="mb-1 block text-xs font-medium text-foreground-muted">{tt("bankAccount")}</label><Select label={tt("bankAccount")} options={bankOptions} value={draftBank === undefined ? "" : String(draftBank)} onChange={(v) => setDraftBank(v ? Number(v) : undefined)} placeholder={t("all")} /></div>
+        <div><label className="mb-1 block text-xs font-medium text-foreground-muted">{tt("type")}</label><Select label={tt("type")} options={[{ value: "income", label: tt("income") }, { value: "expense", label: tt("expense") }]} value={draftType ?? ""} onChange={(v) => setDraftType((v || undefined) as TransactionType | undefined)} placeholder={t("all")} /></div>
+        <div className="w-full min-w-0 sm:w-44"><label className="mb-1 block text-xs font-medium text-foreground-muted">{tt("fromDate")}</label><DatePicker value={draftFrom} onChange={setDraftFrom} wrapperClassName="min-w-0 max-w-full" /></div>
+        <div className="w-full min-w-0 sm:w-44"><label className="mb-1 block text-xs font-medium text-foreground-muted">{tt("toDate")}</label><DatePicker value={draftTo} onChange={setDraftTo} wrapperClassName="min-w-0 max-w-full" /></div>
     </>;
     return <div className="space-y-6">
         <Breadcrumb navItems={CLUB_NAV_ITEMS(slug)} homeHref={clubRoute(slug)} />

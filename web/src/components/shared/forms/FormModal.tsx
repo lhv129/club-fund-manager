@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { LOCALES, DEFAULT_LOCALE } from "@/lib/locales";
 import { splitTranslationErrors, buildEmptyTranslationValues } from "@/lib/formTranslations";
 import DatePicker from "@/components/shared/ui/DatePicker";
+import DateTimePicker from "@/components/shared/ui/DateTimePicker";
 import TimeSelect from "@/components/shared/ui/TimeSelect";
 import Select from "@/components/shared/ui/Select";
 import { RichEditor } from "@/components/shared/ui/RichEditor";
@@ -21,6 +22,7 @@ export interface FormFieldDef {
     type:
     | "text"
     | "number"
+    | "currency"
     | "email"
     | "url"
     | "password"
@@ -28,6 +30,7 @@ export interface FormFieldDef {
     | "richtext"
     | "select"
     | "datepicker"
+    | "datetime-local"
     | "time-select"
     | "checkbox"
     | "toggle"
@@ -92,6 +95,9 @@ const EMPTY_INITIAL_VALUES: Record<
 
 const EMPTY_TRANSLATABLE_FIELDS: TranslatableFieldDef[] = [];
 
+const formatCurrencyValue = (value: unknown) =>
+    String(value ?? "").replace(/[^\d]/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getServerError(err: unknown): ServerErrorResponse | null {
@@ -155,7 +161,9 @@ export function FormModal({
             Object.fromEntries(
                 fields.map((field) => [
                     field.name,
-                    String(resolvedInitialValues[field.name] ?? ""),
+                    field.type === "currency"
+                        ? formatCurrencyValue(resolvedInitialValues[field.name])
+                        : String(resolvedInitialValues[field.name] ?? ""),
                 ])
             )
         );
@@ -206,8 +214,16 @@ export function FormModal({
             : [];
 
         try {
+            const normalizedValues = Object.fromEntries(
+                fields.map((field) => [
+                    field.name,
+                    field.type === "currency"
+                        ? (values[field.name] ?? "").replace(/,/g, "")
+                        : values[field.name] ?? "",
+                ])
+            );
             const res = await onSubmit(
-                values,
+                normalizedValues,
                 resolvedTranslatableFields.length ? translations : undefined
             );
             if (res && res.success === false) applyServerErrors(res);
@@ -223,6 +239,9 @@ export function FormModal({
         setValues((prev) => ({ ...prev, [name]: value }));
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
     };
+
+    const handleCurrencyChange = (name: string, value: string) =>
+        handleChange(name, value.replace(/[^\d]/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ","));
 
     const handleBoolChange = (name: string) => {
         handleChange(name, isChecked(name) ? "0" : "1");
@@ -370,6 +389,8 @@ export function FormModal({
             </>
       );
 
+      if (field.type === "datetime-local") return (<><label className="block text-sm font-medium text-foreground mb-1.5">{field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}</label><DateTimePicker value={val} onChange={(v) => handleChange(field.name, v)} /><>{renderError(err)}</></>);
+
       if (field.type === "time-select") return (
           <>
               <label className="block text-sm font-medium text-foreground mb-1.5">{field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}</label>
@@ -410,9 +431,10 @@ export function FormModal({
                     />
                 ) : (
                     <input
-                        type={field.type}
+                        type={field.type === "currency" ? "text" : field.type}
+                        inputMode={field.type === "currency" ? "numeric" : undefined}
                         value={val}
-                        onChange={(e) => handleChange(field.name, e.target.value)}
+                        onChange={(e) => field.type === "currency" ? handleCurrencyChange(field.name, e.target.value) : handleChange(field.name, e.target.value)}
                         {...(field.placeholder ? { placeholder: field.placeholder } : {})}
                         className={inputCls(!!err)}
                     />

@@ -48,9 +48,11 @@ function daysInMonth(month: number, year: number) {
 function Calendar({
     selectedIso,
     onSelect,
+    onClose,
 }: {
     selectedIso: string;
     onSelect: (iso: string) => void;
+    onClose: () => void;
 }) {
     const locale = useLocale();
     const t = useTranslations("common");
@@ -124,9 +126,9 @@ function Calendar({
     };
 
     return (
-        <div className="p-3 w-[17rem] select-none">
+        <div className="w-full select-none p-3 sm:w-[17rem]">
             {/* ── Header ────────────────────────────────────────── */}
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 grid grid-cols-[2rem_1fr_2rem_2rem] items-center gap-1">
                 <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
@@ -142,7 +144,7 @@ function Calendar({
                     </svg>
                 </button>
 
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                <span className="truncate text-center text-sm font-medium text-gray-800 dark:text-gray-100">
                     {headerLabel}
                 </span>
 
@@ -158,6 +160,19 @@ function Calendar({
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+
+                <button
+                    type="button"
+                    aria-label={t("close")}
+                    title={t("close")}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={onClose}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/30 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -487,7 +502,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
     // ── Render ─────────────────────────────────────────────────
     return (
-        <div className={`relative w-full ${wrapperClassName}`}>
+        <div className={`relative min-w-0 w-full max-w-full ${wrapperClassName}`}>
 
             {/* Icon trái */}
             {hasLeft && (
@@ -532,12 +547,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     }
                 }}
                 className={[
-                    "flex items-center gap-0",
+                    "flex min-w-0 max-w-full items-center gap-0 overflow-hidden",
                     "border",
                     "bg-white dark:bg-neutral-900",
                     "border-neutral-200 dark:border-neutral-700",
                     rounded,
-                    "h-11 px-4 py-3",
+                    "h-11 px-3 py-3 sm:px-4",
                     hasLeft ? "pl-10" : "",
                     hasRight ? "pr-10" : "",
                     "outline-none focus:border-primary-300 dark:focus:border-primary-500",
@@ -548,7 +563,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             >
                 {/* dd */}
                 <span
-                    className={`text-base font-light cursor-default transition-colors ${segPlaceholderCls("dd", !!day)}`}
+                    className={`shrink-0 text-sm font-light cursor-default transition-colors sm:text-base ${segPlaceholderCls("dd", !!day)}`}
                     onClick={(e) => { e.stopPropagation(); activate("dd"); }}
                 >
                     {dDisplay}
@@ -558,7 +573,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
                 {/* mm */}
                 <span
-                    className={`text-base font-light cursor-default transition-colors ${segPlaceholderCls("mm", !!month)}`}
+                    className={`shrink-0 text-sm font-light cursor-default transition-colors sm:text-base ${segPlaceholderCls("mm", !!month)}`}
                     onClick={(e) => { e.stopPropagation(); activate("mm"); }}
                 >
                     {mDisplay}
@@ -568,7 +583,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
                 {/* yyyy */}
                 <span
-                    className={`text-base font-light cursor-default transition-colors ${segPlaceholderCls("yyyy", !!year)}`}
+                    className={`min-w-0 shrink text-sm font-light cursor-default transition-colors sm:text-base ${segPlaceholderCls("yyyy", !!year)}`}
                     onClick={(e) => { e.stopPropagation(); activate("yyyy"); }}
                 >
                     {yDisplay}
@@ -604,12 +619,20 @@ const DatePicker: React.FC<DatePickerProps> = ({
             {showCal && !disabled && (
                 <div
                     ref={calendarRef}
-                    className="absolute top-full left-0 mt-1 z-50
+                    className="absolute left-0 top-full z-50 mt-1 w-full max-w-[calc(100vw-1.5rem)] overflow-hidden
+                        sm:w-[17rem]
                         bg-white dark:bg-gray-900
                         border border-neutral-200 dark:border-neutral-700
                         rounded-xl shadow-lg"
                 >
-                    <Calendar selectedIso={currentIso} onSelect={handleCalSelect} />
+                    <Calendar
+                        selectedIso={currentIso}
+                        onSelect={handleCalSelect}
+                        onClose={() => {
+                            setShowCal(false);
+                            setActiveSeg(null);
+                        }}
+                    />
                 </div>
             )}
         </div>

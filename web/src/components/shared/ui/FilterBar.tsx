@@ -100,10 +100,10 @@ export function FilterBar({
 
     return (
         <div
-            className={`flex flex-wrap items-end gap-2.5 bg-background border border-border rounded-2xl px-4 py-3.5 shadow-sm ${className}`}
+            className={`flex min-w-0 max-w-full flex-wrap items-end gap-2.5 overflow-visible bg-background border border-border rounded-2xl px-3 py-3.5 shadow-sm sm:px-4 ${className}`}
         >
             {/* Search input */}
-            <div className="flex flex-col gap-1 flex-1 min-w-56">
+            <div className="flex w-full min-w-0 flex-1 flex-col gap-1 sm:min-w-56">
                 <span className="text-xs font-medium text-foreground-muted">
                     {t("search")}
                 </span>

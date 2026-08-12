@@ -11,6 +11,7 @@ export type ClubMemberJoinType = "request" | "invite";
 
 export interface ClubMember {
     id: number;
+    user_id?: number;
     join_type: ClubMemberJoinType;
     status: ClubMemberStatus;
     is_active: boolean;

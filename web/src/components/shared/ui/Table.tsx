@@ -101,7 +101,7 @@ export function Table<T extends object>({
     );
 
     return (
-        <div className="bg-background border border-border rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-hidden rounded-t-2xl rounded-b-none border border-b-0 border-border bg-background">
             {showHeader && (
                 <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                     {title && (

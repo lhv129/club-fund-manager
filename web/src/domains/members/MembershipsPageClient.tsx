@@ -103,7 +103,7 @@ export function MembershipsPageClient() {
                 join_type: undefined,
                 is_active: undefined,
             },
-            defaultSortBy: "joined_at",
+            defaultSortBy: "created_at",
             defaultSortDir: "desc",
         });
 

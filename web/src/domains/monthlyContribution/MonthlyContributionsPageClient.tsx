@@ -157,7 +157,7 @@ export function MonthlyContributionsPageClient() {
     const {
         data: members,
         isLoading: isMembersLoading,
-    } = useClubMemberSelect(slug);
+    } = useClubMemberSelect(slug, { status: "approved" });
 
     const [modalOpen, setModalOpen] = useState(false);
     const [selected, setSelected] =
@@ -220,10 +220,10 @@ export function MonthlyContributionsPageClient() {
     }));
 
     const memberOptions = members.map((member) => ({
-        value: String(member.id),
+        value: String(member?.user_id),
         label: member.user?.fullname
             ? `${member.user.fullname} — ${member.user.email}`
-            : String(member.id),
+            : String(member?.user_id),
     }));
 
     const transactionOptions = transactions.map((transaction) => ({

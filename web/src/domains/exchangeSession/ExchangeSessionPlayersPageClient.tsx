@@ -23,6 +23,7 @@ import type {
     ExchangeSessionPlayer,
 } from "./types";
 import { useUserSelect } from "@/domains/user/hooks/useUsers";
+import { formatAmount } from "@/utils";
 
 export function ExchangeSessionPlayersPageClient() {
     const { slug, sessionId } = useParams<{
@@ -105,14 +106,38 @@ export function ExchangeSessionPlayersPageClient() {
 
     const columns: ColumnDef<ExchangeSessionPlayer>[] = [
         {
+            key: "index",
+            label: x("stt"),
+            className: "w-16 text-center",
+            render: (_row, index) =>
+                (params.page - 1) * params.limit + index + 1,
+        },
+        {
             key: "user",
             label: x("user"),
-            render: (row) => row.user?.fullname || row.player_name || "—",
+            render: (row) => row.user?.fullname || "—",
+        },
+        {
+            key: "player_name",
+            label: x("playerName"),
+            render: (row) => row.player_name || "—",
+        },
+        {
+            key: "male",
+            label: x("male"),
+            className: "text-center",
+            render: (row) => row.male,
+        },
+        {
+            key: "female",
+            label: x("female"),
+            className: "text-center",
+            render: (row) => row.female,
         },
         {
             key: "amount",
             label: x("amount"),
-            render: (row) => row.amount,
+            render: (row) => formatAmount(row.amount),
         },
         {
             key: "paid",
@@ -120,16 +145,10 @@ export function ExchangeSessionPlayersPageClient() {
             render: (row) => (
                 <ToggleSwitch
                     checked={row.paid}
-                    loading={false}
-                    onChange={() => players.handleTogglePaid(row.id)}
+                    loading={players.payingIds.has(row.id)}
+                    onChange={() => players.handleTogglePaid(row)}
                 />
             ),
-        },
-        {
-            key: "checked",
-            label: x("checkedIn"),
-            render: (row) =>
-                row.checked_in ? t("active") : t("inactive"),
         },
     ];
 
@@ -148,10 +167,10 @@ export function ExchangeSessionPlayersPageClient() {
         setSelected(null);
     };
 
-    const handleSubmit = (values: Record<string, string>) => {
-        const result = selected
+    const handleSubmit = async (values: Record<string, string>) => {
+        const result = await (selected
             ? players.handleEdit(selected.id, values)
-            : players.handleCreate(values);
+            : players.handleCreate(values));
 
         if (!result) {
             handleCloseModal();
@@ -159,6 +178,15 @@ export function ExchangeSessionPlayersPageClient() {
 
         return result;
     };
+
+    const totalReceivable = players.data.reduce(
+        (sum, row) => sum + Number(row.amount || 0),
+        0
+    );
+    const totalPaid = players.data.reduce(
+        (sum, row) => sum + (row.paid ? Number(row.amount || 0) : 0),
+        0
+    );
 
     const handleDelete = () => {
         if (deleteTarget) {
@@ -208,6 +236,17 @@ export function ExchangeSessionPlayersPageClient() {
                     </TableActions>
                 )}
             />
+
+            <div className="flex flex-wrap justify-end gap-6 border-t border-border pt-4 text-sm">
+                <div>
+                    <span className="text-foreground-muted">{x("totalReceivable")}: </span>
+                    <span className="font-semibold text-foreground">{formatAmount(totalReceivable)}</span>
+                </div>
+                <div>
+                    <span className="text-foreground-muted">{x("totalPaid")}: </span>
+                    <span className="font-semibold text-emerald-500">{formatAmount(totalPaid)}</span>
+                </div>
+            </div>
 
             <Pagination
                 page={params.page}

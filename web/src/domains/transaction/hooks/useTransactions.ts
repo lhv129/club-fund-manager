@@ -62,7 +62,7 @@ function buildPayload(
         formData.append("source", values.source);
     }
 
-    formData.append("amount", values.amount ?? "");
+    formData.append("amount", (values.amount ?? "").replace(/,/g, ""));
 
     if (values.description) {
         formData.append("description", values.description);

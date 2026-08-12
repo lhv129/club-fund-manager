@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
 import { getClubMemberService } from "@/domains/members/services/ClubMemberService";
-import type { PaginatedResponse } from "@/types/api";
+
 import type { ClubMemberSelect, MemberFilters, MemberHistoryFilters, RejectPayload } from "@/domains/members/types/member";
 
 // ─── Members hook (tổng quan) ─────────────────────────────────────────────────
@@ -140,17 +140,24 @@ export function useClubMemberHistory(
 }
 
 export function useClubMemberSelect(
-    clubSlug?: string | null
+    clubSlug?: string | null,
+    params?: Partial<MemberHistoryFilters>
 ) {
     const query = useQuery({
-        queryKey: ["club-members-select", clubSlug],
+        queryKey: [
+            "club-members-select",
+            clubSlug,
+            params,
+        ],
+
         queryFn: () => {
             if (!clubSlug) {
                 throw new Error("Club slug is required");
             }
 
-            return getClubMemberService(clubSlug).select();
+            return getClubMemberService(clubSlug).select(params);
         },
+
         enabled: Boolean(clubSlug),
     });
 
