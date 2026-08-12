@@ -9,11 +9,12 @@ class StoreExampleRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'title'       => ['required', 'string', 'max:255'],
-            'slug'        => ['nullable', 'string', 'max:255', 'unique:examples,slug'],
+            'title' => ['required', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255', 'unique:examples,slug'],
             'description' => ['nullable', 'string'],
-            'is_active'   => ['nullable', 'boolean'],
-            'sort_order'  => ['nullable', 'integer', 'min:0'],
+            'image' => ['nullable', 'image', 'max:5120'],
+            'is_active' => ['nullable', 'boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
 
             // user_id lấy từ JWTAuth::user()->id trong Controller, không validate ở đây.
         ];
@@ -25,11 +26,12 @@ class StoreExampleRequest extends BaseRequest
     public function attributes(): array
     {
         return [
-            'title'       => __('domains/example.attributes.title'),
-            'slug'        => __('domains/example.attributes.slug'),
+            'title' => __('domains/example.attributes.title'),
+            'slug' => __('domains/example.attributes.slug'),
             'description' => __('domains/example.attributes.description'),
-            'is_active'   => __('domains/example.attributes.is_active'),
-            'sort_order'  => __('domains/example.attributes.sort_order'),
+            'image' => __('domains/example.attributes.image'),
+            'is_active' => __('domains/example.attributes.is_active'),
+            'sort_order' => __('domains/example.attributes.sort_order'),
         ];
     }
 }

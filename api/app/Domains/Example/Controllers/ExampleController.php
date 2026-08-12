@@ -82,8 +82,8 @@ class ExampleController extends BaseController
      */
     public function store(StoreExampleRequest $request): JsonResponse
     {
-        $data             = $request->validated();
-        $data['user_id']  = JWTAuth::user()->id;
+        $data = $request->validated();
+        $data['user_id'] = JWTAuth::user()->id;
 
         return $this->responseCommon(
             true,
@@ -110,9 +110,21 @@ class ExampleController extends BaseController
      */
     public function destroy(int $id): JsonResponse
     {
-        $this->service->deleteWithSortOrder($id);
+        $this->service->delete($id);
 
         return $this->responseCommon(true, __('domains/example.deleted'));
+    }
+
+    public function restore(int $id): JsonResponse
+    {
+        return $this->responseCommon(true, __('domains/example.restored'), new ExampleResource($this->service->restore($id)));
+    }
+
+    public function forceDestroy(int $id): JsonResponse
+    {
+        $this->service->forceDelete($id);
+
+        return $this->responseCommon(true, __('domains/example.force_deleted'));
     }
 
     /**

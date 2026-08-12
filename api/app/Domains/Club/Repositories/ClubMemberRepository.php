@@ -13,6 +13,8 @@ class ClubMemberRepository extends BaseRepository
     protected string $defaultOrderBy = 'created_at';
     protected string $defaultOrderDirection = 'desc';
 
+    protected array $allowedSortColumns = ['id', 'joined_at', 'created_at'];
+
     /** Cột cho getForSelect() — dropdown trả [{id, user_id}] */
     protected array $selectColumns = ['id', 'user_id'];
     protected array $selectWith = [
@@ -28,13 +30,10 @@ class ClubMemberRepository extends BaseRepository
     // List / Search
     // -------------------------------------------------------------------------
 
-    /**
-     * Danh sách member của 1 club (offset pagination).
-     * Toàn bộ filter/search/sort nằm ở đây — Service chỉ truyền $filters + clubSLUG.
-     */
-    public function paginateClubMembers(string $clubSlug, array $filters = []): LengthAwarePaginator
+    /** Query cơ sở dùng chung cho các list chuẩn của BaseRepository. */
+    protected function baseListQuery(?int $clubId = null): Builder
     {
-        $query = $this->model
+        return $this->model
             ->select([
                 'id',
                 'club_id',
@@ -52,16 +51,14 @@ class ClubMemberRepository extends BaseRepository
             ])
             ->with([
                 'user:id,fullname,email,phone,status,gender,avatar,updated_at,created_at',
-                'user.clubMemberRoles' => function ($q) use ($clubSlug) {
+                'user.clubMemberRoles' => function ($q) use ($clubId) {
                     $q->select([
                         'id',
                         'club_id',
                         'user_id',
                         'role_id',
                     ])
-                        ->whereHas('club.translations', function ($q) use ($clubSlug) {
-                            $q->where('slug', $clubSlug);
-                        })
+                        ->when($clubId, fn ($query) => $query->where('club_id', $clubId))
                         ->with([
                             'role' => function ($q) {
                                 $q->select([
@@ -87,16 +84,25 @@ class ClubMemberRepository extends BaseRepository
                 },
                 'reviewedBy:id,fullname',
                 'invitedBy:id,fullname',
-            ])
-            ->whereHas('club.translations', function ($query) use ($clubSlug) {
-                $query->where('slug', $clubSlug);
-            });
+            ]);
+    }
+
+    /** Danh sách member, lọc club trực tiếp qua filters[club_id]. */
+    public function getList(array $filters = []): LengthAwarePaginator
+    {
+        $clubId = !empty($filters['club_id']) ? (int) $filters['club_id'] : null;
+        $query = $this->baseListQuery($clubId);
 
         $this->applySearch($query, $filters);
         $this->applyFilters($query, $filters);
-        $this->applySorting($query, $filters, ['id', 'joined_at', 'created_at']);
+        $this->applySorting($query, $filters, $this->allowedSortColumns);
 
-        return $query->paginate($filters['limit'] ?? $this->defaultLimit);
+        return $query->paginate(
+            $filters['limit'] ?? $this->defaultLimit,
+            ['*'],
+            'page',
+            $filters['page'] ?? $this->defaultPage
+        );
     }
 
     // ------------------------------------------------------------------
@@ -119,6 +125,10 @@ class ClubMemberRepository extends BaseRepository
     /** Filter theo status (string), join_type, is_active. */
     protected function applyFilters(Builder $query, array $filters): void
     {
+        if (!empty($filters['club_id'])) {
+            $query->where('club_id', (int) $filters['club_id']);
+        }
+
         $this->applyStatusFilter($query, $filters, 'status', ['pending', 'approved', 'rejected']);
 
         if (isset($filters['join_type']) && $filters['join_type'] !== '' && $filters['join_type'] !== null) {

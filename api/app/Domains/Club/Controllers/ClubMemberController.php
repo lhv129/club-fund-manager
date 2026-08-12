@@ -9,7 +9,6 @@ use App\Domains\Club\Requests\RejectMemberRequest;
 use App\Domains\Club\Resources\ClubMemberResource;
 use App\Domains\Club\Services\ClubMemberService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ClubMemberController extends BaseController
 {
@@ -36,7 +35,10 @@ class ClubMemberController extends BaseController
      */
     public function index(FilterClubMemberRequest $request, string $clubSlug): JsonResponse
     {
-        $members = $this->service->paginateClubMembers($clubSlug, $request->validated());
+        $filters = $request->validated();
+        $filters['club_id'] = $request->attributes->get('club_id');
+
+        $members = $this->service->paginate($filters);
 
         return $this->paginateResponse($members, __('domains/club_member.list'), ClubMemberResource::class);
     }
@@ -55,14 +57,14 @@ class ClubMemberController extends BaseController
      * GET /api/v1/clubs/{clubSlug}/members/select
      */
 
-    public function select(Request $request): JsonResponse
+    public function select(FilterClubMemberRequest $request): JsonResponse
     {
+        $filters = $request->validated();
+        $filters['club_id'] = $request->attributes->get('club_id');
         return $this->responseCommon(
             true,
             __('domains/club_member.list'),
-            $this->service->getForSelect([
-                'club_id' => $request->attributes->get('club_id'),
-            ]),
+            $this->service->getForSelect($filters),
         );
     }
 

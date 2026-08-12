@@ -16,7 +16,8 @@ class ExampleRepository extends BaseRepository
     // ------------------------------------------------------------------
 
     /** Example mặc định sort theo sort_order asc (kéo thả) */
-    protected string $defaultOrderBy        = 'sort_order';
+    protected string $defaultOrderBy = 'sort_order';
+
     protected string $defaultOrderDirection = 'asc';
 
     /** Whitelist cột sort cho getList() — chống cột lạ xuống Query Builder */
@@ -24,7 +25,8 @@ class ExampleRepository extends BaseRepository
 
     /** Cột cho getForSelect() — dropdown trả [{id, title, slug}] */
     protected array $selectColumns = ['id', 'title', 'slug'];
-    protected array $selectWith    = [];
+
+    protected array $selectWith = [];
 
     public function __construct(Example $model)
     {
@@ -60,7 +62,7 @@ class ExampleRepository extends BaseRepository
      */
     protected function applySearch(Builder $query, array $filters): void
     {
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search) {
@@ -78,7 +80,7 @@ class ExampleRepository extends BaseRepository
     {
         $this->applyActiveFilter($query, $filters);
 
-        if (!empty($filters['user_id'])) {
+        if (! empty($filters['user_id'])) {
             $query->where('user_id', (int) $filters['user_id']);
         }
     }
@@ -138,5 +140,15 @@ class ExampleRepository extends BaseRepository
         return $query
             ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
             ->get();
+    }
+
+    public function findWithTrashed(int $id): ?Example
+    {
+        return $this->model->withTrashed()->find($id);
+    }
+
+    public function findOnlyTrashed(int $id): ?Example
+    {
+        return $this->model->onlyTrashed()->find($id);
     }
 }

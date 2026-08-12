@@ -14,7 +14,7 @@ class ReorderExampleRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            '*.id'         => ['required', 'integer', 'min:1'],
+            '*.id' => ['required', 'integer', 'min:1'],
             '*.sort_order' => ['required', 'integer', 'min:0'],
         ];
     }

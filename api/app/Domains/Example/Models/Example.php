@@ -19,12 +19,13 @@ class Example extends Model
         'title',
         'slug',
         'description',
+        'image_path',
         'is_active',
         'sort_order',
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'sort_order' => 'integer',
     ];
 
@@ -76,5 +77,10 @@ class Example extends Model
                 $model->slug = Str::slug($model->title);
             }
         });
+    }
+
+    public function softDeleteCascadeRelations(): array
+    {
+        return [];
     }
 }

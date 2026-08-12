@@ -31,9 +31,9 @@ class ClubMemberService extends BaseService
     // List
     // -------------------------------------------------------------------------
 
-    public function paginateClubMembers(string $clubSlug, array $params = []): LengthAwarePaginator
+    public function paginate(array $params = []): LengthAwarePaginator
     {
-        return $this->repository->paginateClubMembers($clubSlug, $params);
+        return $this->repository->getList($params);
     }
 
     // -------------------------------------------------------------------------

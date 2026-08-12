@@ -44,13 +44,12 @@ class FundPeriodController extends BaseController
     /**
      * GET /api/v1/fund-periods/select — dropdown, không Resource, không phân trang.
      */
-    public function select(Request $request): JsonResponse
+    public function select(FilterFundPeriodRequest $request): JsonResponse
     {
-        return $this->responseCommon(
-            true,
-            __('domains/fund_period.select'),
-            $this->service->getForSelect($request->only(['search', 'club_id', 'year', 'is_active', 'limit'])),
-        );
+        $filters = $request->validated();
+        $filters['club_id'] = $request->attributes->get('club_id');
+
+        return $this->responseCommon(true, __('domains/fund_period.select'), $this->service->getForSelect($filters));
     }
 
     /**

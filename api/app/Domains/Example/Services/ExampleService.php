@@ -10,6 +10,7 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ExampleService extends BaseService
@@ -73,7 +74,7 @@ class ExampleService extends BaseService
             select: ['*'],
         );
 
-        if (!$example) {
+        if (! $example) {
             throw new ApiException(__($this->notFoundMessage), 404);
         }
 
@@ -88,7 +89,7 @@ class ExampleService extends BaseService
     {
         $example = $this->repository->findBySlug($slug);
 
-        if (!$example) {
+        if (! $example) {
             throw new ApiException(__($this->notFoundMessage), 404);
         }
 
@@ -101,9 +102,12 @@ class ExampleService extends BaseService
 
     public function create(array $data): Example
     {
+        $image = $data['image'] ?? null;
+        unset($data['image']);
+
         // Sinh slug nếu client không truyền — Model boot() cũng tự sinh,
         // nhưng đặt ở đây để dễ trace và test business rule.
-        if (empty($data['slug']) && !empty($data['title'])) {
+        if (empty($data['slug']) && ! empty($data['title'])) {
             $data['slug'] = Str::slug($data['title']);
         }
 
@@ -112,17 +116,84 @@ class ExampleService extends BaseService
             $data['sort_order'] = $this->repository->getNextSortOrder();
         }
 
-        return $this->repository->create($data);
+        $example = $this->repository->create($data);
+        if ($image) {
+            $example->image_path = $image->store('examples', 'public');
+            $example->save();
+        }
+
+        return $example->fresh();
     }
 
     public function update(int $id, array $data): Example
     {
+        $image = $data['image'] ?? null;
+        unset($data['image']);
         // Đổi title mà chưa truyền slug mới → sinh lại slug theo title
         if (isset($data['title']) && empty($data['slug'])) {
             $data['slug'] = Str::slug($data['title']);
         }
 
-        return parent::update($id, $data);
+        $example = parent::update($id, $data);
+        if ($image) {
+            $oldImage = $example->image_path;
+            $example->image_path = $image->store('examples', 'public');
+            $example->save();
+            if ($oldImage) {
+                Storage::disk('public')->delete($oldImage);
+            }
+        }
+
+        return $example->fresh();
+    }
+
+    public function delete(int $id): bool
+    {
+        return DB::transaction(function () use ($id) {
+            $example = $this->find($id);
+            foreach ($example->softDeleteCascadeRelations() as $relation) {
+                $example->{$relation}()->get()->each(fn ($child) => $child->delete());
+            }
+            $this->repository->decrementSortOrderAfterDelete($example->sort_order, $example->id);
+
+            return (bool) $example->delete();
+        });
+    }
+
+    public function restore(int $id): Example
+    {
+        return DB::transaction(function () use ($id) {
+            $example = $this->repository->findOnlyTrashed($id);
+            if (! $example) {
+                throw new ApiException(__($this->notFoundMessage), 404);
+            }
+            $example->restore();
+            foreach ($example->softDeleteCascadeRelations() as $relation) {
+                $example->{$relation}()->withTrashed()->get()->each(fn ($child) => $child->restore());
+            }
+            $example->sort_order = $this->repository->getNextSortOrder();
+            $example->save();
+
+            return $example->fresh();
+        });
+    }
+
+    public function forceDelete(int $id): bool
+    {
+        return DB::transaction(function () use ($id) {
+            $example = $this->repository->findWithTrashed($id);
+            if (! $example) {
+                throw new ApiException(__($this->notFoundMessage), 404);
+            }
+            foreach ($example->softDeleteCascadeRelations() as $relation) {
+                $example->{$relation}()->withTrashed()->get()->each(fn ($child) => $child->forceDelete());
+            }
+            if ($example->image_path) {
+                Storage::disk('public')->delete($example->image_path);
+            }
+
+            return (bool) $example->forceDelete();
+        });
     }
 
     /**
@@ -143,6 +214,7 @@ class ExampleService extends BaseService
             }
 
             DB::commit();
+
             return true;
         } catch (\Throwable $e) {
             DB::rollBack();

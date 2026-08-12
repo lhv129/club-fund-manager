@@ -11,6 +11,8 @@ Route::middleware('auth.jwt')->prefix('examples')->group(function () {
     Route::get('/select',       [ExampleController::class, 'select'])->middleware('perm.club:example,view');
     Route::get('/slug/{slug}',  [ExampleController::class, 'showBySlug'])->middleware('perm.club:example,view');
     Route::post('/reorder',     [ExampleController::class, 'reorder'])->middleware('perm.club:example,update');
+    Route::post('/{id}/restore', [ExampleController::class, 'restore'])->middleware('perm.club:example,update');
+    Route::delete('/{id}/force', [ExampleController::class, 'forceDestroy'])->middleware('perm.club:example,delete');
 
     // Dynamic sau
     Route::get('/', [ExampleController::class, 'index'])->middleware('perm.club:example,view');
