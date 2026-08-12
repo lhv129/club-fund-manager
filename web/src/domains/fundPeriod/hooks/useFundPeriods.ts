@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { keepPreviousData, useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
@@ -108,9 +108,10 @@ export function useFundPeriods(
 
     const queryKey = ["fund-periods", clubSlug, params] as const;
 
-    const { data: listData, isLoading } = useQuery({
+    const { data: listData, isLoading, isFetching } = useQuery({
         queryKey,
         queryFn: () => service.list(params),
+        placeholderData: keepPreviousData,
         enabled: !!clubSlug,
     });
 
@@ -335,6 +336,7 @@ export function useFundPeriods(
         data,
         total,
         isLoading,
+        isFetching,
 
         selectData,
         isSelectLoading,

@@ -1,7 +1,7 @@
 // src/domains/transaction/hooks/useTransactions.ts
 "use client";
 
-import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { keepPreviousData, useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
@@ -91,7 +91,7 @@ export function useTransactions(
 
     const queryKey = ["transactions", clubSlug, params] as const;
 
-    const { data: listData, isLoading } = useQuery({
+    const { data: listData, isLoading, isFetching } = useQuery({
         queryKey,
         queryFn: () => service.list(params),
         enabled: !!clubSlug,
@@ -106,6 +106,7 @@ export function useTransactions(
             service.select() as Promise<
                 ApiResponse<TransactionSelect[]>
             >,
+        placeholderData: keepPreviousData,
         enabled: !!clubSlug,
     });
 
@@ -224,6 +225,7 @@ export function useTransactions(
         data,
         total,
         isLoading,
+        isFetching,
 
         selectData,
         isSelectLoading,

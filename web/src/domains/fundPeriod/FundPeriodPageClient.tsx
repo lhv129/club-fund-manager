@@ -6,7 +6,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { Table, type ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import {
     FormModal,
     type FormFieldDef,
@@ -78,6 +78,7 @@ export function FundPeriodPageClient() {
         data,
         total,
         isLoading,
+        isFetching,
         togglingIds,
         isCreating,
         isDeleting,
@@ -355,19 +356,17 @@ export function FundPeriodPageClient() {
                     sortDir={params.sort_dir}
                     sortOptions={sortOptions}
                     showStatusFilter={false}
-                    loading={isLoading}
+                    loading={isFetching}
                     onApply={handleApplyFilters}
                     onReset={handleReset}
                     extraFilters={extraFilters}
                 />
 
-                <Table
-                    columns={columns}
-                    data={data}
-                    loading={isLoading}
-                    keyExtractor={(row) => row.id}
-                    showActions={canDelete}
-                    renderActions={(row) => {
+                <DataTable
+                    table={{ columns, data, loading: isLoading, fetching: isFetching,
+                    keyExtractor: (row) => row.id,
+                    showActions: canDelete,
+                    renderActions: (row) => {
                         if (!canDelete) return null;
                         return (
                             <TableActions>
@@ -379,16 +378,8 @@ export function FundPeriodPageClient() {
                                 />
                             </TableActions>
                         );
-                    }}
-                    emptyText={tf("notFound")}
-                />
-
-                <Pagination
-                    page={params.page}
-                    limit={params.limit}
-                    total={total}
-                    onPageChange={setPage}
-                    onLimitChange={setLimit}
+                    }, emptyText: tf("notFound") }}
+                    pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
                 />
             </div>
 
@@ -435,3 +426,4 @@ export function FundPeriodPageClient() {
         </div>
     );
 }
+

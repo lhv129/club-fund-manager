@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import {
@@ -43,7 +43,7 @@ import type {
 } from "./types";
 
 import { getTranslatedTitle } from "@/lib/translations";
-import { Pagination } from "@/components/shared/ui/Pagination";
+import { DataTable } from "@/components/shared/ui/DataTable";
 
 export function ExchangeSessionsPageClient() {
     const locale = useLocale();
@@ -423,7 +423,7 @@ export function ExchangeSessionsPageClient() {
                             label: t("createdAt"),
                         },
                     ]}
-                    loading={h.isLoading}
+                    loading={h.isFetching}
                     showStatusFilter={false}
                     extraFilters={(
                         <>
@@ -516,16 +516,15 @@ export function ExchangeSessionsPageClient() {
                 />
             </div>
 
-            {/* Table + Pagination */}
-            <Table
-                columns={cols}
-                data={h.data}
-                loading={h.isLoading}
-                keyExtractor={(row) =>
-                    row.id
-                }
-                emptyText={x("notFound")}
-                renderActions={(row) => (
+            <DataTable
+                table={{
+                    columns: cols,
+                    data: h.data,
+                    loading: h.isLoading,
+                    fetching: h.isFetching,
+                    keyExtractor: (row) => row.id,
+                    emptyText: x("notFound"),
+                    renderActions: (row) => (
                     <TableActions>
                         <TableActionItem
                             icon={
@@ -593,15 +592,15 @@ export function ExchangeSessionsPageClient() {
                             />
                         )}
                     </TableActions>
-                )}
-            />
-
-            <Pagination
-                page={params.page}
-                limit={params.limit}
-                total={h.total}
-                onPageChange={setPage}
-                onLimitChange={setLimit}
+                    ),
+                }}
+                pagination={{
+                    page: params.page,
+                    limit: params.limit,
+                    total: h.total,
+                    onPageChange: setPage,
+                    onLimitChange: setLimit,
+                }}
             />
 
             {/* Create / Edit */}
@@ -690,3 +689,4 @@ export function ExchangeSessionsPageClient() {
         </div>
     );
 }
+

@@ -300,7 +300,7 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                     {hasMore ? (
                         <LoadMoreButton
                             onClick={handleLoadMore}
-                            loading={isLoading}
+                            loading={isFetching}
                             label={tc("loadMore")}
                             loadingLabel={t("loading")}
                             remainingLabel={tc("loadMoreCount", { remaining })}
@@ -357,3 +357,4 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
         </div>
     );
 }
+

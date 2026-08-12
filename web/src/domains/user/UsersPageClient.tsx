@@ -7,7 +7,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Table, ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import { FormModal, type SubmitResult } from "@/components/shared/forms/FormModal";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
 import { TableActions } from "@/components/shared/ui/TableActions";
@@ -84,6 +84,7 @@ export function UsersPageClient() {
     data,
     total,
     isLoading,
+    isFetching,
     updatingStatusIds,
     isCreating,
     isUpdating,
@@ -359,20 +360,18 @@ export function UsersPageClient() {
           sortDir={params.sort_dir}
           sortOptions={sortOptions}
           showStatusFilter={false}
-          loading={isLoading}
+          loading={isFetching}
           onApply={handleApply}
           onReset={handleReset}
           extraFilters={extraFilters}
           searchPlaceholder={tu("searchPlaceholder")}
         />
 
-        <Table
-          columns={columns}
-          data={data}
-          loading={isLoading}
-          keyExtractor={(row) => row.id}
-          showActions={canUpdate || canDelete}
-          renderActions={(row) => {
+        <DataTable
+          table={{ columns, data, loading: isLoading, fetching: isFetching,
+          keyExtractor: (row) => row.id,
+          showActions: canUpdate || canDelete,
+          renderActions: (row) => {
             const showEdit = canUpdate;
             const showDelete = canDelete && row.id !== user?.id;
 
@@ -397,16 +396,8 @@ export function UsersPageClient() {
                 )}
               </TableActions>
             );
-          }}
-          emptyText={tu("notFound")}
-        />
-
-        <Pagination
-          page={params.page}
-          limit={params.limit}
-          total={total}
-          onPageChange={setPage}
-          onLimitChange={setLimit}
+          }, emptyText: tu("notFound") }}
+          pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
         />
       </div>
 
@@ -440,3 +431,4 @@ export function UsersPageClient() {
     </div>
   );
 }
+

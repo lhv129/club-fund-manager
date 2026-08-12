@@ -8,7 +8,7 @@ import { useRouter } from "@/i18n/routing";
 
 import { Table, type ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
@@ -59,6 +59,7 @@ export function MembersPageClient() {
         data,
         total,
         isLoading,
+        isFetching,
         isDeleting,
         handleDeleteConfirm,
     } = useClubMembers({ ...params, club_slug: slug }, { status: "approved" });
@@ -209,18 +210,16 @@ export function MembersPageClient() {
                     sortBy={params.sort_by}
                     sortDir={params.sort_dir}
                     sortOptions={sortOptions}
-                    loading={isLoading}
+                    loading={isFetching}
                     onApply={(filters) => updateMany(filters as Partial<typeof params>)}
                     onReset={reset}
                 />
 
-                <Table
-                    columns={columns}
-                    data={data}
-                    loading={isLoading}
-                    keyExtractor={(row) => row.id}
-                    showActions={canView || canDelete}
-                    renderActions={(row) => {
+                <DataTable
+                    table={{ columns, data, loading: isLoading, fetching: isFetching,
+                    keyExtractor: (row) => row.id,
+                    showActions: canView || canDelete,
+                    renderActions: (row) => {
                         if (!canView && !canDelete) return null;
                         return (
                             <TableActions>
@@ -245,16 +244,8 @@ export function MembersPageClient() {
                                 )}
                             </TableActions>
                         );
-                    }}
-                    emptyText={tm("notFound")}
-                />
-
-                <Pagination
-                    page={params.page}
-                    limit={params.limit}
-                    total={total}
-                    onPageChange={setPage}
-                    onLimitChange={setLimit}
+                    }, emptyText: tm("notFound") }}
+                    pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
                 />
             </div>
 
@@ -281,3 +272,4 @@ export function MembersPageClient() {
         </div>
     );
 }
+

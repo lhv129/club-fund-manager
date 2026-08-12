@@ -7,7 +7,7 @@ import { Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check } from "lucide-react
 
 import { Table, type ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
 import { FormModal, type SubmitResult } from "@/components/shared/forms/FormModal";
 import { TableActions } from "@/components/shared/ui/TableActions";
@@ -84,6 +84,7 @@ export function ClubInvitesPageClient() {
         data,
         total,
         isLoading,
+        isFetching,
         isCreating,
         isDeleting,
         handleCreate,
@@ -263,19 +264,17 @@ export function ClubInvitesPageClient() {
                     sortDir={params.sort_dir}
                     sortOptions={sortOptions}
                     showStatusFilter={false}
-                    loading={isLoading}
+                    loading={isFetching}
                     onApply={handleApplyFilters}
                     onReset={handleReset}
                     extraFilters={extraFilters}
                 />
 
-                <Table
-                    columns={columns}
-                    data={data}
-                    loading={isLoading}
-                    keyExtractor={(row) => row.id}
-                    showActions={canUpdate}
-                    renderActions={(row) => {
+                <DataTable
+                    table={{ columns, data, loading: isLoading, fetching: isFetching,
+                    keyExtractor: (row) => row.id,
+                    showActions: canUpdate,
+                    renderActions: (row) => {
                         const joinLink = buildJoinLink(locale, row.club.slug, row.invite_code);
                         const displayStatus = getInviteDisplayStatus(row);
 
@@ -306,16 +305,8 @@ export function ClubInvitesPageClient() {
                                 />
                             </TableActions>
                         );
-                    }}
-                    emptyText={ti("notFound")}
-                />
-
-                <Pagination
-                    page={params.page}
-                    limit={params.limit}
-                    total={total}
-                    onPageChange={setPage}
-                    onLimitChange={setLimit}
+                    }, emptyText: ti("notFound") }}
+                    pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
                 />
             </div>
 
@@ -369,3 +360,4 @@ export function ClubInvitesPageClient() {
         </div>
     );
 }
+

@@ -1,13 +1,17 @@
 // src/domains/club/hooks/useClubMembers.ts
 "use client";
-
-import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
 import { getClubMemberService } from "@/domains/members/services/ClubMemberService";
 
-import type { ClubMemberSelect, MemberFilters, MemberHistoryFilters, RejectPayload } from "@/domains/members/types/member";
+import type { MemberFilters, MemberHistoryFilters, RejectPayload } from "@/domains/members/types/member";
 
 // ─── Members hook (tổng quan) ─────────────────────────────────────────────────
 
@@ -23,9 +27,10 @@ export function useClubMembers(
     const queryKey = ["club-members", clubSlug, params, fixedParams] as const;
     const mergedParams = fixedParams ? { ...params, ...fixedParams } : params;
 
-    const { data: listData, isLoading } = useQuery({
+    const { data: listData, isLoading, isFetching } = useQuery({
         queryKey,
         queryFn: () => service.list(mergedParams),
+        placeholderData: keepPreviousData,
         enabled: !!clubSlug,
     });
 
@@ -52,6 +57,7 @@ export function useClubMembers(
         data,
         total,
         isLoading,
+        isFetching,
         isDeleting: deleteMutation.isPending,
         handleDeleteConfirm,
     };
@@ -68,7 +74,7 @@ export function useClubMemberHistory(
     const service = getClubMemberService();
     const queryKey = ["club-members-history", clubSlug, params] as const;
 
-    const { data: listData, isLoading } = useQuery({
+    const { data: listData, isLoading, isFetching } = useQuery({
         queryKey,
         queryFn: () => service.list(params),
         enabled: !!clubSlug,
@@ -130,6 +136,7 @@ export function useClubMemberHistory(
         data,
         total,
         isLoading,
+        isFetching,
         isApproving: approveMutation.isPending,
         isRejecting: rejectMutation.isPending,
         isDeleting: deleteMutation.isPending,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
@@ -48,6 +48,7 @@ export function usePlayingSchedules(params: Params) {
     const query = useQuery({
         queryKey,
         queryFn: () => playingScheduleService.list(params) as Promise<PaginatedResponse<PlayingSchedule>>,
+        placeholderData: keepPreviousData,
     });
     const createMutation = useMutation({
         mutationFn: (payload: FormData) => {
@@ -108,6 +109,7 @@ export function usePlayingSchedules(params: Params) {
         data: query.data?.data ?? [],
         total: query.data?.meta?.total ?? 0,
         isLoading: query.isLoading,
+        isFetching: query.isFetching,
         isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
         isDeleting: deleteMutation.isPending,

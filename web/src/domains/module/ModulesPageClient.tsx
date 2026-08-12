@@ -17,7 +17,7 @@ import {
 
 import { Table, ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
 import {
     FormModal,
@@ -243,6 +243,7 @@ export function ModulesPageClient() {
         data,
         total,
         isLoading,
+        isFetching,
         togglingIds,
         isCreating,
         isUpdating,
@@ -424,7 +425,7 @@ export function ModulesPageClient() {
                     sortBy={params.sort_by}
                     sortDir={params.sort_dir}
                     sortOptions={sortOptions}
-                    loading={isLoading}
+                    loading={isFetching}
                     onApply={(filters) => updateMany(filters as Partial<typeof params>)}
                     onReset={reset}
                 />
@@ -477,15 +478,12 @@ export function ModulesPageClient() {
                     )}
                 </div>
 
-                {/* Desktop table */}
                 <div className="hidden lg:block">
-                    <Table
-                        columns={columns}
-                        data={data}
-                        loading={isLoading}
-                        keyExtractor={(row) => row.module_id}
-                        showActions={canUpdate || canDelete}
-                        renderActions={(row) => (
+                    <DataTable
+                        table={{ columns, data, loading: isLoading, fetching: isFetching,
+                        keyExtractor: (row) => row.module_id,
+                        showActions: canUpdate || canDelete,
+                        renderActions: (row) => (
                             <TableActions>
                                 {canUpdate && (
                                     <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />
@@ -494,18 +492,10 @@ export function ModulesPageClient() {
                                     <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
                                 )}
                             </TableActions>
-                        )}
-                        emptyText={tm("notFound")}
+                        ), emptyText: tm("notFound") }}
+                        pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
                     />
                 </div>
-
-                <Pagination
-                    page={params.page}
-                    limit={params.limit}
-                    total={total}
-                    onPageChange={setPage}
-                    onLimitChange={setLimit}
-                />
 
                 <FormModal
                     isOpen={modalOpen}
@@ -551,3 +541,4 @@ export function ModulesPageClient() {
         </div>
     );
 }
+

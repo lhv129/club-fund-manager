@@ -1,6 +1,11 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
@@ -38,7 +43,16 @@ export function useExchangeSessions(params: Params) {
 
     const query = useQuery({
         queryKey,
-        queryFn: () => exchangeSessionService.list(params) as Promise<PaginatedResponse<ExchangeSession>>,
+
+        queryFn: () => {
+            return exchangeSessionService.list(
+                params,
+            ) as Promise<
+                PaginatedResponse<ExchangeSession>
+            >;
+        },
+
+        placeholderData: keepPreviousData,
     });
 
     const createMutation = useMutation({
@@ -98,6 +112,7 @@ export function useExchangeSessions(params: Params) {
         data: query.data?.data ?? [],
         total: query.data?.meta?.total ?? 0,
         isLoading: query.isLoading,
+        isFetching: query.isFetching,
         isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
         isDeleting: deleteMutation.isPending,

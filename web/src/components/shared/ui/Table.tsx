@@ -581,8 +581,6 @@ export function Table<T extends object>({
                                 border-t-transparent
                                 "
                             />
-
-                            <span>Đang tải...</span>
                         </div>
                     </div>
                 )}

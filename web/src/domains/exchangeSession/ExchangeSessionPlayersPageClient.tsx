@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
 import { Table, type ColumnDef } from "@/components/shared/ui/Table";
-import { Pagination } from "@/components/shared/ui/Pagination";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import {
     FormModal,
     type FormFieldDef,
@@ -213,13 +213,15 @@ export function ExchangeSessionPlayersPageClient() {
                 </button>
             </div>
 
-            <Table
-                columns={columns}
-                data={players.data}
-                loading={players.isLoading}
-                keyExtractor={(row) => row.id}
-                emptyText={x("noPlayers")}
-                renderActions={(row) => (
+            <DataTable
+                table={{
+                    columns,
+                    data: players.data,
+                    loading: players.isLoading,
+                    fetching: players.isFetching,
+                    keyExtractor: (row) => row.id,
+                    emptyText: x("noPlayers"),
+                    renderActions: (row) => (
                     <TableActions>
                         <TableActionItem
                             icon={<Pencil className="h-4 w-4" />}
@@ -234,7 +236,15 @@ export function ExchangeSessionPlayersPageClient() {
                             onClick={() => setDeleteTarget(row)}
                         />
                     </TableActions>
-                )}
+                    ),
+                }}
+                pagination={{
+                    page: params.page,
+                    limit: params.limit,
+                    total: players.total,
+                    onPageChange: setPage,
+                    onLimitChange: setLimit,
+                }}
             />
 
             <div className="flex flex-wrap justify-end gap-6 border-t border-border pt-4 text-sm">
@@ -247,14 +257,6 @@ export function ExchangeSessionPlayersPageClient() {
                     <span className="font-semibold text-emerald-500">{formatAmount(totalPaid)}</span>
                 </div>
             </div>
-
-            <Pagination
-                page={params.page}
-                limit={params.limit}
-                total={players.total}
-                onPageChange={setPage}
-                onLimitChange={setLimit}
-            />
 
             <FormModal
                 isOpen={isOpen}

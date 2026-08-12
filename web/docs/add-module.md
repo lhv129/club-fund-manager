@@ -198,7 +198,7 @@ function buildPayload(
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useExamples(
-    // ✅ Dùng ReturnType — đồng bộ exact type với useListParams
+    // Dùng ReturnType — đồng bộ exact type với useListParams
     // Tránh lỗi: "sort_dir: string" không assignable to "asc" | "desc" | undefined
     params: ReturnType<typeof useListParams<ExampleFilters>>["params"]
 ) {
@@ -209,7 +209,7 @@ export function useExamples(
     const queryKey = ["examples", params] as const;
 
     // ── Fetch ─────────────────────────────────────────────────────────────────
-    const { data: listData, isLoading } = useQuery({
+    const { data: listData, isLoading, isFetching } = useQuery({
         queryKey,
         queryFn: () => exampleServiceClient.list(params),
     });
@@ -334,7 +334,7 @@ export function useExamples(
     };
 
     return {
-        data, total, isLoading, togglingIds,
+        data, total, isLoading, isFetching, togglingIds,
         isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
         isDeleting: deleteMutation.isPending,
@@ -412,7 +412,7 @@ const { data: examples, isLoading: examplesLoading } = useExampleSelect();
 
 | Trường hợp | Có cần select hook? |
 |---|---|
-| BE có `/select` VÀ entity được module khác tham chiếu (dropdown/foreign key) | ✅ Thêm |
+| BE có `/select` VÀ entity được module khác tham chiếu (dropdown/foreign key) | Thêm |
 | BE có `/select` NHƯNG entity không bao giờ là dropdown (vd: setting) | Tùy — vẫn thêm cho đồng bộ, hoặc bỏ qua |
 | BE KHÔNG có `/select` | ❌ Bỏ qua — `BaseRepository.select()` sẽ 404 |
 
@@ -431,6 +431,31 @@ const { data: examples, isLoading: examplesLoading } = useExampleSelect();
 > - Nhìn vào type của entity — nếu có `translations?: Array<{locale, name, ...}>` → dùng **Pattern B (có translations)**
 > - Nếu không có mảng `translations` → dùng **Pattern A (không có translations)**
 
+### Quyền truy cập và các button/action
+
+Đọc đúng scope từ page mẫu trước khi copy code:
+
+- **System admin page** (`admin/(system)`), như `ClubsAdminPageClient`: page dành riêng cho system admin có thể render button/action trực tiếp. Nếu module system vẫn khai báo RBAC ở UI, gọi `hasPermission` **không kèm `clubId`**.
+  ```tsx
+  const { hasPermission, isSuperAdmin } = useAuth();
+  const canCreate = isSuperAdmin || hasPermission("example", "create");
+  const canUpdate = isSuperAdmin || hasPermission("example", "update");
+  const canDelete = isSuperAdmin || hasPermission("example", "delete");
+  ```
+- **Club workspace** (`club/[slug]`), như `MembersPageClient`: lấy `club` từ `useClub()` và truyền `club?.id` vào `hasPermission`.
+  ```tsx
+  const { hasPermission, isSuperAdmin } = useAuth();
+  const { club, slug } = useClub();
+  const canView = isSuperAdmin || hasPermission("example", "view", club?.id);
+  const canCreate = isSuperAdmin || hasPermission("example", "create", club?.id);
+  const canUpdate = isSuperAdmin || hasPermission("example", "update", club?.id);
+  const canDelete = isSuperAdmin || hasPermission("example", "delete", club?.id);
+  ```
+
+Các Pattern A/B bên dưới minh họa system module có RBAC. Với page chỉ dành cho system admin như `ClubsAdminPageClient`, có thể bỏ `useAuth`, các biến `can*` và render trực tiếp. Với club workspace, giữ nguyên cách bọc button/action nhưng đổi block `can*` sang biến thể có `club?.id` ở trên.
+
+Chỉ hiển thị button tạo khi `canCreate`; bọc từng `TableActionItem` bằng quyền tương ứng; đặt `showActions: canView || canUpdate || canDelete` và trả về `null` nếu không có action nào. Toggle/status mutation cũng phải disable hoặc ẩn khi không có quyền `update`. Quyền UI không thay thế authorization ở backend.
+
 ---
 
 ### Pattern A — Không có translations
@@ -444,14 +469,15 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
-import { Table, ColumnDef } from "@/components/shared/ui/Table";
+import { type ColumnDef } from "@/components/shared/ui/Table";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import { FilterBar } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
 import { FormModal, type SubmitResult } from "@/components/shared/forms/FormModal";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import { useListParams } from "@/hooks/useListParams";
+import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { useExamples } from "@/domains/example/hooks/useExamples";
 import type { Example, ExampleFilters } from "@/domains/example/types";
 
@@ -459,6 +485,10 @@ export function ExamplesPageClient() {
     // ❌ KHÔNG cần useLocale()
     const t  = useTranslations("common");
     const te = useTranslations("example");
+    const { hasPermission, isSuperAdmin } = useAuth();
+    const canCreate = isSuperAdmin || hasPermission("example", "create");
+    const canUpdate = isSuperAdmin || hasPermission("example", "update");
+    const canDelete = isSuperAdmin || hasPermission("example", "delete");
 
     const { params, setPage, setLimit, updateMany, reset } =
         useListParams<ExampleFilters>({
@@ -468,7 +498,7 @@ export function ExamplesPageClient() {
         });
 
     const {
-        data, total, isLoading,
+        data, total, isLoading, isFetching,
         isCreating, isUpdating, isDeleting,
         handleCreate, handleEdit, handleDeleteConfirm,
     } = useExamples(params);
@@ -539,7 +569,6 @@ export function ExamplesPageClient() {
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <>
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
@@ -548,68 +577,71 @@ export function ExamplesPageClient() {
                             {te("totalCount", { count: total.toLocaleString() })}
                         </p>
                     </div>
-                    <button
-                        onClick={openCreate}
-                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />{te("create")}
-                    </button>
+                    {canCreate && (
+                        <button
+                            onClick={openCreate}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />{te("create")}
+                        </button>
+                    )}
                 </div>
 
-                <div className="space-y-4">
                     <FilterBar
                         search={params.search}
                         sortBy={params.sort_by}
                         sortDir={params.sort_dir}
                         sortOptions={sortOptions}
-                        loading={isLoading}
+                        loading={isFetching}
                         onApply={(filters) => updateMany(filters as Partial<typeof params>)}
                         onReset={reset}
                     />
-                    <Table
-                        columns={columns}
-                        data={data}
-                        loading={isLoading}
-                        keyExtractor={(row) => row.id}
-                        renderActions={(row) => (
-                            <TableActions>
-                                <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")}   onClick={() => openEdit(row)} />
-                                <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
-                            </TableActions>
-                        )}
-                        emptyText={te("notFound")}
+                    <DataTable
+                        table={{
+                            columns,
+                            data,
+                            loading: isLoading,
+                            fetching: isFetching,
+                            keyExtractor: (row) => row.id,
+                            showActions: canUpdate || canDelete,
+                            renderActions: (row) => {
+                                if (!canUpdate && !canDelete) return null;
+                                return (
+                                    <TableActions>
+                                        {canUpdate && <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />}
+                                        {canDelete && <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />}
+                                    </TableActions>
+                                );
+                            },
+                            emptyText: te("notFound"),
+                        }}
+                        pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
                     />
-                    <Pagination
-                        page={params.page} limit={params.limit} total={total}
-                        onPageChange={setPage} onLimitChange={setLimit}
+
+                    {/* FormModal chỉ dùng fields + initialValues, KHÔNG có translatableFields */}
+                    <FormModal
+                        isOpen={modalOpen}
+                        onClose={closeModal}
+                        onSubmit={handleSubmit}
+                        title={selected ? te("edit") : te("create")}
+                        submitting={selected ? isUpdating : isCreating}
+                        isEdit={!!selected}
+                        fields={formFields}
+                        initialValues={formInitialValues}
                     />
-                </div>
+
+                    <DeleteConfirmModal
+                        isOpen={!!deleteTarget}
+                        title={t("deleteConfirmTitle")}
+                        description={t("deleteConfirmDesc")}
+                        message={deleteTarget ? te("deleteConfirmMsg", { name: deleteTarget.name }) : ""}
+                        confirmText={t("delete")}
+                        cancelText={t("cancel")}
+                        onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.id); setDeleteTarget(null); } }}
+                        onCancel={() => setDeleteTarget(null)}
+                        loading={isDeleting}
+                    />
             </div>
-
-            {/* FormModal chỉ dùng fields + initialValues, KHÔNG có translatableFields */}
-            <FormModal
-                isOpen={modalOpen}
-                onClose={closeModal}
-                onSubmit={handleSubmit}
-                title={selected ? te("edit") : te("create")}
-                submitting={selected ? isUpdating : isCreating}
-                isEdit={!!selected}
-                fields={formFields}
-                initialValues={formInitialValues}
-            />
-
-            <DeleteConfirmModal
-                isOpen={!!deleteTarget}
-                title={t("deleteConfirmTitle")}
-                description={t("deleteConfirmDesc")}
-                message={deleteTarget ? te("deleteConfirmMsg", { name: deleteTarget.name }) : ""}
-                confirmText={t("delete")}
-                cancelText={t("cancel")}
-                onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.id); setDeleteTarget(null); } }}
-                onCancel={() => setDeleteTarget(null)}
-                loading={isDeleting}
-            />
-        </>
     );
 }
 ```
@@ -627,9 +659,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
-import { Table, ColumnDef } from "@/components/shared/ui/Table";
+import { type ColumnDef } from "@/components/shared/ui/Table";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
 import {
     FormModal,
     type FormFieldDef,
@@ -642,6 +674,7 @@ import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import Select from "@/components/shared/ui/Select";
 import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
 import { useListParams } from "@/hooks/useListParams";
+import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { useExamples } from "@/domains/example/hooks/useExamples";
 import type { Example, ExampleFilters } from "@/domains/example/types";
 import { getTranslatedName } from "@/lib/translations";
@@ -666,6 +699,10 @@ export function ExamplesPageClient() {
     const locale = useLocale();   // cần để đọc đúng ngôn ngữ
     const t  = useTranslations("common");
     const te = useTranslations("example");
+    const { hasPermission, isSuperAdmin } = useAuth();
+    const canCreate = isSuperAdmin || hasPermission("example", "create");
+    const canUpdate = isSuperAdmin || hasPermission("example", "update");
+    const canDelete = isSuperAdmin || hasPermission("example", "delete");
 
     const { params, setPage, setLimit, updateMany, reset } =
         useListParams<ExampleFilters>({
@@ -681,7 +718,7 @@ export function ExamplesPageClient() {
     useEffect(() => { setDraftIsActive(params.is_active); }, [params.is_active]);
 
     const {
-        data, total, isLoading, togglingIds,
+        data, total, isLoading, isFetching, togglingIds,
         isCreating, isUpdating, isDeleting,
         handleCreate, handleEdit, handleDeleteConfirm, handleToggleStatus,
     } = useExamples(params);
@@ -785,7 +822,7 @@ export function ExamplesPageClient() {
         },
         {
             key: "name", label: t("name"),
-            // ✅ Phải dùng helper — KHÔNG đọc row.name trực tiếp
+            // Phải dùng helper — KHÔNG đọc row.name trực tiếp
             render: (row) => <span className="text-sm text-foreground">{getTranslatedName(row.translations, locale) || "—"}</span>,
         },
         // Nếu entity dùng "title" (không phải "name"):
@@ -798,6 +835,7 @@ export function ExamplesPageClient() {
                         checked={Boolean(row.is_active)}
                         loading={togglingIds.has(row.id)}
                         onChange={() => handleToggleStatus(row)}
+                        disabled={!canUpdate}
                     />
                 </div>
             ),
@@ -806,7 +844,6 @@ export function ExamplesPageClient() {
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <>
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
@@ -815,80 +852,83 @@ export function ExamplesPageClient() {
                             {te("totalCount", { count: total.toLocaleString() })}
                         </p>
                     </div>
-                    <button
-                        onClick={openCreate}
-                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />{te("create")}
-                    </button>
+                    {canCreate && (
+                        <button
+                            onClick={openCreate}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />{te("create")}
+                        </button>
+                    )}
                 </div>
 
-                <div className="space-y-4">
-                    {/* ✅ Khi có extra filters: showStatusFilter={false} + custom handler + extraFilters */}
-                    <FilterBar
-                        search={params.search}
-                        sortBy={params.sort_by}
-                        sortDir={params.sort_dir}
-                        sortOptions={sortOptions}
-                        showStatusFilter={false}
-                        loading={isLoading}
-                        onApply={handleApplyFilters}
-                        onReset={handleReset}
-                        extraFilters={extraFilters}
-                    />
-                    <Table
-                        columns={columns}
-                        data={data}
-                        loading={isLoading}
-                        keyExtractor={(row) => row.id}
-                        renderActions={(row) => (
-                            <TableActions>
-                                <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")}   onClick={() => openEdit(row)} />
-                                <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />
-                            </TableActions>
-                        )}
-                        emptyText={te("notFound")}
-                    />
-                    <Pagination
-                        page={params.page} limit={params.limit} total={total}
-                        onPageChange={setPage} onLimitChange={setLimit}
-                    />
-                </div>
+                {/* Khi có extra filters: showStatusFilter={false} + custom handler + extraFilters */}
+                <FilterBar
+                    search={params.search}
+                    sortBy={params.sort_by}
+                    sortDir={params.sort_dir}
+                    sortOptions={sortOptions}
+                    showStatusFilter={false}
+                    loading={isFetching}
+                    onApply={handleApplyFilters}
+                    onReset={handleReset}
+                    extraFilters={extraFilters}
+                />
+                <DataTable
+                    table={{
+                        columns,
+                        data,
+                        loading: isLoading,
+                        fetching: isFetching,
+                        keyExtractor: (row) => row.id,
+                        showActions: canUpdate || canDelete,
+                        renderActions: (row) => {
+                            if (!canUpdate && !canDelete) return null;
+                            return (
+                                <TableActions>
+                                    {canUpdate && <TableActionItem icon={<Pencil className="w-4 h-4" />} label={t("edit")} onClick={() => openEdit(row)} />}
+                                    {canDelete && <TableActionItem icon={<Trash2 className="w-4 h-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />}
+                                </TableActions>
+                            );
+                        },
+                        emptyText: te("notFound"),
+                    }}
+                    pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
+                />
+
+                {/* FormModal dùng đủ 5 props: fields, initialValues, translatableFields, initialTranslations */}
+                <FormModal
+                    isOpen={modalOpen}
+                    onClose={closeModal}
+                    onSubmit={handleSubmit}
+                    title={selected ? te("edit") : te("create")}
+                    submitting={selected ? isUpdating : isCreating}
+                    isEdit={!!selected}
+                    fields={formFields}
+                    initialValues={selected ? editInitialValues : createInitialValues}
+                    translatableFields={translatableFields}
+                    initialTranslations={
+                        selected
+                            ? toInitialTranslations(selected.translations)
+                            : {
+                                vi: { locale: "vi", name: "", description: "" },
+                                en: { locale: "en", name: "", description: "" },
+                            }
+                    }
+                />
+
+                <DeleteConfirmModal
+                    isOpen={!!deleteTarget}
+                    title={t("deleteConfirmTitle")}
+                    description={t("deleteConfirmDesc")}
+                    message={deleteTarget ? te("deleteConfirmMsg", { name: getTranslatedName(deleteTarget.translations, locale) }) : ""}
+                    confirmText={t("delete")}
+                    cancelText={t("cancel")}
+                    onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.id); setDeleteTarget(null); } }}
+                    onCancel={() => setDeleteTarget(null)}
+                    loading={isDeleting}
+                />
             </div>
-
-            {/* FormModal dùng đủ 5 props: fields, initialValues, translatableFields, initialTranslations */}
-            <FormModal
-                isOpen={modalOpen}
-                onClose={closeModal}
-                onSubmit={handleSubmit}
-                title={selected ? te("edit") : te("create")}
-                submitting={selected ? isUpdating : isCreating}
-                isEdit={!!selected}
-                fields={formFields}
-                initialValues={selected ? editInitialValues : createInitialValues}
-                translatableFields={translatableFields}
-                initialTranslations={
-                    selected
-                        ? toInitialTranslations(selected.translations)
-                        : {
-                            vi: { locale: "vi", name: "", description: "" },
-                            en: { locale: "en", name: "", description: "" },
-                          }
-                }
-            />
-
-            <DeleteConfirmModal
-                isOpen={!!deleteTarget}
-                title={t("deleteConfirmTitle")}
-                description={t("deleteConfirmDesc")}
-                message={deleteTarget ? te("deleteConfirmMsg", { name: getTranslatedName(deleteTarget.translations, locale) }) : ""}
-                confirmText={t("delete")}
-                cancelText={t("cancel")}
-                onConfirm={() => { if (deleteTarget) { handleDeleteConfirm(deleteTarget.id); setDeleteTarget(null); } }}
-                onCancel={() => setDeleteTarget(null)}
-                loading={isDeleting}
-            />
-        </>
     );
 }
 ```
@@ -899,10 +939,10 @@ export function ExamplesPageClient() {
 
 | | **Pattern A** (không có translations) | **Pattern B** (có translations) |
 |---|---|---|
-| `useLocale()` | ❌ | ✅ |
-| `getTranslatedName(row.translations, locale)` | ❌ — đọc `row.name` trực tiếp | ✅ bắt buộc |
-| `getTranslatedTitle(row.translations, locale)` | ❌ | ✅ khi entity dùng `title` thay `name` |
-| `toInitialTranslations()` | ❌ | ✅ |
+| `useLocale()` | ❌ | |
+| `getTranslatedName(row.translations, locale)` | ❌ — đọc `row.name` trực tiếp | bắt buộc |
+| `getTranslatedTitle(row.translations, locale)` | ❌ | khi entity dùng `title` thay `name` |
+| `toInitialTranslations()` | ❌ | |
 | `handleSubmit` | `(values)` | `(values, translations?)` |
 | `FormModal` | `fields` + `initialValues` | Thêm `translatableFields` + `initialTranslations` |
 | Extra filters | `onApply` trực tiếp | Draft state + `handleApplyFilters` + `handleReset` |
@@ -920,7 +960,7 @@ type Example = {
   is_active: boolean;
 }
 
-// ✅ Có translations[] → Pattern B
+// Có translations[] → Pattern B
 type Example = {
   id: string;
   is_active: boolean;

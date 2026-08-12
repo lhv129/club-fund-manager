@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { keepPreviousData, useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
@@ -83,9 +83,10 @@ export function useModules(params: ReturnType<typeof import("@/hooks/useListPara
     const queryKey = ["modules", params] as const;
 
     // ── Fetch list ────────────────────────────────────────────────────────────
-    const { data: listData, isLoading } = useQuery({
+    const { data: listData, isLoading, isFetching } = useQuery({
         queryKey,
         queryFn: () => moduleService.list(params),
+        placeholderData: keepPreviousData
     });
 
     const data = listData?.data ?? [];
@@ -237,6 +238,7 @@ export function useModules(params: ReturnType<typeof import("@/hooks/useListPara
         data,
         total,
         isLoading,
+        isFetching,
         togglingIds,
         // Pending states (dùng cho loading indicator trên button/modal)
         isCreating: createMutation.isPending,

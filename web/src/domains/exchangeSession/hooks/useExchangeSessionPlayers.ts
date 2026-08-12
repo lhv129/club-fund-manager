@@ -1,6 +1,11 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
@@ -33,9 +38,22 @@ export function useExchangeSessionPlayers(params: Params) {
 
     const query = useQuery({
         queryKey,
-        queryFn: () => service.list(params) as Promise<PaginatedResponse<ExchangeSessionPlayer>>,
-        enabled: Number.isFinite(sessionId) && sessionId > 0,
+
+        queryFn: () => {
+            return service.list(
+                params,
+            ) as Promise<
+                PaginatedResponse<ExchangeSessionPlayer>
+            >;
+        },
+
+        enabled:    
+            Number.isFinite(sessionId) &&
+            sessionId > 0,
+
+        placeholderData: keepPreviousData,
     });
+
     const createMutation = useMutation({ mutationFn: (values: Record<string, string>) => service.create(makePayload(values)) });
     const updateMutation = useMutation({ mutationFn: ({ id, values }: { id: number; values: Record<string, string> }) => service.update(id, makePayload(values)) });
     const deleteMutation = useMutation({ mutationFn: (id: number) => service.destroy(id, mutationScope) });
@@ -72,6 +90,7 @@ export function useExchangeSessionPlayers(params: Params) {
         data: query.data?.data ?? [],
         total: query.data?.meta?.total ?? 0,
         isLoading: query.isLoading,
+        isFetching: query.isFetching,
         isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
         isDeleting: deleteMutation.isPending,

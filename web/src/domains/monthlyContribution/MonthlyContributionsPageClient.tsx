@@ -9,7 +9,7 @@ import {
     FilterBar,
     type AppliedFilters,
 } from "@/components/shared/ui/FilterBar";
-import { Pagination } from "@/components/shared/ui/Pagination";
+import { DataTable } from "@/components/shared/ui/DataTable";
 import Select from "@/components/shared/ui/Select";
 import {
     FormModal,
@@ -134,6 +134,7 @@ export function MonthlyContributionsPageClient() {
         data,
         total,
         isLoading,
+        isFetching,
         isCreating,
         isUpdating,
         isDeleting,
@@ -597,12 +598,10 @@ export function MonthlyContributionsPageClient() {
                         extraFilters={extraFilters}
                     />
 
-                    <Table
-                        columns={columns}
-                        data={data}
-                        loading={isLoading}
-                        keyExtractor={(row) => row.id}
-                        renderActions={(row) => (
+                    <DataTable
+                        table={{ columns, data, loading: isLoading, fetching: isFetching,
+                        keyExtractor: (row) => row.id,
+                        renderActions: (row) => (
                             <TableActions>
                                 {canUpdate && (
                                     <TableActionItem
@@ -627,16 +626,8 @@ export function MonthlyContributionsPageClient() {
                                     />
                                 )}
                             </TableActions>
-                        )}
-                        emptyText={tm("notFound")}
-                    />
-
-                    <Pagination
-                        page={params.page}
-                        limit={params.limit}
-                        total={total}
-                        onPageChange={setPage}
-                        onLimitChange={setLimit}
+                        ), emptyText: tm("notFound") }}
+                        pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
                     />
                 </div>
             </div>

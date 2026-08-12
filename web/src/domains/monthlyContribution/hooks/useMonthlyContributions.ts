@@ -1,7 +1,7 @@
 // src/domains/monthlyContribution/hooks/useMonthlyContributions.ts
 "use client";
 
-import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { keepPreviousData, useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
@@ -81,9 +81,10 @@ export function useMonthlyContributions(
         params,
     ] as const;
 
-    const { data: listData, isLoading } = useQuery({
+    const { data: listData, isLoading, isFetching } = useQuery({
         queryKey,
         queryFn: () => service.list(params),
+        placeholderData: keepPreviousData,
         enabled: !!clubSlug,
     });
 
@@ -235,6 +236,7 @@ export function useMonthlyContributions(
         data,
         total,
         isLoading,
+        isFetching,
 
         isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
