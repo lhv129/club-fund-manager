@@ -130,7 +130,13 @@ export function useFundPeriods(
     const selectData = selectResponse?.data ?? [];
 
     const createMutation = useMutation({
-        mutationFn: (payload: FormData) => service.create(payload),
+        mutationFn: (payload: FormData) => {
+            if (clubSlug) {
+                payload.set("club_slug", clubSlug);
+            }
+
+            return service.create(payload);
+        },
     });
 
     const updateMutation = useMutation({
@@ -140,7 +146,13 @@ export function useFundPeriods(
         }: {
             id: number;
             payload: FormData;
-        }) => service.update(id, payload),
+        }) => {
+            if (clubSlug) {
+                payload.set("club_slug", clubSlug);
+            }
+
+            return service.update(id, payload);
+        },
     });
 
     const deleteMutation = useMutation({

@@ -245,7 +245,7 @@ export function FundPeriodPageClient() {
             label: t("name"),
             render: (row) => (
                 <span className="text-sm text-foreground font-medium">
-                    {/* ✅ getTranslatedTitle — Translation đã có title?: string */}
+                    {/* getTranslatedTitle — Translation đã có title?: string */}
                     {getTranslatedTitle(row.translations, locale) || "—"}
                 </span>
             ),
