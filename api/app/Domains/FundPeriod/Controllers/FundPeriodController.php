@@ -13,15 +13,36 @@ use Illuminate\Http\Request;
 
 class FundPeriodController extends BaseController
 {
-    public function __construct(protected FundPeriodService $service) {}
+    public function __construct(
+        protected FundPeriodService $service
+    ) {}
+
+    // =========================================================================
+    // LIST
+    // =========================================================================
 
     /**
-     * GET /api/v1/fund-periods?search=abc&club_id=1&year=2026&is_active=1&sort_by=year&sort_dir=desc&limit=20&page=1
+     * GET /api/v1/fund-periods
+     *
+     * Workspace:
+     *
+     * - Có club_slug:
+     *      middleware resolve -> club_id
+     *      => chỉ lấy FundPeriod của club đó.
+     *
+     * - Không có club_slug:
+     *      club_id = null
+     *      => Global / Super Admin có thể xem tất cả club.
      */
-    public function index(FilterFundPeriodRequest $request): JsonResponse
-    {
+    public function index(
+        FilterFundPeriodRequest $request
+    ): JsonResponse {
         $data = $request->validated();
+
+        // Không tin club_id từ query.
+        // club_id phải đến từ middleware.
         $data['club_id'] = $request->attributes->get('club_id');
+
         return $this->paginateResponse(
             $this->service->paginate($data),
             __('domains/fund_period.list'),
@@ -30,83 +51,269 @@ class FundPeriodController extends BaseController
     }
 
     /**
-     * GET /api/v1/fund-periods/cursor?limit=10&cursor=eyJpZCI6MTAwfQ
+     * GET /api/v1/fund-periods/cursor
      */
-    public function cursorIndex(Request $request): JsonResponse
-    {
+    public function cursorIndex(
+        Request $request
+    ): JsonResponse {
+        $data = $request->only([
+            'limit',
+            'search',
+            'year',
+            'month',
+            'is_active',
+            'is_locked',
+        ]);
+
+        // Workspace scope từ middleware.
+        $data['club_id'] = $request->attributes->get('club_id');
+
         return $this->cursorResponse(
-            $this->service->cursorPaginate($request->only(['limit', 'search', 'club_id', 'year', 'is_active'])),
+            $this->service->cursorPaginate($data),
             __('domains/fund_period.list'),
             FundPeriodResource::class,
         );
     }
 
     /**
-     * GET /api/v1/fund-periods/select — dropdown, không Resource, không phân trang.
+     * GET /api/v1/fund-periods/select
      */
-    public function select(FilterFundPeriodRequest $request): JsonResponse
-    {
-        $filters = $request->validated();
-        $filters['club_id'] = $request->attributes->get('club_id');
+    public function select(
+        FilterFundPeriodRequest $request
+    ): JsonResponse {
+        $data = $request->validated();
 
-        return $this->responseCommon(true, __('domains/fund_period.select'), $this->service->getForSelect($filters));
+        // Workspace scope từ middleware.
+        $data['club_id'] = $request->attributes->get('club_id');
+
+        return $this->responseCommon(
+            true,
+            __('domains/fund_period.select'),
+            $this->service->getForSelect($data),
+        );
     }
+
+    // =========================================================================
+    // SHOW
+    // =========================================================================
 
     /**
      * GET /api/v1/fund-periods/{id}
      */
-    public function show(string $clubSlug, int $id): JsonResponse
-    {
+    public function show(
+        Request $request,
+        int $id
+    ): JsonResponse {
+        $clubId = $request->attributes->get('club_id');
+
+        $fundPeriod = $this->service->findWithRelations(
+            $id,
+            ['translations', 'club'],
+            $clubId,
+        );
+
         return $this->responseCommon(
             true,
             __('domains/fund_period.detail'),
-            new FundPeriodResource($this->service->findWithRelations($id, ['translations', 'club'])),
+            new FundPeriodResource($fundPeriod),
         );
     }
+
+    // =========================================================================
+    // CREATE
+    // =========================================================================
 
     /**
      * POST /api/v1/fund-periods
      */
-    public function store(StoreFundPeriodRequest $request): JsonResponse
-    {
+    public function store(
+        StoreFundPeriodRequest $request
+    ): JsonResponse {
         $data = $request->validated();
+
+        // Tuyệt đối không lấy club_id từ request body.
+        //
+        // Có club_slug:
+        //     middleware -> club_id
+        //
+        // Không có club_slug:
+        //     club_id = null
+        //
+        // Trường hợp create không có workspace thì Service nên từ chối.
         $data['club_id'] = $request->attributes->get('club_id');
+
         return $this->responseCommon(
             true,
             __('domains/fund_period.created'),
-            new FundPeriodResource($this->service->create($data)),
+            new FundPeriodResource(
+                $this->service->create($data)
+            ),
             201,
         );
     }
 
+    // =========================================================================
+    // UPDATE
+    // =========================================================================
+
     /**
      * PUT /api/v1/fund-periods/{id}
      */
-    public function update(UpdateFundPeriodRequest $request, string $clubSlug, int $id): JsonResponse
-    {
+    public function update(
+        UpdateFundPeriodRequest $request,
+        int $id
+    ): JsonResponse {
+        $data = $request->validated();
+
+        // Không cho client tự gửi club_id để đổi workspace.
+        //
+        // club_id phải được resolve từ club_slug middleware.
+        $data['club_id'] = $request->attributes->get('club_id');
+
+        $fundPeriod = $this->service->update(
+            $id,
+            $data
+        );
+
         return $this->responseCommon(
             true,
             __('domains/fund_period.updated'),
-            new FundPeriodResource($this->service->update($id, $request->validated())),
+            new FundPeriodResource($fundPeriod),
         );
     }
 
-    /**
-     * DELETE /api/v1/fund-periods/{id} — xoá mềm + dồn sort_order.
-     */
-    public function destroy(string $clubSlug, int $id): JsonResponse
-    {
-        $this->service->deleteWithSortOrder($id);
+    // =========================================================================
+    // DELETE
+    // =========================================================================
 
-        return $this->responseCommon(true, __('domains/fund_period.deleted'));
+    /**
+     * DELETE /api/v1/fund-periods/{id}
+     */
+    public function destroy(
+        Request $request,
+        int $id
+    ): JsonResponse {
+        $clubId = $request->attributes->get('club_id');
+
+        $this->service->delete(
+            $id,
+            $clubId
+        );
+
+        return $this->responseCommon(
+            true,
+            __('domains/fund_period.deleted'),
+        );
     }
+
+    // =========================================================================
+    // RESTORE
+    // =========================================================================
+
+    /**
+     * POST /api/v1/fund-periods/{id}/restore
+     */
+    public function restore(
+        Request $request,
+        int $id
+    ): JsonResponse {
+        $clubId = $request->attributes->get('club_id');
+
+        $fundPeriod = $this->service->restore(
+            $id,
+            $clubId
+        );
+
+        return $this->responseCommon(
+            true,
+            __('domains/fund_period.restored'),
+            new FundPeriodResource($fundPeriod),
+        );
+    }
+
+    // =========================================================================
+    // CLOSE
+    // =========================================================================
+
+    /**
+     * POST /api/v1/fund-periods/{id}/close
+     */
+    public function close(
+        Request $request,
+        int $id
+    ): JsonResponse {
+        $clubId = $request->attributes->get('club_id');
+
+        $fundPeriod = $this->service->close(
+            $id,
+            $clubId
+        );
+
+        return $this->responseCommon(
+            true,
+            __('domains/fund_period.closed'),
+            new FundPeriodResource($fundPeriod),
+        );
+    }
+
+    // =========================================================================
+    // REOPEN
+    // =========================================================================
+
+    /**
+     * POST /api/v1/fund-periods/{id}/reopen
+     *
+     * Body:
+     *
+     * {
+     *     "reason": "Điều chỉnh khoản đóng góp..."
+     * }
+     */
+    public function reopen(
+        Request $request,
+        int $id
+    ): JsonResponse {
+        $request->validate([
+            'reason' => [
+                'required',
+                'string',
+                'min:5',
+                'max:1000',
+            ],
+        ]);
+
+        $clubId = $request->attributes->get('club_id');
+
+        $fundPeriod = $this->service->reopen(
+            $id,
+            $clubId,
+            $request->input('reason'),
+        );
+
+        return $this->responseCommon(
+            true,
+            __('domains/fund_period.reopened'),
+            new FundPeriodResource($fundPeriod),
+        );
+    }
+
+    // =========================================================================
+    // TOGGLE STATUS
+    // =========================================================================
 
     /**
      * POST /api/v1/fund-periods/{id}/toggle-status
      */
-    public function toggleStatus(string $clubSlug, int $id): JsonResponse
-    {
-        $fundPeriod = $this->service->toggleStatus($id);
+    public function toggleStatus(
+        Request $request,
+        int $id
+    ): JsonResponse {
+        $clubId = $request->attributes->get('club_id');
+
+        $fundPeriod = $this->service->toggleStatus(
+            $id,
+            $clubId
+        );
 
         return $this->responseCommon(
             true,
