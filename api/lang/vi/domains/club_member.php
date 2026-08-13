@@ -19,5 +19,7 @@ return [
     'was_rejected'     => 'Yêu cầu tham gia của bạn trước đó đã bị từ chối',
     'not_approved' => 'Thành viên chưa được phê duyệt.',
     'join_source_required' => 'Vui lòng cung cấp mã mời hoặc tham gia trực tiếp câu lạc bộ.',
-
+    'banned' => 'Thành viên đã bị cấm khỏi club.',
+    'already_banned' => 'Thành viên này đã bị cấm khỏi club.',
+    'cannot_ban_self' => 'Bạn không thể tự cấm chính mình.',
 ];

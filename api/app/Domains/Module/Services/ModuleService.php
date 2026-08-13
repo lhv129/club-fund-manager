@@ -2,7 +2,7 @@
 
 namespace App\Domains\Module\Services;
 
-use App\Services\PermissionCacheService;
+use App\Services\Authorization\PermissionCacheService;
 
 use App\Base\BaseService;
 use App\Domains\Module\Models\Module;

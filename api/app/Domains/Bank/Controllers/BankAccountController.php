@@ -49,7 +49,7 @@ class BankAccountController extends BaseController
     /**
      * PUT /api/v1/bank-accounts/{id}
      */
-    public function update(UpdateBankAccountRequest $request, string $clubSlug, int $id): JsonResponse
+    public function update(UpdateBankAccountRequest $request, int $id): JsonResponse
     {
         $data = $request->validated();
         $data['club'] = $request->attributes->get('club');
@@ -63,7 +63,7 @@ class BankAccountController extends BaseController
     /**
      * DELETE /api/v1/bank-accounts/{id} — xoá mềm + dồn sort_order.
      */
-    public function destroy(string $clubSlug, int $id): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
         $this->service->deleteWithSortOrder($id);
 
@@ -73,7 +73,7 @@ class BankAccountController extends BaseController
     /**
      * POST /api/v1/bank-accounts/{id}/toggle-status
      */
-    public function toggleStatus(string $clubSlug, int $id): JsonResponse
+    public function toggleStatus(int $id): JsonResponse
     {
         $bankAccount = $this->service->toggleStatus($id);
         return $this->responseCommon(true, $bankAccount->is_active ? __('domains/bank_account.status_activated') : __('domains/bank_account.status_deactivated'), new BankAccountResource($bankAccount));
@@ -82,7 +82,7 @@ class BankAccountController extends BaseController
     /**
      * POST /api/v1/bank-accounts/{id}/toggle-default
      */
-    public function toggleDefault(string $clubSlug, int $id): JsonResponse
+    public function toggleDefault(int $id): JsonResponse
     {
         $bankAccount = $this->service->toggleDefault($id);
 

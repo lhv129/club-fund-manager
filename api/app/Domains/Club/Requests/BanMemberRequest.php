@@ -4,13 +4,17 @@ namespace App\Domains\Club\Requests;
 
 use App\Base\BaseRequest;
 
-class RejectMemberRequest extends BaseRequest
+class BanMemberRequest extends BaseRequest
 {
     public function rules(): array
     {
         return [
             'club_slug' => 'nullable|exists:club_translations,slug',
-            'rejected_reason' => ['nullable', 'string', 'max:1000'],
+            'banned_reason' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
         ];
     }
 }

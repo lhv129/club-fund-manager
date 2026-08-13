@@ -9,8 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB;
-use App\Services\PermissionCacheService;
+use App\Services\Authorization\PermissionService;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
@@ -121,7 +120,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isSuperAdmin(): bool
     {
-        return app(PermissionCacheService::class)->isSuperAdmin($this);
+        return app(PermissionService::class)->isSuperAdmin($this);
     }
 
     /**
@@ -133,16 +132,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isSystemAdmin(): bool
     {
-        return DB::table('club_member_roles')
-            ->join('roles', 'roles.id', '=', 'club_member_roles.role_id')
-            ->where('club_member_roles.user_id', $this->id)
-            ->where('club_member_roles.is_active', 1)
-            ->whereNull('club_member_roles.deleted_at')
-            ->whereNull('club_member_roles.club_id')
-            ->where('roles.slug', '!=', 'superadmin')
-            ->where('roles.is_active', 1)
-            ->whereNull('roles.deleted_at')
-            ->exists();
+        return app(PermissionService::class)->isSystemAdmin($this);
     }
 
     /**
@@ -159,7 +149,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function hasPermission(string $module, string $action, ?int $clubId = null): bool
     {
-        return app(PermissionCacheService::class)->hasPermission($this, $module, $action, $clubId);
+        return app(PermissionService::class)->hasPermission($this, $module, $action, $clubId);
     }
 
     /**
@@ -186,71 +176,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function permissionsGroupedByClub(): array
     {
-        if ($this->isSuperAdmin()) {
-            return ['*'];
-        }
-        $rows = DB::table('club_member_roles')
-            ->join('roles', function ($j) {
-                $j->on('roles.id', '=', 'club_member_roles.role_id')
-                    ->where('roles.is_active', 1)
-                    ->whereNull('roles.deleted_at');
-            })
-            ->join('role_permissions', function ($j) {
-                $j->on('role_permissions.role_id', '=', 'roles.id')
-                    ->where('role_permissions.is_active', 1)
-                    ->whereNull('role_permissions.deleted_at');
-            })
-            ->join('permissions', function ($j) {
-                $j->on('permissions.id', '=', 'role_permissions.permission_id')
-                    ->where('permissions.is_active', 1)
-                    ->whereNull('permissions.deleted_at');
-            })
-            ->join('modules', function ($j) {
-                $j->on('modules.id', '=', 'permissions.module_id')
-                    ->where('modules.is_active', 1)
-                    ->whereNull('modules.deleted_at');
-            })
-            ->where('club_member_roles.user_id', $this->id)
-            ->where('club_member_roles.is_active', 1)
-            ->whereNull('club_member_roles.deleted_at')
-            ->select(
-                'club_member_roles.club_id',
-                'modules.slug as module',
-                'permissions.action'
-            )
-            ->get();
-
-        // Build plain PHP array (KHÔNG dùng Collection::toArray() — nó reindex
-        // numeric string keys thành 0,1 → JSON ra array tuần tự, mất key).
-        //
-        // System scope (club_id NULL)  → top-level module key:   { module: [actions] }
-        // Club scope (club_id = id)    → nested club_{id} key:   { "club_{id}": { module: [actions] } }
-        $result = [];
-        foreach ($rows as $r) {
-            if ($r->club_id === null) {
-                // System scope — flat ở top-level (key = module slug).
-                if (!isset($result[$r->module])) {
-                    $result[$r->module] = [];
-                }
-                if (!in_array($r->action, $result[$r->module], true)) {
-                    $result[$r->module][] = $r->action;
-                }
-            } else {
-                // Club scope — nested dưới "club_{id}".
-                $key = 'club_' . $r->club_id;
-                if (!isset($result[$key])) {
-                    $result[$key] = [];
-                }
-                if (!isset($result[$key][$r->module])) {
-                    $result[$key][$r->module] = [];
-                }
-                if (!in_array($r->action, $result[$key][$r->module], true)) {
-                    $result[$key][$r->module][] = $r->action;
-                }
-            }
-        }
-
-        return $result;
+        return app(PermissionService::class)->permissionsGroupedByClub($this);
     }
 
     // Chưa xác thực email

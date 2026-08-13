@@ -3,7 +3,9 @@
 namespace App\Domains\MonthlyContribution\Services;
 
 use App\Base\BaseService;
+use App\Domains\Club\Models\ClubMember;
 use App\Domains\FundPeriod\Models\FundPeriod;
+use App\Domains\FundPeriod\Repositories\FundPeriodRepository;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\MonthlyContribution\Repositories\MonthlyContributionRepository;
 use App\Domains\User\Repositories\UserRepository;
@@ -18,15 +20,15 @@ class MonthlyContributionService extends BaseService
     protected string $notFoundMessage = 'domains/monthly_contribution.not_found';
 
     protected object $userRepository;
-    protected object $fundPeriod;
+    protected object $fundPeriodRepository;
     public function __construct(
         MonthlyContributionRepository $repository,
         UserRepository $userRepository,
-        FundPeriod $fundPeriod,
+        FundPeriodRepository $fundPeriodRepository,
     ) {
         parent::__construct($repository);
         $this->userRepository = $userRepository;
-        $this->fundPeriod = $fundPeriod;
+        $this->fundPeriodRepository = $fundPeriodRepository;
     }
 
     // ── List / Search ────────────────────────────────────────────────────────
@@ -89,7 +91,7 @@ class MonthlyContributionService extends BaseService
 
             $user = $this->userRepository->find($data['user_id']);
 
-            $period = $this->fundPeriod->find($data['period_id']);
+            $period = $this->fundPeriodRepository->find($data['period_id']);
 
             $data['amount'] = match ($user->gender) {
                 'male' => $period->male_amount,
@@ -101,6 +103,31 @@ class MonthlyContributionService extends BaseService
 
             return $this->repository->create($data);
         });
+    }
+
+    // Dùng trong ClubMemberService
+    public function createForApprovedMember(
+        ClubMember $member,
+        FundPeriod $period
+    ): ?MonthlyContribution {
+        $exists = $this->repository->exists([
+            'club_id'   => $member->club_id,
+            'user_id'   => $member->user_id,
+            'period_id' => $period->id,
+        ]);
+
+        if ($exists) {
+            return null;
+        }
+
+        return $this->create([
+            'club_id'   => $member->club_id,
+            'user_id'   => $member->user_id,
+            'period_id' => $period->id,
+            'status'    => 'pending',
+            'sort_order' => 0,
+            'is_active' => true,
+        ]);
     }
 
     public function update(int $id, array $data): MonthlyContribution
@@ -125,7 +152,7 @@ class MonthlyContributionService extends BaseService
             }
 
             $user = $this->userRepository->find($userId);
-            $period = $this->fundPeriod->find($periodId);
+            $period = $this->fundPeriodRepository->find($periodId);
 
             $data['amount'] = match ($user->gender) {
                 'male' => $period->male_amount,

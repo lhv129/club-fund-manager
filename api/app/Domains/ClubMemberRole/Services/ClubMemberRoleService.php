@@ -7,7 +7,7 @@ use App\Domains\Club\Repositories\ClubRepository;
 use App\Domains\ClubMemberRole\Repositories\ClubMemberRoleRepository;
 use App\Domains\Role\Models\Role;
 use App\Domains\Role\Repositories\RoleRepository;
-use App\Services\PermissionCacheService;
+use App\Services\Authorization\PermissionCacheService;
 
 class ClubMemberRoleService extends BaseService
 {

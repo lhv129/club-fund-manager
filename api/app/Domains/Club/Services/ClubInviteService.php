@@ -85,7 +85,8 @@ class ClubInviteService extends BaseService
             $data['sort_order'] = $this->repository->getNextSortOrder();
         }
 
-        return $this->repository->create($data);
+        $invite = $this->repository->create($data);
+        return $invite->load('club');
     }
 
     public function deleteClubInvite(string $clubSlug, int $id): bool

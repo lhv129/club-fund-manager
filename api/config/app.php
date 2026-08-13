@@ -135,4 +135,12 @@ return [
 
     'frontend_url' => env('FRONTEND_URL'),
 
+    'qr' => [
+        'enabled' => (bool) env('QR_ENABLED', true),
+        'provider_url' => env(
+            'QR_PROVIDER_URL',
+            'https://vietqr.app/img'
+        ),
+    ],
+
 ];

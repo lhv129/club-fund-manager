@@ -164,4 +164,37 @@ class BankAccountRepository extends BaseRepository
                 'is_default' => false,
             ]);
     }
+
+    /**
+     * Lấy bank account active của club.
+     *
+     * Ưu tiên:
+     * 1. is_default = true
+     * 2. sort_order asc
+     * 3. id asc
+     */
+    public function findActiveDefaultByClub(int $clubId): ?BankAccount
+    {
+        return $this->model
+            ->select([
+                'id',
+                'club_id',
+                'bank_id',
+                'account_name',
+                'account_number',
+                'qr_image',
+                'sort_order',
+                'is_active',
+                'is_default',
+            ])
+            ->with([
+                'bank:id,code,name,short_name,logo',
+            ])
+            ->where('club_id', $clubId)
+            ->where('is_active', true)
+            ->orderByDesc('is_default')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->first();
+    }
 }

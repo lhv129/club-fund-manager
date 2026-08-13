@@ -4,7 +4,6 @@ use App\Domains\WebhookConfig\Controllers\WebhookConfigController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->group(function () {
-    // Webhook config — nested dưới clubs/{clubSlug}, cần perm.club
     Route::prefix('webhook-configs')->group(function () {
         // Tĩnh trước — bắt buộc đứng trước /{id}
         Route::get('/cursor', [WebhookConfigController::class, 'cursorIndex'])->middleware('perm.club:webhook_config,view');

@@ -5,7 +5,7 @@ namespace App\Domains\ClubMemberRole\Repositories;
 use App\Base\BaseRepository;
 use App\Domains\Club\Models\ClubMember;
 use App\Domains\ClubMemberRole\Models\ClubMemberRole;
-use App\Services\PermissionCacheService;
+use App\Services\Authorization\PermissionCacheService;
 
 
 class ClubMemberRoleRepository extends BaseRepository

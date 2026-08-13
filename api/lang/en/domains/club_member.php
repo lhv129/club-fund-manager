@@ -18,5 +18,8 @@ return [
     'already_member'   => 'You are already a member of this club',
     'was_rejected'     => 'Your join request was previously rejected',
     'not_approved' => 'The member has not been approved yet.',
-        'join_source_required' => 'Please provide either an invite code or a join club.'
+    'join_source_required' => 'Please provide either an invite code or a join club.',
+    'banned' => 'Member has been banned from the club.',
+    'already_banned' => 'This member has already been banned from the club.',
+    'cannot_ban_self' => 'You cannot ban yourself.',
 ];

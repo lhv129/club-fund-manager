@@ -15,6 +15,7 @@ Route::middleware('auth.jwt')->group(function () {
         Route::get('/{memberId}', [ClubMemberController::class, 'show'])->middleware('perm.club:club_member,view');
         Route::post('/{memberId}/approve', [ClubMemberController::class, 'approve'])->middleware('perm.club:club_member,update');
         Route::post('/{memberId}/reject', [ClubMemberController::class, 'reject'])->middleware('perm.club:club_member,update');
+        Route::post('/{memberId}/ban', [ClubMemberController::class, 'ban'])->middleware('perm.club:club_member,update');
         Route::delete('/{memberId}', [ClubMemberController::class, 'destroy'])->middleware('perm.club:club_member,update');
     });
 });

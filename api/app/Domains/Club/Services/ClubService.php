@@ -11,7 +11,7 @@ use App\Helpers\ImageHelper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Services\PermissionCacheService;
+use App\Services\Authorization\PermissionCacheService;
 
 class ClubService extends BaseService
 {
@@ -214,7 +214,7 @@ class ClubService extends BaseService
      */
     public function toggleStatus(int $id): Club
     {
-        $club            = $this->find($id);
+        $club = $this->find($id);
         $club->is_active = !$club->is_active;
         $club->save();
 

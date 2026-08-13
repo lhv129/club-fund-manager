@@ -14,12 +14,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth.jwt')->prefix('payment-codes')->group(function () {
     // List + detail (read-only)
     Route::get('/',     [MemberPaymentCodeController::class, 'index'])->middleware('perm.club:member_payment_code,view');
-    Route::get('/{id}', [MemberPaymentCodeController::class, 'show'])->middleware('perm.club:member_payment_code,view');
+    Route::get('/{paymentCode}', [MemberPaymentCodeController::class, 'getByPaymentCode'])->middleware('perm.club:member_payment_code,view');
 });
 
 Route::middleware('auth.jwt')->prefix('monthly-contributions')->group(function () {
-    // Sub-resource trên monthly-contributions: show + generate code
-    Route::get('/{contributionId}/payment-code',  [MemberPaymentCodeController::class, 'showForContribution'])->middleware('perm.club:member_payment_code,view');
     // Endpoint sinh mã thanh toán — chỉ chủ sở hữu
     Route::post('/{contributionId}/payment-code', [MemberPaymentCodeController::class, 'generateOrReuse'])->middleware('perm.club:member_payment_code,view');
 });

@@ -27,12 +27,6 @@ return [
     'token_invalid'            => 'Access token không hợp lệ.',
     'token_invalid_signature'  => 'Chữ ký token không hợp lệ.',
 
-    // app/bootstrap/app.php
-    'server_error' => 'Lỗi hệ thống, vui lòng thử lại sau.',
-
-    // app/Base/BaseService.php
-    'not_found' => 'Không tìm thấy dữ liệu.',
-
     // app/Middleware/CheckClubPermission
     'no_club_permission' => 'Bạn không có quyền truy cập hoặc thực hiện hành động này trên câu lạc bộ.',
     'club_not_found' => 'Club không tồn tại.'

@@ -12,7 +12,7 @@ return [
     'unauthorized'      => 'Unauthenticated.',
     'forbidden'         => 'You do not have permission.',
     'not_found'         => 'Resource not found.',
-    'server_error'      => 'Internal server error.',
+    'server_error'      => 'Internal server error, please try again later.',
     'forbidden_action' => 'You do not have permission to perform this action.',
 
     // app/Middleware/JwtAuthenticate.php
@@ -21,12 +21,6 @@ return [
     'token_blacklisted'        => 'Access token has been blacklisted.',
     'token_invalid'            => 'Invalid access token.',
     'token_invalid_signature'  => 'Invalid token signature.',
-
-    // app/bootstrap/app.php
-    'server_error' => 'Internal server error, please try again later.',
-
-    // app/Base/BaseService.php
-    'not_found' => 'Resource not found.',
 
     // app/Middleware/CheckClubPermission
     'no_club_permission' => 'You do not have permission to access or perform this action on the club.',

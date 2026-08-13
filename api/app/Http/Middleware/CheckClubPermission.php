@@ -119,7 +119,7 @@ class CheckClubPermission
         if ($clubSlug) {
             $club = Club::query()
                 ->with('translations')
-                ->whereHas('translations', fn ($query) => $query->where('slug', $clubSlug))
+                ->whereHas('translations', fn($query) => $query->where('slug', $clubSlug))
                 ->first();
 
             if (! $club) {
@@ -160,19 +160,10 @@ class CheckClubPermission
         return $club;
     }
 
-    private function prependClubSlugRouteParameter(Request $request, string $slug): void
-    {
-        $route = $request->route();
-        $parameters = $route->parameters();
-
-        foreach (array_keys($parameters) as $key) {
-            $route->forgetParameter($key);
-        }
-
-        $route->setParameter('clubSlug', $slug);
-
-        foreach ($parameters as $key => $value) {
-            $route->setParameter($key, $value);
-        }
+    private function prependClubSlugRouteParameter(
+        Request $request,
+        string $slug
+    ): void {
+        $request->route()->setParameter('clubSlug', $slug);
     }
 }

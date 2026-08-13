@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->group(function () {
 
-    // Transactions — nested dưới clubs/{clubSlug}, cần perm.club
     Route::prefix('transactions')->group(function () {
         // Dynamic routes
         Route::get('/', [TransactionController::class, 'index'])

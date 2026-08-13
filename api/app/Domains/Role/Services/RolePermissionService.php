@@ -7,7 +7,7 @@ use App\Domains\Module\Repositories\ModuleRepository;
 use App\Domains\Role\Repositories\RolePermissionRepository;
 use App\Domains\Role\Repositories\RoleRepository;
 use App\Exceptions\ApiException;
-use App\Services\PermissionCacheService;
+use App\Services\Authorization\PermissionCacheService;
 
 
 class RolePermissionService extends BaseService

@@ -10,7 +10,7 @@ use App\Domains\Role\Repositories\RoleRepository;
 use App\Exceptions\ApiException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use App\Services\PermissionCacheService;
+use App\Services\Authorization\PermissionCacheService;
 
 class RoleService extends BaseService
 {
