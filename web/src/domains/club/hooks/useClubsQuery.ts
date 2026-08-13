@@ -61,15 +61,18 @@ export function useClubsQuery(
     // ── Delete → setQueryData với data + meta trả về từ BE ───────────────────
     const deleteMutation = useMutation({
         mutationFn: (id: number) => clubServiceClient.destroy(id, params),
-        onSuccess: (res) => {
+        onSuccess: (res, deletedId) => {
             queryClient.setQueryData(
                 queryKey,
                 (old: PaginatedResponse<Club> | undefined) => {
                     if (!old) return old;
                     return {
                         ...old,
-                        data: res.data ?? old.data,
-                        meta: { ...old.meta, total: res.meta?.total ?? old.meta?.total },
+                        data: (old.data ?? []).filter((item) => item.id !== deletedId),
+                        meta: {
+                            ...old.meta,
+                            total: Math.max(0, (old.meta?.total ?? 1) - 1),
+                        },
                     };
                 }
             );
@@ -103,6 +106,7 @@ export function useClubsQuery(
                     };
                 }
             );
+            toast.success(res.message || t("updateSuccess"));
         },
         onError: (error: unknown) => {
             toast.error((error as Error)?.message || t("loadError"));

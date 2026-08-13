@@ -9,8 +9,12 @@ import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 
-import { FormModalWithMedia } from "@/components/shared/forms/FormModalWithMedia";
+import {
+    FormModalWithMedia,
+    toInitialTranslations,
+} from "@/components/shared/forms/FormModalWithMedia";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
+import ToggleSwitch from "@/components/shared/ui/ToggleSwitch";
 
 import type { ColumnDef } from "@/components/shared/ui/Table";
 
@@ -156,44 +160,11 @@ export function ClubsAdminPageClient() {
                     togglingIds.has(row.id);
 
                 return (
-                    <button
-                        type="button"
-                        disabled={isToggling}
-                        onClick={() =>
-                            handleToggle(row)
-                        }
-                        className={`
-                            relative inline-flex h-5 w-9
-                            items-center rounded-full
-                            transition-colors
-                            ${row.is_active
-                                ? "bg-primary"
-                                : "bg-muted"
-                            }
-                            ${isToggling
-                                ? "cursor-wait opacity-60"
-                                : ""
-                            }
-                        `}
-                        aria-label={
-                            row.is_active
-                                ? t("inactive")
-                                : t("activate")
-                        }
-                    >
-                        <span
-                            className={`
-                                inline-block h-4 w-4
-                                transform rounded-full
-                                bg-white shadow-sm
-                                transition-transform
-                                ${row.is_active
-                                    ? "translate-x-4"
-                                    : "translate-x-0.5"
-                                }
-                            `}
-                        />
-                    </button>
+                    <ToggleSwitch
+                        checked={Boolean(row.is_active)}
+                        loading={isToggling}
+                        onChange={() => handleToggle(row)}
+                    />
                 );
             },
         },
@@ -353,15 +324,44 @@ export function ClubsAdminPageClient() {
                 }
                 fields={[
                     {
+                        name: "max_members",
+                        label: t("maxMembers"),
+                        type: "number",
+                        required: true,
+                    },
+                    {
                         name: "is_active",
                         label: t("active"),
-                        type: "checkbox",
+                        type: "toggle",
                     },
                 ]}
                 initialValues={{
-                    is_active:
-                        editing?.is_active ?? true,
+                    max_members: editing?.max_members ?? 50,
+                    is_active: editing ? (editing.is_active ? "1" : "0") : "1",
                 }}
+                translatableFields={[
+                    {
+                        name: "name",
+                        label: t("name"),
+                        type: "text",
+                        required: true,
+                        placeholder: tc("namePlaceholder"),
+                    },
+                    {
+                        name: "description",
+                        label: t("description"),
+                        type: "richtext",
+                        placeholder: tc("descriptionPlaceholder"),
+                    },
+                ]}
+                initialTranslations={toInitialTranslations(editing?.translations)}
+                imageFields={[
+                    {
+                        name: "logo",
+                        label: t("logo"),
+                        initialUrl: editing?.logo ?? null,
+                    },
+                ]}
             />
 
             <DeleteConfirmModal

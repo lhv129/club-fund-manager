@@ -26,7 +26,7 @@ export function SidebarCopyJoinLinkButton({ slug }: SidebarCopyJoinLinkButtonPro
         try {
             // Tạo invite tạm (no max_uses, no expires_at) → lấy invite_code
             const service = getClubInviteService(slug);
-            const res = await service.create({ max_uses: null, expires_at: null });
+            const res = await service.create({ max_uses: null, expires_at: null, club_slug: slug });
 
             if (!res.success || !res.data) {
                 toast.error(res.message || tCommon("loadError"));

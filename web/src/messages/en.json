@@ -54,6 +54,7 @@
     "members_action": "See Members",
     "name": "Name",
     "members": "Members",
+    "maxMembers": "Maximum members",
     "description": "Description",
     "logo": "Logo",
     "sortOrder": "Sort order",
@@ -155,6 +156,10 @@
     "transactions": {
       "title": "Income and Expenses",
       "description": "Track and manage the club's income and expense transactions"
+    },
+    "monthlyContributions": {
+      "title": "Monthly Contribution Tracking",
+      "description": "Track and manage the monthly contribution status of club members."
     }
   },
   "header": {
@@ -475,7 +480,9 @@
     "reject": "Reject",
     "rejectTitle": "Reject Member",
     "deleteConfirmMsg": "Are you sure you want to remove member \"{name}\"?",
-    "forbidden_description": "You do not have permission to access the membership management page."
+    "forbidden_description": "You do not have permission to access the membership management page.",
+    "ban": "Ban member",
+    "statusBanned": "Banned"
   },
   "invite": {
     "title": "Invite Link Management",

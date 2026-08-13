@@ -54,3 +54,45 @@ export type MonthlyContributionFilters = {
     status: ContributionStatus | undefined;
     paid_by: ContributionPaidBy | undefined;
 };
+
+
+export interface MonthlyContributionPaymentBank {
+    id: number;
+    code: string;
+    name: string;
+    short_name: string;
+    logo: string;
+}
+
+export interface MonthlyContributionPaymentBankAccount {
+    id: number;
+    account_number: string;
+    account_name: string;
+    qr_image: string;
+    is_default: boolean;
+    bank: MonthlyContributionPaymentBank;
+}
+
+export interface MonthlyContributionPaymentQr {
+    enabled: boolean;
+    url: string;
+}
+
+export interface MonthlyContributionPayment {
+    id: number;
+    monthly_contribution_id: number;
+    payment_code: string;
+    status: string;
+    expired_at: string;
+    used_at: string | null;
+    is_active: boolean;
+    amount: string;
+    bank_account: MonthlyContributionPaymentBankAccount;
+    qr: MonthlyContributionPaymentQr;
+}
+
+export interface GenerateMonthlyContributionPaymentResponse {
+    success: boolean;
+    message: string;
+    data: MonthlyContributionPayment;
+}

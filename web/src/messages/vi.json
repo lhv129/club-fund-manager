@@ -17,6 +17,7 @@
     "create": "Tạo mới",
     "search": "Tìm kiếm",
     "actions": "Hành động",
+    "isActive": "Hiển thị",
     "status": "Trạng thái",
     "active": "Đang hoạt động",
     "inactive": "Ngừng hoạt động",
@@ -53,6 +54,7 @@
     "createdAt": "Ngày tạo",
     "name": "Tên",
     "members": "Thành viên",
+    "maxMembers": "Số thành viên tối đa",
     "members_action": "Xem thành viên",
     "description": "Mô tả",
     "logo": "Logo",
@@ -155,6 +157,10 @@
     "transactions": {
       "title": "Quản lý thu chi",
       "description": "Theo dõi và quản lý các giao dịch thu chi của câu lạc bộ"
+    },
+    "monthlyContributions": {
+      "title": "Theo dõi đóng quỹ hàng tháng",
+      "description": "Theo dõi và quản lý tình trạng đóng quỹ hàng tháng của các thành viên trong câu lạc bộ"
     }
   },
   "header": {
@@ -472,7 +478,9 @@
     "reject": "Từ chối",
     "rejectTitle": "Từ chối thành viên",
     "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa thành viên \"{name}\"?",
-    "forbidden_description": "Bạn không có quyền truy cập trang quản lý thành viên."
+    "forbidden_description": "Bạn không có quyền truy cập trang quản lý thành viên.",
+    "ban": "Cấm thành viên",
+    "statusBanned": "Đã bị cấm"
   },
   "invite": {
     "title": "Quản lý link mời",

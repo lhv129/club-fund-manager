@@ -3,13 +3,24 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CheckCircle, XCircle, Trash2 } from "lucide-react";
+import {
+    CheckCircle,
+    XCircle,
+    Trash2,
+    Ban,
+} from "lucide-react";
 
-import { Table, type ColumnDef } from "@/components/shared/ui/Table";
-import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
+import { type ColumnDef } from "@/components/shared/ui/Table";
+import {
+    FilterBar,
+    type AppliedFilters,
+} from "@/components/shared/ui/FilterBar";
 import { DataTable } from "@/components/shared/ui/DataTable";
 import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
-import { FormModal, type SubmitResult } from "@/components/shared/forms/FormModal";
+import {
+    FormModal,
+    type SubmitResult,
+} from "@/components/shared/forms/FormModal";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
@@ -17,26 +28,30 @@ import { Forbidden } from "@/components/shared/ui/Forbidden";
 import { StatusDropdown } from "@/components/shared/ui/StatusDropdown";
 import Select from "@/components/shared/ui/Select";
 import Avatar from "@/components/shared/ui/Avatar";
+
 import { useListParams } from "@/hooks/useListParams";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { useClub } from "@/domains/club/hooks/useClub";
 import { useClubMemberHistory } from "@/domains/members/hooks/useClubMembers";
+
 import type {
     ClubMember,
     ClubMemberStatus,
     ClubMemberJoinType,
     MemberHistoryFilters,
 } from "@/domains/members/types/member";
+
 import { clubRoute } from "@/constants";
 import { Badge } from "@/components/shared/ui/Badge";
 import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
 
-
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDate(iso: string | null | undefined): string {
+function formatDate(
+    iso: string | null | undefined
+): string {
     if (!iso) return "—";
+
     return new Intl.DateTimeFormat("vi-VN", {
         day: "2-digit",
         month: "2-digit",
@@ -46,9 +61,30 @@ function formatDate(iso: string | null | undefined): string {
     }).format(new Date(iso));
 }
 
-function ActorCell({ actor }: { actor: { id: number; fullname: string } | null | undefined }) {
-    if (!actor) return <span className="text-fg-muted text-xs">—</span>;
-    return <span className="text-sm text-fg">{actor.fullname}</span>;
+function ActorCell({
+    actor,
+}: {
+    actor:
+    | {
+        id: number;
+        fullname: string;
+    }
+    | null
+    | undefined;
+}) {
+    if (!actor) {
+        return (
+            <span className="text-fg-muted text-xs">
+                —
+            </span>
+        );
+    }
+
+    return (
+        <span className="text-sm text-fg">
+            {actor.fullname}
+        </span>
+    );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -57,84 +93,195 @@ export function MembershipsPageClient() {
     const t = useTranslations("common");
     const tm = useTranslations("member");
 
-    const { hasPermission, isSuperAdmin } = useAuth();
+    const {
+        hasPermission,
+        isSuperAdmin,
+    } = useAuth();
+
     const { club, slug } = useClub();
 
-    // ── Permission gates (club scope — luôn truyền club.id) ───────────────────
-    const canView = isSuperAdmin || hasPermission("club_member", "view", club?.id);
-    const canUpdate = isSuperAdmin || hasPermission("club_member", "update", club?.id);
-    const canDelete = isSuperAdmin || hasPermission("club_member", "delete", club?.id);
+    // ── Permission gates ──────────────────────────────────────────────────────
+
+    const canView =
+        isSuperAdmin ||
+        hasPermission(
+            "club_member",
+            "view",
+            club?.id
+        );
+
+    const canUpdate =
+        isSuperAdmin ||
+        hasPermission(
+            "club_member",
+            "update",
+            club?.id
+        );
+
+    const canDelete =
+        isSuperAdmin ||
+        hasPermission(
+            "club_member",
+            "delete",
+            club?.id
+        );
 
     // ── Filter options ────────────────────────────────────────────────────────
+
     const statusOptions = [
-        { value: "pending", label: tm("statusPending"), variant: "pending" as const },
-        { value: "approved", label: tm("statusApproved"), variant: "active" as const },
-        { value: "rejected", label: tm("statusRejected"), variant: "locked" as const },
-        { value: "removed", label: tm("statusRemoved"), variant: "inactive" as const },
+        {
+            value: "pending",
+            label: tm("statusPending"),
+            variant: "pending" as const,
+        },
+        {
+            value: "approved",
+            label: tm("statusApproved"),
+            variant: "active" as const,
+        },
+        {
+            value: "rejected",
+            label: tm("statusRejected"),
+            variant: "locked" as const,
+        },
+        {
+            value: "removed",
+            label: tm("statusRemoved"),
+            variant: "inactive" as const,
+        },
+        {
+            value: "banned",
+            label: tm("statusBanned"),
+            variant: "locked" as const,
+        },
     ];
 
-    const statusSelectOptions = statusOptions.map((o) => ({
-        value: o.value,
-        label: o.label,
-    }));
+    const statusSelectOptions =
+        statusOptions.map((option) => ({
+            value: option.value,
+            label: option.label,
+        }));
 
     const joinTypeOptions = [
-        { value: "request", label: tm("joinTypeRequest") },
-        { value: "invite", label: tm("joinTypeInvite") },
+        {
+            value: "request",
+            label: tm("joinTypeRequest"),
+        },
+        {
+            value: "invite",
+            label: tm("joinTypeInvite"),
+        },
     ];
 
     const activeOptions = [
-        { value: "1", label: t("active") },
-        { value: "0", label: t("inactive") },
+        {
+            value: "1",
+            label: t("active"),
+        },
+        {
+            value: "0",
+            label: t("inactive"),
+        },
     ];
 
     const sortOptions = [
-        { value: "joined_at", label: tm("joinedAt") },
-        { value: "created_at", label: t("createdAt") },
-        { value: "id", label: "ID" },
+        {
+            value: "joined_at",
+            label: tm("joinedAt"),
+        },
+        {
+            value: "created_at",
+            label: t("createdAt"),
+        },
+        {
+            value: "id",
+            label: "ID",
+        },
     ];
 
     // ── List params ───────────────────────────────────────────────────────────
-    const { params, setPage, setLimit, updateMany, reset } =
-        useListParams<MemberHistoryFilters>({
-            defaultFilters: {
-                search: "",
-                status: undefined,
-                join_type: undefined,
-                is_active: undefined,
-            },
-            defaultSortBy: "created_at",
-            defaultSortDir: "desc",
-        });
 
-    // Draft state cho extra filters
-    const [draftStatus, setDraftStatus] = useState<ClubMemberStatus | undefined>(params.status);
-    const [draftJoinType, setDraftJoinType] = useState<ClubMemberJoinType | undefined>(params.join_type);
-    const [draftIsActive, setDraftIsActive] = useState<0 | 1 | undefined>(params.is_active);
+    const {
+        params,
+        setPage,
+        setLimit,
+        updateMany,
+        reset,
+    } = useListParams<MemberHistoryFilters>({
+        defaultFilters: {
+            search: "",
+            status: undefined,
+            join_type: undefined,
+            is_active: undefined,
+        },
+        defaultSortBy: "created_at",
+        defaultSortDir: "desc",
+    });
 
-    useEffect(() => { setDraftStatus(params.status); }, [params.status]);
-    useEffect(() => { setDraftJoinType(params.join_type); }, [params.join_type]);
-    useEffect(() => { setDraftIsActive(params.is_active); }, [params.is_active]);
+    // ── Draft filters ─────────────────────────────────────────────────────────
+
+    const [draftStatus, setDraftStatus] =
+        useState<ClubMemberStatus | undefined>(
+            params.status
+        );
+
+    const [draftJoinType, setDraftJoinType] =
+        useState<ClubMemberJoinType | undefined>(
+            params.join_type
+        );
+
+    const [draftIsActive, setDraftIsActive] =
+        useState<0 | 1 | undefined>(
+            params.is_active
+        );
+
+    useEffect(() => {
+        setDraftStatus(params.status);
+    }, [params.status]);
+
+    useEffect(() => {
+        setDraftJoinType(params.join_type);
+    }, [params.join_type]);
+
+    useEffect(() => {
+        setDraftIsActive(params.is_active);
+    }, [params.is_active]);
 
     // ── Data ──────────────────────────────────────────────────────────────────
+
     const {
         data,
         total,
         isLoading,
         isFetching,
+
+        isApproving,
         isRejecting,
         isDeleting,
+        isBanning,
+
         handleApprove,
         handleReject,
         handleDeleteConfirm,
-    } = useClubMemberHistory({ ...params, club_slug: slug });
+        handleBan,
+    } = useClubMemberHistory({
+        ...params,
+        club_slug: slug,
+    });
 
     // ── UI state ──────────────────────────────────────────────────────────────
-    const [deleteTarget, setDeleteTarget] = useState<ClubMember | null>(null);
-    const [rejectTarget, setRejectTarget] = useState<ClubMember | null>(null);
+
+    const [deleteTarget, setDeleteTarget] =
+        useState<ClubMember | null>(null);
+
+    const [rejectTarget, setRejectTarget] =
+        useState<ClubMember | null>(null);
 
     // ── FilterBar handlers ────────────────────────────────────────────────────
-    const handleApplyFilters = (filters: AppliedFilters) => {
+
+    const handleApplyFilters = (
+        filters: AppliedFilters
+    ) => {
         updateMany({
             search: filters.search,
             sort_by: filters.sort_by,
@@ -149,98 +296,149 @@ export function MembershipsPageClient() {
         setDraftStatus(undefined);
         setDraftJoinType(undefined);
         setDraftIsActive(undefined);
+
         reset();
     };
 
-    // ── Reject submit (via FormModal) ─────────────────────────────────────────
+    // ── Reject submit ─────────────────────────────────────────────────────────
+
     const handleRejectSubmit = async (
         values: Record<string, string>
     ): Promise<SubmitResult> => {
-        if (!rejectTarget) return { success: false };
+        if (!rejectTarget) {
+            return {
+                success: false,
+            };
+        }
+
         try {
-            await handleReject(rejectTarget.id, {
-                rejected_reason: values.rejected_reason ?? "",
-            });
+            await handleReject(
+                rejectTarget.id,
+                {
+                    rejected_reason:
+                        values.rejected_reason ?? "",
+                }
+            );
+
             setRejectTarget(null);
-            return undefined; // FormModal tự đóng
+
+            return undefined;
         } catch (error: unknown) {
-            return { success: false, message: (error as Error)?.message || t("loadError") };
+            return {
+                success: false,
+                message:
+                    (error as Error)?.message ||
+                    t("loadError"),
+            };
         }
     };
 
     // ── Guards ────────────────────────────────────────────────────────────────
+
     if (!club || !slug) {
-        return null; // hoặc Skeleton
+        return null;
     }
 
-    // Tầng 3 — page gate: không có quyền view → trả Forbidden
     if (!canView) {
-        return <Forbidden description={tm('forbidden_description')} />;
+        return (
+            <Forbidden
+                description={tm(
+                    "forbidden_description"
+                )}
+            />
+        );
     }
 
     // ── Columns ───────────────────────────────────────────────────────────────
+
     const columns: ColumnDef<ClubMember>[] = [
         {
             key: "stt",
             label: t("no"),
             className: "w-12",
+
             render: (_row, index) => (
                 <span className="text-fg-muted text-xs">
-                    {(params.page - 1) * params.limit + index + 1}
+                    {(params.page - 1) *
+                        params.limit +
+                        index +
+                        1}
                 </span>
             ),
         },
+
         {
             key: "avatar",
             label: tm("avatar"),
             className: "w-14",
+
             render: (row) => (
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-background-muted flex items-center justify-center shrink-0">
                     <Avatar
                         imgUrl={row.user.avatar}
-                        userName={row.user.fullname}
+                        userName={
+                            row.user.fullname
+                        }
                         sizeClass="w-full h-full object-cover"
                     />
                 </div>
             ),
         },
+
         {
             key: "fullname",
             label: t("name"),
+
             render: (row) => (
                 <div className="flex flex-col min-w-0">
-                    <span className="text-fg font-medium truncate">{row.user.fullname}</span>
-                    <span className="text-fg-muted text-xs truncate">{row.user.email}</span>
+                    <span className="text-fg font-medium truncate">
+                        {row.user.fullname}
+                    </span>
+
+                    <span className="text-fg-muted text-xs truncate">
+                        {row.user.email}
+                    </span>
                 </div>
             ),
         },
+
         {
             key: "phone",
             label: tm("phone"),
+
             render: (row) => (
                 <span className="text-sm text-fg whitespace-nowrap">
                     {row.user.phone ?? "—"}
                 </span>
             ),
         },
+
         {
             key: "join_type",
             label: tm("joinType"),
+
             render: (row) => (
                 <Badge
                     variant={row.join_type}
                     title={
-                        row.join_type === "invite"
-                            ? tm("joinTypeInvite")
-                            : tm("joinTypeRequest")
+                        row.join_type ===
+                            "invite"
+                            ? tm(
+                                "joinTypeInvite"
+                            )
+                            : tm(
+                                "joinTypeRequest"
+                            )
                     }
                     showDot={false}
                 />
             ),
         },
+
         {
             key: "status",
             label: t("status"),
+
             render: (row) => {
                 if (!row.status) {
                     return (
@@ -249,6 +447,7 @@ export function MembershipsPageClient() {
                         </span>
                     );
                 }
+
                 return (
                     <StatusDropdown
                         value={row.status}
@@ -257,80 +456,148 @@ export function MembershipsPageClient() {
                 );
             },
         },
+
         {
             key: "joined_at",
             label: tm("joinedAt"),
+
             render: (row) => (
                 <span className="text-xs text-fg-muted whitespace-nowrap">
-                    {formatDate(row.joined_at)}
+                    {formatDate(
+                        row.joined_at
+                    )}
                 </span>
             ),
         },
+
         {
             key: "reviewedBy",
             label: tm("reviewedBy"),
-            render: (row) => <ActorCell actor={row.reviewedBy} />,
+
+            render: (row) => (
+                <ActorCell
+                    actor={row.reviewedBy}
+                />
+            ),
         },
+
         {
             key: "invitedBy",
             label: tm("invitedBy"),
-            render: (row) => <ActorCell actor={row.invitedBy} />,
+
+            render: (row) => (
+                <ActorCell
+                    actor={row.invitedBy}
+                />
+            ),
         },
+
         {
             key: "removed_at",
             label: tm("removedAt"),
+
             render: (row) => (
                 <span className="text-xs text-fg-muted whitespace-nowrap">
-                    {row.removed_at ? formatDate(row.removed_at) : "—"}
+                    {row.removed_at
+                        ? formatDate(
+                            row.removed_at
+                        )
+                        : "—"}
                 </span>
             ),
         },
+
         {
             key: "rejected_reason",
             label: tm("rejectedReason"),
+
             render: (row) => (
-                <span className="text-xs text-red-500 max-w-[160px] truncate block" title={row.rejected_reason ?? ""}>
-                    {row.rejected_reason ?? "—"}
+                <span
+                    className="text-xs text-red-500 max-w-[160px] truncate block"
+                    title={
+                        row.rejected_reason ??
+                        ""
+                    }
+                >
+                    {row.rejected_reason ??
+                        "—"}
                 </span>
             ),
         },
     ];
 
     // ── Extra filters ─────────────────────────────────────────────────────────
+
     const extraFilters = (
         <>
             <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-fg-muted">{t("status")}</span>
+                <span className="text-xs font-medium text-fg-muted">
+                    {t("status")}
+                </span>
+
                 <Select
                     label={t("status")}
-                    options={statusSelectOptions}
+                    options={
+                        statusSelectOptions
+                    }
                     value={draftStatus ?? ""}
-                    onChange={(v) =>
-                        setDraftStatus((v || undefined) as ClubMemberStatus | undefined)
+                    onChange={(value) =>
+                        setDraftStatus(
+                            (value ||
+                                undefined) as
+                            | ClubMemberStatus
+                            | undefined
+                        )
                     }
                     placeholder={t("all")}
                 />
             </div>
+
             <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-fg-muted">{tm("joinType")}</span>
+                <span className="text-xs font-medium text-fg-muted">
+                    {tm("joinType")}
+                </span>
+
                 <Select
                     label={tm("joinType")}
                     options={joinTypeOptions}
                     value={draftJoinType ?? ""}
-                    onChange={(v) =>
-                        setDraftJoinType((v || undefined) as ClubMemberJoinType | undefined)
+                    onChange={(value) =>
+                        setDraftJoinType(
+                            (value ||
+                                undefined) as
+                            | ClubMemberJoinType
+                            | undefined
+                        )
                     }
                     placeholder={t("all")}
                 />
             </div>
+
             <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-fg-muted">{t("active")}</span>
+                <span className="text-xs font-medium text-fg-muted">
+                    {t("active")}
+                </span>
+
                 <Select
                     label={t("active")}
                     options={activeOptions}
-                    value={draftIsActive !== undefined ? String(draftIsActive) : ""}
-                    onChange={(v) =>
-                        setDraftIsActive(v === "" ? undefined : (Number(v) as 0 | 1))
+                    value={
+                        draftIsActive !==
+                            undefined
+                            ? String(
+                                draftIsActive
+                            )
+                            : ""
+                    }
+                    onChange={(value) =>
+                        setDraftIsActive(
+                            value === ""
+                                ? undefined
+                                : (Number(
+                                    value
+                                ) as 0 | 1)
+                        )
                     }
                     placeholder={t("all")}
                 />
@@ -339,19 +606,27 @@ export function MembershipsPageClient() {
     );
 
     // ── Render ────────────────────────────────────────────────────────────────
+
     return (
         <div className="space-y-6">
             <Breadcrumb
-                navItems={CLUB_NAV_ITEMS(slug)}
+                navItems={CLUB_NAV_ITEMS(
+                    slug
+                )}
                 homeHref={clubRoute(slug)}
             />
 
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-fg">{tm("historyTitle")}</h1>
+                    <h1 className="text-xl font-semibold text-fg">
+                        {tm("historyTitle")}
+                    </h1>
+
                     <p className="text-sm text-fg-muted mt-0.5">
-                        {tm("totalCount", { count: total.toLocaleString() })}
+                        {tm("totalCount", {
+                            count: total.toLocaleString(),
+                        })}
                     </p>
                 </div>
             </div>
@@ -364,98 +639,224 @@ export function MembershipsPageClient() {
                     sortOptions={sortOptions}
                     showStatusFilter={false}
                     loading={isFetching}
-                    onApply={handleApplyFilters}
+                    onApply={
+                        handleApplyFilters
+                    }
                     onReset={handleReset}
-                    extraFilters={extraFilters}
+                    extraFilters={
+                        extraFilters
+                    }
                 />
 
                 <DataTable
-                    table={{ columns, data, loading: isLoading, fetching: isFetching,
-                    keyExtractor: (row) => row.id,
-                    showActions: canUpdate || canDelete,
-                    renderActions: (row) => {
-                        const isPending = row.status === "pending";
+                    table={{
+                        columns,
+                        data,
+                        loading: isLoading,
+                        fetching: isFetching,
 
-                        const showApprove = canUpdate && isPending;
-                        const showReject = canUpdate && isPending;
-                        const showDelete = canDelete;
+                        keyExtractor: (row) =>
+                            row.id,
 
-                        if (!showApprove && !showReject && !showDelete) return null;
+                        showActions:
+                            canUpdate ||
+                            canDelete,
 
-                        return (
-                            <TableActions>
-                                {showApprove && (
-                                    <TableActionItem
-                                        icon={<CheckCircle className="w-4 h-4" />}
-                                        label={tm("approve")}
-                                        onClick={() => handleApprove(row.id)}
-                                    />
-                                )}
-                                {showReject && (
-                                    <TableActionItem
-                                        icon={<XCircle className="w-4 h-4" />}
-                                        label={tm("reject")}
-                                        variant="danger"
-                                        onClick={() => setRejectTarget(row)}
-                                    />
-                                )}
-                                {showDelete && (
-                                    <TableActionItem
-                                        icon={<Trash2 className="w-4 h-4" />}
-                                        label={t("delete")}
-                                        variant="danger"
-                                        onClick={() => setDeleteTarget(row)}
-                                    />
-                                )}
-                            </TableActions>
-                        );
-                    }, emptyText: tm("notFound") }}
-                    pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
+                        renderActions: (row) => {
+                            const isPending =
+                                row.status ===
+                                "pending";
+
+                            const isApproved =
+                                row.status ===
+                                "approved";
+
+                            const showApprove =
+                                canUpdate &&
+                                isPending;
+
+                            const showReject =
+                                canUpdate &&
+                                isPending;
+
+                            const showBan =
+                                canUpdate &&
+                                isApproved;
+
+                            const showDelete =
+                                canDelete;
+
+                            if (
+                                !showApprove &&
+                                !showReject &&
+                                !showBan &&
+                                !showDelete
+                            ) {
+                                return null;
+                            }
+
+                            return (
+                                <TableActions>
+                                    {/* Approve */}
+                                    {showApprove && (
+                                        <TableActionItem
+                                            icon={
+                                                <CheckCircle className="w-4 h-4" />
+                                            }
+                                            label={tm(
+                                                "approve"
+                                            )}
+                                            onClick={() =>
+                                                handleApprove(
+                                                    row.id
+                                                )
+                                            }
+                                        />
+                                    )}
+
+                                    {/* Reject */}
+                                    {showReject && (
+                                        <TableActionItem
+                                            icon={
+                                                <XCircle className="w-4 h-4" />
+                                            }
+                                            label={tm(
+                                                "reject"
+                                            )}
+                                            variant="danger"
+                                            onClick={() =>
+                                                setRejectTarget(
+                                                    row
+                                                )
+                                            }
+                                        />
+                                    )}
+
+                                    {/* Ban */}
+                                    {showBan && (
+                                        <TableActionItem
+                                            icon={
+                                                <Ban className="w-4 h-4" />
+                                            }
+                                            label={tm(
+                                                "ban"
+                                            )}
+                                            variant="danger"
+                                            onClick={() =>
+                                                handleBan(
+                                                    row.id
+                                                )
+                                            }
+                                        />
+                                    )}
+
+                                    {/* Delete / Remove */}
+                                    {showDelete && (
+                                        <TableActionItem
+                                            icon={
+                                                <Trash2 className="w-4 h-4" />
+                                            }
+                                            label={t(
+                                                "delete"
+                                            )}
+                                            variant="danger"
+                                            onClick={() =>
+                                                setDeleteTarget(
+                                                    row
+                                                )
+                                            }
+                                        />
+                                    )}
+                                </TableActions>
+                            );
+                        },
+
+                        emptyText: tm(
+                            "notFound"
+                        ),
+                    }}
+                    pagination={{
+                        page: params.page,
+                        limit: params.limit,
+                        total,
+                        onPageChange: setPage,
+                        onLimitChange:
+                            setLimit,
+                    }}
                 />
             </div>
 
-            {/* ── Reject modal (cần lý do) ────────────────────────────────────── */}
+            {/* Reject modal */}
             <FormModal
                 isOpen={!!rejectTarget}
-                onClose={() => setRejectTarget(null)}
-                onSubmit={handleRejectSubmit}
-                title={tm("rejectTitle")}
+                onClose={() =>
+                    setRejectTarget(null)
+                }
+                onSubmit={
+                    handleRejectSubmit
+                }
+                title={tm(
+                    "rejectTitle"
+                )}
                 submitting={isRejecting}
                 isEdit={false}
                 fields={[
                     {
                         name: "rejected_reason",
-                        label: tm("rejectedReason"),
+                        label: tm(
+                            "rejectedReason"
+                        ),
                         type: "textarea" as const,
                         required: false,
-                        placeholder: tm("rejectedReasonPlaceholder"),
+                        placeholder: tm(
+                            "rejectedReasonPlaceholder"
+                        ),
                     },
                 ]}
-                initialValues={{ rejected_reason: "" }}
+                initialValues={{
+                    rejected_reason: "",
+                }}
             />
 
-            {/* ── Delete (status change) confirm modal ────────────────────────── */}
+            {/* Delete modal */}
             <DeleteConfirmModal
                 isOpen={!!deleteTarget}
-                title={t("deleteConfirmTitle")}
-                description={t("deleteConfirmDesc")}
+                title={t(
+                    "deleteConfirmTitle"
+                )}
+                description={t(
+                    "deleteConfirmDesc"
+                )}
                 message={
                     deleteTarget
-                        ? tm("deleteConfirmMsg", { name: deleteTarget.user.fullname })
+                        ? tm(
+                            "deleteConfirmMsg",
+                            {
+                                name: deleteTarget
+                                    .user
+                                    .fullname,
+                            }
+                        )
                         : ""
                 }
                 confirmText={t("delete")}
                 cancelText={t("cancel")}
                 onConfirm={() => {
-                    if (deleteTarget) {
-                        handleDeleteConfirm(deleteTarget.id);
-                        setDeleteTarget(null);
+                    if (!deleteTarget) {
+                        return;
                     }
+
+                    handleDeleteConfirm(
+                        deleteTarget.id
+                    );
+
+                    setDeleteTarget(null);
                 }}
-                onCancel={() => setDeleteTarget(null)}
+                onCancel={() =>
+                    setDeleteTarget(null)
+                }
                 loading={isDeleting}
             />
         </div>
     );
 }
-

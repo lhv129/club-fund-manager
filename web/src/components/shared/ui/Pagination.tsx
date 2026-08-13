@@ -310,12 +310,16 @@ function PageSelect({
                                         sm:text-[12px]
                                     "
                                 >
-                                    <span className="
-                                        flex h-4 w-4
-                                        shrink-0
-                                        items-center
-                                        justify-center
-                                    ">
+                                    <span
+                                        className="
+                                            flex
+                                            h-4
+                                            w-4
+                                            shrink-0
+                                            items-center
+                                            justify-center
+                                        "
+                                    >
                                         {selected && (
                                             <Check className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
                                         )}
@@ -386,10 +390,7 @@ export function Pagination({
     return (
         <div
             className={`
-                flex
                 w-full
-                flex-col
-                gap-3
                 rounded-b-2xl
                 border
                 border-t-0
@@ -400,238 +401,349 @@ export function Pagination({
                 sm:px-4
                 sm:py-3
                 md:px-5
-                lg:flex-row
-                lg:items-center
-                lg:justify-between
                 ${className}
             `}
         >
-            {/* Result count */}
+            {/* =========================================================
+                MOBILE
+                ========================================================= */}
             <div
                 className="
-                    flex
-                    min-w-0
+                    grid
+                    w-full
+                    grid-cols-2
                     items-center
-                    justify-center
-                    text-[10px]
-                    font-medium
-                    text-foreground-muted
-                    sm:justify-start
-                    sm:text-[11px]
-                    lg:shrink-0
+                    gap-y-3
+                    sm:hidden
                 "
             >
-                <span className="truncate">
-                    {total === 0
-                        ? t("noResults")
-                        : t("showingResults", {
-                            from,
-                            to,
-                            total,
-                        })}
-                </span>
+                {/* Pagination - centered */}
+                <div
+                    className="
+                        col-span-2
+                        flex
+                        min-w-0
+                        items-center
+                        justify-center
+                    "
+                >
+                    <PaginationControls
+                        page={page}
+                        totalPages={totalPages}
+                        pageItems={pageItems}
+                        onPageChange={onPageChange}
+                        getPageSelectLabel={
+                            getPageSelectLabel
+                        }
+                        mobile
+                        t={t}
+                    />
+                </div>
+
+                {/* Showing */}
+                <div
+                    className="
+                        min-w-0
+                        justify-self-start
+                        text-[10px]
+                        font-medium
+                        text-foreground-muted
+                    "
+                >
+                    <span className="block truncate">
+                        {total === 0
+                            ? t("noResults")
+                            : t("showingResults", {
+                                from,
+                                to,
+                                total,
+                            })}
+                    </span>
+                </div>
+
+                {/* Items */}
+                {onLimitChange && (
+                    <div className="justify-self-end">
+                        <PaginationLimitSelect
+                            value={limit}
+                            options={limitOptions}
+                            onChange={onLimitChange}
+                            label={t("itemsPerPage")}
+                        />
+                    </div>
+                )}
             </div>
 
-            {/* Controls */}
+            {/* =========================================================
+                TABLET / DESKTOP
+
+                40%                  60%
+                Showing              Pagination + Items
+
+                Showing 1–10 of 100   ← 1 2 3 … 10 →   Items: 10
+                ========================================================= */}
             <div
                 className="
-                    flex
+                    hidden
                     w-full
-                    min-w-0
-                    flex-col
                     items-center
-                    gap-2
-                    sm:flex-row
-                    sm:justify-end
-                    sm:gap-2
-                    md:gap-3
-                    lg:w-auto
-                    lg:shrink-0
+                    justify-between
+                    sm:flex
                 "
             >
-                {/* Pagination */}
+                {/* Left - 40% */}
+                <div
+                    className="
+                        min-w-0
+                        w-[40%]
+                        shrink-0
+                        text-[10px]
+                        font-medium
+                        text-foreground-muted
+                        sm:text-[11px]
+                    "
+                >
+                    <span className="block truncate">
+                        {total === 0
+                            ? t("noResults")
+                            : t("showingResults", {
+                                from,
+                                to,
+                                total,
+                            })}
+                    </span>
+                </div>
+
+                {/* Right - 60% */}
                 <div
                     className="
                         flex
+                        w-[60%]
                         min-w-0
-                        max-w-full
+                        shrink-0
                         items-center
-                        justify-center
-                        gap-0.5
-                        sm:gap-1
+                        justify-end
+                        gap-3
+                        md:gap-4
+                        lg:gap-5
                     "
                 >
-                    {/* Previous */}
-                    <button
-                        type="button"
-                        disabled={page <= 1}
-                        onClick={() =>
-                            onPageChange(page - 1)
+                    {/* Pagination */}
+                    <PaginationControls
+                        page={page}
+                        totalPages={totalPages}
+                        pageItems={pageItems}
+                        onPageChange={onPageChange}
+                        getPageSelectLabel={
+                            getPageSelectLabel
                         }
-                        aria-label={t("previous")}
-                        className="
-                            flex
-                            h-8
-                            w-8
-                            shrink-0
-                            items-center
-                            justify-center
-                            rounded-lg
-                            text-foreground-muted
-                            transition-colors
-                            hover:bg-background-subtle
-                            hover:text-foreground
-                            disabled:pointer-events-none
-                            disabled:opacity-40
-                            focus-visible:outline-none
-                            focus-visible:ring-2
-                            focus-visible:ring-primary/30
-                        "
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                    </button>
-
-                    {/* Pages */}
-                    <div
-                        className="
-                            flex
-                            min-w-0
-                            items-center
-                            gap-0.5
-                            overflow-x-auto
-                            scrollbar-none
-                        "
-                    >
-                        {pageItems.map(
-                            (item, index) => {
-                                if (
-                                    item.type ===
-                                    "ellipsis"
-                                ) {
-                                    return (
-                                        <PageSelect
-                                            key={`ellipsis-${item.side}-${index}`}
-                                            pages={item.pages}
-                                            currentPage={page}
-                                            onChange={
-                                                onPageChange
-                                            }
-                                            align={
-                                                item.side ===
-                                                    "left"
-                                                    ? "left"
-                                                    : "right"
-                                            }
-                                            label={getPageSelectLabel(
-                                                item.side,
-                                            )}
-                                        />
-                                    );
-                                }
-
-                                const active =
-                                    item.value ===
-                                    page;
-
-                                return (
-                                    <button
-                                        key={
-                                            item.value
-                                        }
-                                        type="button"
-                                        onClick={() =>
-                                            onPageChange(
-                                                item.value,
-                                            )
-                                        }
-                                        aria-current={
-                                            active
-                                                ? "page"
-                                                : undefined
-                                        }
-                                        className={`
-                                            flex
-                                            h-8
-                                            min-w-8
-                                            shrink-0
-                                            items-center
-                                            justify-center
-                                            rounded-lg
-                                            px-1.5
-                                            text-[10px]
-                                            font-medium
-                                            tabular-nums
-                                            transition-all
-                                            duration-150
-                                            active:scale-95
-                                            sm:px-2
-                                            sm:text-[11px]
-                                            focus-visible:outline-none
-                                            focus-visible:ring-2
-                                            focus-visible:ring-primary/30
-                                            ${active
-                                                ? `
-                                                        bg-primary-50
-                                                        font-semibold
-                                                        text-primary-700
-                                                    `
-                                                : `
-                                                        text-foreground
-                                                        hover:bg-background-subtle
-                                                    `
-                                            }
-                                        `}
-                                    >
-                                        {item.value}
-                                    </button>
-                                );
-                            },
-                        )}
-                    </div>
-
-                    {/* Next */}
-                    <button
-                        type="button"
-                        disabled={
-                            page >= totalPages
-                        }
-                        onClick={() =>
-                            onPageChange(page + 1)
-                        }
-                        aria-label={t("next")}
-                        className="
-                            flex
-                            h-8
-                            w-8
-                            shrink-0
-                            items-center
-                            justify-center
-                            rounded-lg
-                            text-foreground-muted
-                            transition-colors
-                            hover:bg-background-subtle
-                            hover:text-foreground
-                            disabled:pointer-events-none
-                            disabled:opacity-40
-                            focus-visible:outline-none
-                            focus-visible:ring-2
-                            focus-visible:ring-primary/30
-                        "
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                    </button>
-                </div>
-
-                {/* Items per page */}
-                {onLimitChange && (
-                    <PaginationLimitSelect
-                        value={limit}
-                        options={limitOptions}
-                        onChange={onLimitChange}
-                        label={t("itemsPerPage")}
+                        t={t}
                     />
+
+                    {/* Items */}
+                    {onLimitChange && (
+                        <PaginationLimitSelect
+                            value={limit}
+                            options={limitOptions}
+                            onChange={onLimitChange}
+                            label={t("itemsPerPage")}
+                        />
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function PaginationControls({
+    page,
+    totalPages,
+    pageItems,
+    onPageChange,
+    getPageSelectLabel,
+    mobile = false,
+    t,
+}: {
+    page: number;
+    totalPages: number;
+    pageItems: PageItem[];
+    onPageChange: (page: number) => void;
+    getPageSelectLabel: (
+        side: "left" | "right",
+    ) => string;
+    mobile?: boolean;
+    t: ReturnType<typeof useTranslations>;
+}) {
+    return (
+        <div
+            className={`
+                flex
+                min-w-0
+                items-center
+                justify-center
+                gap-0.5
+                ${mobile
+                    ? "max-w-full"
+                    : "shrink-0"
+                }
+                sm:gap-1
+            `}
+        >
+            {/* Previous */}
+            <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() =>
+                    onPageChange(page - 1)
+                }
+                aria-label={t("previous")}
+                className="
+                    flex
+                    h-8
+                    w-8
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    text-foreground-muted
+                    transition-colors
+                    hover:bg-background-subtle
+                    hover:text-foreground
+                    disabled:pointer-events-none
+                    disabled:opacity-40
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-primary/30
+                "
+            >
+                <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            {/* Pages */}
+            <div
+                className="
+                    flex
+                    min-w-0
+                    items-center
+                    gap-0.5
+                    sm:gap-1
+                "
+            >
+                {pageItems.map(
+                    (item, index) => {
+                        if (
+                            item.type ===
+                            "ellipsis"
+                        ) {
+                            return (
+                                <PageSelect
+                                    key={`ellipsis-${item.side}-${index}`}
+                                    pages={item.pages}
+                                    currentPage={page}
+                                    onChange={
+                                        onPageChange
+                                    }
+                                    align={
+                                        item.side ===
+                                            "left"
+                                            ? "left"
+                                            : "right"
+                                    }
+                                    label={getPageSelectLabel(
+                                        item.side,
+                                    )}
+                                />
+                            );
+                        }
+
+                        const active =
+                            item.value === page;
+
+                        return (
+                            <button
+                                key={item.value}
+                                type="button"
+                                onClick={() =>
+                                    onPageChange(
+                                        item.value,
+                                    )
+                                }
+                                aria-current={
+                                    active
+                                        ? "page"
+                                        : undefined
+                                }
+                                className={`
+                                    flex
+                                    h-8
+                                    min-w-8
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-lg
+                                    px-1.5
+                                    text-[10px]
+                                    font-medium
+                                    tabular-nums
+                                    transition-all
+                                    duration-150
+                                    active:scale-95
+                                    sm:px-2
+                                    sm:text-[11px]
+                                    focus-visible:outline-none
+                                    focus-visible:ring-2
+                                    focus-visible:ring-primary/30
+                                    ${active
+                                        ? `
+                                                bg-primary-50
+                                                font-semibold
+                                                text-primary-700
+                                            `
+                                        : `
+                                                text-foreground
+                                                hover:bg-background-subtle
+                                            `
+                                    }
+                                `}
+                            >
+                                {item.value}
+                            </button>
+                        );
+                    },
                 )}
             </div>
+
+            {/* Next */}
+            <button
+                type="button"
+                disabled={
+                    page >= totalPages
+                }
+                onClick={() =>
+                    onPageChange(page + 1)
+                }
+                aria-label={t("next")}
+                className="
+                    flex
+                    h-8
+                    w-8
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    text-foreground-muted
+                    transition-colors
+                    hover:bg-background-subtle
+                    hover:text-foreground
+                    disabled:pointer-events-none
+                    disabled:opacity-40
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-primary/30
+                "
+            >
+                <ChevronRight className="h-4 w-4" />
+            </button>
         </div>
     );
 }
@@ -686,9 +798,8 @@ function PaginationLimitSelect({
             ref={ref}
             className="
                 relative
-                w-full
+                w-auto
                 shrink-0
-                sm:w-auto
             "
         >
             <button
@@ -699,10 +810,33 @@ function PaginationLimitSelect({
                     setOpen((value) => !value)
                 }
                 className="
-                inline-flex h-8 w-full items-center justify-center gap-2 rounded-xl border border-border px-3 text-[10px] font-normal text-foreground transition-colors hover:border-primary/40 hover:bg-background-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:w-auto sm:justify-start sm:text-[11px]
-            "
+                    inline-flex
+                    h-8
+                    w-auto
+                    shrink-0
+                    items-center
+                    justify-center
+                    gap-1.5
+                    whitespace-nowrap
+                    rounded-xl
+                    border
+                    border-border
+                    px-2.5
+                    text-[10px]
+                    font-normal
+                    text-foreground
+                    transition-colors
+                    hover:border-primary/40
+                    hover:bg-background-muted
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-primary/30
+                    sm:gap-2
+                    sm:px-3
+                    sm:text-[11px]
+                "
             >
-                <span className="truncate">
+                <span className="whitespace-nowrap">
                     {label}: {value}
                 </span>
 
@@ -729,7 +863,7 @@ function PaginationLimitSelect({
                         right-0
                         z-50
                         mb-2
-                        w-full
+                        w-auto
                         min-w-44
                         overflow-hidden
                         rounded-xl
@@ -738,7 +872,6 @@ function PaginationLimitSelect({
                         bg-background
                         shadow-lg
                         shadow-foreground/10
-                        sm:w-auto
                     "
                 >
                     <div className="py-1">
