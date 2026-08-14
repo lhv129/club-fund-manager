@@ -7,6 +7,7 @@ import {
     UserCheck,
     Banknote,
     CalendarDays,
+    CalendarClock,
     Landmark,
     ScanLine,
 } from "lucide-react";
@@ -29,6 +30,7 @@ import type { NavItem } from "@/components/admin/layout/nav-config";
 
 /**
  * Build club workspace nav với absolute hrefs dựa trên slug.
+ *
  * Gọi từ ClubSidebar sau khi biết slug của club hiện tại.
  *
  * clubRoute(slug, sub) → "/club/{slug}/{sub}"
@@ -36,7 +38,7 @@ import type { NavItem } from "@/components/admin/layout/nav-config";
  */
 export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
     return [
-        // ── Dashboard ─────────────────────────────────────────────────────────
+        // ── Dashboard ────────────────────────────────────────────────────────
         {
             href: clubRoute(slug, CLUB_SUBROUTES.dashboard),
             labelKey: "dashboard",
@@ -46,7 +48,7 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
             exact: true,
         },
 
-        // ── Thành viên (group) ────────────────────────────────────────────────
+        // ── Lịch chơi ─────────────────────────────────────────────────────────
         {
             labelKey: "playingSchedulesMenu",
             icon: CalendarDays,
@@ -54,34 +56,60 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
             action: PERMISSION_ACTIONS.view,
             children: [
                 {
-                    href: clubRoute(slug, CLUB_SUBROUTES.playingSchedules),
+                    href: clubRoute(
+                        slug,
+                        CLUB_SUBROUTES.playingSchedules
+                    ),
                     labelKey: "playingSchedules",
                     icon: CalendarDays,
                     module: MODULE_SLUGS.playingSchedule,
                     action: PERMISSION_ACTIONS.view,
                 },
                 {
-                    href: clubRoute(slug, CLUB_SUBROUTES.exchangeSessions),
+                    href: clubRoute(
+                        slug,
+                        CLUB_SUBROUTES.exchangeSessions
+                    ),
                     labelKey: "exchangeSessions",
-                    icon: CalendarDays,
+                    icon: CalendarClock,
                     module: MODULE_SLUGS.exchangeSession,
                     action: PERMISSION_ACTIONS.view,
                 },
             ],
         },
+
+        // ── Thành viên ────────────────────────────────────────────────────────
         {
-            href: clubRoute(slug, CLUB_SUBROUTES.members), labelKey: "members", icon: Users, module: MODULE_SLUGS.clubMember, action: PERMISSION_ACTIONS.view,
+            labelKey: "members",
+            icon: Users,
+            module: MODULE_SLUGS.clubMember,
+            action: PERMISSION_ACTIONS.view,
             children: [
-                { href: clubRoute(slug, CLUB_SUBROUTES.members), labelKey: "clubMembers", icon: Users, module: MODULE_SLUGS.clubMember, action: PERMISSION_ACTIONS.view },
                 {
-                    href: clubRoute(slug, CLUB_SUBROUTES.memberships),
+                    href: clubRoute(
+                        slug,
+                        CLUB_SUBROUTES.members
+                    ),
+                    labelKey: "clubMembers",
+                    icon: Users,
+                    module: MODULE_SLUGS.clubMember,
+                    action: PERMISSION_ACTIONS.view,
+                },
+                {
+                    href: clubRoute(
+                        slug,
+                        CLUB_SUBROUTES.memberships
+                    ),
                     labelKey: "memberships",
                     icon: UserCheck,
                     module: MODULE_SLUGS.clubMember,
                     action: PERMISSION_ACTIONS.view,
                 },
                 {
-                    href: clubRoute(slug, CLUB_SUBROUTES.invites),
+                    href: clubRoute(
+                        slug,
+                        CLUB_SUBROUTES.invites
+                    ),
                     labelKey: "clubInvites",
                     icon: Mail,
                     module: MODULE_SLUGS.clubInvite,
@@ -90,7 +118,7 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
             ],
         },
 
-        // ── Tài chính (group) ─────────────────────────────────────────────────
+        // ── Tài chính ─────────────────────────────────────────────────────────
         {
             labelKey: "funds",
             icon: Wallet,
@@ -98,28 +126,30 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
             action: PERMISSION_ACTIONS.view,
             children: [
                 {
-                    href: clubRoute(slug, CLUB_SUBROUTES.fundPeriods),
+                    href: clubRoute(
+                        slug,
+                        CLUB_SUBROUTES.fundPeriods
+                    ),
                     labelKey: "fundPeriods",
                     icon: Wallet,
                     module: MODULE_SLUGS.fundPeriod,
                     action: PERMISSION_ACTIONS.view,
                 },
                 {
-                    href: clubRoute(slug, CLUB_SUBROUTES.monthlyContributions),
+                    href: clubRoute(
+                        slug,
+                        CLUB_SUBROUTES.monthlyContributions
+                    ),
                     labelKey: "monthlyContributions",
                     icon: Banknote,
                     module: MODULE_SLUGS.monthlyContribution,
                     action: PERMISSION_ACTIONS.view,
                 },
                 {
-                    href: clubRoute(slug, CLUB_SUBROUTES.bankAccounts),
-                    labelKey: "bankAccounts",
-                    icon: Landmark,
-                    module: MODULE_SLUGS.bankAccount,
-                    action: PERMISSION_ACTIONS.view,
-                },
-                {
-                    href: clubRoute(slug, CLUB_SUBROUTES.transactions),
+                    href: clubRoute(
+                        slug,
+                        CLUB_SUBROUTES.transactions
+                    ),
                     labelKey: "transactions",
                     icon: Banknote,
                     module: MODULE_SLUGS.transaction,
@@ -128,8 +158,24 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
             ],
         },
 
+        // ── Tài khoản ngân hàng ───────────────────────────────────────────────
         {
-            href: clubRoute(slug, CLUB_SUBROUTES.paymentCodes),
+            href: clubRoute(
+                slug,
+                CLUB_SUBROUTES.bankAccounts
+            ),
+            labelKey: "bankAccounts",
+            icon: Landmark,
+            module: MODULE_SLUGS.bankAccount,
+            action: PERMISSION_ACTIONS.view,
+        },
+
+        // ── Mã thanh toán ─────────────────────────────────────────────────────
+        {
+            href: clubRoute(
+                slug,
+                CLUB_SUBROUTES.paymentCodes
+            ),
             labelKey: "paymentCodes",
             icon: ScanLine,
             module: MODULE_SLUGS.memberPaymentCode,
@@ -138,7 +184,10 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
 
         // ── Cài đặt ───────────────────────────────────────────────────────────
         {
-            href: clubRoute(slug, CLUB_SUBROUTES.settings),
+            href: clubRoute(
+                slug,
+                CLUB_SUBROUTES.settings
+            ),
             labelKey: "clubSettings",
             icon: Settings,
             module: MODULE_SLUGS.club,

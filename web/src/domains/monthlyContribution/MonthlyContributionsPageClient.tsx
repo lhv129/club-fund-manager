@@ -319,12 +319,9 @@ export function MonthlyContributionsPageClient() {
         },
     ];
 
-    const cashPaidByOptions = [
-        {
-            value: "cash",
-            label: tm("paid_by_cash"),
-        },
-    ];
+    const formPaidByOptions = selected?.paid_by === "bank"
+        ? paidByOptions
+        : paidByOptions.filter((option) => option.value === "cash");
 
     const extraFilters = (
         <>
@@ -444,7 +441,8 @@ export function MonthlyContributionsPageClient() {
                 name: "paid_by",
                 label: tm("paidBy"),
                 type: "select",
-                options: cashPaidByOptions,
+                options: formPaidByOptions,
+                disabled: selected?.paid_by === "bank",
                 placeholder: t("chooseOption"),
             },
             {
@@ -457,7 +455,8 @@ export function MonthlyContributionsPageClient() {
             memberOptions,
             periodOptions,
             statusOptions,
-            cashPaidByOptions,
+            formPaidByOptions,
+            selected?.paid_by,
             t,
             tm,
         ]
@@ -468,7 +467,7 @@ export function MonthlyContributionsPageClient() {
             user_id: String(selected.user_id),
             period_id: String(selected.period_id),
             status: selected.status,
-            paid_by: selected.paid_by === "cash" ? "cash" : "",
+            paid_by: selected.paid_by ?? "",
             payment_date: selected.payment_date
                 ? selected.payment_date.slice(0, 16)
                 : "",

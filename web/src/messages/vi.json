@@ -226,9 +226,9 @@
     "fundPeriods": "Cấu hình quỹ",
     "monthlyContributions": "Theo dõi đóng quỹ tháng",
     "bankAccounts": "Tài khoản ngân hàng",
-    "playingSchedules": "Lịch đánh",
     "playingSchedulesMenu": "Lịch đánh",
-    "exchangeSessions": "Buổi đánh",
+    "playingSchedules": "Lịch các buổi",
+    "exchangeSessions": "Buổi cố định",
     "transactions": "Thu chi",
     "paymentCodes": "Mã thanh toán"
   },

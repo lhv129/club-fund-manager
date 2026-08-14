@@ -35,6 +35,7 @@ export interface MonthlyContribution {
     is_active: boolean;
     created_at: string | null;
     updated_at: string | null;
+    delete_action?: "cancelled" | "deleted";
     user: User;
     club?: Club;
     period: FundPeriod;

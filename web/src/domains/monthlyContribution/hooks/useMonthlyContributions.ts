@@ -88,10 +88,47 @@ export function useMonthlyContributions(
     const data = listData?.data ?? [];
     const total = listData?.meta?.total ?? 0;
 
+    const matchesCurrentFilters = (item: MonthlyContribution) =>
+        (!params.period_id || item.period_id === Number(params.period_id))
+        && (!params.user_id || item.user_id === Number(params.user_id))
+        && (!params.status || item.status === params.status)
+        && (!params.paid_by || item.paid_by === params.paid_by);
+
+    const updateCurrentList = (
+        updater: (items: MonthlyContribution[]) => MonthlyContribution[],
+    ) => {
+        queryClient.setQueryData(
+            queryKey,
+            (old: PaginatedResponse<MonthlyContribution> | undefined) => {
+                if (!old) return old;
+
+                const nextData = updater(old.data ?? []);
+
+                return {
+                    ...old,
+                    data: nextData,
+                    meta: {
+                        ...old.meta,
+                        total: nextData.length === (old.data ?? []).length
+                            ? old.meta.total
+                            : Math.max(0, old.meta.total + nextData.length - (old.data ?? []).length),
+                    },
+                };
+            },
+        );
+    };
+
     const createMutation = useMutation({
         mutationFn: (payload: FormData) => {
             if (clubSlug) payload.set("club_slug", clubSlug);
             return service.create(payload);
+        },
+        onSuccess: (res) => {
+            const saved = res.data;
+            if (!res.success || !saved) return;
+            updateCurrentList((items) => matchesCurrentFilters(saved)
+                ? [saved, ...items.filter((item) => item.id !== saved.id)]
+                : items);
         },
     });
 
@@ -106,38 +143,37 @@ export function useMonthlyContributions(
             if (clubSlug) payload.set("club_slug", clubSlug);
             return service.update(id, payload);
         },
+        onSuccess: (res) => {
+            const saved = res.data;
+            if (!res.success || !saved) return;
+            updateCurrentList((items) => matchesCurrentFilters(saved)
+                ? items.map((item) => item.id === saved.id
+                    ? { ...item, ...saved }
+                    : item)
+                : items.filter((item) => item.id !== saved.id));
+        },
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id: number) => service.destroy(id, { club_slug: clubSlug }),
+        mutationFn: (id: number) => service.destroyContribution(id, { club_slug: clubSlug }),
 
         onSuccess: (res, deletedId) => {
             if (!res.success) return;
+            const saved = res.data;
 
-            queryClient.setQueryData(
-                queryKey,
-                (
-                    old:
-                        | PaginatedResponse<MonthlyContribution>
-                        | undefined
-                ) => {
-                    if (!old) return old;
-
-                    return {
-                        ...old,
-                        data: (old.data ?? []).filter(
-                            (item) => item.id !== deletedId
-                        ),
-                        meta: {
-                            ...old.meta,
-                            total: Math.max(
-                                0,
-                                (old.meta?.total ?? 1) - 1
-                            ),
-                        },
-                    };
-                }
+            updateCurrentList((items) =>
+                saved?.delete_action === "cancelled"
+                    ? (matchesCurrentFilters(saved)
+                        ? items.map((item) => item.id === deletedId
+                            ? { ...item, ...saved }
+                            : item)
+                        : items.filter((item) => item.id !== deletedId))
+                    : items.filter((item) => item.id !== deletedId)
             );
+
+            void queryClient.invalidateQueries({
+                queryKey: ["monthly-contributions", clubSlug],
+            });
 
             toast.success(res.message || t("deleteSuccess"));
         },

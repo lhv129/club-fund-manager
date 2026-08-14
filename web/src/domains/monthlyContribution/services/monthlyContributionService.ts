@@ -7,6 +7,7 @@ import type {
     GenerateMonthlyContributionPaymentResponse,
     MonthlyContribution,
 } from "../types";
+import type { ApiResponse } from "@/types/api";
 
 class MonthlyContributionServiceClient extends BaseRepository<MonthlyContribution> {
     protected resource = "monthly-contributions";
@@ -34,6 +35,13 @@ class MonthlyContributionServiceClient extends BaseRepository<MonthlyContributio
         return this.get(`/${this.resource}/${id}`, {
             club_slug: clubSlug,
         });
+    }
+
+    destroyContribution(
+        id: number | string,
+        params?: Record<string, unknown>,
+    ): Promise<ApiResponse<MonthlyContribution>> {
+        return this.delete(`/${this.resource}/${id}`, params);
     }
 }
 

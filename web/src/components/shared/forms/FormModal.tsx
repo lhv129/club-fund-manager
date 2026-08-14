@@ -41,6 +41,7 @@ export interface FormFieldDef {
     options?: { label: string; value: string }[];
     icons?: { label?: string; value: string }[];
     className?: string;
+    disabled?: boolean;
 }
 
 /** Field lặp lại theo từng locale (vd: name, slug, description). */
@@ -367,6 +368,7 @@ export function FormModal({
                     onChange={(v) => handleChange(field.name, v)}
                     {...(field.placeholder ? { placeholder: field.placeholder } : {})}
                     error={!!err}
+                    disabled={field.disabled}
                     className="w-full [&>button]:w-full"
                 />
                 {renderError(err)}
@@ -389,7 +391,7 @@ export function FormModal({
             </>
       );
 
-      if (field.type === "datetime-local") return (<><label className="block text-sm font-medium text-foreground mb-1.5">{field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}</label><DateTimePicker value={val} onChange={(v) => handleChange(field.name, v)} /><>{renderError(err)}</></>);
+      if (field.type === "datetime-local") return (<><label className="block text-sm font-medium text-foreground mb-1.5">{field.label}{field.required && <span className="text-rose-500 ml-1">*</span>}</label><DateTimePicker value={val} onChange={(v) => handleChange(field.name, v)} disabled={field.disabled} /><>{renderError(err)}</></>);
 
       if (field.type === "time-select") return (
           <>
