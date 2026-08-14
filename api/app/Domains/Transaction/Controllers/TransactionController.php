@@ -4,7 +4,6 @@ namespace App\Domains\Transaction\Controllers;
 
 use App\Base\BaseController;
 use App\Domains\Transaction\Requests\FilterTransactionRequest;
-use App\Domains\Transaction\Requests\StoreTransactionRequest;
 use App\Domains\Transaction\Requests\UpdateTransactionRequest;
 use App\Domains\Transaction\Resources\TransactionResource;
 use App\Domains\Transaction\Services\TransactionService;
@@ -63,22 +62,6 @@ class TransactionController extends BaseController
         );
     }
 
-    /**
-     * POST /api/v1/transactions — chỉ income manual (thu giao lưu).
-     */
-    public function store(StoreTransactionRequest $request): JsonResponse
-    {
-        $data = $request->validated();
-        $data['club_id'] = $request->attributes->get('club_id');
-
-        return $this->responseCommon(
-            true,
-            __('domains/transaction.created'),
-            new TransactionResource($this->service->create($data)),
-            201,
-        );
-    }
-
     public function update(UpdateTransactionRequest $request, int $id): JsonResponse
     {
         return $this->responseCommon(
@@ -90,15 +73,5 @@ class TransactionController extends BaseController
                 $request->validated(),
             )),
         );
-    }
-
-    public function destroy(Request $request, int $id): JsonResponse
-    {
-        $this->service->deleteForClub(
-            $id,
-            (int) $request->attributes->get('club_id'),
-        );
-
-        return $this->responseCommon(true, __('domains/transaction.deleted'));
     }
 }

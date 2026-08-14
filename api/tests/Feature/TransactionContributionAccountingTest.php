@@ -9,9 +9,7 @@ use App\Domains\FundPeriod\Models\FundPeriod;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\MonthlyContribution\Services\MonthlyContributionService;
 use App\Domains\Transaction\Models\Transaction;
-use App\Domains\Transaction\Services\TransactionService;
 use App\Domains\User\Models\User;
-use App\Exceptions\ApiException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,137 +17,136 @@ class TransactionContributionAccountingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_linking_existing_cash_or_bank_transaction_does_not_change_fund_balance(): void
+    public function test_cash_payment_creates_one_transaction_and_updates_fund_once(): void
+    {
+        [$club, $period] = $this->createClubAndPeriod();
+        $contribution = $this->createContribution($club, $period, 'cash@example.com');
+        $service = app(MonthlyContributionService::class);
+
+        $paid = $service->update($contribution->id, [
+            'club_id' => $club->id,
+            'user_id' => $contribution->user_id,
+            'period_id' => $period->id,
+            'status' => MonthlyContribution::STATUS_PAID,
+            'paid_by' => MonthlyContribution::PAID_BY_CASH,
+            'payment_date' => '2026-08-14 20:52:15',
+        ]);
+
+        $this->assertNotNull($paid->transaction_id);
+        $this->assertSame('100000.00', $this->fundBalance($club));
+        $this->assertDatabaseHas('transactions', [
+            'id' => $paid->transaction_id,
+            'club_id' => $club->id,
+            'source' => Transaction::SOURCE_CASH,
+            'type' => Transaction::TYPE_INCOME,
+            'amount' => 100000,
+            'description' => 'Thu tiền mặt khoản đóng quỹ tháng 8/2026 - cash@example.com',
+        ]);
+
+        $service->update($contribution->id, [
+            'club_id' => $club->id,
+            'user_id' => $contribution->user_id,
+            'period_id' => $period->id,
+            'status' => MonthlyContribution::STATUS_PAID,
+            'paid_by' => MonthlyContribution::PAID_BY_CASH,
+            'payment_date' => '2026-08-14 21:00:00',
+        ]);
+
+        $this->assertSame(1, Transaction::query()->count());
+        $this->assertSame('100000.00', $this->fundBalance($club));
+    }
+
+    public function test_deleting_cash_reverses_fund_but_deleting_bank_cancels_contribution_only(): void
     {
         [$club, $period] = $this->createClubAndPeriod();
         $cashContribution = $this->createContribution($club, $period, 'cash@example.com');
         $bankContribution = $this->createContribution($club, $period, 'bank@example.com');
-
-        $cash = app(TransactionService::class)->create([
-            'club_id' => $club->id,
-            'source' => Transaction::SOURCE_CASH,
-            'amount' => 100000,
-        ]);
-        $bank = app(ClubFundService::class)->recordTransaction([
-            'club_id' => $club->id,
-            'source' => Transaction::SOURCE_WEBHOOK,
-            'type' => Transaction::TYPE_INCOME,
-            'amount' => 200000,
-            'transaction_date' => now(),
-            'sort_order' => 0,
-            'is_active' => true,
-        ]);
-
-        $this->assertSame('300000.00', $this->fundBalance($club));
-
         $service = app(MonthlyContributionService::class);
-        $service->update($cashContribution->id, [
+
+        $cashContribution = $service->update($cashContribution->id, [
             'club_id' => $club->id,
+            'user_id' => $cashContribution->user_id,
+            'period_id' => $period->id,
             'status' => MonthlyContribution::STATUS_PAID,
             'paid_by' => MonthlyContribution::PAID_BY_CASH,
-            'transaction_id' => $cash->id,
-        ]);
-        $service->update($bankContribution->id, [
-            'club_id' => $club->id,
-            'status' => MonthlyContribution::STATUS_PAID,
-            'paid_by' => MonthlyContribution::PAID_BY_BANK,
-            'transaction_id' => $bank->id,
         ]);
 
-        $this->assertSame('300000.00', $this->fundBalance($club));
-    }
-
-    public function test_contribution_only_accepts_a_transaction_matching_the_payment_method(): void
-    {
-        [$club, $period] = $this->createClubAndPeriod();
-        $contribution = $this->createContribution($club, $period, 'member@example.com');
-        $cash = app(TransactionService::class)->create([
-            'club_id' => $club->id,
-            'source' => Transaction::SOURCE_CASH,
-            'amount' => 100000,
-        ]);
-
-        try {
-            app(MonthlyContributionService::class)->update($contribution->id, [
-                'club_id' => $club->id,
-                'status' => MonthlyContribution::STATUS_PAID,
-                'paid_by' => MonthlyContribution::PAID_BY_BANK,
-                'transaction_id' => $cash->id,
-            ]);
-
-            $this->fail('A cash transaction must not be accepted as a bank payment.');
-        } catch (ApiException $exception) {
-            $this->assertSame('INVALID_PAYMENT_TRANSACTION', $exception->getErrorCode());
-        }
-
-        $this->assertSame(MonthlyContribution::STATUS_PENDING, $contribution->fresh()->status);
-        $this->assertSame('100000.00', $this->fundBalance($club));
-    }
-
-    public function test_cash_crud_adjusts_balance_and_webhook_financial_data_is_immutable(): void
-    {
-        [$club] = $this->createClubAndPeriod();
-        $transactionService = app(TransactionService::class);
-
-        $cash = $transactionService->create([
-            'club_id' => $club->id,
-            'source' => Transaction::SOURCE_CASH,
-            'amount' => 100000,
-        ]);
-
-        $transactionService->updateForClub($cash->id, $club->id, [
-            'amount' => 150000,
-            'description' => 'Cash contribution',
-        ]);
-
-        $this->assertSame('150000.00', $this->fundBalance($club));
-
-        $transactionService->deleteForClub($cash->id, $club->id);
-
-        $this->assertSame('0.00', $this->fundBalance($club));
-        $this->assertSoftDeleted('transactions', ['id' => $cash->id]);
-
-        $webhook = app(ClubFundService::class)->recordTransaction([
+        $bankTransaction = app(ClubFundService::class)->recordTransaction([
             'club_id' => $club->id,
             'source' => Transaction::SOURCE_WEBHOOK,
             'type' => Transaction::TYPE_INCOME,
-            'amount' => 200000,
-            'description' => 'Original',
+            'amount' => 100000,
             'transaction_date' => now(),
             'sort_order' => 0,
             'is_active' => true,
         ]);
-
-        $updated = $transactionService->updateForClub($webhook->id, $club->id, [
-            'description' => 'Updated description',
+        $bankContribution->update([
+            'transaction_id' => $bankTransaction->id,
+            'status' => MonthlyContribution::STATUS_PAID,
+            'paid_by' => MonthlyContribution::PAID_BY_BANK,
+            'payment_date' => now(),
         ]);
 
-        $this->assertSame('Updated description', $updated->description);
         $this->assertSame('200000.00', $this->fundBalance($club));
 
-        try {
-            $transactionService->updateForClub($webhook->id, $club->id, [
-                'amount' => 250000,
-            ]);
+        $service->deleteForClub($cashContribution->id, $club->id);
+        $this->assertSame('100000.00', $this->fundBalance($club));
+        $this->assertSoftDeleted('transactions', ['id' => $cashContribution->transaction_id]);
 
-            $this->fail('Webhook financial data must be immutable.');
-        } catch (ApiException $exception) {
-            $this->assertSame('WEBHOOK_TRANSACTION_IMMUTABLE', $exception->getErrorCode());
-        }
-
-        try {
-            $transactionService->deleteForClub($webhook->id, $club->id);
-
-            $this->fail('Webhook transactions must not be deleted.');
-        } catch (ApiException $exception) {
-            $this->assertSame('WEBHOOK_TRANSACTION_DELETE_FORBIDDEN', $exception->getErrorCode());
-        }
-
-        $this->assertSame('200000.00', $this->fundBalance($club));
-        $this->assertDatabaseHas('transactions', [
-            'id' => $webhook->id,
+        $service->deleteForClub($bankContribution->id, $club->id);
+        $this->assertSame('100000.00', $this->fundBalance($club));
+        $this->assertDatabaseHas('monthly_contributions', [
+            'id' => $bankContribution->id,
+            'transaction_id' => $bankTransaction->id,
+            'status' => MonthlyContribution::STATUS_CANCELLED,
+            'is_active' => false,
             'deleted_at' => null,
         ]);
+        $this->assertDatabaseHas('transactions', [
+            'id' => $bankTransaction->id,
+            'source' => Transaction::SOURCE_WEBHOOK,
+            'is_active' => true,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_creating_a_soft_deleted_contribution_restores_it_as_pending(): void
+    {
+        [$club, $period] = $this->createClubAndPeriod();
+        $contribution = $this->createContribution($club, $period, 'restore@example.com');
+        $service = app(MonthlyContributionService::class);
+
+        $contribution = $service->update($contribution->id, [
+            'club_id' => $club->id,
+            'user_id' => $contribution->user_id,
+            'period_id' => $period->id,
+            'status' => MonthlyContribution::STATUS_PAID,
+            'paid_by' => MonthlyContribution::PAID_BY_CASH,
+        ]);
+
+        $originalId = $contribution->id;
+        $service->deleteForClub($originalId, $club->id);
+
+        $restored = $service->create([
+            'club_id' => $club->id,
+            'user_id' => $contribution->user_id,
+            'period_id' => $period->id,
+            'status' => MonthlyContribution::STATUS_PAID,
+            'paid_by' => MonthlyContribution::PAID_BY_CASH,
+        ]);
+
+        $this->assertSame($originalId, $restored->id);
+        $this->assertSame(MonthlyContribution::STATUS_PENDING, $restored->status);
+        $this->assertNull($restored->transaction_id);
+        $this->assertNull($restored->paid_by);
+        $this->assertNull($restored->payment_date);
+        $this->assertTrue($restored->is_active);
+        $this->assertSame(1, MonthlyContribution::withTrashed()
+            ->where('club_id', $club->id)
+            ->where('user_id', $contribution->user_id)
+            ->where('period_id', $period->id)
+            ->count());
+        $this->assertSame('0.00', $this->fundBalance($club));
     }
 
     private function createClubAndPeriod(): array
@@ -190,6 +187,8 @@ class TransactionContributionAccountingTest extends TestCase
 
     private function fundBalance(Club $club): string
     {
-        return (string) ClubFund::where('club_id', $club->id)->value('balance');
+        return (string) ClubFund::query()
+            ->where('club_id', $club->id)
+            ->value('balance');
     }
 }

@@ -57,10 +57,18 @@ Mỗi module tuân theo luồng `Request → Controller → Service → Reposito
    │  │     → MemberPaymentCode.status = used, used_at = now
    │  └── không match → Transaction vẫn lưu, chờ admin đối soát tay (source=manual)
    ▼
-[Admin]  có thể tạo Transaction tay (source=cash|manual) & gắn vào MonthlyContribution
+[Admin]  không tạo Transaction trực tiếp từ module Transactions
 ```
 
-**Variant tiền mặt:** Admin tạo Transaction `source=cash` → gắn vào MonthlyContribution với `paid_by=cash` → MonthlyContribution sang `paid`.
+**Variant tiền mặt:** Admin sửa MonthlyContribution, chọn `status=paid` và `paid_by=cash`.
+MonthlyContributionService tự tạo Transaction `source=cash`, `type=income`, lấy đúng `amount` của
+MonthlyContribution, cập nhật `club_funds.balance`, rồi gắn `transaction_id` trong cùng database
+transaction. Client không truyền hoặc tự chọn `transaction_id`.
+
+Khi MonthlyContribution đã thanh toán bị chuyển về `pending`/`cancelled` hoặc bị xóa, Transaction
+đang liên kết cũng được xóa mềm và ảnh hưởng của nó được trừ khỏi `club_funds.balance`. Quy tắc này
+áp dụng cho cả Transaction `cash` và `webhook`; hệ thống cập nhật số dư trực tiếp, không tạo giao
+dịch đảo.
 
 ## 4. Luồng buổi đánh
 
@@ -216,13 +224,20 @@ exchange_session_translations
 | ExchangeSession | `/api/v1/exchange-sessions` | `exchange_session` | Full CRUD + translations |
 | ExchangeSessionPlayer | `/api/v1/exchange-sessions/{sessionId}/players` | `exchange_session` | Sub-resource CRUD |
 | MemberPaymentCode | `/api/v1/monthly-contributions/{contributionId}/payment-code` | `member_payment_code` | Read-only + generate |
-| Transaction | `/api/v1/transactions` | `transaction` | (đã có index) |
+| Transaction | `/api/v1/transactions` | `transaction` | Chỉ xem và sửa description |
 | BankAccount | `/api/v1/bank-accounts` | `bank_account` | (đã có, đang hoạt động) |
 | WebhookConfig | `/api/v1/webhook-configs` | `webhook_config` | (đã có, đang hoạt động) |
 
 ## 7. Ghi chú
 
 - Transaction luôn được tạo **trước** khi matching payment code.
+- Transaction không có API tạo/xóa công khai. Webhook tạo Transaction chuyển khoản;
+  MonthlyContribution tạo Transaction tiền mặt nội bộ.
+- Module Transactions chỉ cho xem và cập nhật `description`; không cho sửa trực tiếp amount, type,
+  source hoặc transaction_date.
+- Một Transaction chỉ được gắn với một MonthlyContribution.
+- Xóa/hủy MonthlyContribution đã thanh toán sẽ xóa mềm Transaction liên kết và cập nhật trực tiếp
+  `club_funds.balance`, không sinh Transaction đảo.
 - MonthlyContribution lưu `amount` thực tế (theo giới tính của thành viên trong FundPeriod).
 - PlayingSchedule là **mẫu**, ExchangeSession là dữ liệu thực tế.
 - `playing_schedule_id` nullable để hỗ trợ tạo ExchangeSession thủ công.

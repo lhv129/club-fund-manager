@@ -23,6 +23,19 @@ class MonthlyContributionRepository extends BaseRepository
         parent::__construct($model);
     }
 
+    public function findExistingForMemberPeriod(
+        int $clubId,
+        int $userId,
+        int $periodId,
+    ): ?MonthlyContribution {
+        return MonthlyContribution::withTrashed()
+            ->where('club_id', $clubId)
+            ->where('user_id', $userId)
+            ->where('period_id', $periodId)
+            ->lockForUpdate()
+            ->first();
+    }
+
     // ── Hook overrides ───────────────────────────────────────────────────────
 
     protected function baseListQuery(): Builder

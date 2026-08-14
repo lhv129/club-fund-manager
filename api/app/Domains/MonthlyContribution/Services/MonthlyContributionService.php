@@ -4,11 +4,13 @@ namespace App\Domains\MonthlyContribution\Services;
 
 use App\Base\BaseService;
 use App\Domains\Club\Models\ClubMember;
+use App\Domains\ClubFund\Services\ClubFundService;
 use App\Domains\FundPeriod\Models\FundPeriod;
 use App\Domains\FundPeriod\Repositories\FundPeriodRepository;
 use App\Domains\FundPeriod\Services\FundPeriodStateGuard;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\MonthlyContribution\Repositories\MonthlyContributionRepository;
+use App\Domains\Transaction\Models\Transaction;
 use App\Domains\Transaction\Repositories\TransactionRepository;
 use App\Domains\User\Repositories\UserRepository;
 use App\Exceptions\ApiException;
@@ -32,6 +34,7 @@ class MonthlyContributionService extends BaseService
         FundPeriodRepository $fundPeriodRepository,
         protected FundPeriodStateGuard $periodStateGuard,
         protected TransactionRepository $transactionRepository,
+        protected ClubFundService $clubFundService,
     ) {
         parent::__construct($repository);
 
@@ -146,13 +149,24 @@ class MonthlyContributionService extends BaseService
             // DUPLICATE
             // =============================================================
 
-            $exists = $this->contributionExists(
+            $existing = $this->repository->findExistingForMemberPeriod(
                 $data['club_id'],
                 $data['user_id'],
                 $data['period_id'],
             );
 
-            if ($exists) {
+            if ($existing && ! $existing->trashed()) {
+                if (
+                    $existing->status === MonthlyContribution::STATUS_CANCELLED
+                    && $existing->paid_by === MonthlyContribution::PAID_BY_BANK
+                ) {
+                    throw new ApiException(
+                        __('domains/monthly_contribution.cancelled_bank_exists'),
+                        422,
+                        'CANCELLED_BANK_CONTRIBUTION_EXISTS',
+                    );
+                }
+
                 throw new ApiException(
                     __('domains/monthly_contribution.already_exists'),
                     422
@@ -168,13 +182,28 @@ class MonthlyContributionService extends BaseService
                 $period
             );
 
-            $data = $this->normalizePaymentData(
-                $data,
-                (int) $data['club_id'],
-                null,
+            if ($existing?->trashed()) {
+                $existing->restore();
+
+                return $this->repository->update($existing, [
+                    'amount' => $data['amount'],
+                    'status' => MonthlyContribution::STATUS_PENDING,
+                    'transaction_id' => null,
+                    'paid_by' => null,
+                    'payment_date' => null,
+                    'is_active' => true,
+                ]);
+            }
+
+            $contribution = $this->repository->create(
+                $this->withoutClientTransactionId($data),
             );
 
-            return $this->repository->create($data);
+            return $this->syncPayment(
+                $contribution,
+                $data,
+                (int) $data['club_id'],
+            );
         });
     }
 
@@ -328,26 +357,33 @@ class MonthlyContributionService extends BaseService
             // Không cho client thay đổi club.
             unset($data['club_id']);
 
-            $data = $this->normalizePaymentData(
-                [
-                    'status' => $data['status'] ?? $contribution->status,
-                    'paid_by' => array_key_exists('paid_by', $data)
-                        ? $data['paid_by']
-                        : $contribution->paid_by,
-                    'transaction_id' => array_key_exists('transaction_id', $data)
-                        ? $data['transaction_id']
-                        : $contribution->transaction_id,
-                    'payment_date' => $data['payment_date'] ?? $contribution->payment_date,
-                    ...$data,
-                ],
-                (int) $contribution->club_id,
-                (int) $contribution->id,
-            );
+            $oldTransactionId = $contribution->transaction_id;
+            $data = $this->withoutClientTransactionId($data);
+            $targetStatus = $data['status'] ?? $contribution->status;
+            $contribution = $this->repository->update($contribution, $data);
 
-            return $this->repository->update(
-                $contribution,
-                $data,
-            );
+            if ($targetStatus !== MonthlyContribution::STATUS_PAID) {
+                // Cash transactions are managed by this module and can be reversed.
+                // Bank/webhook transactions are immutable evidence of money received.
+                $this->removeLinkedTransaction($oldTransactionId, (int) $contribution->club_id, (int) $contribution->id);
+
+                $linked = $oldTransactionId
+                    ? $this->transactionRepository->findForContributionPayment(
+                        (int) $oldTransactionId,
+                        (int) $contribution->club_id,
+                        MonthlyContribution::PAID_BY_BANK,
+                        (int) $contribution->id,
+                    )
+                    : null;
+
+                return $this->repository->update($contribution, [
+                    'transaction_id' => $linked?->id,
+                    'paid_by' => $linked ? MonthlyContribution::PAID_BY_BANK : null,
+                    'payment_date' => $linked?->transaction_date,
+                ]);
+            }
+
+            return $this->syncPayment($contribution, $data, (int) $contribution->club_id);
         });
     }
 
@@ -402,6 +438,16 @@ class MonthlyContributionService extends BaseService
             }
 
             $this->periodStateGuard->ensureUnlocked($period);
+
+            if ($contribution->paid_by === MonthlyContribution::PAID_BY_BANK) {
+                // Keep the monthly row and immutable bank receipt for auditability.
+                return (bool) $this->repository->update($contribution, [
+                    'status' => MonthlyContribution::STATUS_CANCELLED,
+                    'is_active' => false,
+                ]);
+            }
+
+            $this->removeLinkedTransaction($contribution->transaction_id, (int) $contribution->club_id, (int) $contribution->id);
 
             if (isset($contribution->sort_order)) {
                 $this->repository->decrementSortOrderAfterDelete(
@@ -532,33 +578,29 @@ class MonthlyContributionService extends BaseService
         );
     }
 
-    private function normalizePaymentData(
+    private function syncPayment(
+        MonthlyContribution $contribution,
         array $data,
         int $clubId,
-        ?int $contributionId,
-    ): array {
-        $status = $data['status'] ?? MonthlyContribution::STATUS_PENDING;
+    ): MonthlyContribution {
+        $status = $data['status'] ?? $contribution->status;
 
         if ($status !== MonthlyContribution::STATUS_PAID) {
-            $data['transaction_id'] = null;
-            $data['paid_by'] = null;
-            $data['payment_date'] = null;
-
-            return $data;
+            return $contribution;
         }
 
-        $paidBy = $data['paid_by'] ?? null;
-        $transactionId = $data['transaction_id'] ?? null;
+        $paidBy = $data['paid_by'] ?? $contribution->paid_by;
 
-        if (! in_array($paidBy, [MonthlyContribution::PAID_BY_BANK, MonthlyContribution::PAID_BY_CASH], true)) {
-            throw new ApiException(
-                __('domains/monthly_contribution.payment_method_required'),
-                422,
-                'PAYMENT_METHOD_REQUIRED',
-            );
-        }
+        if ($paidBy === MonthlyContribution::PAID_BY_BANK) {
+            if ($contribution->transaction_id && $this->transactionRepository->findForContributionPayment(
+                (int) $contribution->transaction_id,
+                $clubId,
+                MonthlyContribution::PAID_BY_BANK,
+                (int) $contribution->id,
+            )) {
+                return $contribution;
+            }
 
-        if (! $transactionId) {
             throw new ApiException(
                 __('domains/monthly_contribution.transaction_required'),
                 422,
@@ -566,26 +608,97 @@ class MonthlyContributionService extends BaseService
             );
         }
 
-        $transaction = $this->transactionRepository->findForContributionPayment(
-            (int) $transactionId,
-            $clubId,
-            $paidBy,
-            $contributionId,
-        );
-
-        if (! $transaction) {
+        if ($paidBy !== MonthlyContribution::PAID_BY_CASH) {
             throw new ApiException(
-                __('domains/monthly_contribution.invalid_payment_transaction'),
+                __('domains/monthly_contribution.payment_method_required'),
                 422,
-                'INVALID_PAYMENT_TRANSACTION',
+                'PAYMENT_METHOD_REQUIRED',
             );
         }
 
-        $data['transaction_id'] = $transaction->id;
-        $data['payment_date'] = $data['payment_date']
-            ?? $transaction->transaction_date
-            ?? now();
+        if ($contribution->transaction_id) {
+            $transaction = $this->transactionRepository->findForContributionPayment(
+                (int) $contribution->transaction_id,
+                $clubId,
+                MonthlyContribution::PAID_BY_CASH,
+                (int) $contribution->id,
+            );
+
+            if ($transaction) {
+                $transaction = $this->clubFundService->updateManagedTransaction(
+                    (int) $transaction->id,
+                    $clubId,
+                    [
+                        'amount' => $contribution->amount,
+                        'transaction_date' => $data['payment_date']
+                            ?? $contribution->payment_date
+                            ?? $transaction->transaction_date,
+                    ],
+                );
+
+                return $this->repository->update($contribution, [
+                    'paid_by' => MonthlyContribution::PAID_BY_CASH,
+                    'payment_date' => $data['payment_date']
+                        ?? $contribution->payment_date
+                        ?? $transaction->transaction_date,
+                ]);
+            }
+
+            $this->removeLinkedTransaction(
+                (int) $contribution->transaction_id,
+                $clubId,
+                (int) $contribution->id,
+            );
+        }
+
+        $transaction = $this->clubFundService->recordTransaction([
+            'club_id' => $clubId,
+            'user_id' => $contribution->user_id,
+            'source' => Transaction::SOURCE_CASH,
+            'type' => Transaction::TYPE_INCOME,
+            'amount' => $contribution->amount,
+            'description' => __('domains/monthly_contribution.cash_transaction_description', [
+                'month' => $contribution->period->month,
+                'year' => $contribution->period->year,
+                'fullname' => $contribution->user->fullname,
+            ]),
+            'transaction_date' => $data['payment_date'] ?? now(),
+            'sort_order' => 0,
+            'is_active' => true,
+        ]);
+
+        return $this->repository->update($contribution, [
+            'transaction_id' => $transaction->id,
+            'paid_by' => MonthlyContribution::PAID_BY_CASH,
+            'payment_date' => $data['payment_date'] ?? $transaction->transaction_date,
+        ]);
+    }
+
+    private function withoutClientTransactionId(array $data): array
+    {
+        unset($data['transaction_id']);
+
+        if (($data['status'] ?? MonthlyContribution::STATUS_PENDING) !== MonthlyContribution::STATUS_PAID) {
+            $data['paid_by'] = null;
+            $data['payment_date'] = null;
+        }
 
         return $data;
+    }
+
+    private function removeLinkedTransaction(?int $transactionId, int $clubId, ?int $contributionId = null): void
+    {
+        if ($transactionId) {
+            $transaction = $this->transactionRepository->findForContributionPayment(
+                $transactionId,
+                $clubId,
+                MonthlyContribution::PAID_BY_CASH,
+                $contributionId,
+            );
+
+            if ($transaction) {
+                $this->clubFundService->deleteManagedTransaction($transactionId, $clubId);
+            }
+        }
     }
 }

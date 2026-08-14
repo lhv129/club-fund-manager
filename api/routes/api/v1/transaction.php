@@ -13,11 +13,7 @@ Route::middleware('auth.jwt')->group(function () {
             ->middleware('perm.club:transaction,view');
         Route::get('/{id}', [TransactionController::class, 'show'])
             ->middleware('perm.club:transaction,view');
-        Route::post('/', [TransactionController::class, 'store'])
-            ->middleware('perm.club:transaction,create');
         Route::put('/{id}', [TransactionController::class, 'update'])
             ->middleware('perm.club:transaction,update');
-        Route::delete('/{id}', [TransactionController::class, 'destroy'])
-            ->middleware('perm.club:transaction,delete');
     });
 });

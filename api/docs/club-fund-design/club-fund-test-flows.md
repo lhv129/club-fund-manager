@@ -543,49 +543,11 @@ Response `200`:
 
 ---
 
-## Bước 8 — Thu giao lưu (income manual, đối soát tay)
+## Bước 8 — Thu giao lưu (income nội bộ)
 
-> Nếu admin nhận tiền mặt giao lưu, có thể tạo Transaction income manual rồi gắn
-> vào session qua `transaction_id`.
-
-### 8.1 Tạo Transaction income manual
-
-`POST /clubs/hanoi-bc/transactions`
-
-```json
-{
-  "source": "cash",
-  "amount": 180000,
-  "description": "Thu tiền mặt giao lưu buổi 4/8",
-  "transaction_date": "2026-08-05 21:30:00"
-}
-```
-
-Response `201`:
-```json
-{
-  "success": true,
-  "data": {
-    "id": 3,
-    "type": "income",
-    "source": "cash",
-    "amount": "180000.00"
-  }
-}
-```
-
-### 8.2 Gắn Transaction vào ExchangeSession
-
-`PUT /clubs/hanoi-bc/exchange-sessions/1`
-
-```json
-{
-  "transaction_id": 3,
-  "translations": {
-    "vi": { "title": "Buổi đánh 4/8", "note": "Đánh tại Sansan" }
-  }
-}
-```
+Module Transactions không có API tạo/xóa công khai. Khi triển khai thu tiền mặt giao lưu,
+ExchangeSessionPlayerService phải tạo Transaction income nội bộ và gắn `transaction_id` trong cùng
+database transaction. Không tạo Transaction từ màn hình Transactions.
 
 ---
 
@@ -682,7 +644,7 @@ Status `422`.
 }
 ```
 
-### 10.5 Tạo Transaction expense manual → bị ép income
+### 10.5 Gọi API tạo Transaction → route không tồn tại
 
 `POST /clubs/hanoi-bc/transactions`
 
@@ -690,8 +652,7 @@ Status `422`.
 { "source": "cash", "type": "expense", "amount": 100000 }
 ```
 
-> Service **ép** `type=income` bất kể input. Response sẽ có `"type": "income"`.
-> Expense chỉ qua webhook — không tạo manual.
+> Response `404` hoặc `405`. Module Transactions chỉ hỗ trợ GET và PUT cập nhật description.
 
 ### 10.6 Sửa Transaction field ngoài description → bị lờ đi
 
@@ -701,8 +662,8 @@ Status `422`.
 { "amount": 999999, "type": "income" }
 ```
 
-> Request rule chỉ chấp nhận `description` → `amount`/`type` bị filter khỏi
-> `validated()`. Response giữ `amount=350000`, `type=expense` nguyên.
+> Request rule chỉ chấp nhận `description` → `amount`/`type` bị filter khỏi `validated()`.
+> Response giữ `amount=350000`, `type=expense` nguyên.
 
 ### 10.7 Webhook sai chữ ký HMAC
 

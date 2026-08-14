@@ -197,35 +197,23 @@ class TransactionService extends BaseService
             throw new ApiException(__($this->notFoundMessage), 404);
         }
 
-        if ($transaction->source === Transaction::SOURCE_WEBHOOK) {
-            if (array_diff_key($data, ['description' => true]) !== []) {
-                throw new ApiException(
-                    __('domains/transaction.financial_fields_immutable'),
-                    422,
-                    'WEBHOOK_TRANSACTION_IMMUTABLE',
-                );
-            }
-
-            return $this->repository->loadDetailRelations(
-                $this->repository->update($transaction, $data),
-            );
-        }
-
-        if (! in_array($transaction->source, [Transaction::SOURCE_CASH, Transaction::SOURCE_MANUAL], true)) {
+        if ($transaction->source === Transaction::SOURCE_WEBHOOK
+            && array_diff_key($data, ['description' => true]) !== []) {
             throw new ApiException(
                 __('domains/transaction.financial_fields_immutable'),
                 422,
-                'TRANSACTION_IMMUTABLE',
+                'WEBHOOK_TRANSACTION_IMMUTABLE',
             );
         }
 
-        unset($data['source'], $data['type']);
-
         return $this->repository->loadDetailRelations(
-            $this->clubFundService->updateManagedTransaction($id, $clubId, $data),
+            $this->repository->update($transaction, [
+                'description' => $data['description'] ?? $transaction->description,
+            ]),
         );
     }
 
+    /** Internal lifecycle hook. The public Transactions API has no DELETE route. */
     public function deleteForClub(int $id, int $clubId): void
     {
         $transaction = $this->repository->findForClub($id, $clubId);
@@ -239,14 +227,6 @@ class TransactionService extends BaseService
                 __('domains/transaction.webhook_delete_forbidden'),
                 422,
                 'WEBHOOK_TRANSACTION_DELETE_FORBIDDEN',
-            );
-        }
-
-        if (! in_array($transaction->source, [Transaction::SOURCE_CASH, Transaction::SOURCE_MANUAL], true)) {
-            throw new ApiException(
-                __('domains/transaction.financial_fields_immutable'),
-                422,
-                'TRANSACTION_IMMUTABLE',
             );
         }
 

@@ -174,6 +174,10 @@ routes/api/v1/{module}.php  → route riêng từng module
 | DELETE | `/{module}/{id}` | `destroy` | delete |
 | POST | `/{module}/{id}/toggle-status` | `toggleStatus` | update |
 
+Riêng module Transaction không có endpoint `POST`/`DELETE` công khai. Transaction chỉ được tạo hoặc
+xóa nội bộ bởi nghiệp vụ sở hữu (webhook, MonthlyContribution, ExchangeSessionPlayer). API
+`/transactions` chỉ cho xem và cập nhật `description`.
+
 ## 13. Filter / Search / Sort / Pagination
 
 ### Repository — nơi duy nhất build query

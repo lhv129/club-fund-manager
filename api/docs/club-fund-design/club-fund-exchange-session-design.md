@@ -23,7 +23,9 @@
 - **Chi tiền sân** = Transaction `type=expense` do **webhook SePay** tạo
   (`transferType=out`). Admin **chỉ được sửa `description`** (lý do chi) — không
   sửa amount/date/type/source (bảo toàn dữ liệu ngân hàng).
-- **Thu giao lưu** (tuỳ chọn) = Transaction `type=income` do admin tạo manual
+- Module Transactions không cho tạo/xóa trực tiếp. Transaction phát sinh phải do service của nghiệp
+  vụ sở hữu tạo nội bộ để tránh sửa số tiền ngoài luồng và hạn chế rò rỉ dữ liệu tài chính.
+- **Thu giao lưu** (tuỳ chọn) = Transaction `type=income` do ExchangeSessionPlayerService tạo nội bộ
   (`source=manual|cash`), gắn vào `exchange_session_players.transaction_id` để đối soát.
 
 ## 1. Sơ đồ luồng (buổi đánh + giao lưu + chi sân)
@@ -58,8 +60,8 @@
 [Chi sân]  SePay webhook transferType=out → Transaction type=expense, source=webhook
    │  └─▶ admin PATCH /transactions/{id} sửa description (lý do chi) — chỉ description
    ▼
-[Thu giao lưu]  admin POST /transactions (income manual/cash)
-   │  └─▶ PUT /players/{id} {transaction_id} → paid=1 (hoặc toggle-paid tay)
+[Thu giao lưu]  ExchangeSessionPlayerService tạo income manual/cash nội bộ
+   │  └─▶ service gắn transaction_id → paid=1 (hoặc toggle-paid tay)
 ```
 
 ## 2. Schema (đã code)
@@ -88,8 +90,8 @@ checked_in     boolean
 
 ### `transactions` — không thêm cột mới
 
-Chi sân = expense qua webhook, admin chỉ sửa `description`. Thu giao lưu = income
-manual, gắn vào `exchange_session_players.transaction_id` (FK đã thêm ở bảng player).
+Chi sân = expense qua webhook, admin chỉ sửa `description`. Thu giao lưu = income manual/cash do
+ExchangeSessionPlayerService tạo nội bộ, sau đó gắn vào `exchange_session_players.transaction_id`.
 
 ### `club_funds` — số dư quỹ do hệ thống tự quản lý
 
@@ -132,7 +134,7 @@ KHÔNG webhook cho giao lưu.
 - Quỹ tháng bao trùm member → không thu thêm tiền sân cho member.
 - Chi sân = Transaction `type=expense` qua **webhook SePay** (`transferType=out`).
   Admin **chỉ sửa `description`** (lý do chi) — không sửa amount/date/type/source.
-- Thu giao lưu = Transaction `type=income` manual (`source=manual|cash`), gắn vào
+- Thu giao lưu = Transaction `type=income` manual/cash do nghiệp vụ giao lưu tạo nội bộ, gắn vào
   `exchange_session_players.transaction_id` → tự set `paid=1`.
 - Đối soát `paid` giao lưu: (a) gắn `transaction_id` tay [có audit trail]; (b) toggle tay.
 
@@ -145,7 +147,7 @@ KHÔNG webhook cho giao lưu.
 5. Nhóm giao lưu `male + female = 0` → 422.
 6. Edit player đổi `male`/`female` mà không gửi `amount` → tự tính lại từ rates.
 7. Gắn `transaction_id` khác → tự set `paid=true`. Toggle paid=false → clear `transaction_id`.
-8. Tạo Transaction expense manual → service **ép** `type=income` (expense chỉ qua webhook).
+8. Gọi API tạo/xóa Transaction trực tiếp → route không tồn tại; Transaction do nghiệp vụ sở hữu.
 9. Sửa Transaction field ngoài `description` → rule filter, chỉ description được lưu.
 10. `applySearch` Transaction cũ reference cột `title` không tồn tại → đã fix.
 11. `UpdateExchangeSessionRequest` typo `'somtimes'` → đã fix `'sometimes'`.
