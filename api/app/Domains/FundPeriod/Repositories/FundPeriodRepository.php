@@ -4,10 +4,8 @@ namespace App\Domains\FundPeriod\Repositories;
 
 use App\Base\BaseRepository;
 use App\Domains\FundPeriod\Models\FundPeriod;
-use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 
 class FundPeriodRepository extends BaseRepository
 {
@@ -177,102 +175,30 @@ class FundPeriodRepository extends BaseRepository
         );
     }
 
-    // ------------------------------------------------------------------
-    // LIST
-    // ------------------------------------------------------------------
-
-    public function getList(
+    /**
+     * Lấy danh sách FundPeriod đã soft delete.
+     */
+    public function getTrashedList(
         array $filters = []
     ): LengthAwarePaginator {
-        $query = $this->baseListQuery();
+        $query = $this->model
+            ->onlyTrashed()
+            ->with(['translations']);
 
-        $this->applySearch(
-            $query,
-            $filters
-        );
+        $this->applySearch($query, $filters);
+        $this->applyFilters($query, $filters);
 
-        $this->applyFilters(
-            $query,
-            $filters
-        );
-
-        $this->applySorting(
-            $query,
-            $filters,
-            $this->allowedSortColumns
-        );
-
-        return $query->paginate(
-            $filters['limit'] ?? $this->defaultLimit,
-            ['*'],
-            'page',
-            $filters['page'] ?? $this->defaultPage
-        );
-    }
-
-    // ------------------------------------------------------------------
-    // CURSOR
-    // ------------------------------------------------------------------
-
-    public function getCursorList(
-        array $filters = []
-    ): CursorPaginator {
-        $query = $this->baseListQuery();
-
-        $this->applySearch(
-            $query,
-            $filters
-        );
-
-        $this->applyFilters(
-            $query,
-            $filters
-        );
-
-        $this->applyCursorOrder(
-            $query
-        );
-
-        return $query->cursorPaginate(
-            $filters['limit'] ?? $this->defaultLimit
-        );
-    }
-
-    // ------------------------------------------------------------------
-    // SELECT
-    // ------------------------------------------------------------------
-
-    public function getForSelect(
-        array $filters = []
-    ): Collection {
-        $query = $this->baseSelectQuery();
-
-        $this->applySearch(
-            $query,
-            $filters
-        );
-
-        $this->applyFilters(
-            $query,
-            $filters
-        );
-
-        $query->orderBy(
-            $this->defaultOrderBy,
-            $this->defaultOrderDirection
-        );
+        // -------------------------------------------------------------
+        // Pagination
+        // -------------------------------------------------------------
 
         return $query
-            ->limit(
-                min(
-                    (int) (
-                        $filters['limit']
-                        ?? $this->selectDefaultLimit
-                    ),
-                    $this->selectMaxLimit
-                )
-            )
-            ->get();
+            ->orderByDesc('deleted_at')
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->paginate(
+                $filters['limit'] ?? 15
+            );
     }
 
     // ------------------------------------------------------------------

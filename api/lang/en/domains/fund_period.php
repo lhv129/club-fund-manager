@@ -22,6 +22,8 @@ return [
 
     'list' => 'Fund periods retrieved successfully.',
 
+    'trashed' => 'Fund periods trashed retrieved successfully,',
+
     'detail' => 'Fund period details retrieved successfully.',
 
     'select' => 'Fund periods for dropdown retrieved successfully.',

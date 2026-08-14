@@ -34,7 +34,7 @@ class TransactionController extends BaseController
     /**
      * GET /api/v1/transactions/{id}
      */
-    public function show(string $clubSlug, int $id): JsonResponse
+    public function show(int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -63,7 +63,7 @@ class TransactionController extends BaseController
     /**
      * POST /api/v1/transactions — chỉ income manual (thu giao lưu).
      */
-    public function store(StoreTransactionRequest $request, string $clubSlug): JsonResponse
+    public function store(StoreTransactionRequest $request): JsonResponse
     {
         $data = $request->validated();
         $data['club_id'] = $request->attributes->get('club_id');
@@ -79,7 +79,7 @@ class TransactionController extends BaseController
     /**
      * PATCH /api/v1/transactions/{id} — chỉ sửa description (lý do chi).
      */
-    public function update(UpdateTransactionRequest $request, string $clubSlug, int $id): JsonResponse
+    public function update(UpdateTransactionRequest $request,  int $id): JsonResponse
     {
         return $this->responseCommon(
             true,

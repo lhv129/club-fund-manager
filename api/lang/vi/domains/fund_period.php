@@ -22,6 +22,8 @@ return [
 
     'list' => 'Lấy danh sách kỳ quỹ thành công.',
 
+    'trashed' => 'Lấy danh sách kỳ quỹ đã bị xóa thành công',
+
     'detail' => 'Lấy chi tiết kỳ quỹ thành công.',
 
     'select' => 'Lấy danh sách kỳ quỹ (dropdown) thành công.',

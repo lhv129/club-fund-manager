@@ -39,7 +39,7 @@ class Role extends Model
     {
         return $this->hasMany(RoleTranslation::class);
     }
-    public function translation(string $locale = null)
+    public function translation(?string $locale = null)
     {
         return $this->hasOne(RoleTranslation::class)
             ->where('locale', $locale ?? app()->getLocale());

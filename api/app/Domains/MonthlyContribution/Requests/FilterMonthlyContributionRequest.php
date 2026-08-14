@@ -14,6 +14,7 @@ class FilterMonthlyContributionRequest extends BaseRequest
             'user_id'   => ['nullable', 'integer', 'min:1'],
             'status'    => ['nullable', 'string', 'in:pending,paid,cancelled'],
             'paid_by'   => ['nullable', 'string', 'in:bank,cash,manual'],
+            'is_active' => ['nullable', 'boolean'],
             'limit'     => ['nullable', 'integer', 'min:1', 'max:100'],
             'page'      => ['nullable', 'integer', 'min:1'],
             'sort_by'   => ['nullable', 'string', 'in:amount,payment_date,created_at'],

@@ -18,64 +18,64 @@ class MemberPaymentCodePaymentResource extends JsonResource
         $bank = $bankAccount->bank;
 
         return [
-            'id' =>
-            $payment->id,
+            // 'id' =>
+            // $payment->id,
 
-            'monthly_contribution_id' =>
-            $payment->monthly_contribution_id,
+            // 'monthly_contribution_id' =>
+            // $payment->monthly_contribution_id,
 
-            'payment_code' =>
-            $payment->payment_code,
+            // 'payment_code' =>
+            // $payment->payment_code,
 
-            'status' =>
-            $payment->status,
+            // 'status' =>
+            // $payment->status,
 
-            'expired_at' =>
-            $payment->expired_at,
+            // 'expired_at' =>
+            // $payment->expired_at,
 
-            'used_at' =>
-            $payment->used_at,
+            // 'used_at' =>
+            // $payment->used_at,
 
-            'is_active' =>
-            $payment->is_active,
+            // 'is_active' =>
+            // $payment->is_active,
 
-            'amount' =>
-            $this->getAmount(),
+            // 'amount' =>
+            // $this->getAmount(),
 
-            'bank_account' => [
-                'id' =>
-                $bankAccount->id,
+            // 'bank_account' => [
+            //     'id' =>
+            //     $bankAccount->id,
 
-                'account_number' =>
-                $bankAccount->account_number,
+            //     'account_number' =>
+            //     $bankAccount->account_number,
 
-                'account_name' =>
-                $bankAccount->account_name,
+            //     'account_name' =>
+            //     $bankAccount->account_name,
 
-                // Luôn trả QR image mặc định
-                'qr_image' =>
-                $bankAccount->qr_image,
+            //     // Luôn trả QR image mặc định
+            //     'qr_image' =>
+            //     $bankAccount->qr_image,
 
-                'is_default' =>
-                $bankAccount->is_default,
+            //     'is_default' =>
+            //     $bankAccount->is_default,
 
-                'bank' => [
-                    'id' =>
-                    $bank->id,
+            //     'bank' => [
+            //         'id' =>
+            //         $bank->id,
 
-                    'code' =>
-                    $bank->code,
+            //         'code' =>
+            //         $bank->code,
 
-                    'name' =>
-                    $bank->name,
+            //         'name' =>
+            //         $bank->name,
 
-                    'short_name' =>
-                    $bank->short_name,
+            //         'short_name' =>
+            //         $bank->short_name,
 
-                    'logo' =>
-                    $bank->logo,
-                ],
-            ],
+            //         'logo' =>
+            //         $bank->logo,
+            //     ],
+            // ],
 
             'qr' => [
                 'enabled' =>

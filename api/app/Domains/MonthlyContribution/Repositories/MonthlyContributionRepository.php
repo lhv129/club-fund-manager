@@ -5,10 +5,7 @@ namespace App\Domains\MonthlyContribution\Repositories;
 use App\Base\BaseRepository;
 use App\Domains\Club\Models\ClubMember;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
-use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class MonthlyContributionRepository extends BaseRepository
@@ -62,7 +59,7 @@ class MonthlyContributionRepository extends BaseRepository
                 $q->whereHas(
                     'user',
                     fn($u) => $u
-                        ->where('name', 'like', "%{$search}%")
+                        ->where('fullname', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
                 );
             });
@@ -92,45 +89,6 @@ class MonthlyContributionRepository extends BaseRepository
         if (!empty($filters['paid_by'])) {
             $query->where('paid_by', $filters['paid_by']);
         }
-    }
-
-    // ── List methods ─────────────────────────────────────────────────────────
-
-    public function getList(array $filters = []): LengthAwarePaginator
-    {
-        $query = $this->baseListQuery();
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $this->applySorting($query, $filters, $this->allowedSortColumns);
-
-        return $query->paginate(
-            $filters['limit'] ?? $this->defaultLimit,
-            ['*'],
-            'page',
-            $filters['page'] ?? $this->defaultPage
-        );
-    }
-
-    public function getCursorList(array $filters = []): CursorPaginator
-    {
-        $query = $this->baseListQuery();
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $this->applyCursorOrder($query);
-
-        return $query->cursorPaginate($filters['limit'] ?? $this->defaultLimit);
-    }
-
-    public function getForSelect(array $filters = []): Collection
-    {
-        $query = $this->baseSelectQuery();
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $query->orderBy($this->defaultOrderBy, $this->defaultOrderDirection);
-
-        return $query
-            ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
-            ->get();
     }
 
     // ── Generate helpers ─────────────────────────────────────────────────────

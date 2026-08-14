@@ -34,18 +34,13 @@ class MonthlyContributionController extends BaseController
     /**
      * GET /api/v1/monthly-contributions/cursor?limit=10&cursor=eyJpZCI6MTAwfQ
      */
-    public function cursorIndex(Request $request): JsonResponse
+    public function cursorIndex(FilterMonthlyContributionRequest $request): JsonResponse
     {
+        $filters = $request->validated();
+        $filters['club_id'] = $request->attributes->get('club_id');
+
         return $this->cursorResponse(
-            $this->service->cursorPaginate($request->only([
-                'limit',
-                'search',
-                'club_id',
-                'period_id',
-                'status',
-                'paid_by',
-                'is_active',
-            ])),
+            $this->service->cursorPaginate($filters),
             __('domains/monthly_contribution.list'),
             MonthlyContributionResource::class,
         );
@@ -54,33 +49,55 @@ class MonthlyContributionController extends BaseController
     /**
      * GET /api/v1/monthly-contributions/select — dropdown, không Resource, không phân trang.
      */
-    public function select(Request $request): JsonResponse
+    public function select(FilterMonthlyContributionRequest $request): JsonResponse
     {
+        $filters = $request->validated();
+        $filters['club_id'] = $request->attributes->get('club_id');
+
         return $this->responseCommon(
             true,
             __('domains/monthly_contribution.select'),
-            $this->service->getForSelect($request->only([
-                'search',
-                'club_id',
-                'period_id',
-                'status',
-                'is_active',
-                'limit',
-            ])),
+            $this->service->getForSelect($filters),
         );
     }
 
     /**
      * GET /api/v1/monthly-contributions/{id}
      */
-    public function show(string $clubSlug, int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        $contribution = $this->service->findWithRelations(
+            $id,
+            [
+                // User
+                'user:id,fullname,email,gender',
+
+                // Club
+                'club:id,logo',
+                'club.translations:id,club_id,locale,name,slug',
+
+                // Fund Period
+                'period:id,club_id,year,month,male_amount,female_amount,exchange_male_amount,exchange_female_amount,is_locked',
+
+                // Payment Code
+                'paymentCode:id,monthly_contribution_id,payment_code,status,expired_at,used_at',
+
+                // Transaction
+                'transaction:id,club_id,bank_account_id,source,type,amount,balance,reference_code,sender_name,sender_account,description,transaction_date',
+
+                // Bank Account
+                'transaction.bankAccount:id,bank_id,account_number,account_name,qr_image,is_default',
+
+                // Bank
+                'transaction.bankAccount.bank:id,name,code,logo',
+            ],
+            $request->attributes->get('club_id'),
+        );
+
         return $this->responseCommon(
             true,
             __('domains/monthly_contribution.detail'),
-            new MonthlyContributionResource(
-                $this->service->findWithRelations($id, ['period', 'user', 'club', 'transaction', 'paymentCode'])
-            ),
+            new MonthlyContributionResource($contribution),
         );
     }
 
@@ -102,9 +119,10 @@ class MonthlyContributionController extends BaseController
     /**
      * PUT /api/v1/monthly-contributions/{id}
      */
-    public function update(UpdateMonthlyContributionRequest $request, string $clubSlug, int $id): JsonResponse
+    public function update(UpdateMonthlyContributionRequest $request, int $id): JsonResponse
     {
         $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
 
         return $this->responseCommon(
             true,
@@ -118,9 +136,12 @@ class MonthlyContributionController extends BaseController
     /**
      * DELETE /api/v1/monthly-contributions/{id} — xoá mềm + dồn sort_order.
      */
-    public function destroy(string $clubSlug, int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        $this->service->deleteWithSortOrder($id);
+        $this->service->deleteForClub(
+            $id,
+            $request->attributes->get('club_id'),
+        );
 
         return $this->responseCommon(true, __('domains/monthly_contribution.deleted'));
     }

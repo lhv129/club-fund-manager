@@ -18,6 +18,7 @@ class MonthlyContribution extends Model
 {
     use HasFactory, SoftDeletes;
 
+
     protected $fillable = [
         'club_id',
         'user_id',
@@ -47,6 +48,21 @@ class MonthlyContribution extends Model
             'is_active' => 'boolean',
         ];
     }
+
+
+    /*
+|--------------------------------------------------------------------------
+| State constants
+|--------------------------------------------------------------------------
+*/
+
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_PAID = 'paid';
+    public const STATUS_CANCELLED = 'cancelled';
+
+    public const IS_ACTIVE = 1;
+    public const IS_INACTIVE = 0;
+
 
     /*
     |--------------------------------------------------------------------------

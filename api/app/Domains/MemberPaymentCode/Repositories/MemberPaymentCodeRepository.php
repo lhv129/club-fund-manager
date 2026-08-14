@@ -4,10 +4,7 @@ namespace App\Domains\MemberPaymentCode\Repositories;
 
 use App\Base\BaseRepository;
 use App\Domains\MemberPaymentCode\Models\MemberPaymentCode;
-use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 
 class MemberPaymentCodeRepository extends BaseRepository
 {
@@ -54,43 +51,6 @@ class MemberPaymentCodeRepository extends BaseRepository
         }
 
         $this->applyStatusFilter($query, $filters, 'status', ['pending', 'used', 'expired']);
-    }
-
-    public function getList(array $filters = []): LengthAwarePaginator
-    {
-        $query = $this->baseListQuery();
-
-        $this->applyFilters($query, $filters);
-        $this->applySorting($query, $filters, $this->allowedSortColumns);
-
-        return $query->paginate(
-            $filters['limit'] ?? $this->defaultLimit,
-            ['*'],
-            'page',
-            $filters['page'] ?? $this->defaultPage
-        );
-    }
-
-    public function getCursorList(array $filters = []): CursorPaginator
-    {
-        $query = $this->baseListQuery();
-
-        $this->applyFilters($query, $filters);
-        $this->applyCursorOrder($query);
-
-        return $query->cursorPaginate($filters['limit'] ?? $this->defaultLimit);
-    }
-
-    public function getForSelect(array $filters = []): Collection
-    {
-        $query = $this->baseSelectQuery();
-
-        $this->applyFilters($query, $filters);
-        $query->orderBy($this->defaultOrderBy, $this->defaultOrderDirection);
-
-        return $query
-            ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
-            ->get();
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Domains\FundPeriod\Controllers;
 
 use App\Base\BaseController;
 use App\Domains\FundPeriod\Requests\FilterFundPeriodRequest;
+use App\Domains\FundPeriod\Requests\ReopenFundPeriodRequest;
 use App\Domains\FundPeriod\Requests\StoreFundPeriodRequest;
 use App\Domains\FundPeriod\Requests\UpdateFundPeriodRequest;
 use App\Domains\FundPeriod\Resources\FundPeriodResource;
@@ -23,24 +24,11 @@ class FundPeriodController extends BaseController
 
     /**
      * GET /api/v1/fund-periods
-     *
-     * Workspace:
-     *
-     * - Có club_slug:
-     *      middleware resolve -> club_id
-     *      => chỉ lấy FundPeriod của club đó.
-     *
-     * - Không có club_slug:
-     *      club_id = null
-     *      => Global / Super Admin có thể xem tất cả club.
      */
-    public function index(
-        FilterFundPeriodRequest $request
-    ): JsonResponse {
+    public function index(FilterFundPeriodRequest $request): JsonResponse
+    {
         $data = $request->validated();
 
-        // Không tin club_id từ query.
-        // club_id phải đến từ middleware.
         $data['club_id'] = $request->attributes->get('club_id');
 
         return $this->paginateResponse(
@@ -53,24 +41,32 @@ class FundPeriodController extends BaseController
     /**
      * GET /api/v1/fund-periods/cursor
      */
-    public function cursorIndex(
-        Request $request
-    ): JsonResponse {
-        $data = $request->only([
-            'limit',
-            'search',
-            'year',
-            'month',
-            'is_active',
-            'is_locked',
-        ]);
+    public function cursorIndex(FilterFundPeriodRequest $request): JsonResponse
+    {
+        $data = $request->validated();
 
-        // Workspace scope từ middleware.
         $data['club_id'] = $request->attributes->get('club_id');
 
         return $this->cursorResponse(
             $this->service->cursorPaginate($data),
             __('domains/fund_period.list'),
+            FundPeriodResource::class,
+        );
+    }
+
+    /**
+     * GET /api/v1/fund-periods/trashed
+     *
+     * Danh sách FundPeriod đã soft delete.
+     */
+    public function trashed(FilterFundPeriodRequest $request): JsonResponse {
+        $data = $request->validated();
+
+        $data['club_id'] = $request->attributes->get('club_id');
+
+        return $this->paginateResponse(
+            $this->service->trashed($data),
+            __('domains/fund_period.trashed'),
             FundPeriodResource::class,
         );
     }
@@ -83,8 +79,8 @@ class FundPeriodController extends BaseController
     ): JsonResponse {
         $data = $request->validated();
 
-        // Workspace scope từ middleware.
-        $data['club_id'] = $request->attributes->get('club_id');
+        $data['club_id'] =
+            $request->attributes->get('club_id');
 
         return $this->responseCommon(
             true,
@@ -104,12 +100,18 @@ class FundPeriodController extends BaseController
         Request $request,
         int $id
     ): JsonResponse {
-        $clubId = $request->attributes->get('club_id');
+        $data = [
+            'club_id' =>
+            $request->attributes->get('club_id'),
+        ];
 
         $fundPeriod = $this->service->findWithRelations(
-            $id,
-            ['translations', 'club'],
-            $clubId,
+            id: $id,
+            with: [
+                'translations',
+                'club',
+            ],
+            clubId: $data['club_id'],
         );
 
         return $this->responseCommon(
@@ -131,23 +133,15 @@ class FundPeriodController extends BaseController
     ): JsonResponse {
         $data = $request->validated();
 
-        // Tuyệt đối không lấy club_id từ request body.
-        //
-        // Có club_slug:
-        //     middleware -> club_id
-        //
-        // Không có club_slug:
-        //     club_id = null
-        //
-        // Trường hợp create không có workspace thì Service nên từ chối.
-        $data['club_id'] = $request->attributes->get('club_id');
+        $data['club_id'] =
+            $request->attributes->get('club_id');
+
+        $fundPeriod = $this->service->create($data);
 
         return $this->responseCommon(
             true,
             __('domains/fund_period.created'),
-            new FundPeriodResource(
-                $this->service->create($data)
-            ),
+            new FundPeriodResource($fundPeriod),
             201,
         );
     }
@@ -165,14 +159,12 @@ class FundPeriodController extends BaseController
     ): JsonResponse {
         $data = $request->validated();
 
-        // Không cho client tự gửi club_id để đổi workspace.
-        //
-        // club_id phải được resolve từ club_slug middleware.
-        $data['club_id'] = $request->attributes->get('club_id');
+        $data['club_id'] =
+            $request->attributes->get('club_id');
 
         $fundPeriod = $this->service->update(
             $id,
-            $data
+            $data,
         );
 
         return $this->responseCommon(
@@ -193,11 +185,14 @@ class FundPeriodController extends BaseController
         Request $request,
         int $id
     ): JsonResponse {
-        $clubId = $request->attributes->get('club_id');
+        $data = [
+            'club_id' =>
+            $request->attributes->get('club_id'),
+        ];
 
         $this->service->delete(
             $id,
-            $clubId
+            $data,
         );
 
         return $this->responseCommon(
@@ -217,11 +212,14 @@ class FundPeriodController extends BaseController
         Request $request,
         int $id
     ): JsonResponse {
-        $clubId = $request->attributes->get('club_id');
+        $data = [
+            'club_id' =>
+            $request->attributes->get('club_id'),
+        ];
 
         $fundPeriod = $this->service->restore(
             $id,
-            $clubId
+            $data,
         );
 
         return $this->responseCommon(
@@ -242,11 +240,14 @@ class FundPeriodController extends BaseController
         Request $request,
         int $id
     ): JsonResponse {
-        $clubId = $request->attributes->get('club_id');
+        $data = [
+            'club_id' =>
+            $request->attributes->get('club_id'),
+        ];
 
         $fundPeriod = $this->service->close(
             $id,
-            $clubId
+            $data,
         );
 
         return $this->responseCommon(
@@ -262,32 +263,19 @@ class FundPeriodController extends BaseController
 
     /**
      * POST /api/v1/fund-periods/{id}/reopen
-     *
-     * Body:
-     *
-     * {
-     *     "reason": "Điều chỉnh khoản đóng góp..."
-     * }
      */
     public function reopen(
-        Request $request,
+        ReopenFundPeriodRequest $request,
         int $id
     ): JsonResponse {
-        $request->validate([
-            'reason' => [
-                'required',
-                'string',
-                'min:5',
-                'max:1000',
-            ],
-        ]);
+        $data = $request->validated();
 
-        $clubId = $request->attributes->get('club_id');
+        $data['club_id'] =
+            $request->attributes->get('club_id');
 
         $fundPeriod = $this->service->reopen(
             $id,
-            $clubId,
-            $request->input('reason'),
+            $data,
         );
 
         return $this->responseCommon(
@@ -308,11 +296,14 @@ class FundPeriodController extends BaseController
         Request $request,
         int $id
     ): JsonResponse {
-        $clubId = $request->attributes->get('club_id');
+        $data = [
+            'club_id' =>
+            $request->attributes->get('club_id'),
+        ];
 
         $fundPeriod = $this->service->toggleStatus(
             $id,
-            $clubId
+            $data,
         );
 
         return $this->responseCommon(

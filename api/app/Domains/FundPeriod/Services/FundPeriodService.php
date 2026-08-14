@@ -19,6 +19,7 @@ class FundPeriodService extends BaseService
     public function __construct(
         FundPeriodRepository $repository,
         protected MonthlyContributionService $contributionService,
+        protected FundPeriodStateGuard $stateGuard,
     ) {
         parent::__construct($repository);
     }
@@ -27,16 +28,36 @@ class FundPeriodService extends BaseService
     // LIST / SEARCH
     // =========================================================================
 
+    /**
+     * GET list FundPeriod.
+     *
+     * $filters['club_id'] được Controller inject từ middleware.
+     */
     public function paginate(array $filters = []): LengthAwarePaginator
     {
         return $this->repository->getList($filters);
     }
 
+    /**
+     * Cursor pagination.
+     */
     public function cursorPaginate(array $filters = []): CursorPaginator
     {
         return $this->repository->getCursorList($filters);
     }
 
+    /**
+     * Danh sách FundPeriod đã soft delete.
+     */
+    public function trashed(
+        array $filters = []
+    ): LengthAwarePaginator {
+        return $this->repository->getTrashedList($filters);
+    }
+
+    /**
+     * Danh sách dùng cho select.
+     */
     public function getForSelect(array $filters = []): Collection
     {
         return $this->repository->getForSelect($filters);
@@ -47,24 +68,25 @@ class FundPeriodService extends BaseService
     // =========================================================================
 
     /**
-     * Find FundPeriod đang active trong database.
+     * Find FundPeriod.
      *
-     * Soft deleted sẽ không được tìm thấy.
+     * Nếu truyền clubId thì bắt buộc FundPeriod phải thuộc club đó.
      */
-    public function find($id): FundPeriod
-    {
-        return parent::find($id);
-    }
-
-    /**
-     * Find FundPeriod kèm relations.
-     */
-    public function findWithRelations(
+    public function find(
         int $id,
-        array $with = []
+        ?int $clubId = null,
+        array $with = ['translations'],
     ): FundPeriod {
+        $where = [
+            'id' => $id,
+        ];
+
+        if ($clubId !== null) {
+            $where['club_id'] = $clubId;
+        }
+
         $fundPeriod = $this->repository->first(
-            where: ['id' => $id],
+            where: $where,
             with: $with,
             select: ['*'],
         );
@@ -72,7 +94,53 @@ class FundPeriodService extends BaseService
         if (! $fundPeriod) {
             throw new ApiException(
                 __($this->notFoundMessage),
-                404
+                404,
+            );
+        }
+
+        return $fundPeriod;
+    }
+
+    /**
+     * Find FundPeriod kèm relations.
+     */
+    public function findWithRelations(
+        int $id,
+        array $with = [],
+        ?int $clubId = null,
+    ): FundPeriod {
+        return $this->find(
+            id: $id,
+            clubId: $clubId,
+            with: $with,
+        );
+    }
+
+    /**
+     * Find FundPeriod bao gồm soft deleted.
+     *
+     * Dùng cho restore.
+     */
+    protected function findWithTrashed(
+        int $id,
+        ?int $clubId = null,
+    ): FundPeriod {
+        $fundPeriod = $this->repository->findWithTrashed($id);
+
+        if (! $fundPeriod) {
+            throw new ApiException(
+                __($this->notFoundMessage),
+                404,
+            );
+        }
+
+        if (
+            $clubId !== null &&
+            (int) $fundPeriod->club_id !== $clubId
+        ) {
+            throw new ApiException(
+                __($this->notFoundMessage),
+                404,
             );
         }
 
@@ -86,23 +154,22 @@ class FundPeriodService extends BaseService
     /**
      * Tạo FundPeriod.
      *
-     * Business rules:
+     * Controller phải inject:
      *
-     * - Một club chỉ có duy nhất một kỳ theo year + month.
-     * - Check cả record đã soft delete.
-     * - Nếu kỳ cũ đã soft delete thì không tạo kỳ mới.
-     * - Không tự động restore.
-     * - Generate MonthlyContribution sau khi tạo.
+     * $data['club_id']
+     *
+     * từ middleware trước khi gọi Service.
      */
     public function create(array $data): FundPeriod
     {
         return DB::transaction(function () use ($data) {
+            $clubId = (int) $data['club_id'];
+
             $translations = $data['translations'] ?? [];
             unset($data['translations']);
 
-            $clubId = (int) $data['club_id'];
-            $year   = (int) $data['year'];
-            $month  = (int) $data['month'];
+            $year = (int) $data['year'];
+            $month = (int) $data['month'];
 
             // -----------------------------------------------------------------
             // Duplicate check INCLUDING soft deleted
@@ -112,20 +179,20 @@ class FundPeriodService extends BaseService
                 ->findByClubAndDateWithTrashed(
                     $clubId,
                     $year,
-                    $month
+                    $month,
                 );
 
             if ($existing) {
                 if ($existing->trashed()) {
                     throw new ApiException(
                         __('domains/fund_period.deleted_period_exists'),
-                        422
+                        422,
                     );
                 }
 
                 throw new ApiException(
                     __('domains/fund_period.already_exists'),
-                    422
+                    422,
                 );
             }
 
@@ -146,7 +213,7 @@ class FundPeriodService extends BaseService
 
             $fundPeriod = $this->repository->createWithTranslations(
                 $data,
-                $translations
+                $translations,
             );
 
             // -----------------------------------------------------------------
@@ -154,7 +221,7 @@ class FundPeriodService extends BaseService
             // -----------------------------------------------------------------
 
             $this->contributionService->generateForPeriod(
-                $fundPeriod
+                $fundPeriod,
             );
 
             return $fundPeriod->fresh('translations');
@@ -168,35 +235,35 @@ class FundPeriodService extends BaseService
     /**
      * Update FundPeriod.
      *
-     * Signature PHẢI tương thích BaseService:
-     *
-     *     update(int $id, array $data)
-     *
-     * Business rules:
-     *
-     * - Không update FundPeriod đã locked.
-     * - Không cho client đổi club_id.
-     * - Nếu year/month thay đổi thì phải check duplicate.
-     * - Check duplicate cả soft deleted.
-     * - Không generate lại MonthlyContribution.
+     * $data['club_id'] được Controller inject từ middleware.
      */
-    public function update(int $id, array $data): FundPeriod
-    {
-        return DB::transaction(function () use ($id, $data) {
-            $fundPeriod = $this->find($id);
+    public function update(
+        int $id,
+        array $data,
+    ): FundPeriod {
+        return DB::transaction(function () use (
+            $id,
+            $data,
+        ) {
+            $fundPeriod = $this->find(
+                id: $id,
+                clubId: $data['club_id'],
+            );
 
             // -----------------------------------------------------------------
-            // Locked => không được sửa FundPeriod
+            // Locked => không được sửa
             // -----------------------------------------------------------------
 
             $this->ensureUnlocked($fundPeriod);
 
             // -----------------------------------------------------------------
-            // Không cho client thay đổi club
+            // Không cho client đổi club
             //
-            // club_id phải được xác định từ middleware / workspace.
+            // club_id chỉ dùng để scope.
+            // Không update xuống DB.
             // -----------------------------------------------------------------
 
+            $clubId = (int) $data['club_id'];
             unset($data['club_id']);
 
             // -----------------------------------------------------------------
@@ -218,8 +285,6 @@ class FundPeriodService extends BaseService
                 ? (int) $data['month']
                 : (int) $fundPeriod->month;
 
-            $clubId = (int) $fundPeriod->club_id;
-
             $periodChanged =
                 $year !== (int) $fundPeriod->year ||
                 $month !== (int) $fundPeriod->month;
@@ -234,46 +299,41 @@ class FundPeriodService extends BaseService
                         $clubId,
                         $year,
                         $month,
-                        $fundPeriod->id
+                        $fundPeriod->id,
                     );
 
                 if ($existing) {
                     if ($existing->trashed()) {
                         throw new ApiException(
                             __('domains/fund_period.deleted_period_exists'),
-                            422
+                            422,
                         );
                     }
 
                     throw new ApiException(
                         __('domains/fund_period.already_exists'),
-                        422
+                        422,
                     );
                 }
             }
 
             // -----------------------------------------------------------------
-            // Không cho request thay đổi trạng thái locked
+            // Không cho request thay đổi locked
             // -----------------------------------------------------------------
 
             $data['is_locked'] = $fundPeriod->is_locked;
 
             // -----------------------------------------------------------------
             // Update
-            //
-            // Gọi parent::update() để giữ đúng BaseService contract.
             // -----------------------------------------------------------------
 
             $fundPeriod = parent::update(
                 $id,
-                $data
+                $data,
             );
 
             // -----------------------------------------------------------------
-            // Update translations nếu repository/domain của bạn hỗ trợ
-            //
-            // Nếu BaseService::update() không xử lý translations,
-            // repository updateWithTranslations() sẽ phù hợp hơn.
+            // Update translations
             // -----------------------------------------------------------------
 
             if (! empty($translations)) {
@@ -281,7 +341,7 @@ class FundPeriodService extends BaseService
                     ->updateWithTranslations(
                         $fundPeriod,
                         $translations,
-                        []
+                        [],
                     );
             }
 
@@ -296,20 +356,25 @@ class FundPeriodService extends BaseService
     /**
      * Soft delete FundPeriod.
      *
-     * Không xóa MonthlyContribution.
-     * Không xóa Payment.
+     * Controller truyền:
      *
-     * Chỉ cho delete khi FundPeriod chưa locked.
+     * $data['club_id']
      */
-    public function delete(int $id): bool
-    {
-        return DB::transaction(function () use ($id) {
-            $fundPeriod = $this->find($id);
+    public function delete(
+        int $id,
+        array $data = [],
+    ): bool {
+        return DB::transaction(function () use (
+            $id,
+            $data,
+        ) {
+            $fundPeriod = $this->find(
+                id: $id,
+                clubId: $data['club_id'],
+            );
 
-            // Không được xóa kỳ đã đóng.
             $this->ensureUnlocked($fundPeriod);
 
-            // Không cascade delete MonthlyContribution.
             return (bool) $fundPeriod->delete();
         });
     }
@@ -320,25 +385,24 @@ class FundPeriodService extends BaseService
 
     /**
      * Restore FundPeriod đã soft delete.
-     *
-     * Không generate MonthlyContribution lại.
      */
-    public function restore(int $id): FundPeriod
-    {
-        return DB::transaction(function () use ($id) {
-            $fundPeriod = $this->repository->findWithTrashed($id);
-
-            if (! $fundPeriod) {
-                throw new ApiException(
-                    __($this->notFoundMessage),
-                    404
-                );
-            }
+    public function restore(
+        int $id,
+        array $data = [],
+    ): FundPeriod {
+        return DB::transaction(function () use (
+            $id,
+            $data,
+        ) {
+            $fundPeriod = $this->findWithTrashed(
+                id: $id,
+                clubId: $data['club_id'],
+            );
 
             if (! $fundPeriod->trashed()) {
                 throw new ApiException(
                     __('domains/fund_period.not_deleted'),
-                    422
+                    422,
                 );
             }
 
@@ -348,24 +412,18 @@ class FundPeriodService extends BaseService
 
             $conflict = $this->repository
                 ->findByClubAndDateWithTrashedExcept(
-                    (int) $fundPeriod->club_id,
+                    (int) $data['club_id'],
                     (int) $fundPeriod->year,
                     (int) $fundPeriod->month,
-                    $fundPeriod->id
+                    $fundPeriod->id,
                 );
 
             if ($conflict && ! $conflict->trashed()) {
                 throw new ApiException(
                     __('domains/fund_period.restore_conflict'),
-                    422
+                    422,
                 );
             }
-
-            // -----------------------------------------------------------------
-            // Restore đúng record cũ.
-            //
-            // Không generate lại MonthlyContribution.
-            // -----------------------------------------------------------------
 
             $fundPeriod->restore();
 
@@ -379,31 +437,26 @@ class FundPeriodService extends BaseService
 
     /**
      * Đóng FundPeriod.
-     *
-     * is_locked = true
-     *
-     * Sau khi đóng:
-     *
-     * - Không sửa FundPeriod.
-     * - Không xóa FundPeriod.
-     * - Không thêm/sửa/xóa MonthlyContribution.
      */
-    public function close(int $id): FundPeriod
-    {
-        return DB::transaction(function () use ($id) {
-            $fundPeriod = $this->find($id);
+    public function close(
+        int $id,
+        array $data = [],
+    ): FundPeriod {
+        return DB::transaction(function () use (
+            $id,
+            $data,
+        ) {
+            $fundPeriod = $this->find(
+                id: $id,
+                clubId: $data['club_id'],
+            );
 
             if ($fundPeriod->is_locked) {
                 throw new ApiException(
                     __('domains/fund_period.already_locked'),
-                    422
+                    422,
                 );
             }
-
-            // Nếu sau này cần validate contribution trước khi đóng:
-            //
-            // $this->contributionService
-            //     ->ensurePeriodCanBeClosed($fundPeriod);
 
             $fundPeriod->is_locked = true;
             $fundPeriod->save();
@@ -419,28 +472,39 @@ class FundPeriodService extends BaseService
     /**
      * Mở lại FundPeriod đã đóng.
      *
-     * Bắt buộc có reason.
+     * $data:
+     *
+     * [
+     *     'club_id' => 1,
+     *     'reason'  => 'Điều chỉnh khoản đóng góp...',
+     * ]
      */
     public function reopen(
         int $id,
-        string $reason
+        array $data,
     ): FundPeriod {
-        return DB::transaction(function () use ($id, $reason) {
-            $fundPeriod = $this->find($id);
+        return DB::transaction(function () use (
+            $id,
+            $data,
+        ) {
+            $fundPeriod = $this->find(
+                id: $id,
+                clubId: $data['club_id'],
+            );
 
             if (! $fundPeriod->is_locked) {
                 throw new ApiException(
                     __('domains/fund_period.not_locked'),
-                    422
+                    422,
                 );
             }
 
-            $reason = trim($reason);
+            $reason = trim($data['reason']);
 
             if ($reason === '') {
                 throw new ApiException(
                     __('domains/fund_period.reopen_reason_required'),
-                    422
+                    422,
                 );
             }
 
@@ -450,9 +514,11 @@ class FundPeriodService extends BaseService
             /*
              * TODO:
              *
-             * Nếu có AuditLogService:
+             * AuditLogService:
              *
              * action = fund_period.reopen
+             * club_id = $fundPeriod->club_id
+             * fund_period_id = $fundPeriod->id
              * reason = $reason
              */
 
@@ -466,17 +532,25 @@ class FundPeriodService extends BaseService
 
     /**
      * Toggle is_active.
-     *
-     * FundPeriod locked => không được toggle.
      */
-    public function toggleStatus(int $id): FundPeriod
-    {
-        return DB::transaction(function () use ($id) {
-            $fundPeriod = $this->find($id);
+    public function toggleStatus(
+        int $id,
+        array $data = [],
+    ): FundPeriod {
+        return DB::transaction(function () use (
+            $id,
+            $data,
+        ) {
+            $fundPeriod = $this->find(
+                id: $id,
+                clubId: $data['club_id'],
+            );
 
             $this->ensureUnlocked($fundPeriod);
 
-            $fundPeriod->is_active = ! $fundPeriod->is_active;
+            $fundPeriod->is_active =
+                ! $fundPeriod->is_active;
+
             $fundPeriod->save();
 
             return $fundPeriod->fresh('translations');
@@ -491,13 +565,8 @@ class FundPeriodService extends BaseService
      * FundPeriod locked => không được sửa/xóa/toggle.
      */
     protected function ensureUnlocked(
-        FundPeriod $fundPeriod
+        FundPeriod $fundPeriod,
     ): void {
-        if ($fundPeriod->is_locked) {
-            throw new ApiException(
-                __('domains/fund_period.locked'),
-                422
-            );
-        }
+        $this->stateGuard->ensureUnlocked($fundPeriod);
     }
 }

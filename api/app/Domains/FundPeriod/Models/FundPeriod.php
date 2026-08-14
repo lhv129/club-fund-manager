@@ -67,7 +67,7 @@ class FundPeriod extends Model
         return $this->hasMany(FundPeriodTranslation::class);
     }
 
-    public function translation(string $locale = null): HasOne
+    public function translation(?string $locale = null): HasOne
     {
         return $this->hasOne(FundPeriodTranslation::class)
             ->where('locale', $locale ?? app()->getLocale());

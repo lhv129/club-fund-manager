@@ -48,7 +48,7 @@ class WebhookConfigController extends BaseController
     /**
      * GET /api/v1/webhook-configs/{id}
      */
-    public function show(string $clubSlug, int $id): JsonResponse
+    public function show(int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -60,7 +60,7 @@ class WebhookConfigController extends BaseController
     /**
      * POST /api/v1/webhook-configs
      */
-    public function store(StoreWebhookConfigRequest $request, string $clubSlug): JsonResponse
+    public function store(StoreWebhookConfigRequest $request, ): JsonResponse
     {
         $data = $request->validated();
         $data['club_id'] = $request->attributes->get('club_id');
@@ -75,7 +75,7 @@ class WebhookConfigController extends BaseController
     /**
      * PUT /api/v1/webhook-configs/{id}
      */
-    public function update(UpdateWebhookConfigRequest $request, string $clubSlug, int $id): JsonResponse
+    public function update(UpdateWebhookConfigRequest $request,int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -87,7 +87,7 @@ class WebhookConfigController extends BaseController
     /**
      * DELETE /api/v1/webhook-configs/{id} — xoá mềm + dồn sort_order.
      */
-    public function destroy(string $clubSlug, int $id): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
         $this->service->deleteWithSortOrder($id);
 
@@ -97,7 +97,7 @@ class WebhookConfigController extends BaseController
     /**
      * PATCH /api/v1/webhook-configs/{id}/toggle-status
      */
-    public function toggleStatus(string $clubSlug, int $id): JsonResponse
+    public function toggleStatus(int $id): JsonResponse
     {
         return $this->responseCommon(
             true,

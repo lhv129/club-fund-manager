@@ -132,32 +132,20 @@ class MemberPaymentCodeService extends BaseService
         // 4. Generate / reuse payment code
         // ---------------------------------------------------------------------
 
-        $paymentCode =
-            $this->repository
-            ->findActiveForContribution(
-                $contribution->id
-            );
+        $paymentCode = $this->repository->findActiveForContribution($contribution->id);
 
         if (!$paymentCode) {
             $paymentCode = DB::transaction(
                 function () use ($contribution) {
                     return $this->repository->create([
-                        'monthly_contribution_id' =>
-                        $contribution->id,
+                        'monthly_contribution_id' => $contribution->id,
 
-                        'payment_code' =>
-                        $this->generateUniqueCode(),
+                        'payment_code' => $this->generateUniqueCode(),
 
-                        'status' =>
-                        'pending',
+                        'status' => MemberPaymentCode::STATUS_PENDING,
 
-                        'expired_at' =>
-                        now()
-                            ->endOfMonth()
-                            ->endOfDay(),
-
-                        'is_active' =>
-                        true,
+                        'expired_at' =>now()->endOfMonth()->endOfDay(),
+                        'is_active' => true,
                     ]);
                 }
             );
@@ -424,13 +412,13 @@ class MemberPaymentCodeService extends BaseService
         MonthlyContribution $contribution
     ): void {
         if (
-            $contribution->status === 'paid'
+            $contribution->status === MonthlyContribution::STATUS_PAID
         ) {
             throw new ApiException(__('domains/member_payment_code.already_paid'), 422, 'PAYMENT_ALREADY_PAID');
         }
 
         if (
-            $contribution->status === 'cancelled'
+            $contribution->status === MonthlyContribution::STATUS_CANCELLED
         ) {
             throw new ApiException(__('domains/member_payment_code.already_cancelled'), 422, 'PAYMENT_ALREADY_CANCELLED');
         }
