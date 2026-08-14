@@ -52,6 +52,8 @@ Request → Controller → Service → Repository → Model
 
 Filter phức tạp (`whereHas`, `join`, `withCount`, `groupBy`) viết thẳng Query Builder trong Repository — không cần helper riêng.
 
+**Quy ước Repository:** Không viết lại `getList()`, `getCursorList()` hoặc `getForSelect()` trong repository domain nếu chỉ dùng hành vi chuẩn. Các method này đã được kế thừa từ `BaseRepository`; repository domain chỉ cấu hình property và override hook như `baseListQuery()`, `applySearch()` hoặc `applyFilters()` khi cần dữ liệu đặc thù.
+
 ## 4. Domain Structure
 
 ```
@@ -189,22 +191,6 @@ protected function baseListQuery(): Builder
     return $this->model
         ->select(['id', 'field_a', 'field_b', 'created_at'])
         ->with(['relation']);
-}
-
-public function getList(array $filters = []): LengthAwarePaginator // hoặc getList
-{
-    $query = $this->baseListQuery();
-
-    // whereHas phức tạp viết thẳng ở đây trước khi gọi các helper
-    if (!empty($filters['club_slug'])) {
-        $query->whereHas('club.translations', fn ($q) => $q->where('slug', $filters['club_slug']));
-    }
-
-    $this->applySearch($query, $filters);          // protected — domain-specific
-    $this->applyFilters($query, $filters);         // protected — dùng helper BaseRepository
-    $this->applySorting($query, $filters, $this->allowedSortColumns);
-
-    return $query->paginate($filters['limit'] ?? $this->defaultLimit, ['*'], 'page', $filters['page'] ?? 1);
 }
 
 // Search — protected, override per-domain

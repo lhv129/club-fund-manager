@@ -12,7 +12,7 @@ class UpdateMonthlyContributionRequest extends BaseRequest
             'user_id' => ['required', 'integer', 'min:1', 'exists:users,id'],
             'period_id' => ['required', 'integer', 'min:1', 'exists:fund_periods,id'],
             'status' => ['nullable', 'string', 'in:pending,paid,cancelled'],
-            'paid_by' => ['sometimes', 'nullable', 'string', 'in:cash'],
+            'paid_by' => ['sometimes', 'nullable', 'string', 'in:bank,cash'],
             'payment_date' => ['nullable', 'date'],
         ];
     }

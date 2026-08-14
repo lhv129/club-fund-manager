@@ -31,6 +31,10 @@ class MonthlyContributionResource extends JsonResource
 
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
+            'delete_action' => $this->when(
+                isset($this->delete_action),
+                $this->delete_action,
+            ),
 
             /*
             |--------------------------------------------------------------------------

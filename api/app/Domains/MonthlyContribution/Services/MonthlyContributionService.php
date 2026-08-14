@@ -358,6 +358,7 @@ class MonthlyContributionService extends BaseService
             unset($data['club_id']);
 
             $oldTransactionId = $contribution->transaction_id;
+            $requestedPaymentDate = $data['payment_date'] ?? null;
             $data = $this->withoutClientTransactionId($data);
             $targetStatus = $data['status'] ?? $contribution->status;
             $contribution = $this->repository->update($contribution, $data);
@@ -375,6 +376,12 @@ class MonthlyContributionService extends BaseService
                         (int) $contribution->id,
                     )
                     : null;
+
+                if ($linked && $requestedPaymentDate) {
+                    $linked = $this->transactionRepository->update($linked, [
+                        'transaction_date' => $requestedPaymentDate,
+                    ]);
+                }
 
                 return $this->repository->update($contribution, [
                     'transaction_id' => $linked?->id,
@@ -422,7 +429,7 @@ class MonthlyContributionService extends BaseService
     // DELETE
     // =========================================================================
 
-    public function deleteForClub(int $id, ?int $clubId): bool
+    public function deleteForClub(int $id, ?int $clubId): MonthlyContribution
     {
         return DB::transaction(function () use ($id, $clubId) {
             $contribution = $this->find($id, $clubId);
@@ -441,10 +448,14 @@ class MonthlyContributionService extends BaseService
 
             if ($contribution->paid_by === MonthlyContribution::PAID_BY_BANK) {
                 // Keep the monthly row and immutable bank receipt for auditability.
-                return (bool) $this->repository->update($contribution, [
+                $contribution = $this->repository->update($contribution, [
                     'status' => MonthlyContribution::STATUS_CANCELLED,
                     'is_active' => false,
                 ]);
+
+                $contribution->setAttribute('delete_action', 'cancelled');
+
+                return $this->loadListRelations($contribution);
             }
 
             $this->removeLinkedTransaction($contribution->transaction_id, (int) $contribution->club_id, (int) $contribution->id);
@@ -456,7 +467,11 @@ class MonthlyContributionService extends BaseService
                 );
             }
 
-            return (bool) $this->repository->delete($contribution);
+            $this->loadListRelations($contribution);
+            $this->repository->delete($contribution);
+            $contribution->setAttribute('delete_action', 'deleted');
+
+            return $contribution;
         });
     }
 
@@ -592,13 +607,28 @@ class MonthlyContributionService extends BaseService
         $paidBy = $data['paid_by'] ?? $contribution->paid_by;
 
         if ($paidBy === MonthlyContribution::PAID_BY_BANK) {
-            if ($contribution->transaction_id && $this->transactionRepository->findForContributionPayment(
-                (int) $contribution->transaction_id,
-                $clubId,
-                MonthlyContribution::PAID_BY_BANK,
-                (int) $contribution->id,
-            )) {
-                return $contribution;
+            $transaction = $contribution->transaction_id
+                ? $this->transactionRepository->findForContributionPayment(
+                    (int) $contribution->transaction_id,
+                    $clubId,
+                    MonthlyContribution::PAID_BY_BANK,
+                    (int) $contribution->id,
+                )
+                : null;
+
+            if ($transaction) {
+                if (! empty($data['payment_date'])) {
+                    $transaction = $this->transactionRepository->update($transaction, [
+                        'transaction_date' => $data['payment_date'],
+                    ]);
+                }
+
+                return $this->repository->update($contribution, [
+                    'paid_by' => MonthlyContribution::PAID_BY_BANK,
+                    'payment_date' => $data['payment_date']
+                        ?? $contribution->payment_date
+                        ?? $transaction->transaction_date,
+                ]);
             }
 
             throw new ApiException(
@@ -700,5 +730,15 @@ class MonthlyContributionService extends BaseService
                 $this->clubFundService->deleteManagedTransaction($transactionId, $clubId);
             }
         }
+    }
+
+    private function loadListRelations(MonthlyContribution $contribution): MonthlyContribution
+    {
+        return $contribution->load([
+            'user:id,fullname,email,gender',
+            'period:id,year,month,male_amount,female_amount,exchange_male_amount,exchange_female_amount,is_locked,is_active',
+            'transaction:id,source,type,amount,reference_code,transaction_date',
+            'paymentCode:id,monthly_contribution_id,payment_code,status,expired_at,used_at,is_active',
+        ]);
     }
 }

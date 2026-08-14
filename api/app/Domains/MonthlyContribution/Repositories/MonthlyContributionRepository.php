@@ -18,11 +18,16 @@ class MonthlyContributionRepository extends BaseRepository
     protected array $selectColumns = ['id', 'club_id', 'period_id', 'user_id', 'amount', 'status', 'is_active'];
     protected array $selectWith    = ['user:id,name,email', 'period:id,year,month'];
 
+    /** Khởi tạo repository với model khoản đóng quỹ tháng. */
     public function __construct(MonthlyContribution $model)
     {
         parent::__construct($model);
     }
 
+    /**
+     * Tìm cả bản ghi đang hoạt động và đã soft-delete theo club, member và kỳ.
+     * Row được khóa để luồng create/restore không tạo trùng khi chạy đồng thời.
+     */
     public function findExistingForMemberPeriod(
         int $clubId,
         int $userId,
@@ -38,6 +43,7 @@ class MonthlyContributionRepository extends BaseRepository
 
     // ── Hook overrides ───────────────────────────────────────────────────────
 
+    /** Tạo query danh sách kèm member, kỳ, transaction và payment code. */
     protected function baseListQuery(): Builder
     {
         return $this->model
@@ -63,6 +69,7 @@ class MonthlyContributionRepository extends BaseRepository
             ]);
     }
 
+    /** Áp dụng tìm kiếm theo họ tên hoặc email của thành viên. */
     protected function applySearch(Builder $query, array $filters): void
     {
         if (!empty($filters['search'])) {
@@ -79,6 +86,7 @@ class MonthlyContributionRepository extends BaseRepository
         }
     }
 
+    /** Áp dụng các bộ lọc club, kỳ, member, trạng thái và hình thức thanh toán. */
     protected function applyFilters(Builder $query, array $filters): void
     {
         $this->applyActiveFilter($query, $filters);

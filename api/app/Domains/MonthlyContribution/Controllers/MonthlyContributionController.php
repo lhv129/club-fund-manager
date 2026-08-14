@@ -138,11 +138,15 @@ class MonthlyContributionController extends BaseController
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $this->service->deleteForClub(
+        $contribution = $this->service->deleteForClub(
             $id,
             $request->attributes->get('club_id'),
         );
 
-        return $this->responseCommon(true, __('domains/monthly_contribution.deleted'));
+        return $this->responseCommon(
+            true,
+            __('domains/monthly_contribution.deleted'),
+            new MonthlyContributionResource($contribution),
+        );
     }
 }

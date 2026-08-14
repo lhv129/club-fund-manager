@@ -4,10 +4,7 @@ namespace App\Domains\Transaction\Repositories;
 
 use App\Base\BaseRepository;
 use App\Domains\Transaction\Models\Transaction;
-use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class TransactionRepository extends BaseRepository
@@ -44,6 +41,7 @@ class TransactionRepository extends BaseRepository
 
     protected array $selectWith = [];
 
+    /** Khởi tạo repository với model giao dịch quỹ. */
     public function __construct(Transaction $model)
     {
         parent::__construct($model);
@@ -137,62 +135,10 @@ class TransactionRepository extends BaseRepository
     }
 
     // ------------------------------------------------------------------
-    // Domain-specific list methods
+    // Domain-specific queries
     // ------------------------------------------------------------------
 
-    /**
-     * Offset pagination (admin table).
-     * Build từ baseListQuery() + hooks. Sort whitelist chặn cột lạ.
-     */
-    public function getList(array $filters = []): LengthAwarePaginator
-    {
-        $query = $this->baseListQuery();
-
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $this->applySorting($query, $filters, $this->allowedSortColumns);
-
-        return $query->paginate(
-            $filters['limit'] ?? $this->defaultLimit,
-            ['*'],
-            'page',
-            $filters['page'] ?? $this->defaultPage
-        );
-    }
-
-    /**
-     * Cursor pagination (infinite scroll).
-     * Cursor phải orderBy cột unique → applyCursorOrder() mặc định đã có tie-breaker id desc.
-     */
-    public function getCursorList(array $filters = []): CursorPaginator
-    {
-        $query = $this->baseListQuery();
-
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $this->applyCursorOrder($query);
-
-        return $query->cursorPaginate($filters['limit'] ?? $this->defaultLimit);
-    }
-
-    /**
-     * Dropdown — nhẹ, không phân trang, không Resource.
-     * Chỉ trả id + title + slug, defaultOrderBy (sort_order asc).
-     */
-    public function getForSelect(array $filters = []): Collection
-    {
-        $query = $this->baseSelectQuery();
-
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-
-        $query->orderBy($this->defaultOrderBy, $this->defaultOrderDirection);
-
-        return $query
-            ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
-            ->get();
-    }
-
+    /** Tìm chi tiết giao dịch trong phạm vi club và eager-load thông tin ngân hàng. */
     public function findDetail(int $id, ?int $clubId = null): ?Transaction
     {
         $query = $this->model
@@ -209,6 +155,7 @@ class TransactionRepository extends BaseRepository
         return $query->find($id);
     }
 
+    /** Tìm giao dịch theo ID và bắt buộc thuộc đúng club. */
     public function findForClub(int $id, int $clubId): ?Transaction
     {
         return $this->model
@@ -217,6 +164,7 @@ class TransactionRepository extends BaseRepository
             ->find($id);
     }
 
+    /** Khóa giao dịch trong club để cập nhật quỹ và transaction nguyên tử. */
     public function lockByIdForClub(int $id, int $clubId): Transaction
     {
         return $this->model
@@ -226,6 +174,10 @@ class TransactionRepository extends BaseRepository
             ->findOrFail($id);
     }
 
+    /**
+     * Tìm transaction thu hợp lệ cho khoản đóng quỹ theo nguồn bank/cash.
+     * Từ chối transaction đã được một nghiệp vụ khác tham chiếu.
+     */
     public function findForContributionPayment(
         int $id,
         int $clubId,
@@ -253,6 +205,7 @@ class TransactionRepository extends BaseRepository
         return $transaction;
     }
 
+    /** Kiểm tra transaction đang được monthly contribution hoặc exchange session sử dụng. */
     public function isReferenced(int $id, ?int $ignoreContributionId = null): bool
     {
         $monthlyContributionQuery = DB::table('monthly_contributions')
@@ -277,6 +230,7 @@ class TransactionRepository extends BaseRepository
                 ->exists();
     }
 
+    /** Vô hiệu hóa rồi soft-delete transaction do hệ thống quản lý. */
     public function deactivateAndDelete(Transaction $transaction): void
     {
         $transaction->is_active = false;
@@ -284,6 +238,7 @@ class TransactionRepository extends BaseRepository
         $transaction->delete();
     }
 
+    /** Nạp các quan hệ ngân hàng và webhook dùng cho response chi tiết. */
     public function loadDetailRelations(Transaction $transaction): Transaction
     {
         return $transaction->load([

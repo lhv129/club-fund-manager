@@ -238,42 +238,6 @@ class CategoryRepository extends BaseRepository
         // Thêm filter phức tạp (whereHas, join, withCount...) trực tiếp ở đây
     }
 
-    // ------------------------------------------------------------------
-    // Domain-specific list methods
-    // ------------------------------------------------------------------
-
-    public function getList(array $filters = []): LengthAwarePaginator
-    {
-        $query = $this->baseListQuery();
-
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $this->applySorting($query, $filters, $this->allowedSortColumns);
-
-        return $query->paginate($filters['limit'] ?? $this->defaultLimit, ['*'], 'page', $filters['page'] ?? 1);
-    }
-
-    public function cursorPaginate(array $filters = []): CursorPaginator
-    {
-        $query = $this->baseListQuery();
-
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $query->orderBy('id', 'desc');
-
-        return $query->cursorPaginate($filters['limit'] ?? $this->defaultLimit);
-    }
-
-    public function getForSelect(array $filters = []): Collection
-    {
-        $query = $this->model->select(['id', 'sort_order'])->with('translations');
-
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $query->orderBy('sort_order', 'asc');
-
-        return $query->limit(min((int) ($filters['limit'] ?? 20), 50))->get();
-    }
 }
 ```
 

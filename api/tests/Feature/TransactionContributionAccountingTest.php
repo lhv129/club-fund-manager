@@ -93,8 +93,9 @@ class TransactionContributionAccountingTest extends TestCase
         $this->assertSame('100000.00', $this->fundBalance($club));
         $this->assertSoftDeleted('transactions', ['id' => $cashContribution->transaction_id]);
 
-        $service->deleteForClub($bankContribution->id, $club->id);
+        $cancelled = $service->deleteForClub($bankContribution->id, $club->id);
         $this->assertSame('100000.00', $this->fundBalance($club));
+        $this->assertSame('cancelled', $cancelled->delete_action);
         $this->assertDatabaseHas('monthly_contributions', [
             'id' => $bankContribution->id,
             'transaction_id' => $bankTransaction->id,
@@ -108,6 +109,21 @@ class TransactionContributionAccountingTest extends TestCase
             'is_active' => true,
             'deleted_at' => null,
         ]);
+
+        $newPaymentDate = '2026-08-15 09:30:00';
+        $service->update($bankContribution->id, [
+            'club_id' => $club->id,
+            'user_id' => $bankContribution->user_id,
+            'period_id' => $period->id,
+            'status' => MonthlyContribution::STATUS_CANCELLED,
+            'paid_by' => MonthlyContribution::PAID_BY_BANK,
+            'payment_date' => $newPaymentDate,
+        ]);
+
+        $this->assertSame(
+            $newPaymentDate,
+            $bankTransaction->fresh()->transaction_date?->format('Y-m-d H:i:s'),
+        );
     }
 
     public function test_creating_a_soft_deleted_contribution_restores_it_as_pending(): void
