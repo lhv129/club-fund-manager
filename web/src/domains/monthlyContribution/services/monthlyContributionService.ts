@@ -19,9 +19,11 @@ class MonthlyContributionServiceClient extends BaseRepository<MonthlyContributio
      */
     public async generateOrReuse(
         id: number,
+        clubSlug: string,
     ): Promise<GenerateMonthlyContributionPaymentResponse> {
-        return this.adapter.post(
-            `${this.resource}/${id}/payment-code`,
+        return this.post<GenerateMonthlyContributionPaymentResponse>(
+            `/${this.resource}/${id}/payment-code`,
+            { club_slug: clubSlug },
         );
     }
 }

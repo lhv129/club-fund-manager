@@ -42,6 +42,7 @@ export const CLUB_SUBROUTES = {
   monthlyContributions: "monthly-contributions",
   bankAccounts: "bank-accounts",
   transactions: "transactions",
+  paymentCodes: "payment-codes",
   playingSchedules: "playing-schedules",
   exchangeSessions: "exchange-sessions",
   events: "events",
@@ -110,6 +111,7 @@ export const MODULE_SLUGS = {
   webhook: "webhook",
   monthlyContribution: "monthly_contribution",
   bankAccount: "bank_account"
+  ,memberPaymentCode: "member_payment_code"
   ,playingSchedule: "playing_schedule"
   ,exchangeSessionPlayer: "exchange_session_player"
 } as const;

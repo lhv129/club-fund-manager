@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/routing";
 import { Plus, Building2, PlusCircle, Users, TrendingUp } from "lucide-react";
+import toast from "react-hot-toast";
 
 import {
     FormModalWithMedia,
@@ -59,6 +60,7 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
         data: hookData,
         total: hookTotal,
         isLoading,
+        isFetching,
         togglingIds,
         isCreating,
         isUpdating,
@@ -116,7 +118,11 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
     const handleOpen = (clubId: number) => {
         const club = allData.find((c) => c.id === clubId);
         if (!club) return;
-        const slug = getTranslation(club.translations, locale)?.slug ?? String(club.id);
+        const slug = getTranslation(club.translations, locale)?.slug;
+        if (!slug) {
+            toast.error(t("loadError"));
+            return;
+        }
         router.push(clubDashboardRoute(slug) as never);
     };
 
@@ -278,13 +284,21 @@ export function ClubsPageClient({ clubs: initialClubs, total: initialTotal }: Cl
                                     onMembers={(id) => {
                                         const c = allData.find((x) => x.id === id);
                                         if (!c) return;
-                                        const slug = getTranslation(c.translations, locale)?.slug ?? String(id);
+                                        const slug = getTranslation(c.translations, locale)?.slug;
+                                        if (!slug) {
+                                            toast.error(t("loadError"));
+                                            return;
+                                        }
                                         router.push(`/club/${slug}/members` as never);
                                     }}
                                     onSettings={(id) => {
                                         const c = allData.find((x) => x.id === id);
                                         if (!c) return;
-                                        const slug = getTranslation(c.translations, locale)?.slug ?? String(id);
+                                        const slug = getTranslation(c.translations, locale)?.slug;
+                                        if (!slug) {
+                                            toast.error(t("loadError"));
+                                            return;
+                                        }
                                         router.push(`/club/${slug}/settings` as never);
                                     }}
                                     onDisband={

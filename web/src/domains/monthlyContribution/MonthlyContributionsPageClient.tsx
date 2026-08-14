@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { Table, type ColumnDef } from "@/components/shared/ui/Table";
+import type { ColumnDef } from "@/components/shared/ui/Table";
 import {
     FilterBar,
     type AppliedFilters,
@@ -20,20 +20,25 @@ import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Eye, Loader2, Pencil, Plus, QrCode, Trash2 } from "lucide-react";
 
 import { useListParams } from "@/hooks/useListParams";
 import { useClub } from "@/domains/club/hooks/useClub";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
 import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
-import { clubRoute } from "@/constants";
+import { clubRoute, CLUB_SUBROUTES } from "@/constants";
+import { useRouter } from "@/i18n/routing";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 
 import { useFundPeriodSelect } from "@/domains/fundPeriod/hooks/useFundPeriods";
 import { useTransactionSelect } from "@/domains/transaction/hooks/useTransactions";
 import { useClubMemberSelect } from "@/domains/members/hooks/useClubMembers";
 
-import { useMonthlyContributions } from "@/domains/monthlyContribution/hooks/useMonthlyContributions";
+import {
+    useMonthlyContributionPaymentQr,
+    useMonthlyContributions,
+} from "@/domains/monthlyContribution/hooks/useMonthlyContributions";
+import { PaymentQrModal } from "@/domains/monthlyContribution/components/PaymentQrModal";
 import type {
     ContributionPaidBy,
     ContributionStatus,
@@ -52,9 +57,10 @@ const STATUS_CLASSES: Record<ContributionStatus, string> = {
 export function MonthlyContributionsPageClient() {
     const t = useTranslations("common");
     const tm = useTranslations("monthlyContribution");
+    const router = useRouter();
 
     const { club, slug } = useClub();
-    const { hasPermission, isSuperAdmin } = useAuth();
+    const { user, hasPermission, isSuperAdmin, isSystemAdmin } = useAuth();
 
     const canCreate =
         isSuperAdmin ||
@@ -79,6 +85,47 @@ export function MonthlyContributionsPageClient() {
             "delete",
             club?.id
         );
+
+
+
+
+    const canGetPaymentQr = (row: MonthlyContribution) => {
+        // Payment QR access rules:
+        // 1. SuperAdmin                  → tất cả thành viên.
+        // 2. System-level VIEW           → tất cả thành viên.
+        // 3. Club-level VIEW             → tất cả thành viên trong club.
+        // 4. Club-level CREATE           → chỉ contribution của chính mình.
+        //
+        // Backend vẫn phải enforce authorization.
+        // Logic này chỉ dùng để quyết định có hiển thị action trên UI hay không.
+
+        if (isSuperAdmin) {
+            return true;
+        }
+
+        if (hasPermission("member_payment_code", "view")) {
+            return true;
+        }
+
+        if (
+            hasPermission(
+                "member_payment_code",
+                "view",
+                club?.id
+            )
+        ) {
+            return true;
+        }
+
+        return (
+            row.user_id === user?.id &&
+            hasPermission(
+                "member_payment_code",
+                "create",
+                club?.id
+            )
+        );
+    };
 
     const {
         params,
@@ -142,6 +189,14 @@ export function MonthlyContributionsPageClient() {
         handleEdit,
         handleDeleteConfirm,
     } = useMonthlyContributions({ ...params, club_slug: slug });
+
+    const {
+        qrUrl,
+        isGettingPaymentQr,
+        gettingPaymentQrId,
+        handleGetPaymentQr,
+        closePaymentQrModal,
+    } = useMonthlyContributionPaymentQr(slug);
 
     const {
         data: fundPeriods,
@@ -599,34 +654,58 @@ export function MonthlyContributionsPageClient() {
                     />
 
                     <DataTable
-                        table={{ columns, data, loading: isLoading, fetching: isFetching,
-                        keyExtractor: (row) => row.id,
-                        renderActions: (row) => (
-                            <TableActions>
-                                {canUpdate && (
+                        table={{
+                            columns, data, loading: isLoading, fetching: isFetching,
+                            keyExtractor: (row) => row.id,
+                            renderActions: (row) => (
+                                <TableActions>
                                     <TableActionItem
-                                        icon={
-                                            <Pencil className="h-4 w-4" />
-                                        }
-                                        label={t("edit")}
-                                        onClick={() => openEdit(row)}
+                                        icon={<Eye className="h-4 w-4" />}
+                                        label={t("view")}
+                                        onClick={() => router.push(`${clubRoute(slug, CLUB_SUBROUTES.monthlyContributions)}/${row.id}` as never)}
                                     />
-                                )}
+                                    {canGetPaymentQr(row) && (
+                                        <TableActionItem
+                                            icon={
+                                                isGettingPaymentQr &&
+                                                    gettingPaymentQrId === row.id ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <QrCode className="h-4 w-4" />
+                                                )
+                                            }
+                                            label={tm("getPaymentQr")}
+                                            variant="success"
+                                            onClick={() => {
+                                                void handleGetPaymentQr(row.id);
+                                            }}
+                                        />
+                                    )}
+                                    {canUpdate && (
+                                        <TableActionItem
+                                            icon={
+                                                <Pencil className="h-4 w-4" />
+                                            }
+                                            label={t("edit")}
+                                            onClick={() => openEdit(row)}
+                                        />
+                                    )}
 
-                                {canDelete && (
-                                    <TableActionItem
-                                        icon={
-                                            <Trash2 className="h-4 w-4" />
-                                        }
-                                        label={t("delete")}
-                                        variant="danger"
-                                        onClick={() =>
-                                            setDeleteTarget(row)
-                                        }
-                                    />
-                                )}
-                            </TableActions>
-                        ), emptyText: tm("notFound") }}
+                                    {canDelete && (
+                                        <TableActionItem
+                                            icon={
+                                                <Trash2 className="h-4 w-4" />
+                                            }
+                                            label={t("delete")}
+                                            variant="danger"
+                                            onClick={() =>
+                                                setDeleteTarget(row)
+                                            }
+                                        />
+                                    )}
+                                </TableActions>
+                            ), emptyText: tm("notFound")
+                        }}
                         pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
                     />
                 </div>
@@ -658,6 +737,13 @@ export function MonthlyContributionsPageClient() {
                 }}
                 onCancel={() => setDeleteTarget(null)}
                 loading={isDeleting}
+            />
+
+            <PaymentQrModal
+                qrUrl={qrUrl}
+                alt={tm("paymentQrAlt")}
+                closeLabel={t("close")}
+                onClose={closePaymentQrModal}
             />
         </>
     );

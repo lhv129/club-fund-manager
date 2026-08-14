@@ -1,5 +1,6 @@
 // src/domains/monthlyContribution/types/index.ts
 import type { FundPeriod } from "@/domains/fundPeriod/types";
+import type { Club } from "@/domains/club/types";
 
 /** Stub — đầy đủ type khai báo ở src/domains/transaction/types/index.ts */
 import type { Transaction } from "@/domains/transaction/types";
@@ -7,14 +8,11 @@ import type { Transaction } from "@/domains/transaction/types";
 /** Stub — đầy đủ type khai báo ở src/domains/paymentCode/types/index.ts */
 import type { PaymentCode } from "@/domains/paymentCode/types";
 
+import type { User } from "@/domains/user/types";
+
 // ─── Nested types ─────────────────────────────────────────────────────────────
 
-export interface MonthlyContributionUser {
-    id: number;
-    fullname: string;
-    email: string;
-    gender: string | null;
-}
+
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -37,10 +35,11 @@ export interface MonthlyContribution {
     is_active: boolean;
     created_at: string | null;
     updated_at: string | null;
-    user: MonthlyContributionUser;
+    user: User;
+    club?: Club;
     period: FundPeriod;
-    transaction: Transaction | null;
-    payment_code: PaymentCode | null;
+    transaction?: Transaction;
+    payment_code?: PaymentCode;
 }
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
@@ -75,7 +74,7 @@ export interface MonthlyContributionPaymentBankAccount {
 
 export interface MonthlyContributionPaymentQr {
     enabled: boolean;
-    url: string;
+    url: string | null;
 }
 
 export interface MonthlyContributionPayment {
@@ -94,5 +93,7 @@ export interface MonthlyContributionPayment {
 export interface GenerateMonthlyContributionPaymentResponse {
     success: boolean;
     message: string;
-    data: MonthlyContributionPayment;
+    data: {
+        qr: MonthlyContributionPaymentQr;
+    };
 }

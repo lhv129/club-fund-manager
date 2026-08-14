@@ -8,6 +8,7 @@ import {
     Banknote,
     CalendarDays,
     Landmark,
+    ScanLine,
 } from "lucide-react";
 
 import {
@@ -125,6 +126,14 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
                     action: PERMISSION_ACTIONS.view,
                 },
             ],
+        },
+
+        {
+            href: clubRoute(slug, CLUB_SUBROUTES.paymentCodes),
+            labelKey: "paymentCodes",
+            icon: ScanLine,
+            module: MODULE_SLUGS.memberPaymentCode,
+            action: PERMISSION_ACTIONS.view,
         },
 
         // ── Cài đặt ───────────────────────────────────────────────────────────

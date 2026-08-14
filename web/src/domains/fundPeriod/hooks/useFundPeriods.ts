@@ -94,7 +94,8 @@ function buildPayload(
 export function useFundPeriods(
     params: ReturnType<
         typeof useListParams<FundPeriodFilters>
-    >["params"]
+    >["params"],
+    view: "active" | "trashed" = "active",
 ) {
     const clubSlug = params.club_slug as string | undefined;
     const queryClient = useQueryClient();
@@ -112,7 +113,15 @@ export function useFundPeriods(
         queryKey,
         queryFn: () => service.list(params),
         placeholderData: keepPreviousData,
-        enabled: !!clubSlug,
+        enabled: !!clubSlug && view === "active",
+    });
+
+    const trashedQueryKey = ["fund-periods-trashed", clubSlug, params] as const;
+    const trashedQuery = useQuery({
+        queryKey: trashedQueryKey,
+        queryFn: () => service.trashed(params),
+        placeholderData: keepPreviousData,
+        enabled: !!clubSlug && view === "trashed",
     });
 
     const {
@@ -234,6 +243,40 @@ export function useFundPeriods(
                 (error as Error)?.message || t("loadError")
             );
         },
+    });
+
+    const restoreMutation = useMutation({
+        mutationFn: (id: number) => service.restore(id, clubSlug!),
+        onSuccess: async (res) => {
+            if (!res.success) return;
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["fund-periods", clubSlug] }),
+                queryClient.invalidateQueries({ queryKey: ["fund-periods-trashed", clubSlug] }),
+            ]);
+            toast.success(res.message || t("updateSuccess"));
+        },
+        onError: (error: unknown) => toast.error((error as Error)?.message || t("loadError")),
+    });
+
+    const closeMutation = useMutation({
+        mutationFn: (id: number) => service.close(id, clubSlug!),
+        onSuccess: async (res) => {
+            if (!res.success) return;
+            await queryClient.invalidateQueries({ queryKey: ["fund-periods", clubSlug] });
+            toast.success(res.message || t("updateSuccess"));
+        },
+        onError: (error: unknown) => toast.error((error as Error)?.message || t("loadError")),
+    });
+
+    const reopenMutation = useMutation({
+        mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+            service.reopen(id, clubSlug!, reason),
+        onSuccess: async (res) => {
+            if (!res.success) return;
+            await queryClient.invalidateQueries({ queryKey: ["fund-periods", clubSlug] });
+            toast.success(res.message || t("updateSuccess"));
+        },
+        onError: (error: unknown) => toast.error((error as Error)?.message || t("loadError")),
     });
 
     const handleCreate = async (
@@ -358,11 +401,21 @@ export function useFundPeriods(
         isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
         isDeleting: deleteMutation.isPending,
+        trashedData: trashedQuery.data?.data ?? [],
+        trashedTotal: trashedQuery.data?.meta?.total ?? 0,
+        isTrashedLoading: trashedQuery.isLoading,
+        isTrashedFetching: trashedQuery.isFetching,
+        isRestoring: restoreMutation.isPending,
+        isClosing: closeMutation.isPending,
+        isReopening: reopenMutation.isPending,
 
         handleCreate,
         handleEdit,
         handleDeleteConfirm,
         handleToggleStatus,
+        handleRestore: (id: number) => restoreMutation.mutateAsync(id),
+        handleClose: (id: number) => closeMutation.mutateAsync(id),
+        handleReopen: (id: number, reason: string) => reopenMutation.mutateAsync({ id, reason }),
     };
 }
 

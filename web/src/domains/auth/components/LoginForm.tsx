@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useRouter, Link } from "@/i18n/routing";
+import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import { useAuth } from "../hooks/useAuth";
 import { Button } from "@/components/shared/ui/Button";
 import { Input } from "@/components/shared/ui/Input";
@@ -12,7 +12,7 @@ import type { LoginPayload } from "../types";
 export function LoginForm() {
   const t = useTranslations("auth.login");
   const tValidation = useTranslations("validation");
-  const router = useRouter();
+  const locale = useLocale();
   const { login, isLoading, error, clearError } = useAuth();
 
   const [form, setForm] = useState<LoginPayload>({
@@ -42,7 +42,9 @@ export function LoginForm() {
     // ── Redirect về root — root page tự phân luồng theo role ────────────────
     //  (admin → /admin, 1 club → /club/{slug}/dashboard, 2+ → clubs list,
     //   0 club → NoClub). Xem src/app/[locale]/page.tsx.
-    router.replace(APP_ROUTES.home);
+    // Auth cookies changed. A document navigation clears the previous RSC
+    // router cache and performance timeline before LocaleRootPage redirects.
+    window.location.replace(`/${locale}${APP_ROUTES.home}`);
   };
 
   const updateField = (field: keyof LoginPayload, value: string) => {

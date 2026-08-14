@@ -152,29 +152,33 @@ export function NoClubClient() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-5 sm:space-y-6">
 
       <Breadcrumb navItems={[]} homeHref="/" extraItems={[{ label: t("breadcrumb") }]} />
 
       {/* ── Hero header ──────────────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background-muted border border-primary/20 px-6 py-7">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/25">
-            <Users className="w-6 h-6 text-primary-foreground" />
+      <section className="overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-background-muted px-4 py-5 sm:px-6 sm:py-7">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25 sm:h-12 sm:w-12 sm:rounded-2xl">
+            <Users className="h-5 w-5 text-primary-foreground sm:h-6 sm:w-6" />
           </div>
-          <div>
-            <h1 className="text-[18px] font-bold text-foreground tracking-tight leading-snug">
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold leading-snug tracking-tight text-foreground sm:text-xl">
               {t("title")}
             </h1>
-            <p className="text-sm text-foreground-muted mt-0.5 leading-relaxed">
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-foreground-muted">
               {t("subtitle")}
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* ── Tab switcher — sliding pill, không remount content ───────────── */}
-      <div className="relative grid grid-cols-2 bg-background-muted rounded-xl p-1">
+      <div
+        className="relative grid grid-cols-2 rounded-xl bg-background-muted p-1"
+        role="tablist"
+        aria-label={t("breadcrumb")}
+      >
         {/* Animated sliding background */}
         <span
           aria-hidden
@@ -192,10 +196,14 @@ export function NoClubClient() {
           const label = m === "search" ? t("searchTab") : t("tokenTab");
           return (
             <button
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`${m}-panel`}
               key={m}
               onClick={() => { setMode(m); setJoinSuccess(null); }}
               className={cn(
-                "relative z-10 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg",
+                "relative z-10 flex min-h-11 items-center justify-center gap-2 rounded-lg px-2 py-2.5 sm:px-3",
                 "text-sm font-medium transition-colors duration-200",
                 isActive
                   ? "text-foreground"
@@ -220,7 +228,7 @@ export function NoClubClient() {
           mode === "search"
             ? "relative opacity-100 translate-y-0"
             : "absolute inset-x-0 top-0 opacity-0 -translate-y-2 pointer-events-none select-none"
-        )}>
+        )} id="search-panel" role="tabpanel" aria-hidden={mode !== "search"}>
           {joinSuccess ? (
             <div className="rounded-2xl p-6">
               <JoinSuccess
@@ -232,10 +240,16 @@ export function NoClubClient() {
           ) : (
             <div className="space-y-4">
               {/* Search input */}
-              <div className="relative group">
+              <div className="group relative">
+                <label htmlFor="club-search" className="sr-only">
+                  {t("searchPlaceholder")}
+                </label>
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted z-10 transition-colors group-focus-within:text-primary" />
                 <input
+                  id="club-search"
+                  name="club-search"
                   type="text"
+                  autoComplete="off"
                   placeholder={t("searchPlaceholder")}
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
@@ -255,7 +269,7 @@ export function NoClubClient() {
               </div>
 
               {/* Min length hint — fixed height tránh nhảy layout */}
-              <div className="h-4">
+              <div className="min-h-5" aria-live="polite">
                 {showHintShort && (
                   <p className="text-xs text-center text-foreground-muted">
                     {t("searchMinLength", { min: String(MIN_SEARCH_LENGTH) })}
@@ -264,7 +278,7 @@ export function NoClubClient() {
               </div>
 
               {/* Results */}
-              <div className="min-h-[320px] space-y-2">
+              <div className="min-h-64 space-y-3 sm:min-h-80" aria-live="polite" aria-busy={searching}>
                 {searching ? (
                   <>
                     <ClubRowSkeleton />
@@ -272,7 +286,7 @@ export function NoClubClient() {
                     <ClubRowSkeleton />
                   </>
                 ) : showEmpty ? (
-                  <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-dashed border-border bg-background-muted/50">
+                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-background-muted/50 px-4 py-12 text-center sm:py-16">
                     <div className="w-10 h-10 rounded-full bg-background-muted flex items-center justify-center mb-3">
                       <Search className="w-5 h-5 text-foreground-muted" />
                     </div>
@@ -294,7 +308,7 @@ export function NoClubClient() {
                       <div
                         key={club.id}
                         className={cn(
-                          "group flex items-center gap-4 p-4 rounded-2xl",
+                          "group flex flex-col items-stretch gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:gap-4",
                           "bg-background",
                           "border border-border",
                           "shadow-sm ring-1 ring-foreground/5",
@@ -304,7 +318,8 @@ export function NoClubClient() {
                         )}
                       >
                         {/* Logo */}
-                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-background-muted flex items-center justify-center shrink-0 ring-1 ring-foreground/10">
+                        <div className="flex min-w-0 items-center gap-3 sm:contents">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-background-muted ring-1 ring-foreground/10">
                           <CustomImage
                             src={club.logo}
                             alt={name}
@@ -319,7 +334,7 @@ export function NoClubClient() {
                         </div>
 
                         {/* Info */}
-                        <div className="flex-1 min-w-0 space-y-0.5">
+                        <div className="min-w-0 flex-1 space-y-0.5">
                           <p className="font-semibold text-sm text-foreground truncate leading-snug">
                             {name}
                           </p>
@@ -341,13 +356,14 @@ export function NoClubClient() {
                             </div>
                           )}
                         </div>
+                        </div>
 
                         {/* Join */}
                         <button
                           disabled={isJoining}
                           onClick={() => handleJoinBySlug(club)}
                           className={cn(
-                            "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl",
+                            "flex min-h-10 w-full shrink-0 items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 sm:w-auto",
                             "text-sm font-medium",
                             "border border-primary/40",
                             "text-primary",
@@ -397,10 +413,10 @@ export function NoClubClient() {
           mode === "token"
             ? "relative opacity-100 translate-y-0"
             : "absolute inset-x-0 top-0 opacity-0 translate-y-2 pointer-events-none select-none"
-        )}>
-          <div className="rounded-2xl bg-background border border-border shadow-sm ring-1 ring-foreground/5 overflow-hidden">
+        )} id="token-panel" role="tabpanel" aria-hidden={mode !== "token"}>
+          <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-border bg-background shadow-sm ring-1 ring-foreground/5">
             {/* Panel header */}
-            <div className="flex items-center gap-3 px-6 py-5 border-b border-border bg-amber-50/60 dark:bg-amber-950/20">
+            <div className="flex items-start gap-3 border-b border-border bg-amber-50/60 px-4 py-4 dark:bg-amber-950/20 sm:items-center sm:px-6 sm:py-5">
               <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
                 <Ticket className="w-[18px] h-[18px] text-amber-600 dark:text-amber-400" />
               </div>
@@ -414,9 +430,15 @@ export function NoClubClient() {
               </div>
             </div>
 
-            <form onSubmit={handleJoinByToken} className="p-6 space-y-4">
+            <form onSubmit={handleJoinByToken} className="space-y-4 p-4 sm:p-6">
+              <label htmlFor="invite-code" className="sr-only">
+                {t("tokenLabel")}
+              </label>
               <input
+                id="invite-code"
+                name="invite-code"
                 type="text"
+                autoComplete="off"
                 placeholder={t("tokenPlaceholder")}
                 value={token}
                 onChange={(e) => setToken(e.target.value)}

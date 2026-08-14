@@ -8,6 +8,7 @@ import { ClubsPageClient } from "@/domains/club/ClubsPageClient";
 import { NoClubClient } from "@/domains/club/NoClubClient";
 import type { Club, Translation } from "@/domains/club/types";
 import { APP_ROUTES, clubDashboardRoute } from "@/constants";
+import { canAccessClub, hasAnySystemPermission } from "@/lib/permissions";
 
 function pickSlugByLocale(club: Club, locale: string): string | undefined {
   return (
@@ -45,16 +46,30 @@ export default async function LocaleRootPage({
 
   try {
     const res = await clubServiceServer.list({ limit: LIMIT });
-    clubs = res.data ?? [];
-    total = res.meta?.total ?? clubs.length;
+    const listedClubs = res.data ?? [];
+    const isSystemAdmin =
+      profile.is_system_admin ||
+      hasAnySystemPermission(profile.permissions, profile.is_superadmin);
+
+    clubs = listedClubs.filter((club) =>
+      canAccessClub(
+        profile.permissions,
+        profile.is_superadmin,
+        club.id,
+        isSystemAdmin,
+      ),
+    );
+    total = clubs.length;
   } catch {
     clubs = [];
     total = 0;
   }
 
   if (clubs.length === 1) {
-    const slug = pickSlugByLocale(clubs[0], locale) ?? String(clubs[0].id);
-    redirect(`/${locale}${clubDashboardRoute(slug)}`);
+    const slug = pickSlugByLocale(clubs[0], locale);
+    if (slug) {
+      redirect(`/${locale}${clubDashboardRoute(slug)}`);
+    }
   }
 
   if (clubs.length >= 2) {

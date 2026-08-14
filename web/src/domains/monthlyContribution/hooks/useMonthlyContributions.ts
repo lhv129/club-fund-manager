@@ -1,6 +1,7 @@
 // src/domains/monthlyContribution/hooks/useMonthlyContributions.ts
 "use client";
 
+import { useCallback, useState } from "react";
 import { keepPreviousData, useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
@@ -263,5 +264,79 @@ export function useMonthlyContributionSelect(params?: Partial<MonthlyContributio
     return {
         data: query.data?.data ?? [],
         isLoading: query.isLoading,
+    };
+}
+
+export function useMonthlyContribution(id: number, clubSlug: string) {
+    return useQuery({
+        queryKey: ["monthly-contribution", clubSlug, id],
+        queryFn: () => getMonthlyContributionService().show(id),
+        enabled: Boolean(id && clubSlug),
+    });
+}
+
+export function useMonthlyContributionPaymentQr(
+    clubSlug?: string | null
+) {
+    const t = useTranslations("common");
+    const tm = useTranslations("monthlyContribution");
+    const [qrUrl, setQrUrl] = useState<string | null>(null);
+
+    const paymentQrMutation = useMutation({
+        mutationFn: (id: number) => {
+            if (!clubSlug) {
+                throw new Error(t("loadError"));
+            }
+
+            return getMonthlyContributionService().generateOrReuse(
+                id,
+                clubSlug
+            );
+        },
+    });
+
+    const closePaymentQrModal = useCallback(() => {
+        setQrUrl(null);
+    }, []);
+
+    const handleGetPaymentQr = async (id: number) => {
+        if (!clubSlug || paymentQrMutation.isPending) return;
+
+        try {
+            const response = await paymentQrMutation.mutateAsync(id);
+
+            if (!response.success) {
+                toast.error(response.message || t("loadError"));
+                return;
+            }
+
+            const qr = response.data?.qr;
+
+            if (!qr?.enabled || !qr.url) {
+                toast.error(tm("paymentQrUnavailable"));
+                return;
+            }
+
+            setQrUrl(qr.url);
+            toast.success(
+                response.message || tm("paymentQrSuccess")
+            );
+        } catch (error: unknown) {
+            const serverError = getServerError(error);
+
+            toast.error(
+                serverError?.message ||
+                (error as Error)?.message ||
+                t("loadError")
+            );
+        }
+    };
+
+    return {
+        qrUrl,
+        isGettingPaymentQr: paymentQrMutation.isPending,
+        gettingPaymentQrId: paymentQrMutation.variables ?? null,
+        handleGetPaymentQr,
+        closePaymentQrModal,
     };
 }

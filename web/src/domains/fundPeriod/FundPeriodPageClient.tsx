@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Trash2 } from "lucide-react";
+import { ArchiveRestore, LockKeyhole, Plus, Trash2, UnlockKeyhole } from "lucide-react";
 
-import { Table, type ColumnDef } from "@/components/shared/ui/Table";
+import { type ColumnDef } from "@/components/shared/ui/Table";
 import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
 import { DataTable } from "@/components/shared/ui/DataTable";
 import {
@@ -29,6 +29,10 @@ import { clubRoute } from "@/constants";
 import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
 import { getTranslatedTitle } from "@/lib/translations";
 import { formatAmount } from "@/utils";
+import {
+    FundPeriodTabs,
+    type FundPeriodView,
+} from "@/domains/fundPeriod/components/FundPeriodTabs";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -69,6 +73,7 @@ export function FundPeriodPageClient() {
     // ── Draft state cho extra filters (year/month) ────────────────────────────
     const [draftYear, setDraftYear] = useState<number | undefined>(params.year);
     const [draftMonth, setDraftMonth] = useState<number | undefined>(params.month);
+    const [view, setView] = useState<FundPeriodView>("active");
 
     useEffect(() => { setDraftYear(params.year); }, [params.year]);
     useEffect(() => { setDraftMonth(params.month); }, [params.month]);
@@ -82,14 +87,27 @@ export function FundPeriodPageClient() {
         togglingIds,
         isCreating,
         isDeleting,
+        trashedData,
+        trashedTotal,
+        isTrashedLoading,
+        isTrashedFetching,
+        isRestoring,
+        isClosing,
+        isReopening,
         handleCreate,
         handleDeleteConfirm,
         handleToggleStatus,
-    } = useFundPeriods({ ...params, club_slug: slug });
+        handleRestore,
+        handleClose,
+        handleReopen,
+    } = useFundPeriods({ ...params, club_slug: slug }, view);
 
     // ── UI state ──────────────────────────────────────────────────────────────
     const [modalOpen, setModalOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<FundPeriod | null>(null);
+    const [restoreTarget, setRestoreTarget] = useState<FundPeriod | null>(null);
+    const [closeTarget, setCloseTarget] = useState<FundPeriod | null>(null);
+    const [reopenTarget, setReopenTarget] = useState<FundPeriod | null>(null);
 
     const openCreate = () => setModalOpen(true);
     const closeModal = () => setModalOpen(false);
@@ -202,6 +220,16 @@ export function FundPeriodPageClient() {
         is_active: "1",
     };
 
+    const reopenFields: FormFieldDef[] = [
+        {
+            name: "reason",
+            label: tf("reopenReason"),
+            type: "textarea",
+            required: true,
+            placeholder: tf("reopenReasonPlaceholder"),
+        },
+    ];
+
     // ── Extra filters JSX ─────────────────────────────────────────────────────
     const extraFilters = (
         <>
@@ -309,7 +337,7 @@ export function FundPeriodPageClient() {
         },
         {
             key: "is_active",
-            label: t("status"),
+            label: t("isActive"),
             className: "text-center w-24",
             render: (row) => (
                 <div className="flex justify-center">
@@ -317,7 +345,7 @@ export function FundPeriodPageClient() {
                         checked={Boolean(row.is_active)}
                         loading={togglingIds.has(row.id)}
                         onChange={() => canUpdate && handleToggleStatus(row)}
-                        disabled={!canUpdate}
+                        disabled={!canUpdate || row.is_locked}
                     />
                 </div>
             ),
@@ -326,22 +354,28 @@ export function FundPeriodPageClient() {
 
     if (!club || !slug) return null;
 
+    const displayedData = view === "active" ? data : trashedData;
+    const displayedTotal = view === "active" ? total : trashedTotal;
+    const displayedLoading = view === "active" ? isLoading : isTrashedLoading;
+    const displayedFetching = view === "active" ? isFetching : isTrashedFetching;
+
     // ── Render ─────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
             <Breadcrumb navItems={CLUB_NAV_ITEMS(slug)} homeHref={clubRoute(slug)} />
 
-            <div className="flex items-center justify-between">
-                <div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
                     <h1 className="text-xl font-semibold text-foreground">{tf("title")}</h1>
-                    <p className="text-sm text-foreground-muted mt-0.5">
-                        {tf("totalCount", { count: total.toLocaleString() })}
+                    <p className="mt-1 text-sm text-foreground-muted">
+                        {tf("totalCount", { count: displayedTotal.toLocaleString() })}
                     </p>
                 </div>
                 {canCreate && (
                     <button
+                        type="button"
                         onClick={openCreate}
-                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
+                        className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
                     >
                         <Plus className="w-4 h-4" />
                         {tf("create")}
@@ -350,36 +384,74 @@ export function FundPeriodPageClient() {
             </div>
 
             <div className="space-y-4">
+                <FundPeriodTabs
+                    value={view}
+                    activeLabel={tf("activeTab")}
+                    trashedLabel={tf("trashedTab")}
+                    onChange={(nextView) => {
+                        setView(nextView);
+                        setPage(1);
+                    }}
+                />
+
                 <FilterBar
                     search={params.search}
                     sortBy={params.sort_by}
                     sortDir={params.sort_dir}
                     sortOptions={sortOptions}
                     showStatusFilter={false}
-                    loading={isFetching}
+                    loading={displayedFetching}
                     onApply={handleApplyFilters}
                     onReset={handleReset}
                     extraFilters={extraFilters}
                 />
 
                 <DataTable
-                    table={{ columns, data, loading: isLoading, fetching: isFetching,
+                    table={{ columns, data: displayedData, loading: displayedLoading, fetching: displayedFetching,
                     keyExtractor: (row) => row.id,
-                    showActions: canDelete,
+                    showActions: view === "trashed" ? canUpdate : canDelete || canUpdate,
                     renderActions: (row) => {
-                        if (!canDelete) return null;
+                        if (view === "trashed") {
+                            if (!canUpdate) return null;
+                            return (
+                                <TableActions>
+                                    <TableActionItem
+                                        icon={<ArchiveRestore className="h-4 w-4" />}
+                                        label={tf("restore")}
+                                        variant="success"
+                                        onClick={() => setRestoreTarget(row)}
+                                    />
+                                </TableActions>
+                            );
+                        }
+                        if (!canDelete && !canUpdate) return null;
                         return (
                             <TableActions>
-                                <TableActionItem
-                                    icon={<Trash2 className="w-4 h-4" />}
-                                    label={t("delete")}
-                                    variant="danger"
-                                    onClick={() => setDeleteTarget(row)}
-                                />
+                                {canUpdate && (row.is_locked ? (
+                                    <TableActionItem
+                                        icon={<UnlockKeyhole className="h-4 w-4" />}
+                                        label={tf("reopen")}
+                                        onClick={() => setReopenTarget(row)}
+                                    />
+                                ) : (
+                                    <TableActionItem
+                                        icon={<LockKeyhole className="h-4 w-4" />}
+                                        label={tf("closePeriod")}
+                                        onClick={() => setCloseTarget(row)}
+                                    />
+                                ))}
+                                {canDelete && !row.is_locked && (
+                                    <TableActionItem
+                                        icon={<Trash2 className="w-4 h-4" />}
+                                        label={t("delete")}
+                                        variant="danger"
+                                        onClick={() => setDeleteTarget(row)}
+                                    />
+                                )}
                             </TableActions>
                         );
                     }, emptyText: tf("notFound") }}
-                    pagination={{ page: params.page, limit: params.limit, total, onPageChange: setPage, onLimitChange: setLimit }}
+                    pagination={{ page: params.page, limit: params.limit, total: displayedTotal, onPageChange: setPage, onLimitChange: setLimit }}
                 />
             </div>
 
@@ -423,7 +495,58 @@ export function FundPeriodPageClient() {
                 onCancel={() => setDeleteTarget(null)}
                 loading={isDeleting}
             />
+
+            <DeleteConfirmModal
+                isOpen={!!closeTarget}
+                title={tf("closeConfirmTitle")}
+                description={tf("closeConfirmDescription")}
+                message={closeTarget ? tf("closeConfirmMessage", { title: getTranslatedTitle(closeTarget.translations, locale) || `${closeTarget.month}/${closeTarget.year}` }) : ""}
+                confirmText={tf("closePeriod")}
+                cancelText={t("cancel")}
+                onConfirm={async () => {
+                    if (!closeTarget) return;
+                    await handleClose(closeTarget.id);
+                    setCloseTarget(null);
+                }}
+                onCancel={() => setCloseTarget(null)}
+                loading={isClosing}
+            />
+
+            <DeleteConfirmModal
+                isOpen={!!restoreTarget}
+                title={tf("restoreConfirmTitle")}
+                description={tf("restoreConfirmDescription")}
+                message={restoreTarget ? tf("restoreConfirmMessage", { title: getTranslatedTitle(restoreTarget.translations, locale) || `${restoreTarget.month}/${restoreTarget.year}` }) : ""}
+                confirmText={tf("restore")}
+                cancelText={t("cancel")}
+                onConfirm={async () => {
+                    if (!restoreTarget) return;
+                    await handleRestore(restoreTarget.id);
+                    setRestoreTarget(null);
+                }}
+                onCancel={() => setRestoreTarget(null)}
+                loading={isRestoring}
+            />
+
+            <FormModal
+                isOpen={!!reopenTarget}
+                onClose={() => setReopenTarget(null)}
+                onSubmit={async (values) => {
+                    if (!reopenTarget) return { success: false };
+                    const reason = values.reason.trim();
+                    if (!reason) {
+                        return { success: false, errors: { reason: [tf("reopenReasonRequired")] } };
+                    }
+                    await handleReopen(reopenTarget.id, reason);
+                    setReopenTarget(null);
+                }}
+                title={tf("reopenTitle")}
+                fields={reopenFields}
+                initialValues={{ reason: "" }}
+                isEdit
+                submitLabel={tf("reopen")}
+                submitting={isReopening}
+            />
         </div>
     );
 }
-

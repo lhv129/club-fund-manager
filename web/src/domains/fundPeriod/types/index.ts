@@ -14,6 +14,7 @@ export interface FundPeriod {
     sort_order: number;
     created_at: string | null;
     updated_at: string | null;
+    deleted_at?: string | null;
     translation?: Translation;    // list endpoint
     translations?: Translation[]; // show/edit endpoint
 }

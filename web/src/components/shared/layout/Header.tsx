@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "@/i18n/routing";
+import { useLocale } from "next-intl";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { APP_ROUTES } from "@/constants";
@@ -40,7 +40,7 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuToggle }: HeaderProps) {
-  const router = useRouter();
+  const locale = useLocale();
   const { user, logout } = useAuth();
 
   useThemeMode();
@@ -51,8 +51,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   const handleLogout = async () => {
     await logout();
-    router.push(APP_ROUTES.login);
-    router.refresh();
+
+    // Do not overlap a client transition with router.refresh after clearing
+    // auth cookies. Start the logged-out session with a fresh RSC runtime.
+    window.location.replace(`/${locale}${APP_ROUTES.login}`);
   };
 
   return (
