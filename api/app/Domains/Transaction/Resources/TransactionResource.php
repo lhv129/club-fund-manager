@@ -15,6 +15,7 @@ class TransactionResource extends JsonResource
             'club_id' => $this->club_id,
             'bank_account_id' => $this->bank_account_id,
 
+            'source' => $this->source,
             'type' => $this->type,
             'amount' => $this->amount,
             'balance' => $this->balance,
@@ -30,14 +31,14 @@ class TransactionResource extends JsonResource
             'is_active' => $this->is_active,
             'sort_order' => $this->sort_order,
 
-            'club' => $this->whenLoaded('club', fn() => [
+            'club' => $this->whenLoaded('club', fn () => [
                 'id' => $this->club->id,
                 'name' => $this->club->name,
             ]),
 
-            'bank_account' => $this->whenLoaded('bankAccount', fn() => ['id' => $this->bankAccount->id, 'account_number' => $this->bankAccount->account_number, 'account_name' => $this->bankAccount->account_name, 'bank' => $this->bankAccount->relationLoaded('bank') ? ['id' => $this->bankAccount->bank->id, 'code' => $this->bankAccount->bank->code, 'name' => $this->bankAccount->bank->name, 'short_name' => $this->bankAccount->bank->short_name, 'logo' => $this->bankAccount->bank->logo,] : null,]),
+            'bank_account' => $this->whenLoaded('bankAccount', fn () => ['id' => $this->bankAccount->id, 'account_number' => $this->bankAccount->account_number, 'account_name' => $this->bankAccount->account_name, 'bank' => $this->bankAccount->relationLoaded('bank') ? ['id' => $this->bankAccount->bank->id, 'code' => $this->bankAccount->bank->code, 'name' => $this->bankAccount->bank->name, 'short_name' => $this->bankAccount->bank->short_name, 'logo' => $this->bankAccount->bank->logo] : null]),
 
-            'webhook_config' => $this->whenLoaded('webhookConfig', fn() => [
+            'webhook_config' => $this->whenLoaded('webhookConfig', fn () => [
                 'id' => $this->webhookConfig->id,
                 'type' => $this->webhookConfig->type,
             ]),

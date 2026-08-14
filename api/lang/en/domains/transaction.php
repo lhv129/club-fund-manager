@@ -27,4 +27,7 @@ return [
     'reordered' => 'Transaction order updated successfully.',
 
     'not_found' => 'Transaction not found.',
+    'financial_fields_immutable' => 'Bank transactions only allow description updates.',
+    'webhook_delete_forbidden' => 'Webhook bank transactions cannot be deleted.',
+    'in_use' => 'This transaction is already used for reconciliation and cannot be deleted.',
 ];

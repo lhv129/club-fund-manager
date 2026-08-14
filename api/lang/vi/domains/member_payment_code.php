@@ -19,4 +19,5 @@ return [
     'contribution_not_found' => 'Không tìm thấy khoản đóng quỹ.',
     'forbidden' => 'Bạn không có quyền lấy mã thanh toán',
     'already_paid' => 'Bạn đã thanh toán tháng này rồi',
+    "qr_bank_not_configured" => "Ngân hàng chưa được cấu hình để tạo mã QR."
 ];

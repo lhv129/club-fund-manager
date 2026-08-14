@@ -210,8 +210,7 @@ class MemberPaymentCodeService extends BaseService
         MemberPaymentCode $paymentCode,
         BankAccount $bankAccount
     ): string {
-        $bankShortName =
-            $bankAccount->bank->short_name;
+        $bankShortName = $bankAccount->bank->short_name;
 
         if (!$bankShortName) {
             throw new ApiException(

@@ -11,6 +11,9 @@ return [
     'status_toggled' => 'Monthly contribution status updated successfully.',
     'invalid_gender' => 'Invalid user gender.',
     'already_exists' => 'This member has already made a contribution for this period.',
+    'payment_method_required' => 'Please select a payment method.',
+    'transaction_required' => 'A paid monthly contribution must be linked to a transaction.',
+    'invalid_payment_transaction' => 'The transaction does not match the club or selected payment method.',
 
     'attributes' => [
         'club_id'        => 'Club',

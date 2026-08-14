@@ -4,6 +4,7 @@ namespace App\Domains\MemberPaymentCode\Services;
 
 use App\Domains\MemberPaymentCode\Repositories\MemberPaymentCodeRepository;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
+use App\Domains\MonthlyContribution\Repositories\MonthlyContributionRepository;
 use App\Domains\Transaction\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +13,7 @@ class PaymentMatchingService
 {
     public function __construct(
         protected MemberPaymentCodeRepository $paymentCodeRepository,
+        protected MonthlyContributionRepository $monthlyContributionRepository,
     ) {}
 
     /**
@@ -30,11 +32,12 @@ class PaymentMatchingService
 
         $code = $this->extractCode($transaction->description ?? '');
 
-        if (!$code) {
+        if (! $code) {
             Log::info('[PaymentMatching] No code extracted', [
                 'transaction_id' => $transaction->id,
-                'description'    => $transaction->description,
+                'description' => $transaction->description,
             ]);
+
             return null;
         }
 
@@ -42,11 +45,12 @@ class PaymentMatchingService
             // lockForUpdate tránh race condition với concurrent webhooks
             $paymentCode = $this->paymentCodeRepository->findPendingByCode($code);
 
-            if (!$paymentCode) {
+            if (! $paymentCode) {
                 Log::info('[PaymentMatching] Code not found / expired / already used', [
                     'transaction_id' => $transaction->id,
-                    'code'           => $code,
+                    'code' => $code,
                 ]);
+
                 return null;
             }
 
@@ -56,36 +60,37 @@ class PaymentMatchingService
             // Trường hợp: code cũ bị replay, hoặc admin đã settle tay trước
             if ($contribution->status !== 'pending') {
                 Log::info('[PaymentMatching] Contribution already settled — skip', [
-                    'transaction_id'      => $transaction->id,
-                    'contribution_id'     => $contribution->id,
+                    'transaction_id' => $transaction->id,
+                    'contribution_id' => $contribution->id,
                     'contribution_status' => $contribution->status,
-                    'code'                => $code,
+                    'code' => $code,
                 ]);
+
                 return null;
             }
 
             // 1. Đánh dấu payment code đã dùng
-            $paymentCode->update([
-                'status'  => 'used',
+            $this->paymentCodeRepository->update($paymentCode, [
+                'status' => 'used',
                 'used_at' => now(),
             ]);
 
             // 2. Settle MonthlyContribution
-            $contribution->update([
+            $contribution = $this->monthlyContributionRepository->update($contribution, [
                 'transaction_id' => $transaction->id,
-                'status'         => 'paid',
-                'paid_by'        => 'bank',
-                'payment_date'   => $transaction->transaction_date ?? now(),
+                'status' => 'paid',
+                'paid_by' => 'bank',
+                'payment_date' => $transaction->transaction_date ?? now(),
             ]);
 
             Log::info('[PaymentMatching] Settled successfully', [
-                'transaction_id'  => $transaction->id,
-                'payment_code'    => $code,
+                'transaction_id' => $transaction->id,
+                'payment_code' => $code,
                 'payment_code_id' => $paymentCode->id,
                 'contribution_id' => $contribution->id,
             ]);
 
-            return $contribution->fresh();
+            return $contribution;
         });
     }
 

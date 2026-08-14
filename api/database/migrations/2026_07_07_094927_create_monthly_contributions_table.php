@@ -42,7 +42,6 @@ return new class extends Migration
             $table->enum('paid_by', [
                 'bank',
                 'cash',
-                'manual',
             ])->nullable();
 
             $table->timestamp('payment_date')->nullable();

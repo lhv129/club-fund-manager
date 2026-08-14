@@ -8,6 +8,7 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class TransactionRepository extends BaseRepository
 {
@@ -16,6 +17,7 @@ class TransactionRepository extends BaseRepository
     // ------------------------------------------------------------------
 
     protected string $defaultOrderBy = 'transaction_date';
+
     protected string $defaultOrderDirection = 'desc';
 
     /** Whitelist cột sort */
@@ -32,8 +34,12 @@ class TransactionRepository extends BaseRepository
     /** Cột cho getForSelect() */
     protected array $selectColumns = [
         'id',
+        'source',
+        'type',
+        'amount',
         'description',
-        'created_at'
+        'transaction_date',
+        'created_at',
     ];
 
     protected array $selectWith = [];
@@ -59,6 +65,7 @@ class TransactionRepository extends BaseRepository
                 'club_id',
                 'bank_account_id',
                 'webhook_config_id',
+                'source',
                 'type',
                 'amount',
                 'balance',
@@ -85,7 +92,7 @@ class TransactionRepository extends BaseRepository
      */
     protected function applySearch(Builder $query, array $filters): void
     {
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search) {
@@ -104,27 +111,27 @@ class TransactionRepository extends BaseRepository
     {
         $this->applyActiveFilter($query, $filters);
 
-        if (!empty($filters['club_id'])) {
+        if (! empty($filters['club_id'])) {
             $query->where('club_id', (int) $filters['club_id']);
         }
 
-        if (!empty($filters['user_id'])) {
+        if (! empty($filters['user_id'])) {
             $query->where('user_id', (int) $filters['user_id']);
         }
 
-        if (!empty($filters['bank_account_id'])) {
+        if (! empty($filters['bank_account_id'])) {
             $query->where('bank_account_id', (int) $filters['bank_account_id']);
         }
 
-        if (!empty($filters['type']) && in_array($filters['type'], ['income', 'expense'], true)) {
+        if (! empty($filters['type']) && in_array($filters['type'], ['income', 'expense'], true)) {
             $query->where('type', $filters['type']);
         }
 
-        if (!empty($filters['from_date'])) {
+        if (! empty($filters['from_date'])) {
             $query->whereDate('transaction_date', '>=', $filters['from_date']);
         }
 
-        if (!empty($filters['to_date'])) {
+        if (! empty($filters['to_date'])) {
             $query->whereDate('transaction_date', '<=', $filters['to_date']);
         }
     }
@@ -186,14 +193,103 @@ class TransactionRepository extends BaseRepository
             ->get();
     }
 
-    public function findDetail(int $id): ?Transaction
+    public function findDetail(int $id, ?int $clubId = null): ?Transaction
     {
-        return $this->model
+        $query = $this->model
             ->with([
                 'bankAccount:id,account_number,account_name,bank_id',
                 'bankAccount.bank:id,code,name,short_name,logo',
                 'webhookConfig:id,type',
-            ])
+            ]);
+
+        if ($clubId !== null) {
+            $query->where('club_id', $clubId);
+        }
+
+        return $query->find($id);
+    }
+
+    public function findForClub(int $id, int $clubId): ?Transaction
+    {
+        return $this->model
+            ->newQuery()
+            ->where('club_id', $clubId)
             ->find($id);
+    }
+
+    public function lockByIdForClub(int $id, int $clubId): Transaction
+    {
+        return $this->model
+            ->newQuery()
+            ->where('club_id', $clubId)
+            ->lockForUpdate()
+            ->findOrFail($id);
+    }
+
+    public function findForContributionPayment(
+        int $id,
+        int $clubId,
+        string $paidBy,
+        ?int $ignoreContributionId = null,
+    ): ?Transaction {
+        $source = $paidBy === 'bank'
+            ? Transaction::SOURCE_WEBHOOK
+            : Transaction::SOURCE_CASH;
+
+        $transaction = $this->model
+            ->newQuery()
+            ->whereKey($id)
+            ->where('club_id', $clubId)
+            ->where('type', Transaction::TYPE_INCOME)
+            ->where('source', $source)
+            ->where('is_active', true)
+            ->lockForUpdate()
+            ->first();
+
+        if (! $transaction || $this->isReferenced($id, $ignoreContributionId)) {
+            return null;
+        }
+
+        return $transaction;
+    }
+
+    public function isReferenced(int $id, ?int $ignoreContributionId = null): bool
+    {
+        $monthlyContributionQuery = DB::table('monthly_contributions')
+            ->where('transaction_id', $id)
+            ->whereNull('deleted_at');
+
+        if ($ignoreContributionId !== null) {
+            $monthlyContributionQuery->where('id', '!=', $ignoreContributionId);
+        }
+
+        if ($monthlyContributionQuery->exists()) {
+            return true;
+        }
+
+        return DB::table('exchange_sessions')
+            ->where('transaction_id', $id)
+            ->whereNull('deleted_at')
+            ->exists()
+            || DB::table('exchange_session_players')
+                ->where('transaction_id', $id)
+                ->whereNull('deleted_at')
+                ->exists();
+    }
+
+    public function deactivateAndDelete(Transaction $transaction): void
+    {
+        $transaction->is_active = false;
+        $transaction->save();
+        $transaction->delete();
+    }
+
+    public function loadDetailRelations(Transaction $transaction): Transaction
+    {
+        return $transaction->load([
+            'bankAccount:id,account_number,account_name,bank_id',
+            'bankAccount.bank:id,code,name,short_name,logo',
+            'webhookConfig:id,type',
+        ]);
     }
 }

@@ -2,162 +2,204 @@
 
 namespace App\Http\Middleware;
 
-use App\Domains\Bank\Models\BankAccount;
 use App\Domains\Club\Models\Club;
-use App\Domains\Club\Models\ClubInvite;
-use App\Domains\Club\Models\ClubMember;
-use App\Domains\ExchangeSession\Models\ExchangeSession;
-use App\Domains\FundPeriod\Models\FundPeriod;
-use App\Domains\MemberPaymentCode\Models\MemberPaymentCode;
-use App\Domains\MonthlyContribution\Models\MonthlyContribution;
-use App\Domains\PlayingSchedule\Models\PlayingSchedule;
-use App\Domains\Transaction\Models\Transaction;
-use App\Domains\WebhookConfig\Models\WebhookConfig;
+use App\Domains\User\Models\User;
 use App\Exceptions\ApiException;
+use App\Services\Authorization\PermissionService;
 use Closure;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-/** Resolve the request scope, then check the permission in that exact scope. */
+/** Resolve the club context, then check permission in that club. */
 class CheckClubPermission
 {
-    private const RESOURCE_MODELS = [
-        'bank_account' => BankAccount::class,
-        'club_invite' => ClubInvite::class,
-        'club_member' => ClubMember::class,
-        'exchange_session' => ExchangeSession::class,
-        'fund_period' => FundPeriod::class,
-        'member_payment_code' => MemberPaymentCode::class,
-        'monthly_contribution' => MonthlyContribution::class,
-        'playing_schedule' => PlayingSchedule::class,
-        'transaction' => Transaction::class,
-        'webhook_config' => WebhookConfig::class,
-    ];
+    public function __construct(
+        private PermissionService $permissionService,
+    ) {}
 
     public function handle(Request $request, Closure $next, string $module, string $action): Response
     {
+        /** @var User|null $user */
         $user = JWTAuth::parseToken()->authenticate();
 
         if (! $user) {
             throw new ApiException(__('exception.unauthorized'), 401);
         }
 
-        $club = $this->resolveClub($request, $module);
-        $clubId = $club?->id;
+        [$clubId, $clubSlug] = $this->resolveClubIdentifiers($request, $module);
+        $club = $this->resolveClub($clubId, $clubSlug);
+        $clubId = (int) $club->id;
+        $clubSlug = $clubSlug ?? $this->resolveCanonicalSlug($club);
 
-        // Write operations on club-owned resources must always name a club.
-        if (! $request->isMethod('GET') && $clubId === null) {
-            throw new ApiException(__('exception.forbidden_action'), 403);
-        }
-
-        if (! $user->hasPermission($module, $action, $clubId)) {
+        if (! $this->permissionService->hasPermission($user, $module, $action, $clubId)) {
             throw new ApiException(
-                $clubId === null ? __('exception.forbidden_action') : __('exception.no_club_permission'),
+                __('exception.no_club_permission'),
                 403,
-                $clubId === null ? '' : 'NO_CLUB_PERMISSION',
+                'NO_CLUB_PERMISSION',
             );
         }
 
-        if ($club) {
-            $slug = $club->translations->first()?->slug;
-            $request->attributes->set('club', $club);
-            $request->attributes->set('club_id', $club->id);
-            $request->attributes->set('club_slug', $slug);
-            $request->merge(['club_id' => $club->id, 'club_slug' => $slug]);
+        $request->attributes->set('club', $club);
+        $request->attributes->set('club_id', $clubId);
+        $request->attributes->set('club_slug', $clubSlug);
+        $request->merge(['club_id' => $clubId, 'club_slug' => $clubSlug]);
 
-            // Backward-compatible controller/service arguments during route normalization.
-            $this->prependClubSlugRouteParameter($request, $slug);
-        }
+        // Backward-compatible controller/service arguments during route normalization.
+        $this->prependClubSlugRouteParameter($request, $clubSlug);
 
         return $next($request);
     }
 
-    private function resolveClub(Request $request, string $module): ?Club
+    /**
+     * Resolve club_id and club_slug from route params, query params, or request body.
+     *
+     * @return array{0: int|null, 1: string|null}
+     */
+    private function resolveClubIdentifiers(Request $request, string $module): array
     {
+        $clubIds = [
+            $request->route('club_id'),
+            $request->route('clubId'),
+            $request->query('club_id'),
+            $request->query('clubId'),
+            $request->request->get('club_id'),
+            $request->request->get('clubId'),
+            $request->json('club_id'),
+            $request->json('clubId'),
+        ];
+
+        $clubSlugs = [
+            $request->route('club_slug'),
+            $request->route('clubSlug'),
+            $request->query('club_slug'),
+            $request->query('clubSlug'),
+            $request->request->get('club_slug'),
+            $request->request->get('clubSlug'),
+            $request->json('club_slug'),
+            $request->json('clubSlug'),
+        ];
+
         if ($module === 'club') {
-            if ($request->route('id')) {
-                return $this->findClub((int) $request->route('id'));
-            }
-
-            if ($slug = $request->route('slug')) {
-                $request->merge(['club_slug' => $slug]);
-            }
+            $clubIds[] = $request->route('id');
+            $clubSlugs[] = $request->route('slug');
         }
 
-        if ($resource = $this->resolveResource($request, $module)) {
-            return $this->findClub((int) $resource->club_id);
+        $clubId = $this->normalizeClubId($clubIds);
+        $clubSlug = $this->normalizeClubSlug($clubSlugs);
+
+        if ($clubId === null && $clubSlug === null) {
+            throw new ApiException(
+                __('exception.club_context_required'),
+                422,
+                'CLUB_CONTEXT_REQUIRED',
+            );
         }
 
-        // Sub-resources inherit scope from their parent resource.
-        if ($request->route('sessionId')) {
-            $session = ExchangeSession::query()->find($request->route('sessionId'));
-            return $session ? $this->findClub((int) $session->club_id) : null;
-        }
-
-        if ($request->route('contributionId')) {
-            $contribution = MonthlyContribution::query()->find($request->route('contributionId'));
-            return $contribution ? $this->findClub((int) $contribution->club_id) : null;
-        }
-
-        $clubId = $request->input('club_id');
-        $clubSlug = $request->input('club_slug') ?? $request->input('clubSlug');
-
-        if ($clubId && $clubSlug) {
-            $club = $this->findClub((int) $clubId);
-            if (! $club->translations->contains('slug', $clubSlug)) {
-                throw new ApiException(__('domains/club.not_found'), 404, 'CLUB_NOT_FOUND');
-            }
-            return $club;
-        }
-
-        if ($clubId) {
-            return $this->findClub((int) $clubId);
-        }
-
-        if ($clubSlug) {
-            $club = Club::query()
-                ->with('translations')
-                ->whereHas('translations', fn($query) => $query->where('slug', $clubSlug))
-                ->first();
-
-            if (! $club) {
-                throw new ApiException(__('domains/club.not_found'), 404, 'CLUB_NOT_FOUND');
-            }
-
-            return $club;
-        }
-
-        return null;
+        return [$clubId, $clubSlug];
     }
 
-    private function resolveResource(Request $request, string $module): ?Model
+    /** @param array<int, mixed> $values */
+    private function normalizeClubId(array $values): ?int
     {
-        $model = self::RESOURCE_MODELS[$module] ?? null;
-        $id = $request->route('memberId') ?? $request->route('id');
+        $values = array_values(array_filter(
+            $values,
+            fn ($value) => $value !== null && $value !== '',
+        ));
 
-        if (! $model || ! $id) {
+        if ($values === []) {
             return null;
         }
 
-        $resource = $model::query()->find($id);
-        if (! $resource) {
-            throw new ApiException(__('exception.not_found'), 404);
+        foreach ($values as $value) {
+            if (filter_var($value, FILTER_VALIDATE_INT) === false || (int) $value <= 0) {
+                throw new ApiException(
+                    __('exception.club_id_invalid'),
+                    422,
+                    'CLUB_ID_INVALID',
+                );
+            }
         }
 
-        return $resource;
+        $clubIds = array_values(array_unique(array_map('intval', $values)));
+
+        if (count($clubIds) > 1) {
+            $this->throwClubContextMismatch();
+        }
+
+        return $clubIds[0];
     }
 
-    private function findClub(int $clubId): Club
+    /** @param array<int, mixed> $values */
+    private function normalizeClubSlug(array $values): ?string
     {
-        $club = Club::query()->with('translations')->find($clubId);
+        $clubSlugs = [];
+
+        foreach ($values as $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            if (! is_string($value) || trim($value) === '') {
+                $this->throwClubContextMismatch();
+            }
+
+            $clubSlugs[] = trim($value);
+        }
+
+        $clubSlugs = array_values(array_unique($clubSlugs));
+
+        if (count($clubSlugs) > 1) {
+            $this->throwClubContextMismatch();
+        }
+
+        return $clubSlugs[0] ?? null;
+    }
+
+    private function resolveClub(?int $clubId, ?string $clubSlug): Club
+    {
+        $query = Club::query()->with('translations');
+
+        $club = $clubId !== null
+            ? $query->find($clubId)
+            : $query
+                ->whereHas(
+                    'translations',
+                    fn ($translationQuery) => $translationQuery->where('slug', $clubSlug),
+                )
+                ->first();
 
         if (! $club) {
             throw new ApiException(__('domains/club.not_found'), 404, 'CLUB_NOT_FOUND');
         }
 
+        if ($clubSlug !== null && ! $club->translations->contains('slug', $clubSlug)) {
+            $this->throwClubContextMismatch();
+        }
+
         return $club;
+    }
+
+    private function resolveCanonicalSlug(Club $club): string
+    {
+        $clubSlug = $club->translations
+            ->firstWhere('locale', app()->getLocale())?->slug
+            ?? $club->translations->first()?->slug;
+
+        if (! is_string($clubSlug) || $clubSlug === '') {
+            throw new ApiException(__('domains/club.not_found'), 404, 'CLUB_NOT_FOUND');
+        }
+
+        return $clubSlug;
+    }
+
+    private function throwClubContextMismatch(): never
+    {
+        throw new ApiException(
+            __('exception.club_context_mismatch'),
+            422,
+            'CLUB_CONTEXT_MISMATCH',
+        );
     }
 
     private function prependClubSlugRouteParameter(

@@ -19,4 +19,5 @@ return [
     'contribution_not_found' => 'Monthly contribution not found.',
     'forbidden' => 'You do not have permission to retrieve the payment code.',
     'already_paid' => 'You have already paid for this month.',
+    "qr_bank_not_configured" => "The bank is not configured for QR code generation."
 ];

@@ -29,5 +29,8 @@ return [
 
     // app/Middleware/CheckClubPermission
     'no_club_permission' => 'Bạn không có quyền truy cập hoặc thực hiện hành động này trên câu lạc bộ.',
-    'club_not_found' => 'Club không tồn tại.'
+    'club_not_found' => 'Club không tồn tại.',
+    'club_context_required' => 'Cần truyền club_id hoặc club_slug.',
+    'club_context_mismatch' => 'club_id và club_slug không cùng xác định một câu lạc bộ.',
+    'club_id_invalid' => 'club_id phải là một số nguyên dương.',
 ];

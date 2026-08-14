@@ -11,6 +11,9 @@ return [
     'status_toggled' => 'Đã cập nhật trạng thái khoản đóng quỹ.',
     'invalid_gender' => 'Người dùng chưa chọn giới tính.',
     'already_exists' => 'Thành viên đã có khoản đóng góp cho kỳ này.',
+    'payment_method_required' => 'Vui lòng chọn hình thức thanh toán.',
+    'transaction_required' => 'Khoản đóng quỹ đã thanh toán phải được gắn với một giao dịch.',
+    'invalid_payment_transaction' => 'Giao dịch không hợp lệ với CLB hoặc hình thức thanh toán đã chọn.',
 
     'attributes' => [
         'club_id'        => 'CLB',

@@ -24,5 +24,8 @@ return [
 
     // app/Middleware/CheckClubPermission
     'no_club_permission' => 'You do not have permission to access or perform this action on the club.',
-    'club_not_found' => 'Club not found.'
+    'club_not_found' => 'Club not found.',
+    'club_context_required' => 'Either club_id or club_slug is required.',
+    'club_context_mismatch' => 'The provided club_id and club_slug do not identify the same club.',
+    'club_id_invalid' => 'The club_id field must be a positive integer.',
 ];

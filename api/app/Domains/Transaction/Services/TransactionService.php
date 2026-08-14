@@ -10,7 +10,6 @@ use App\Domains\WebhookConfig\Models\WebhookConfig;
 use App\Exceptions\ApiException;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 
 class TransactionService extends BaseService
 {
@@ -43,9 +42,9 @@ class TransactionService extends BaseService
     // -------------------------------------------------------------------------
     // Detail
     // -------------------------------------------------------------------------
-    public function findDetail(int $id): Transaction
+    public function findDetail(int $id, ?int $clubId = null): Transaction
     {
-        $data = $this->repository->findDetail($id);
+        $data = $this->repository->findDetail($id, $clubId);
 
         if (! $data) {
             throw new ApiException(__($this->notFoundMessage), 404);
@@ -154,36 +153,33 @@ class TransactionService extends BaseService
 
     public function createManual(array $data): Transaction
     {
-        return DB::transaction(function () use ($data) {
+        return $this->clubFundService->recordTransaction([
+            'club_id' => $data['club_id'],
+            'bank_account_id' => $data['bank_account_id'] ?? null,
+            'webhook_config_id' => null,
 
-            return $this->clubFundService->recordTransaction([
-                'club_id' => $data['club_id'],
-                'bank_account_id' => $data['bank_account_id'] ?? null,
-                'webhook_config_id' => null,
+            'source' => $data['source'] ?? Transaction::SOURCE_MANUAL,
+            'type' => Transaction::TYPE_INCOME,
 
-                'source' => $data['source'] ?? 'manual',
-                'type' => $data['type'] ?? 'income',
+            'amount' => $data['amount'],
+            'description' => $data['description'] ?? null,
+            'reference_code' => $data['reference_code'] ?? null,
 
-                'amount' => $data['amount'],
-                'description' => $data['description'] ?? null,
-                'reference_code' => $data['reference_code'] ?? null,
+            'sender_name' => $data['sender_name'] ?? null,
+            'sender_account' => $data['sender_account'] ?? null,
 
-                'sender_name' => $data['sender_name'] ?? null,
-                'sender_account' => $data['sender_account'] ?? null,
+            'transaction_date' => ! empty($data['transaction_date'])
+                ? Carbon::parse($data['transaction_date'])
+                : now(),
 
-                'transaction_date' => ! empty($data['transaction_date'])
-                    ? Carbon::parse($data['transaction_date'])
-                    : now(),
-
-                'sort_order' => 0,
-                'is_active' => true,
-            ]);
-        });
+            'sort_order' => 0,
+            'is_active' => true,
+        ]);
     }
 
     public function create(array $data): Transaction
     {
-        // API manual đi qua cùng một luồng cập nhật quỹ.
+        // Thu thủ công/cash đi qua cùng một luồng cập nhật quỹ.
         $data['type'] = 'income';
 
         return $this->createManual($data);
@@ -193,16 +189,75 @@ class TransactionService extends BaseService
     // Update
     // -------------------------------------------------------------------------
 
-    public function updateDescription(int $id, array $data): Transaction
+    public function updateForClub(int $id, int $clubId, array $data): Transaction
     {
-        $transaction = $this->find($id);
+        $transaction = $this->repository->findForClub($id, $clubId);
 
-        $transaction->description = $data['description'] ?? $transaction->description;
+        if (! $transaction) {
+            throw new ApiException(__($this->notFoundMessage), 404);
+        }
 
-        $transaction->save();
+        if ($transaction->source === Transaction::SOURCE_WEBHOOK) {
+            if (array_diff_key($data, ['description' => true]) !== []) {
+                throw new ApiException(
+                    __('domains/transaction.financial_fields_immutable'),
+                    422,
+                    'WEBHOOK_TRANSACTION_IMMUTABLE',
+                );
+            }
 
-        return $transaction->fresh([
-            'bankAccount:id,account_number,account_name',
-        ]);
+            return $this->repository->loadDetailRelations(
+                $this->repository->update($transaction, $data),
+            );
+        }
+
+        if (! in_array($transaction->source, [Transaction::SOURCE_CASH, Transaction::SOURCE_MANUAL], true)) {
+            throw new ApiException(
+                __('domains/transaction.financial_fields_immutable'),
+                422,
+                'TRANSACTION_IMMUTABLE',
+            );
+        }
+
+        unset($data['source'], $data['type']);
+
+        return $this->repository->loadDetailRelations(
+            $this->clubFundService->updateManagedTransaction($id, $clubId, $data),
+        );
+    }
+
+    public function deleteForClub(int $id, int $clubId): void
+    {
+        $transaction = $this->repository->findForClub($id, $clubId);
+
+        if (! $transaction) {
+            throw new ApiException(__($this->notFoundMessage), 404);
+        }
+
+        if ($transaction->source === Transaction::SOURCE_WEBHOOK) {
+            throw new ApiException(
+                __('domains/transaction.webhook_delete_forbidden'),
+                422,
+                'WEBHOOK_TRANSACTION_DELETE_FORBIDDEN',
+            );
+        }
+
+        if (! in_array($transaction->source, [Transaction::SOURCE_CASH, Transaction::SOURCE_MANUAL], true)) {
+            throw new ApiException(
+                __('domains/transaction.financial_fields_immutable'),
+                422,
+                'TRANSACTION_IMMUTABLE',
+            );
+        }
+
+        if ($this->repository->isReferenced($id)) {
+            throw new ApiException(
+                __('domains/transaction.in_use'),
+                422,
+                'TRANSACTION_IN_USE',
+            );
+        }
+
+        $this->clubFundService->deleteManagedTransaction($id, $clubId);
     }
 }

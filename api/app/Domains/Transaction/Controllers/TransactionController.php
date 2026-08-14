@@ -9,7 +9,7 @@ use App\Domains\Transaction\Requests\UpdateTransactionRequest;
 use App\Domains\Transaction\Resources\TransactionResource;
 use App\Domains\Transaction\Services\TransactionService;
 use Illuminate\Http\JsonResponse;
-
+use Illuminate\Http\Request;
 
 class TransactionController extends BaseController
 {
@@ -34,13 +34,16 @@ class TransactionController extends BaseController
     /**
      * GET /api/v1/transactions/{id}
      */
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
             __('domains/transaction.detail'),
             new TransactionResource(
-                $this->service->findDetail($id)
+                $this->service->findDetail(
+                    $id,
+                    (int) $request->attributes->get('club_id'),
+                )
             ),
         );
     }
@@ -48,11 +51,11 @@ class TransactionController extends BaseController
     /**
      * GET /api/v1/transactions/select
      */
-
     public function select(FilterTransactionRequest $request): JsonResponse
     {
         $filters = $request->validated();
-        $filters['club_id'] =  $request->attributes->get('club_id');
+        $filters['club_id'] = $request->attributes->get('club_id');
+
         return $this->responseCommon(
             true,
             __('domains/transaction.list'),
@@ -76,15 +79,26 @@ class TransactionController extends BaseController
         );
     }
 
-    /**
-     * PATCH /api/v1/transactions/{id} — chỉ sửa description (lý do chi).
-     */
-    public function update(UpdateTransactionRequest $request,  int $id): JsonResponse
+    public function update(UpdateTransactionRequest $request, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
             __('domains/transaction.updated'),
-            new TransactionResource($this->service->updateDescription($id, $request->validated())),
+            new TransactionResource($this->service->updateForClub(
+                $id,
+                (int) $request->attributes->get('club_id'),
+                $request->validated(),
+            )),
         );
+    }
+
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $this->service->deleteForClub(
+            $id,
+            (int) $request->attributes->get('club_id'),
+        );
+
+        return $this->responseCommon(true, __('domains/transaction.deleted'));
     }
 }

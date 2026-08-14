@@ -3,6 +3,7 @@
 namespace App\Domains\Transaction\Requests;
 
 use App\Base\BaseRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Tạo Transaction income thủ công (thu giao lưu, đối soát tay).
@@ -15,18 +16,27 @@ class StoreTransactionRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'bank_account_id' => ['nullable', 'integer', 'exists:bank_accounts,id'],
+            'bank_account_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('bank_accounts', 'id')->where(
+                    fn ($query) => $query->where(
+                        'club_id',
+                        $this->attributes->get('club_id'),
+                    ),
+                ),
+            ],
 
-            'type'=> 'required|in:income,expense',
+            'type' => ['required', 'in:income'],
 
-            'source'        => ['nullable', 'in:manual,cash'],
+            'source' => ['nullable', 'in:manual,cash'],
 
-            'amount'         => ['required', 'numeric', 'min:0'],
+            'amount' => ['required', 'numeric', 'min:0'],
 
-            'description'     => ['nullable', 'string', 'max:1000'],
-            'reference_code'  => ['nullable', 'string', 'max:255'],
-            'sender_name'     => ['nullable', 'string', 'max:255'],
-            'sender_account'  => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'reference_code' => ['nullable', 'string', 'max:255'],
+            'sender_name' => ['nullable', 'string', 'max:255'],
+            'sender_account' => ['nullable', 'string', 'max:255'],
 
             'transaction_date' => ['nullable', 'date'],
         ];
@@ -37,12 +47,12 @@ class StoreTransactionRequest extends BaseRequest
         return [
             'bank_account_id' => __('domains/transaction.attributes.bank_account_id'),
             'type' => __('domains/transaction.attributes.type'),
-            'source'          => __('domains/transaction.attributes.source'),
-            'amount'          => __('domains/transaction.attributes.amount'),
-            'description'     => __('domains/transaction.attributes.description'),
-            'reference_code'  => __('domains/transaction.attributes.reference_code'),
-            'sender_name'     => __('domains/transaction.attributes.sender_name'),
-            'sender_account'  => __('domains/transaction.attributes.sender_account'),
+            'source' => __('domains/transaction.attributes.source'),
+            'amount' => __('domains/transaction.attributes.amount'),
+            'description' => __('domains/transaction.attributes.description'),
+            'reference_code' => __('domains/transaction.attributes.reference_code'),
+            'sender_name' => __('domains/transaction.attributes.sender_name'),
+            'sender_account' => __('domains/transaction.attributes.sender_account'),
             'transaction_date' => __('domains/transaction.attributes.transaction_date'),
         ];
     }

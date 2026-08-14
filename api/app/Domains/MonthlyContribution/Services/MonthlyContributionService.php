@@ -9,6 +9,7 @@ use App\Domains\FundPeriod\Repositories\FundPeriodRepository;
 use App\Domains\FundPeriod\Services\FundPeriodStateGuard;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\MonthlyContribution\Repositories\MonthlyContributionRepository;
+use App\Domains\Transaction\Repositories\TransactionRepository;
 use App\Domains\User\Repositories\UserRepository;
 use App\Exceptions\ApiException;
 use Illuminate\Contracts\Pagination\CursorPaginator;
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\DB;
 class MonthlyContributionService extends BaseService
 {
     protected string $notFoundMessage =
-    'domains/monthly_contribution.not_found';
+        'domains/monthly_contribution.not_found';
 
     protected object $userRepository;
 
@@ -30,6 +31,7 @@ class MonthlyContributionService extends BaseService
         UserRepository $userRepository,
         FundPeriodRepository $fundPeriodRepository,
         protected FundPeriodStateGuard $periodStateGuard,
+        protected TransactionRepository $transactionRepository,
     ) {
         parent::__construct($repository);
 
@@ -166,6 +168,12 @@ class MonthlyContributionService extends BaseService
                 $period
             );
 
+            $data = $this->normalizePaymentData(
+                $data,
+                (int) $data['club_id'],
+                null,
+            );
+
             return $this->repository->create($data);
         });
     }
@@ -199,12 +207,12 @@ class MonthlyContributionService extends BaseService
         }
 
         return $this->create([
-            'club_id'    => $member->club_id,
-            'user_id'    => $member->user_id,
-            'period_id'  => $period->id,
-            'status'     => 'pending',
+            'club_id' => $member->club_id,
+            'user_id' => $member->user_id,
+            'period_id' => $period->id,
+            'status' => 'pending',
             'sort_order' => 0,
-            'is_active'  => true,
+            'is_active' => true,
         ]);
     }
 
@@ -320,9 +328,25 @@ class MonthlyContributionService extends BaseService
             // Không cho client thay đổi club.
             unset($data['club_id']);
 
+            $data = $this->normalizePaymentData(
+                [
+                    'status' => $data['status'] ?? $contribution->status,
+                    'paid_by' => array_key_exists('paid_by', $data)
+                        ? $data['paid_by']
+                        : $contribution->paid_by,
+                    'transaction_id' => array_key_exists('transaction_id', $data)
+                        ? $data['transaction_id']
+                        : $contribution->transaction_id,
+                    'payment_date' => $data['payment_date'] ?? $contribution->payment_date,
+                    ...$data,
+                ],
+                (int) $contribution->club_id,
+                (int) $contribution->id,
+            );
+
             return $this->repository->update(
                 $contribution,
-                $data
+                $data,
             );
         });
     }
@@ -352,12 +376,9 @@ class MonthlyContributionService extends BaseService
             // Không toggle contribution của kỳ đã khóa.
             $this->periodStateGuard->ensureUnlocked($period);
 
-            $contribution->is_active =
-                ! $contribution->is_active;
-
-            $contribution->save();
-
-            return $contribution->fresh();
+            return $this->repository->update($contribution, [
+                'is_active' => ! $contribution->is_active,
+            ]);
         });
     }
 
@@ -426,7 +447,7 @@ class MonthlyContributionService extends BaseService
         $now = now();
 
         $rows = $members
-            ->map(fn($member) => [
+            ->map(fn ($member) => [
                 'club_id' => $period->club_id,
                 'user_id' => $member->user_id,
                 'period_id' => $period->id,
@@ -509,5 +530,62 @@ class MonthlyContributionService extends BaseService
             ],
             $ignoreId,
         );
+    }
+
+    private function normalizePaymentData(
+        array $data,
+        int $clubId,
+        ?int $contributionId,
+    ): array {
+        $status = $data['status'] ?? MonthlyContribution::STATUS_PENDING;
+
+        if ($status !== MonthlyContribution::STATUS_PAID) {
+            $data['transaction_id'] = null;
+            $data['paid_by'] = null;
+            $data['payment_date'] = null;
+
+            return $data;
+        }
+
+        $paidBy = $data['paid_by'] ?? null;
+        $transactionId = $data['transaction_id'] ?? null;
+
+        if (! in_array($paidBy, [MonthlyContribution::PAID_BY_BANK, MonthlyContribution::PAID_BY_CASH], true)) {
+            throw new ApiException(
+                __('domains/monthly_contribution.payment_method_required'),
+                422,
+                'PAYMENT_METHOD_REQUIRED',
+            );
+        }
+
+        if (! $transactionId) {
+            throw new ApiException(
+                __('domains/monthly_contribution.transaction_required'),
+                422,
+                'TRANSACTION_REQUIRED',
+            );
+        }
+
+        $transaction = $this->transactionRepository->findForContributionPayment(
+            (int) $transactionId,
+            $clubId,
+            $paidBy,
+            $contributionId,
+        );
+
+        if (! $transaction) {
+            throw new ApiException(
+                __('domains/monthly_contribution.invalid_payment_transaction'),
+                422,
+                'INVALID_PAYMENT_TRANSACTION',
+            );
+        }
+
+        $data['transaction_id'] = $transaction->id;
+        $data['payment_date'] = $data['payment_date']
+            ?? $transaction->transaction_date
+            ?? now();
+
+        return $data;
     }
 }

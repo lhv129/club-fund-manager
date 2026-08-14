@@ -33,4 +33,7 @@ return [
     'reordered' => 'Cập nhật thứ tự giao dịch thành công.',
 
     'not_found' => 'Không tìm thấy giao dịch.',
+    'financial_fields_immutable' => 'Giao dịch chuyển khoản chỉ được phép chỉnh sửa mô tả.',
+    'webhook_delete_forbidden' => 'Không thể xóa giao dịch chuyển khoản do webhook tạo.',
+    'in_use' => 'Giao dịch đang được dùng để đối soát và không thể xóa.',
 ];

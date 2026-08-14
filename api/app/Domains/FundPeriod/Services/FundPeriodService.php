@@ -125,7 +125,10 @@ class FundPeriodService extends BaseService
         int $id,
         ?int $clubId = null,
     ): FundPeriod {
-        $fundPeriod = $this->repository->findWithTrashed($id);
+        $fundPeriod = $this->repository->findByScopeWithTrashed(
+            id: $id,
+            clubId: $clubId,
+        );
 
         if (! $fundPeriod) {
             throw new ApiException(
@@ -134,19 +137,8 @@ class FundPeriodService extends BaseService
             );
         }
 
-        if (
-            $clubId !== null &&
-            (int) $fundPeriod->club_id !== $clubId
-        ) {
-            throw new ApiException(
-                __($this->notFoundMessage),
-                404,
-            );
-        }
-
         return $fundPeriod;
     }
-
     // =========================================================================
     // CREATE
     // =========================================================================

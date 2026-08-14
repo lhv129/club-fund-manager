@@ -37,8 +37,7 @@ Route::middleware('auth.jwt')->group(function () {
         // ACTIONS
         // ============================================================
 
-        Route::post('/{id}/restore', [FundPeriodController::class, 'restore'])
-            ->middleware('perm.club:fund_period,update');
+        Route::post('/{id}/restore', [FundPeriodController::class, 'restore'])->middleware('perm.club:fund_period,update');
 
         Route::post('/{id}/close', [FundPeriodController::class, 'close'])
             ->middleware('perm.club:fund_period,update');

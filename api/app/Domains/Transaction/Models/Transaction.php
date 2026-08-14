@@ -18,6 +18,16 @@ class Transaction extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const SOURCE_WEBHOOK = 'webhook';
+
+    public const SOURCE_CASH = 'cash';
+
+    public const SOURCE_MANUAL = 'manual';
+
+    public const TYPE_INCOME = 'income';
+
+    public const TYPE_EXPENSE = 'expense';
+
     protected $fillable = [
         'club_id',
         'user_id',              // nullable - xác định sau khi match payment code
