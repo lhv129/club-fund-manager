@@ -590,7 +590,6 @@
     "status_cancelled": "Cancelled",
     "paid_by_bank": "Bank Transfer",
     "paid_by_cash": "Cash",
-    "paid_by_manual": "Manual",
     "detailTitle": "Monthly contribution details",
     "detailNotFound": "Monthly contribution not found.",
     "backToList": "Back to list",

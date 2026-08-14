@@ -17,7 +17,7 @@ import type { User } from "@/domains/user/types";
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export type ContributionStatus = "pending" | "paid" | "cancelled";
-export type ContributionPaidBy = "bank" | "cash" | "manual";
+export type ContributionPaidBy = "bank" | "cash";
 
 // ─── Main entity ──────────────────────────────────────────────────────────────
 

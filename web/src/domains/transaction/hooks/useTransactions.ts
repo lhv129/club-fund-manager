@@ -45,7 +45,8 @@ function getServerError(err: unknown): ServerErrorResponse | null {
 }
 
 function buildPayload(
-    values: Record<string, string>
+    values: Record<string, string>,
+    creating = false
 ): FormData {
     const formData = new FormData();
 
@@ -56,13 +57,17 @@ function buildPayload(
         );
     }
 
-    formData.append("type", values.type || "income");
+    if (creating) {
+        formData.append("type", "income");
+    }
 
     if (values.source) {
         formData.append("source", values.source);
     }
 
-    formData.append("amount", (values.amount ?? "").replace(/,/g, ""));
+    if (values.amount) {
+        formData.append("amount", values.amount.replace(/,/g, ""));
+    }
 
     if (values.description) {
         formData.append("description", values.description);
@@ -133,7 +138,7 @@ export function useTransactions(
     ): Promise<SubmitResult> => {
         try {
             const raw = await createMutation.mutateAsync(
-                buildPayload(values)
+                buildPayload(values, true)
             );
 
             const res = raw as ApiResponse<Transaction>;

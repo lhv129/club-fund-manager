@@ -1,7 +1,7 @@
 // src/domains/transaction/types/index.ts
 
 export type TransactionType = "income" | "expense";
-export type TransactionSource = "manual" | "cash";
+export type TransactionSource = "webhook" | "manual" | "cash";
 
 export interface Transaction {
     id: number;
@@ -45,6 +45,7 @@ export interface Transaction {
 
 export interface TransactionSelect {
     id: number;
+    source?: TransactionSource;
     description: string | null;
     amount?: string;
     type?: TransactionType;

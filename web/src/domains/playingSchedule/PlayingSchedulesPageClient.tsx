@@ -82,7 +82,7 @@ export function PlayingSchedulesPageClient() {
         { key: "title", label: tp("titleField"), render: (row) => <span className="font-medium text-foreground">{getTranslatedTitle(row.translations, locale) || "—"}</span> },
         { key: "weekday", label: tp("weekday"), render: (row) => tp(`weekday_${row.weekday}`) },
         { key: "court", label: tp("courtName"), render: (row) => <div><p>{row.court_name}</p><p className="text-xs text-foreground-muted">{row.start_time} - {row.end_time}</p></div> },
-        { key: "is_active", label: t("status"), render: (row) => <ToggleSwitch checked={row.is_active} loading={schedules.togglingIds.has(row.id)} disabled={!canUpdate} onChange={() => schedules.handleToggleStatus(row.id)} /> },
+        { key: "is_active", label: t("isActive"), render: (row) => <ToggleSwitch checked={row.is_active} loading={schedules.togglingIds.has(row.id)} disabled={!canUpdate} onChange={() => schedules.handleToggleStatus(row.id)} /> },
     ];
 
     if (!club || !slug) return null;

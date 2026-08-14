@@ -333,10 +333,6 @@ export function MonthlyContributionsPageClient() {
             value: "cash",
             label: tm("paid_by_cash"),
         },
-        {
-            value: "manual",
-            label: tm("paid_by_manual"),
-        },
     ];
 
     const extraFilters = (
