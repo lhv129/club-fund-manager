@@ -31,7 +31,6 @@ import { useRouter } from "@/i18n/routing";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 
 import { useFundPeriodSelect } from "@/domains/fundPeriod/hooks/useFundPeriods";
-import { useTransactionSelect } from "@/domains/transaction/hooks/useTransactions";
 import { useClubMemberSelect } from "@/domains/members/hooks/useClubMembers";
 
 import {
@@ -204,14 +203,6 @@ export function MonthlyContributionsPageClient() {
     } = useFundPeriodSelect({ club_slug: slug });
 
     const {
-        data: transactions,
-        isLoading: isTransactionsLoading,
-    } = useTransactionSelect({
-        club_slug: slug,
-        type: "income",
-    });
-
-    const {
         data: members,
         isLoading: isMembersLoading,
     } = useClubMemberSelect({ club_slug: slug, status: "approved" });
@@ -283,13 +274,6 @@ export function MonthlyContributionsPageClient() {
             : String(member?.user_id),
     }));
 
-    const transactionOptions = transactions.map((transaction) => ({
-        value: String(transaction.id),
-        label: transaction.description
-            ? `${transaction.id} — ${transaction.description}`
-            : String(transaction.id),
-    }));
-
     const sortOptions = [
         {
             value: "created_at",
@@ -329,6 +313,13 @@ export function MonthlyContributionsPageClient() {
             value: "bank",
             label: tm("paid_by_bank"),
         },
+        {
+            value: "cash",
+            label: tm("paid_by_cash"),
+        },
+    ];
+
+    const cashPaidByOptions = [
         {
             value: "cash",
             label: tm("paid_by_cash"),
@@ -442,13 +433,6 @@ export function MonthlyContributionsPageClient() {
                 placeholder: t("chooseOption"),
             },
             {
-                name: "transaction_id",
-                label: "Transaction",
-                type: "select",
-                options: transactionOptions,
-                placeholder: t("chooseOption"),
-            },
-            {
                 name: "status",
                 label: tm("status"),
                 type: "select",
@@ -460,21 +444,20 @@ export function MonthlyContributionsPageClient() {
                 name: "paid_by",
                 label: tm("paidBy"),
                 type: "select",
-                options: paidByOptions,
+                options: cashPaidByOptions,
                 placeholder: t("chooseOption"),
             },
             {
                 name: "payment_date",
                 label: tm("paymentDate"),
-                type: "datepicker",
+                type: "datetime-local",
             },
         ],
         [
             memberOptions,
             periodOptions,
-            transactionOptions,
             statusOptions,
-            paidByOptions,
+            cashPaidByOptions,
             t,
             tm,
         ]
@@ -484,19 +467,15 @@ export function MonthlyContributionsPageClient() {
         ? {
             user_id: String(selected.user_id),
             period_id: String(selected.period_id),
-            transaction_id: selected.transaction_id
-                ? String(selected.transaction_id)
-                : "",
             status: selected.status,
-            paid_by: selected.paid_by ?? "",
+            paid_by: selected.paid_by === "cash" ? "cash" : "",
             payment_date: selected.payment_date
-                ? selected.payment_date.slice(0, 10)
+                ? selected.payment_date.slice(0, 16)
                 : "",
         }
         : {
             user_id: "",
             period_id: "",
-            transaction_id: "",
             status: "pending",
             paid_by: "",
             payment_date: "",
@@ -641,8 +620,7 @@ export function MonthlyContributionsPageClient() {
                         loading={
                             isLoading ||
                             isMembersLoading ||
-                            isFundPeriodsLoading ||
-                            isTransactionsLoading
+                            isFundPeriodsLoading
                         }
                         onApply={handleApplyFilters}
                         onReset={handleReset}

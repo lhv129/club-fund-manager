@@ -31,6 +31,12 @@ class FundPeriodService extends BaseRepository<FundPeriod> {
         });
     }
 
+    override toggleStatus(id: number | string, clubSlug?: string): Promise<ApiResponse<FundPeriod>> {
+        return this.post<ApiResponse<FundPeriod>>(`/${this.resource}/${id}/toggle-status`, {
+            club_slug: clubSlug,
+        });
+    }
+
 }
 export const fundPeriodService = new FundPeriodService();
 export const getFundPeriodService = (_clubSlug?: string) => fundPeriodService;

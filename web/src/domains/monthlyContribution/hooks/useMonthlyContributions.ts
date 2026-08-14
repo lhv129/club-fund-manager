@@ -47,10 +47,6 @@ function buildPayload(values: Record<string, string>): FormData {
     formData.append("user_id", values.user_id ?? "");
     formData.append("period_id", values.period_id ?? "");
 
-    if (values.transaction_id) {
-        formData.append("transaction_id", values.transaction_id);
-    }
-
     formData.append("status", values.status || "pending");
 
     if (values.paid_by) {
@@ -93,7 +89,10 @@ export function useMonthlyContributions(
     const total = listData?.meta?.total ?? 0;
 
     const createMutation = useMutation({
-        mutationFn: (payload: FormData) => service.create(payload),
+        mutationFn: (payload: FormData) => {
+            if (clubSlug) payload.set("club_slug", clubSlug);
+            return service.create(payload);
+        },
     });
 
     const updateMutation = useMutation({
@@ -103,11 +102,14 @@ export function useMonthlyContributions(
         }: {
             id: number;
             payload: FormData;
-        }) => service.update(id, payload),
+        }) => {
+            if (clubSlug) payload.set("club_slug", clubSlug);
+            return service.update(id, payload);
+        },
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id: number) => service.destroy(id),
+        mutationFn: (id: number) => service.destroy(id, { club_slug: clubSlug }),
 
         onSuccess: (res, deletedId) => {
             if (!res.success) return;
@@ -270,7 +272,7 @@ export function useMonthlyContributionSelect(params?: Partial<MonthlyContributio
 export function useMonthlyContribution(id: number, clubSlug: string) {
     return useQuery({
         queryKey: ["monthly-contribution", clubSlug, id],
-        queryFn: () => getMonthlyContributionService().show(id),
+        queryFn: () => getMonthlyContributionService().show(id, clubSlug),
         enabled: Boolean(id && clubSlug),
     });
 }

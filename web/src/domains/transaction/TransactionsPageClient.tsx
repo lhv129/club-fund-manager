@@ -3,17 +3,16 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
 import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
-import { DeleteConfirmModal } from "@/components/shared/forms/DeleteConfirmModal";
-import { FormModal, type FormFieldDef } from "@/components/shared/forms/FormModal";
+import { FormModal, type FormFieldDef, type SubmitResult } from "@/components/shared/forms/FormModal";
 import { FilterBar, type AppliedFilters } from "@/components/shared/ui/FilterBar";
 import { DataTable } from "@/components/shared/ui/DataTable";
 import Select from "@/components/shared/ui/Select";
 import DatePicker from "@/components/shared/ui/DatePicker";
-import { Table, type ColumnDef } from "@/components/shared/ui/Table";
+import type { ColumnDef } from "@/components/shared/ui/Table";
 import { TableActions } from "@/components/shared/ui/TableActions";
 import { TableActionItem } from "@/components/shared/ui/TableActionItem";
 import { clubRoute, CLUB_SUBROUTES } from "@/constants";
@@ -35,9 +34,7 @@ export function TransactionsPageClient() {
     const router = useRouter();
     const { club, slug } = useClub();
     const { hasPermission, isSuperAdmin } = useAuth();
-    const canCreate = isSuperAdmin || hasPermission("transaction", "create", club?.id);
     const canUpdate = isSuperAdmin || hasPermission("transaction", "update", club?.id);
-    const canDelete = isSuperAdmin || hasPermission("transaction", "delete", club?.id);
 
     const { params, setPage, setLimit, updateMany, reset } = useListParams<TransactionFilters>({
         defaultFilters: { search: "", bank_account_id: undefined, type: undefined, is_active: undefined, from_date: undefined, to_date: undefined },
@@ -50,7 +47,6 @@ export function TransactionsPageClient() {
     const [draftFrom, setDraftFrom] = useState(params.from_date ?? "");
     const [draftTo, setDraftTo] = useState(params.to_date ?? "");
     const [selected, setSelected] = useState<Transaction | null>(null);
-    const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const transactions = useTransactions({ ...params, club_slug: slug });
     const bankAccounts = useQuery<PaginatedResponse<BankAccount>>({
@@ -62,41 +58,10 @@ export function TransactionsPageClient() {
         value: String(account.id),
         label: `${account.bank?.code ?? account.bank?.name ?? ""} · ${account.account_number} · ${account.account_name}`,
     }));
-    const fields: FormFieldDef[] = useMemo(() => {
-        if (selected?.source === "webhook") {
-            return [
-                { name: "description", label: t("description"), type: "textarea", placeholder: tt("descriptionPlaceholder") },
-            ];
-        }
-
-        const editableFields: FormFieldDef[] = [
-            { name: "bank_account_id", label: tt("bankAccount"), type: "select", options: bankOptions },
-            { name: "amount", label: tt("amount"), type: "currency", required: true, placeholder: "0" },
-            { name: "transaction_date", label: tt("transactionDate"), type: "datetime-local", required: true },
-            { name: "description", label: t("description"), type: "textarea", placeholder: tt("descriptionPlaceholder") },
-        ];
-
-        if (!selected) {
-            editableFields.splice(1, 0, {
-                name: "source",
-                label: tt("source"),
-                type: "select",
-                required: true,
-                options: [
-                    { value: "cash", label: tt("sourceCash") },
-                    { value: "manual", label: tt("sourceManual") },
-                ],
-            });
-        }
-
-        return editableFields;
-    }, [bankOptions, selected, t, tt]);
-    const initialValues = selected?.source === "webhook" ? {
-        description: selected.description ?? "",
-    } : selected ? {
-        bank_account_id: String(selected.bank_account_id ?? ""),
-        amount: Number(selected.amount).toLocaleString("en-US"), description: selected.description ?? "", transaction_date: selected.transaction_date ? selected.transaction_date.slice(0, 16) : "",
-    } : { bank_account_id: "", source: "manual", amount: "", description: "", transaction_date: "" };
+    const fields: FormFieldDef[] = useMemo(() => [
+        { name: "description", label: t("description"), type: "textarea", placeholder: tt("descriptionPlaceholder") },
+    ], [t, tt]);
+    const initialValues = { description: selected?.description ?? "" };
     const columns: ColumnDef<Transaction>[] = [
         { key: "date", label: tt("transactionDate"), render: (row) => <span className="whitespace-nowrap text-sm">{formatDateTime(row.transaction_date, locale)}</span> },
         { key: "type", label: tt("type"), render: (row) => <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${row.type === "income" ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"}`}>{tt(row.type)}</span> },
@@ -106,8 +71,9 @@ export function TransactionsPageClient() {
         { key: "reference", label: tt("referenceCode"), render: (row) => <span className="font-mono text-xs">{row.reference_code || "—"}</span> },
     ];
     if (!club || !slug) return null;
-    const submit = async (values: Record<string, string>) => {
-        const result = selected ? await transactions.handleEdit(selected.id, values) : await transactions.handleCreate(values);
+    const submit = async (values: Record<string, string>): Promise<SubmitResult> => {
+        if (!selected) return { success: false };
+        const result = await transactions.handleEdit(selected.id, values);
         if (!result) { setModalOpen(false); setSelected(null); }
         return result;
     };
@@ -119,11 +85,10 @@ export function TransactionsPageClient() {
     </>;
     return <div className="space-y-6">
         <Breadcrumb navItems={CLUB_NAV_ITEMS(slug)} homeHref={clubRoute(slug)} />
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h1 className="text-xl font-semibold text-foreground">{tt("title")}</h1><p className="mt-1 text-sm text-foreground-muted">{tt("totalCount", { count: transactions.total })}</p></div>{canCreate && <button onClick={() => { setSelected(null); setModalOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"><Plus className="h-4 w-4" />{tt("create")}</button>}</div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h1 className="text-xl font-semibold text-foreground">{tt("title")}</h1><p className="mt-1 text-sm text-foreground-muted">{tt("totalCount", { count: transactions.total })}</p></div></div>
         <FilterBar search={params.search} isActive={params.is_active} sortBy={params.sort_by} sortDir={params.sort_dir} sortOptions={[{ value: "transaction_date", label: tt("transactionDate") }, { value: "amount", label: tt("amount") }, { value: "balance", label: tt("balance") }, { value: "type", label: tt("type") }, { value: "sort_order", label: t("sortOrder") }, { value: "created_at", label: t("createdAt") }]} loading={transactions.isFetching} extraFilters={extraFilters} onApply={(filters: AppliedFilters) => updateMany({ ...filters, bank_account_id: draftBank, type: draftType, from_date: draftFrom || undefined, to_date: draftTo || undefined })} onReset={() => { setDraftBank(undefined); setDraftType(undefined); setDraftFrom(""); setDraftTo(""); reset(); }} />
-        <DataTable table={{ columns, data: transactions.data, loading: transactions.isLoading, fetching: transactions.isFetching, keyExtractor: (row) => row.id, emptyText: tt("notFound"), renderActions: (row) => <TableActions><TableActionItem icon={<Eye className="h-4 w-4" />} label={t("view")} onClick={() => router.push(`${clubRoute(slug, CLUB_SUBROUTES.transactions)}/${row.id}` as never)} />{canUpdate && <TableActionItem icon={<Pencil className="h-4 w-4" />} label={t("edit")} onClick={() => { setSelected(row); setModalOpen(true); }} />}{canDelete && row.source !== "webhook" && <TableActionItem icon={<Trash2 className="h-4 w-4" />} label={t("delete")} variant="danger" onClick={() => setDeleteTarget(row)} />}</TableActions> }} pagination={{ page: params.page, limit: params.limit, total: transactions.total, onPageChange: setPage, onLimitChange: setLimit }} />
-        <FormModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setSelected(null); }} onSubmit={submit} title={selected ? tt("edit") : tt("create")} fields={fields} initialValues={initialValues} isEdit={Boolean(selected)} submitting={selected ? transactions.isUpdating : transactions.isCreating} />
-        <DeleteConfirmModal isOpen={Boolean(deleteTarget)} title={t("deleteConfirmTitle")} description={t("deleteConfirmDesc")} message={tt("deleteConfirmMsg", { id: deleteTarget?.id ?? "" })} confirmText={t("delete")} cancelText={t("cancel")} onConfirm={() => { if (deleteTarget) transactions.handleDelete(deleteTarget.id); setDeleteTarget(null); }} onCancel={() => setDeleteTarget(null)} loading={transactions.isDeleting} />
+        <DataTable table={{ columns, data: transactions.data, loading: transactions.isLoading, fetching: transactions.isFetching, keyExtractor: (row) => row.id, emptyText: tt("notFound"), renderActions: (row) => <TableActions><TableActionItem icon={<Eye className="h-4 w-4" />} label={t("view")} onClick={() => router.push(`${clubRoute(slug, CLUB_SUBROUTES.transactions)}/${row.id}` as never)} />{canUpdate && <TableActionItem icon={<Pencil className="h-4 w-4" />} label={t("edit")} onClick={() => { setSelected(row); setModalOpen(true); }} />}</TableActions> }} pagination={{ page: params.page, limit: params.limit, total: transactions.total, onPageChange: setPage, onLimitChange: setLimit }} />
+        <FormModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setSelected(null); }} onSubmit={submit} title={tt("edit")} fields={fields} initialValues={initialValues} isEdit submitting={transactions.isUpdating} />
     </div>;
 }
 

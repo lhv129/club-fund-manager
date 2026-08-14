@@ -45,40 +45,11 @@ function getServerError(err: unknown): ServerErrorResponse | null {
 }
 
 function buildPayload(
-    values: Record<string, string>,
-    creating = false
+    values: Record<string, string>
 ): FormData {
     const formData = new FormData();
 
-    if (values.bank_account_id) {
-        formData.append(
-            "bank_account_id",
-            values.bank_account_id
-        );
-    }
-
-    if (creating) {
-        formData.append("type", "income");
-    }
-
-    if (values.source) {
-        formData.append("source", values.source);
-    }
-
-    if (values.amount) {
-        formData.append("amount", values.amount.replace(/,/g, ""));
-    }
-
-    if (values.description) {
-        formData.append("description", values.description);
-    }
-
-    if (values.transaction_date) {
-        formData.append(
-            "transaction_date",
-            values.transaction_date
-        );
-    }
+    formData.append("description", values.description ?? "");
 
     return formData;
 }
@@ -119,10 +90,6 @@ export function useTransactions(
     const total = listData?.meta?.total ?? 0;
     const selectData = selectResponse?.data ?? [];
 
-    const createMutation = useMutation({
-        mutationFn: (payload: FormData) => { if (clubSlug) payload.set("club_slug", clubSlug); return service.create(payload); },
-    });
-
     const updateMutation = useMutation({
         mutationFn: ({
             id,
@@ -132,46 +99,6 @@ export function useTransactions(
             payload: FormData;
         }) => { if (clubSlug) payload.set("club_slug", clubSlug); return service.update(id, payload); },
     });
-
-    const handleCreate = async (
-        values: Record<string, string>
-    ): Promise<SubmitResult> => {
-        try {
-            const raw = await createMutation.mutateAsync(
-                buildPayload(values, true)
-            );
-
-            const res = raw as ApiResponse<Transaction>;
-
-            if (!res.success) {
-                return {
-                    success: false,
-                    message: res.message,
-                    errors: res.errors,
-                };
-            }
-
-            await queryClient.invalidateQueries({
-                queryKey: ["transactions", clubSlug],
-            });
-
-            toast.success(res.message || t("saveSuccess"));
-
-            return;
-        } catch (error: unknown) {
-            const serverError = getServerError(error);
-
-            if (serverError) return serverError;
-
-            toast.error(
-                (error as Error)?.message || t("loadError")
-            );
-
-            return {
-                success: false,
-            };
-        }
-    };
 
     const handleEdit = async (
         id: number,
@@ -215,17 +142,6 @@ export function useTransactions(
         }
     };
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: number) => service.destroy(id, { club_slug: clubSlug }),
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ["transactions", clubSlug] });
-            toast.success(t("deleteSuccess"));
-        },
-        onError: (error: unknown) => {
-            toast.error((error as Error)?.message || t("loadError"));
-        },
-    });
-
     return {
         data,
         total,
@@ -235,13 +151,8 @@ export function useTransactions(
         selectData,
         isSelectLoading,
 
-        isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
-        isDeleting: deleteMutation.isPending,
-
-        handleCreate,
         handleEdit,
-        handleDelete: (id: number) => deleteMutation.mutate(id),
     };
 }
 

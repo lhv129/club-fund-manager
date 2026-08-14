@@ -130,7 +130,7 @@ export function useFundPeriods(
     } = useQuery({
         queryKey: ["fund-periods-select", clubSlug],
         queryFn: () =>
-            service.select() as Promise<ApiResponse<FundPeriod[]>>,
+            service.select({ club_slug: clubSlug }) as Promise<ApiResponse<FundPeriod[]>>,
         enabled: !!clubSlug,
     });
 
@@ -165,7 +165,7 @@ export function useFundPeriods(
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id: number) => service.destroy(id),
+        mutationFn: (id: number) => service.destroy(id, { club_slug: clubSlug }),
 
         onSuccess: (res, deletedId) => {
             if (!res.success) return;
@@ -205,7 +205,7 @@ export function useFundPeriods(
 
     const toggleMutation = useMutation({
         mutationFn: (id: number) =>
-            service.toggleStatus(id) as Promise<ApiResponse<FundPeriod>>,
+            service.toggleStatus(id, clubSlug) as Promise<ApiResponse<FundPeriod>>,
 
         onSuccess: (res, id) => {
             if (!res.success) return;

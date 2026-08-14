@@ -26,6 +26,15 @@ class MonthlyContributionServiceClient extends BaseRepository<MonthlyContributio
             { club_slug: clubSlug },
         );
     }
+
+    override show(
+        id: number | string,
+        clubSlug?: string,
+    ): Promise<import("@/types/api").ApiResponse<MonthlyContribution>> {
+        return this.get(`/${this.resource}/${id}`, {
+            club_slug: clubSlug,
+        });
+    }
 }
 
 export const monthlyContributionService = new MonthlyContributionServiceClient();
