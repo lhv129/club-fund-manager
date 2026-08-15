@@ -40,6 +40,10 @@ interface FilterBarProps {
     /** Slot cho filter riêng theo từng page (ví dụ: theo club, theo category...) */
     extraFilters?: React.ReactNode;
 
+    /** Class cho riêng vùng search khi page cần responsive khác mặc định. */
+    searchClassName?: string;
+    extraFiltersClassName?: string;
+
     className?: string;
 }
 
@@ -55,6 +59,8 @@ export function FilterBar({
     onApply,
     onReset,
     extraFilters,
+    searchClassName = "",
+    extraFiltersClassName = "",
     className = "",
 }: FilterBarProps) {
     const t = useTranslations("common");
@@ -103,7 +109,7 @@ export function FilterBar({
             className={`flex min-w-0 max-w-full flex-wrap items-end gap-2.5 overflow-visible bg-background border border-border rounded-2xl px-3 py-3.5 shadow-sm sm:px-4 ${className}`}
         >
             {/* Search input */}
-            <div className="flex w-full min-w-0 flex-1 flex-col gap-1 sm:min-w-56">
+            <div className={`flex w-full min-w-0 flex-1 flex-col gap-1 sm:w-auto sm:min-w-56 ${searchClassName}`}>
                 <span className="text-xs font-medium text-foreground-muted">
                     {t("search")}
                 </span>
@@ -121,11 +127,12 @@ export function FilterBar({
 
             {/* Status (is_active) */}
             {showStatusFilter && (
-                <div className="flex flex-col gap-1">
+                <div className="flex w-full flex-col gap-1 sm:w-auto">
                     <span className="text-xs font-medium text-foreground-muted">
                         {t("status")}
                     </span>
                     <SelectDropdown
+                        className="w-full sm:w-auto"
                         label={t("status")}
                         options={statusOptions}
                         value={draftIsActive === undefined ? "" : String(draftIsActive)}
@@ -138,11 +145,12 @@ export function FilterBar({
             )}
 
             {/* Sort by */}
-            <div className="flex flex-col gap-1">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
                 <span className="text-xs font-medium text-foreground-muted">
                     {t("sortBy")}
                 </span>
                 <SelectDropdown
+                    className="w-full sm:w-auto"
                     label={t("sortBy")}
                     options={sortSelectOptions}
                     value={draftSortBy ?? ""}
@@ -152,14 +160,14 @@ export function FilterBar({
             </div>
 
             {/* Order — component cũ (button + icon đảo asc/desc), chỉ đổi draft */}
-            <div className="flex flex-col gap-1">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
                 <span className="text-xs font-medium text-foreground-muted">
                     {t("sortDir")}
                 </span>
                 <button
                     type="button"
                     onClick={() => setDraftSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-                    className="h-10 flex items-center gap-1.5 px-3 rounded-xl border border-border bg-background text-sm text-foreground-muted hover:bg-background-subtle hover:text-foreground hover:border-border-strong transition-colors"
+                    className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 text-sm text-foreground-muted transition-colors hover:border-border-strong hover:bg-background-subtle hover:text-foreground sm:w-auto"
                 >
                     <ArrowUpDown className="w-3.5 h-3.5" />
                     {draftSortDir === "asc" ? t("sortAsc") : t("sortDesc")}
@@ -167,13 +175,17 @@ export function FilterBar({
             </div>
 
             {/* Extra filters riêng theo từng page */}
-            {extraFilters}
+            {extraFilters && (
+                <div className={`flex w-full flex-col gap-2.5 sm:contents ${extraFiltersClassName}`}>
+                    {extraFilters}
+                </div>
+            )}
 
             {/* Reset */}
             <button
                 type="button"
                 onClick={onReset}
-                className="h-10 flex items-center gap-1.5 px-3 rounded-xl border border-border text-sm font-medium text-foreground-muted hover:bg-background-subtle hover:text-foreground hover:border-border-strong transition-colors"
+                className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-border px-3 text-sm font-medium text-foreground-muted transition-colors hover:border-border-strong hover:bg-background-subtle hover:text-foreground sm:w-auto"
                 title={t("reset")}
             >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -185,7 +197,7 @@ export function FilterBar({
                 type="button"
                 onClick={handleApply}
                 disabled={loading}
-                className="h-10 flex items-center gap-1.5 px-4 rounded-xl bg-primary hover:bg-primary-hover
+                className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-4 hover:bg-primary-hover sm:w-auto
                     disabled:opacity-60 text-primary-foreground text-sm font-medium
                     shadow-sm shadow-primary/25 transition-all duration-150 active:scale-[0.98] shrink-0"
             >

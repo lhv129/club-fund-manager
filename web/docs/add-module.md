@@ -798,9 +798,9 @@ export function ExamplesPageClient() {
     ];
 
     const extraFilters = (
-        <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-fg-muted">{t("status")}</span>
+        <div className="grid w-full basis-full grid-cols-1 gap-3 sm:flex sm:w-auto sm:basis-auto">
             <Select
+                className="w-full sm:w-auto"
                 label={t("status")}
                 options={activeOptions}
                 value={draftIsActive !== undefined ? String(draftIsActive) : ""}
@@ -864,6 +864,7 @@ export function ExamplesPageClient() {
 
                 {/* Khi có extra filters: showStatusFilter={false} + custom handler + extraFilters */}
                 <FilterBar
+                    searchClassName="basis-full sm:w-auto sm:basis-auto"
                     search={params.search}
                     sortBy={params.sort_by}
                     sortDir={params.sort_dir}
@@ -932,6 +933,59 @@ export function ExamplesPageClient() {
     );
 }
 ```
+
+---
+
+### Responsive filters bằng props của `FilterBar`
+
+Không dùng selector nội bộ như `[&>div:first-child]` hoặc `[&>button]`. Page truyền
+class rõ nghĩa qua API của component:
+
+- `className`: class của container `FilterBar`.
+- `searchClassName`: class của riêng vùng search.
+- `extraFilters`: nội dung filter riêng; `FilterBar` tự xếp dọc/full-width trên mobile và dùng lại layout cũ từ `sm`.
+- `extraFiltersClassName`: class tùy chọn cho wrapper extra filters nếu page cần tinh chỉnh thêm.
+- `Select` dùng `className="w-full sm:w-auto"`: full-width trên mobile, từ `sm`
+  trả lại kích thước inline; không cần selector `[&>button]`.
+
+```tsx
+const extraFilters = (
+    <div className="grid w-full grid-cols-1 gap-3 sm:flex sm:w-auto">
+        <Select
+            className="w-full sm:w-auto"
+            label={t("club")}
+            options={clubOptions}
+            value={draftClubSlug}
+            onChange={setDraftClubSlug}
+            placeholder={t("all")}
+        />
+        <Select
+            className="w-full sm:w-auto"
+            label={t("status")}
+            options={statusOptions}
+            value={draftStatus}
+            onChange={setDraftStatus}
+            placeholder={t("all")}
+        />
+    </div>
+);
+
+<FilterBar
+    searchClassName="basis-full sm:w-auto sm:basis-auto"
+    search={params.search}
+    sortBy={params.sort_by}
+    sortDir={params.sort_dir}
+    sortOptions={sortOptions}
+    showStatusFilter={false}
+    loading={isFetching}
+    onApply={handleApplyFilters}
+    onReset={handleReset}
+    extraFilters={extraFilters}
+/>
+```
+
+Kết quả: chỉ mobile search và từng select rộng `100%`; từ `sm` trở lên layout
+trở lại dạng inline/flex như trước.
 
 ---
 

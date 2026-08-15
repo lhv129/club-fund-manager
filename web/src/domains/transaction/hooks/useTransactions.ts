@@ -159,7 +159,7 @@ export function useTransactions(
 export function useTransaction(clubSlug: string, id: number) {
     return useQuery({
         queryKey: ["transactions", clubSlug, id],
-        queryFn: () => getTransactionService().show(id),
+        queryFn: () => getTransactionService().show(id, clubSlug),
         enabled: Boolean(clubSlug) && Number.isFinite(id) && id > 0,
     });
 }

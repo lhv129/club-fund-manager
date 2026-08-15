@@ -259,6 +259,7 @@ export function ClubInvitesPageClient() {
 
             <div className="space-y-4">
                 <FilterBar
+                    searchClassName="basis-full sm:w-auto sm:basis-auto"
                     search={params.search}
                     sortBy={params.sort_by}
                     sortDir={params.sort_dir}

@@ -222,6 +222,7 @@ export function ClubsAdminPageClient() {
             </div>
 
             <FilterBar
+                searchClassName="basis-full sm:w-auto sm:basis-auto"
                 search={params.search ?? ""}
                 isActive={params.is_active}
                 sortBy={params.sort_by}

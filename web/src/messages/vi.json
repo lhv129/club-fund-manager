@@ -102,6 +102,7 @@
     "superAdmin": "Super Admin"
   },
   "metadata": {
+    "webhookConfigs": { "title": "Cấu hình webhook", "description": "Quản lý cấu hình webhook của câu lạc bộ" },
     "users": {
       "title": "Quản lý người dùng",
       "description": "Danh sách và quản lý người dùng"
@@ -230,7 +231,8 @@
     "playingSchedules": "Lịch các buổi",
     "exchangeSessions": "Buổi cố định",
     "transactions": "Thu chi",
-    "paymentCodes": "Mã thanh toán"
+    "paymentCodes": "Mã thanh toán",
+    "webhookConfigs": "Cấu hình webhook"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
@@ -741,6 +743,29 @@
     "weeksAhead": "Số tuần tạo trước",
     "startDate": "Ngày bắt đầu",
     "endDate": "Ngày kết thúc"
+  },
+  "webhookConfig": {
+    "title": "Cấu hình webhook",
+    "totalCount": "{count} cấu hình",
+    "create": "Thêm cấu hình",
+    "edit": "Sửa cấu hình",
+    "club": "Câu lạc bộ",
+    "selectClub": "Chọn câu lạc bộ",
+    "allClubs": "Tất cả câu lạc bộ",
+    "bankAccount": "Tài khoản ngân hàng",
+    "selectBankAccount": "Chọn tài khoản ngân hàng",
+    "allBankAccounts": "Tất cả tài khoản",
+    "type": "Loại",
+    "webhookSecret": "Webhook secret",
+    "secretPlaceholder": "Nhập webhook secret",
+    "secretEditHint": "Để trống nếu không thay đổi",
+    "webhookUrl": "Webhook URL",
+    "copyUrl": "Sao chép URL",
+    "verified": "Đã xác minh",
+    "yes": "Có",
+    "no": "Không",
+    "notFound": "Chưa có cấu hình webhook",
+    "deleteConfirmMsg": "Bạn có chắc muốn xóa cấu hình {type}?"
   },
   "exchangeSession": {
     "title": "Buổi đánh",

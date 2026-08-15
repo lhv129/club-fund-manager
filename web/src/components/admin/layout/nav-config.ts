@@ -6,7 +6,8 @@ import {
     Users,
     LucideIcon,
     Building2,
-    Landmark
+    Landmark,
+    Webhook
 } from "lucide-react";
 
 import { APP_ROUTES, MODULE_SLUGS, PERMISSION_ACTIONS } from "@/constants";
@@ -48,6 +49,13 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
         labelKey: "banks",
         icon: Landmark,
         module: MODULE_SLUGS.bank,
+        action: PERMISSION_ACTIONS.view,
+    },
+    {
+        href: APP_ROUTES.adminWebhookConfigs,
+        labelKey: "webhookConfigs",
+        icon: Webhook,
+        module: MODULE_SLUGS.webhookConfig,
         action: PERMISSION_ACTIONS.view,
     },
     {

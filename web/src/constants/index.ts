@@ -27,6 +27,7 @@ export const APP_ROUTES = {
   adminSettings: "/admin/settings",
   adminClubs: "/admin/clubs",
   adminBanks: "/admin/banks",
+  adminWebhookConfigs: "/admin/webhook-configs",
 
   // ── Club workspace (route prefix; slug được ghép bằng clubRoute()) ────────
   club: "/club",
@@ -45,6 +46,7 @@ export const CLUB_SUBROUTES = {
   paymentCodes: "payment-codes",
   playingSchedules: "playing-schedules",
   exchangeSessions: "exchange-sessions",
+  webhookConfigs: "webhook-configs",
   events: "events",
   settings: "settings",
 } as const;
@@ -109,6 +111,7 @@ export const MODULE_SLUGS = {
   transaction: "transaction",
   exchangeSession: "exchange_session",
   webhook: "webhook",
+  webhookConfig: "webhook_config",
   monthlyContribution: "monthly_contribution",
   bankAccount: "bank_account"
   ,memberPaymentCode: "member_payment_code"

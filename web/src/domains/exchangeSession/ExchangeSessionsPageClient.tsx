@@ -406,6 +406,7 @@ export function ExchangeSessionsPageClient() {
             {/* Filters */}
             <div className="mb-6">
                 <FilterBar
+                    searchClassName="basis-full sm:w-auto sm:basis-auto"
                     search={params.search}
                     sortBy={params.sort_by}
                     sortDir={params.sort_dir}

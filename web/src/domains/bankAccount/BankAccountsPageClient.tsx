@@ -482,6 +482,7 @@ export function BankAccountsPageClient() {
             </div>
 
             <FilterBar
+                searchClassName="basis-full sm:w-auto sm:basis-auto"
                 search={params.search ?? ""}
                 sortBy={params.sort_by}
                 sortDir={params.sort_dir}

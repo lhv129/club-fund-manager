@@ -83,13 +83,14 @@ export function BanksPageClient() {
         { key: "swift_code", label: tb("swiftCode"), render: (row) => <span className="text-sm text-foreground-muted">{row.swift_code || "—"}</span> },
         { key: "is_active", label: t("status"), className: "w-28 text-center", render: (row) => <div className="flex justify-center"><ToggleSwitch checked={row.is_active} loading={togglingIds.has(row.id)} disabled={!canUpdate} onChange={() => handleToggleStatus(row.id)} /></div> },
     ];
-    const extraFilters = <Select label={t("status")} options={[{ value: "1", label: t("active") }, { value: "0", label: t("inactive") }]} value={draftIsActive === undefined ? "" : String(draftIsActive)} onChange={(value) => setDraftIsActive(value === "" ? undefined : Number(value) as 0 | 1)} placeholder={t("all")} />;
+    const extraFilters = <div className="flex w-full flex-col gap-1 sm:w-auto"><span className="text-xs font-medium text-foreground-muted">{t("status")}</span><Select className="w-full sm:w-auto" label={t("status")} options={[{ value: "1", label: t("active") }, { value: "0", label: t("inactive") }]} value={draftIsActive === undefined ? "" : String(draftIsActive)} onChange={(value) => setDraftIsActive(value === "" ? undefined : Number(value) as 0 | 1)} placeholder={t("all")} /></div>;
     return <>
         <div className="space-y-6">
             <div className="flex items-center justify-between"><div><h1 className="text-xl font-semibold text-foreground">{tb("title")}</h1><p className="mt-0.5 text-sm text-foreground-muted">{tb("totalCount", { count: total.toLocaleString() })}</p></div>{canCreate && <button onClick={() => { setSelected(null); setModalOpen(true); }} className="flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"><Plus className="h-4 w-4" />{tb("create")}</button>}</div>
 
 
             <FilterBar
+                searchClassName="basis-full sm:w-auto sm:basis-auto"
                 search={params.search ?? ""}
                 sortBy={params.sort_by}
                 sortDir={params.sort_dir}

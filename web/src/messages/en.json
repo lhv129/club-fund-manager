@@ -102,6 +102,7 @@
     "superAdmin": "Super Admin"
   },
   "metadata": {
+    "webhookConfigs": { "title": "Webhook configurations", "description": "Manage club webhook configurations" },
     "users": {
       "title": "User Management",
       "description": "Manage users and view the user list"
@@ -231,7 +232,8 @@
     "playingSchedules": "Scheduled Sessions",
     "exchangeSessions": "Regular Sessions",
     "transactions": "Income & Expenses",
-    "paymentCodes": "Payment Codes"
+    "paymentCodes": "Payment Codes",
+    "webhookConfigs": "Webhook configurations"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -744,6 +746,29 @@
     "weeksAhead": "Weeks ahead",
     "startDate": "Start date",
     "endDate": "End date"
+  },
+  "webhookConfig": {
+    "title": "Webhook configurations",
+    "totalCount": "{count} configurations",
+    "create": "Add configuration",
+    "edit": "Edit configuration",
+    "club": "Club",
+    "selectClub": "Select club",
+    "allClubs": "All clubs",
+    "bankAccount": "Bank account",
+    "selectBankAccount": "Select bank account",
+    "allBankAccounts": "All bank accounts",
+    "type": "Type",
+    "webhookSecret": "Webhook secret",
+    "secretPlaceholder": "Enter webhook secret",
+    "secretEditHint": "Leave blank to keep unchanged",
+    "webhookUrl": "Webhook URL",
+    "copyUrl": "Copy URL",
+    "verified": "Verified",
+    "yes": "Yes",
+    "no": "No",
+    "notFound": "No webhook configurations found",
+    "deleteConfirmMsg": "Are you sure you want to delete the {type} configuration?"
   },
   "exchangeSession": {
     "title": "Sessions",

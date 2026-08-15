@@ -10,6 +10,7 @@ import {
     CalendarClock,
     Landmark,
     ScanLine,
+    Webhook,
 } from "lucide-react";
 
 import {
@@ -167,6 +168,18 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
             labelKey: "bankAccounts",
             icon: Landmark,
             module: MODULE_SLUGS.bankAccount,
+            action: PERMISSION_ACTIONS.view,
+        },
+
+        // ── Cấu hình webhook ────────────────────────────────────────────────
+        {
+            href: clubRoute(
+                slug,
+                CLUB_SUBROUTES.webhookConfigs
+            ),
+            labelKey: "webhookConfigs",
+            icon: Webhook,
+            module: MODULE_SLUGS.webhookConfig,
             action: PERMISSION_ACTIONS.view,
         },
 
