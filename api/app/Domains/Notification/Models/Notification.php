@@ -2,6 +2,7 @@
 
 namespace App\Domains\Notification\Models;
 
+use App\Domains\Club\Models\Club;
 use App\Domains\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,18 +12,17 @@ class Notification extends Model
     use HasFactory;
 
     protected $fillable = [
+        'club_id',
         'user_id',
-        'type',         // 'club_invite' | 'member_approved' | 'fund_due' | 'transaction_confirmed' | ...
-        'data',         // JSON — payload để frontend render (club_id, amount, ...)
-        'is_read',
+        'type',
+        'data',
         'read_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'data'    => 'array',
-            'is_read' => 'boolean',
+            'data' => 'array',
             'read_at' => 'datetime',
         ];
     }
@@ -37,6 +37,11 @@ class Notification extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function club()
+    {
+        return $this->belongsTo(Club::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
@@ -44,7 +49,7 @@ class Notification extends Model
     */
     public function scopeUnread($query)
     {
-        return $query->where('is_read', false);
+        return $query->whereNull('read_at');
     }
 
     public function scopeOfType($query, string $type)
@@ -60,7 +65,6 @@ class Notification extends Model
     public function markAsRead(): void
     {
         $this->update([
-            'is_read' => true,
             'read_at' => now(),
         ]);
     }

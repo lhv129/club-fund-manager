@@ -24,6 +24,7 @@ Route::prefix('v1')->group(function () {
     require __DIR__ . '/api/v1/monthly_contribution.php';
     require __DIR__ . '/api/v1/bank.php';
     require __DIR__ . '/api/v1/example.php';
+    require __DIR__ . '/api/v1/notification.php';
 });
 
 

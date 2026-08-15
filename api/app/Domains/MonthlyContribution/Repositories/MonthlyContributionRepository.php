@@ -10,13 +10,15 @@ use Illuminate\Support\Facades\DB;
 
 class MonthlyContributionRepository extends BaseRepository
 {
-    protected string $defaultOrderBy        = 'created_at';
+    protected string $defaultOrderBy = 'created_at';
+
     protected string $defaultOrderDirection = 'desc';
 
     protected array $allowedSortColumns = ['id', 'amount', 'payment_date', 'sort_order', 'created_at'];
 
     protected array $selectColumns = ['id', 'club_id', 'period_id', 'user_id', 'amount', 'status', 'is_active'];
-    protected array $selectWith    = ['user:id,name,email', 'period:id,year,month'];
+
+    protected array $selectWith = ['user:id,name,email', 'period:id,year,month'];
 
     /** Khởi tạo repository với model khoản đóng quỹ tháng. */
     public function __construct(MonthlyContribution $model)
@@ -72,13 +74,13 @@ class MonthlyContributionRepository extends BaseRepository
     /** Áp dụng tìm kiếm theo họ tên hoặc email của thành viên. */
     protected function applySearch(Builder $query, array $filters): void
     {
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search) {
                 $q->whereHas(
                     'user',
-                    fn($u) => $u
+                    fn ($u) => $u
                         ->where('fullname', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
                 );
@@ -91,23 +93,23 @@ class MonthlyContributionRepository extends BaseRepository
     {
         $this->applyActiveFilter($query, $filters);
 
-        if (!empty($filters['club_id'])) {
+        if (! empty($filters['club_id'])) {
             $query->where('club_id', (int) $filters['club_id']);
         }
 
-        if (!empty($filters['period_id'])) {
+        if (! empty($filters['period_id'])) {
             $query->where('period_id', (int) $filters['period_id']);
         }
 
-        if (!empty($filters['user_id'])) {
+        if (! empty($filters['user_id'])) {
             $query->where('user_id', (int) $filters['user_id']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['paid_by'])) {
+        if (! empty($filters['paid_by'])) {
             $query->where('paid_by', $filters['paid_by']);
         }
     }
@@ -126,9 +128,9 @@ class MonthlyContributionRepository extends BaseRepository
             ->join('users', 'users.id', '=', 'club_members.user_id')
             ->select('club_members.user_id', 'users.gender')
             ->get()
-            ->map(fn($row) => (object) [
+            ->map(fn ($row) => (object) [
                 'user_id' => $row->user_id,
-                'user'    => (object) ['gender' => $row->gender],
+                'user' => (object) ['gender' => $row->gender],
             ]);
     }
 
@@ -156,5 +158,24 @@ class MonthlyContributionRepository extends BaseRepository
             ->count();
 
         return $countAfter - $countBefore;
+    }
+
+    /** Lấy contribution của một kỳ theo danh sách member để xử lý nghiệp vụ sau bulk insert. */
+    public function getByPeriodAndUserIds(int $periodId, array $userIds)
+    {
+        return $this->model->newQuery()
+            ->where('period_id', $periodId)
+            ->whereIn('user_id', $userIds)
+            ->get(['id', 'club_id', 'user_id', 'period_id', 'amount', 'status', 'paid_by']);
+    }
+
+    public function getExistingUserIdsForPeriod(int $periodId, array $userIds): array
+    {
+        return MonthlyContribution::withTrashed()
+            ->where('period_id', $periodId)
+            ->whereIn('user_id', $userIds)
+            ->pluck('user_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 }

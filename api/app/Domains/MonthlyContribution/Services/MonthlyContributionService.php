@@ -10,6 +10,7 @@ use App\Domains\FundPeriod\Repositories\FundPeriodRepository;
 use App\Domains\FundPeriod\Services\FundPeriodStateGuard;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\MonthlyContribution\Repositories\MonthlyContributionRepository;
+use App\Domains\Notification\Services\NotificationService;
 use App\Domains\Transaction\Models\Transaction;
 use App\Domains\Transaction\Repositories\TransactionRepository;
 use App\Domains\User\Repositories\UserRepository;
@@ -35,6 +36,7 @@ class MonthlyContributionService extends BaseService
         protected FundPeriodStateGuard $periodStateGuard,
         protected TransactionRepository $transactionRepository,
         protected ClubFundService $clubFundService,
+        protected NotificationService $notificationService,
     ) {
         parent::__construct($repository);
 
@@ -185,7 +187,7 @@ class MonthlyContributionService extends BaseService
             if ($existing?->trashed()) {
                 $existing->restore();
 
-                return $this->repository->update($existing, [
+                $contribution = $this->repository->update($existing, [
                     'amount' => $data['amount'],
                     'status' => MonthlyContribution::STATUS_PENDING,
                     'transaction_id' => null,
@@ -193,17 +195,33 @@ class MonthlyContributionService extends BaseService
                     'payment_date' => null,
                     'is_active' => true,
                 ]);
+
+                $this->notifyContribution(
+                    'monthly_contribution_created',
+                    $contribution,
+                    $period,
+                );
+
+                return $contribution;
             }
 
             $contribution = $this->repository->create(
                 $this->withoutClientTransactionId($data),
             );
 
-            return $this->syncPayment(
+            $contribution = $this->syncPayment(
                 $contribution,
                 $data,
                 (int) $data['club_id'],
             );
+
+            $this->notifyContribution(
+                'monthly_contribution_created',
+                $contribution,
+                $period,
+            );
+
+            return $contribution;
         });
     }
 
@@ -256,6 +274,7 @@ class MonthlyContributionService extends BaseService
         return DB::transaction(function () use ($id, $data) {
 
             $contribution = $this->find($id, $data['club_id'] ?? null);
+            $oldStatus = $contribution->status;
 
             // =============================================================
             // LẤY PERIOD HIỆN TẠI
@@ -383,14 +402,34 @@ class MonthlyContributionService extends BaseService
                     ]);
                 }
 
-                return $this->repository->update($contribution, [
+                $contribution = $this->repository->update($contribution, [
                     'transaction_id' => $linked?->id,
                     'paid_by' => $linked ? MonthlyContribution::PAID_BY_BANK : null,
                     'payment_date' => $linked?->transaction_date,
                 ]);
+
+                $this->notifyContributionUpdate(
+                    $contribution,
+                    $newPeriod,
+                    $oldStatus,
+                );
+
+                return $contribution;
             }
 
-            return $this->syncPayment($contribution, $data, (int) $contribution->club_id);
+            $contribution = $this->syncPayment(
+                $contribution,
+                $data,
+                (int) $contribution->club_id,
+            );
+
+            $this->notifyContributionUpdate(
+                $contribution,
+                $newPeriod,
+                $oldStatus,
+            );
+
+            return $contribution;
         });
     }
 
@@ -455,6 +494,12 @@ class MonthlyContributionService extends BaseService
 
                 $contribution->setAttribute('delete_action', 'cancelled');
 
+                $this->notifyContribution(
+                    'monthly_contribution_cancelled',
+                    $contribution,
+                    $period,
+                );
+
                 return $this->loadListRelations($contribution);
             }
 
@@ -470,6 +515,12 @@ class MonthlyContributionService extends BaseService
             $this->loadListRelations($contribution);
             $this->repository->delete($contribution);
             $contribution->setAttribute('delete_action', 'deleted');
+
+            $this->notifyContribution(
+                'monthly_contribution_deleted',
+                $contribution,
+                $period,
+            );
 
             return $contribution;
         });
@@ -528,10 +579,30 @@ class MonthlyContributionService extends BaseService
             ->values()
             ->all();
 
+        $existingUserIds = $this->repository->getExistingUserIdsForPeriod(
+            (int) $period->id,
+            array_column($rows, 'user_id'),
+        );
+        $newRows = array_values(array_filter(
+            $rows,
+            fn (array $row) => ! in_array((int) $row['user_id'], $existingUserIds, true),
+        ));
+
         $created =
             $this->repository->bulkInsertIgnoreDuplicates(
-                $rows
+                $newRows
             );
+
+        if ($created > 0) {
+            $userIds = array_column($newRows, 'user_id');
+            $contributions = $this->repository->getByPeriodAndUserIds(
+                (int) $period->id,
+                $userIds,
+            );
+
+            $contributions->each(fn (MonthlyContribution $contribution) => $this->notifyContribution('fund_due', $contribution, $period)
+            );
+        }
 
         return [
             'created' => $created,
@@ -740,5 +811,39 @@ class MonthlyContributionService extends BaseService
             'transaction:id,source,type,amount,reference_code,transaction_date',
             'paymentCode:id,monthly_contribution_id,payment_code,status,expired_at,used_at,is_active',
         ]);
+    }
+
+    private function notifyContributionUpdate(
+        MonthlyContribution $contribution,
+        FundPeriod $period,
+        string $oldStatus,
+    ): void {
+        $type = $contribution->status === MonthlyContribution::STATUS_CANCELLED
+            && $oldStatus !== MonthlyContribution::STATUS_CANCELLED
+                ? 'monthly_contribution_cancelled'
+                : 'monthly_contribution_updated';
+
+        $this->notifyContribution($type, $contribution, $period);
+    }
+
+    private function notifyContribution(
+        string $type,
+        MonthlyContribution $contribution,
+        FundPeriod $period,
+    ): void {
+        $this->notificationService->send(
+            userId: (int) $contribution->user_id,
+            type: $type,
+            data: [
+                'period_id' => (int) $period->id,
+                'contribution_id' => (int) $contribution->id,
+                'month' => (int) $period->month,
+                'year' => (int) $period->year,
+                'amount' => (float) $contribution->amount,
+                'status' => $contribution->status,
+                'paid_by' => $contribution->paid_by,
+            ],
+            clubId: (int) $contribution->club_id,
+        );
     }
 }
