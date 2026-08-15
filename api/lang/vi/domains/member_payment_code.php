@@ -21,4 +21,5 @@ return [
     'already_paid' => 'Bạn đã thanh toán tháng này rồi',
     "qr_bank_not_configured" => "Ngân hàng chưa được cấu hình để tạo mã QR.",
     'already_cancelled' => "Khoản đóng quỹ tháng này đã bị hủy.",
+    'bank_account_not_found' => "Câu lạc bộ chưa cấu hình ngân hàng nhận tiền"
 ];

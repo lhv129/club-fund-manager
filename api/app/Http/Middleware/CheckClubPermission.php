@@ -28,6 +28,19 @@ class CheckClubPermission
         }
 
         [$clubId, $clubSlug] = $this->resolveClubIdentifiers($request, $module);
+
+        if ($clubId === null && $clubSlug === null) {
+            if (! $this->permissionService->hasPermission($user, $module, $action)) {
+                throw new ApiException(
+                    __('exception.club_context_required'),
+                    422,
+                    'CLUB_CONTEXT_REQUIRED',
+                );
+            }
+
+            return $next($request);
+        }
+
         $club = $this->resolveClub($clubId, $clubSlug);
         $clubId = (int) $club->id;
         $clubSlug = $clubSlug ?? $this->resolveCanonicalSlug($club);
@@ -87,14 +100,6 @@ class CheckClubPermission
 
         $clubId = $this->normalizeClubId($clubIds);
         $clubSlug = $this->normalizeClubSlug($clubSlugs);
-
-        if ($clubId === null && $clubSlug === null) {
-            throw new ApiException(
-                __('exception.club_context_required'),
-                422,
-                'CLUB_CONTEXT_REQUIRED',
-            );
-        }
 
         return [$clubId, $clubSlug];
     }

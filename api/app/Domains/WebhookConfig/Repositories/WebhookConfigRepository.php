@@ -12,14 +12,14 @@ class WebhookConfigRepository extends BaseRepository
     // Cấu hình — Base sử dụng trực tiếp
     // ------------------------------------------------------------------
 
-    protected string $defaultOrderBy        = 'sort_order';
-    protected string $defaultOrderDirection = 'asc';
+    protected string $defaultOrderBy        = 'id';
+    protected string $defaultOrderDirection = 'desc';
 
     /** Whitelist cột sort cho getList() */
-    protected array $allowedSortColumns = ['id', 'type', 'sort_order', 'created_at'];
+    protected array $allowedSortColumns = ['id', 'type', 'created_at'];
 
     /** Cột cho getForSelect() — dropdown */
-    protected array $selectColumns = ['id', 'type', 'is_active'];
+    protected array $selectColumns = ['id', 'club_id', 'bank_account_id', 'type'];
     protected array $selectWith    = [];
 
     public function __construct(WebhookConfig $model)
@@ -44,11 +44,9 @@ class WebhookConfigRepository extends BaseRepository
                 'type',
                 'webhook_url',
                 'is_verified',
-                'is_active',
-                'sort_order',
                 'created_at',
             ])
-            ->with(['bankAccount:id,club_id,bank_name,account_number,account_name']);
+            ->with(['bankAccount:id,club_id,bank_id,account_number,account_name']);
     }
 
     /**
@@ -67,13 +65,11 @@ class WebhookConfigRepository extends BaseRepository
     }
 
     /**
-     * Filter đặc thù WebhookConfig: is_active, type, is_verified, bank_account_id.
+     * Filter đặc thù WebhookConfig: type, is_verified, bank_account_id.
      * club_id luôn được filter từ controller (nested route).
      */
     protected function applyFilters(Builder $query, array $filters): void
     {
-        $this->applyActiveFilter($query, $filters);
-
         if (!empty($filters['club_id'])) {
             $query->where('club_id', (int) $filters['club_id']);
         }
@@ -99,5 +95,36 @@ class WebhookConfigRepository extends BaseRepository
         return $this->model->where('webhook_token', $token)
             ->where('is_active', true)
             ->first();
+    }
+
+    public function findForClub(int $id, ?int $clubId = null): ?WebhookConfig
+    {
+        return $this->model
+            ->with(['bankAccount:id,club_id,bank_id,account_number,account_name'])
+            ->whereKey($id)
+            ->when($clubId !== null, fn (Builder $query) => $query->where('club_id', $clubId))
+            ->first();
+    }
+
+    /**
+     * Kiểm tra bank account đã được cấu hình webhook cùng type chưa.
+     *
+     * Một bank account chỉ được link tới một webhook config
+     * cho mỗi type, không phụ thuộc club.
+     */
+    public function existsByBankAccountAndType(
+        int $bankAccountId,
+        string $type,
+        ?int $exceptId = null,
+    ): bool {
+        $query = $this->model
+            ->where('bank_account_id', $bankAccountId)
+            ->where('type', $type);
+
+        if ($exceptId !== null) {
+            $query->where('id', '!=', $exceptId);
+        }
+
+        return $query->exists();
     }
 }

@@ -10,8 +10,6 @@ return [
         'webhook_secret' => 'Webhook Secret',
         'webhook_url'    => 'Webhook URL',
         'is_verified'    => 'Verification Status',
-        'is_active'      => 'Active Status',
-        'sort_order'     => 'Sort Order',
         'bank_account_id' => 'Bank Account',
     ],
 
@@ -21,7 +19,6 @@ return [
     'created'        => 'Webhook config created successfully.',
     'updated'        => 'Webhook config updated successfully.',
     'deleted'        => 'Webhook config deleted successfully.',
-    'status_toggled' => 'Webhook config status updated successfully.',
-    'reordered'      => 'Webhook config order updated successfully.',
     'not_found'      => 'Webhook config not found.',
+    'duplicate_bank_account_type' => 'This bank account already has a webhook configuration in the current club.',
 ];

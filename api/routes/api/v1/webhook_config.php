@@ -14,6 +14,5 @@ Route::middleware('auth.jwt')->group(function () {
         Route::post('/', [WebhookConfigController::class, 'store'])->middleware('perm.club:webhook_config,create');
         Route::put('/{id}', [WebhookConfigController::class, 'update'])->middleware('perm.club:webhook_config,update');
         Route::delete('/{id}', [WebhookConfigController::class, 'destroy'])->middleware('perm.club:webhook_config,delete');
-        Route::patch('/{id}/toggle-status', [WebhookConfigController::class, 'toggleStatus'])->middleware('perm.club:webhook_config,update');
     });
 });

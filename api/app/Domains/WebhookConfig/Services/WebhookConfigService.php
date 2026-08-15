@@ -27,27 +27,16 @@ class WebhookConfigService extends BaseService
     // List / Search
     // -------------------------------------------------------------------------
 
-    /**
-     * GET /api/v1/webhook-configs
-     *
-     * Inject club_id từ clubSlug — business rule, không phải query builder.
-     */
     public function paginate(array $filters = []): LengthAwarePaginator
     {
         return $this->repository->getList($filters);
     }
 
-    /**
-     * GET /api/v1/webhook-configs/cursor
-     */
     public function cursorPaginate(array $filters = []): CursorPaginator
     {
         return $this->repository->getCursorList($filters);
     }
 
-    /**
-     * GET /api/v1/webhook-configs/select — dropdown.
-     */
     public function getForSelect(array $filters = []): Collection
     {
         return $this->repository->getForSelect($filters);
@@ -57,27 +46,15 @@ class WebhookConfigService extends BaseService
     // Single record
     // -------------------------------------------------------------------------
 
-    public function find(int $id): WebhookConfig
+    public function find(int $id, ?int $clubId = null): WebhookConfig
     {
-        return parent::find($id);
-    }
+        $config = $this->repository->findForClub($id, $clubId);
 
-    /**
-     * Tìm kèm relations.
-     */
-    public function findWithRelations(int $id, array $with = []): WebhookConfig
-    {
-        $webhookConfig = $this->repository->first(
-            where: ['id' => $id],
-            with: $with,
-            select: ['*'],
-        );
-
-        if (!$webhookConfig) {
+        if (! $config) {
             throw new ApiException(__($this->notFoundMessage), 404);
         }
 
-        return $webhookConfig;
+        return $config;
     }
 
     // -------------------------------------------------------------------------
@@ -86,23 +63,83 @@ class WebhookConfigService extends BaseService
 
     /**
      * Tạo webhook config cho club.
-     * club_id inject từ clubSlug (business rule).
      */
     public function create(array $data): WebhookConfig
     {
-        // Tự sinh token ngẫu nhiên 40 ký tự
-        $token = Str::random(40);
-        $data['webhook_token'] = $token;
-        // Tự sinh webhook_url dựa trên token (admin chỉ cần copy)
-        $data['webhook_url'] = url("/api/v1/sepay/webhook/{$token}");
-        if (empty($data['sort_order'])) {
-            $data['sort_order'] = $this->repository->getNextSortOrder();
+        $bankAccountId = (int) $data['bank_account_id'];
+        $type = $data['type'];
+
+        if ($this->repository->existsByBankAccountAndType(
+            $bankAccountId,
+            $type,
+        )) {
+            throw new ApiException(
+                __('domains/webhook_config.duplicate_bank_account_type', [
+                    'type' => $type,
+                ]),
+                422,
+                'DUPLICATE_BANK_ACCOUNT_TYPE',
+            );
         }
+
+        $data['webhook_token'] = Str::random(40);
+
+        $data['webhook_url'] = rtrim(config('app.url'), '/') .
+            "/api/v1/sepay/webhook/{$data['webhook_token']}";
+
+        $data['sort_order'] = 0;
+        $data['is_active'] = true;
+
         return $this->repository->create($data);
     }
 
-    public function update(int $id, array $data): WebhookConfig
+    /**
+     * Cập nhật webhook config.
+     */
+    public function update(int $id, array $data, ?int $clubId = null): WebhookConfig
     {
-        return parent::update($id, $data);
+        $current = $this->find($id, $clubId);
+
+        $bankAccountId = (int) (
+            $data['bank_account_id']
+            ?? $current->bank_account_id
+        );
+
+        $type = $data['type'] ?? $current->type;
+
+        if ($this->repository->existsByBankAccountAndType(
+            $bankAccountId,
+            $type,
+            $id,
+        )) {
+            throw new ApiException(
+                __('domains/webhook_config.duplicate_bank_account_type', [
+                    'type' => $type,
+                ]),
+                422,
+                'DUPLICATE_BANK_ACCOUNT_TYPE',
+            );
+        }
+
+        // Xác định giá trị cuối cùng sau khi update
+        $webhookSecret = $data['webhook_secret'] ?? $current->webhook_secret;
+
+        $webhookUrl = $data['webhook_url']
+            ?? $current->webhook_url;
+
+        // Có đủ secret + URL thì verified
+        $data['is_verified'] = !empty($webhookSecret)
+            && !empty($webhookUrl);
+
+        unset($data['club_id']);
+
+        return $this->repository->update($current, $data);
+    }
+
+    public function deleteForClub(int $id, ?int $clubId = null): bool
+    {
+        $config = $this->find($id, $clubId);
+
+        return $this->repository->delete($config);
     }
 }

@@ -158,5 +158,8 @@ return [
             'before_or_equal' => 'You must be at least 8 years old.',
             'after_or_equal' => 'Age cannot exceed 80.',
         ],
+        'bank_account_id' => [
+            'exists' => ':attribute does not belong to the current club.',
+        ],
     ],
 ];

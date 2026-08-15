@@ -184,6 +184,92 @@ class CheckClubPermissionTest extends TestCase
         $this->assertSame('club-vi', $request->attributes->get('club_slug'));
     }
 
+    public function test_it_allows_system_permission_without_club_context(): void
+    {
+        $request = $this->requestWithRoute(
+            '/api/v1/webhook-configs',
+            'GET',
+            'api/v1/webhook-configs',
+        );
+
+        $user = Mockery::mock(User::class)->makePartial();
+
+        JWTAuth::shouldReceive('parseToken')->once()->andReturnSelf();
+        JWTAuth::shouldReceive('authenticate')->once()->andReturn($user);
+
+        $permissionService = Mockery::mock(PermissionService::class);
+        $permissionService->shouldReceive('hasPermission')
+            ->once()
+            ->with($user, 'webhook_config', 'view', null)
+            ->andReturnTrue();
+
+        $response = (new CheckClubPermission($permissionService))->handle(
+            $request,
+            fn (): Response => new Response(status: 204),
+            'webhook_config',
+            'view',
+        );
+
+        $this->assertSame(204, $response->getStatusCode());
+        $this->assertNull($request->attributes->get('club_id'));
+        $this->assertNull($request->attributes->get('club_slug'));
+    }
+
+    public function test_it_keeps_resolving_club_context_for_system_user_in_workspace(): void
+    {
+        $clubId = $this->createClub();
+        $request = $this->requestWithRoute(
+            '/api/v1/webhook-configs?club_slug=club-vi',
+            'GET',
+            'api/v1/webhook-configs',
+        );
+
+        $response = $this->middlewareWithPermission($clubId)->handle(
+            $request,
+            fn (): Response => new Response(status: 204),
+            'webhook_config',
+            'view',
+        );
+
+        $this->assertSame(204, $response->getStatusCode());
+        $this->assertSame($clubId, $request->attributes->get('club_id'));
+        $this->assertSame('club-vi', $request->attributes->get('club_slug'));
+    }
+
+    public function test_it_requires_club_context_without_system_permission(): void
+    {
+        $request = $this->requestWithRoute(
+            '/api/v1/webhook-configs',
+            'GET',
+            'api/v1/webhook-configs',
+        );
+
+        $user = Mockery::mock(User::class)->makePartial();
+
+        JWTAuth::shouldReceive('parseToken')->once()->andReturnSelf();
+        JWTAuth::shouldReceive('authenticate')->once()->andReturn($user);
+
+        $permissionService = Mockery::mock(PermissionService::class);
+        $permissionService->shouldReceive('hasPermission')
+            ->once()
+            ->with($user, 'webhook_config', 'view', null)
+            ->andReturnFalse();
+
+        try {
+            (new CheckClubPermission($permissionService))->handle(
+                $request,
+                fn (): Response => new Response(status: 204),
+                'webhook_config',
+                'view',
+            );
+
+            $this->fail('Expected a club context required exception.');
+        } catch (ApiException $exception) {
+            $this->assertSame(422, $exception->getStatus());
+            $this->assertSame('CLUB_CONTEXT_REQUIRED', $exception->getErrorCode());
+        }
+    }
+
     public function test_it_rejects_mismatched_club_id_and_club_slug(): void
     {
         $clubId = $this->createClub('club-one');

@@ -16,13 +16,11 @@ class WebhookConfigResource extends JsonResource
             'type'            => $this->type,
             'webhook_url'     => $this->webhook_url,
             'is_verified'     => $this->is_verified,
-            'is_active'       => $this->is_active,
-            'sort_order'      => $this->sort_order,
 
             // Chỉ hiện bankAccount nếu đã được eager load — tránh N+1.
             'bank_account' => $this->whenLoaded('bankAccount', fn () => [
                 'id'             => $this->bankAccount->id,
-                'bank_name'      => $this->bankAccount->bank_name,
+                'bank_id'      => $this->bankAccount->bank_id,
                 'account_number' => $this->bankAccount->account_number,
                 'account_name' => $this->bankAccount->account_name,
             ]),

@@ -10,8 +10,6 @@ return [
         'webhook_secret' => 'Webhook secret',
         'webhook_url'    => 'URL webhook',
         'is_verified'    => 'Trạng thái xác minh',
-        'is_active'      => 'Trạng thái hoạt động',
-        'sort_order'     => 'Thứ tự sắp xếp',
         'bank_account_id' => 'Tài khoản ngân hàng',
     ],
 
@@ -21,7 +19,6 @@ return [
     'created'        => 'Tạo cấu hình webhook thành công.',
     'updated'        => 'Cập nhật cấu hình webhook thành công.',
     'deleted'        => 'Xoá cấu hình webhook thành công.',
-    'status_toggled' => 'Cập nhật trạng thái cấu hình webhook thành công.',
-    'reordered'      => 'Cập nhật thứ tự cấu hình webhook thành công.',
     'not_found'      => 'Không tìm thấy cấu hình webhook.',
+    'duplicate_bank_account_type' => 'Tài khoản ngân hàng này đã có cấu hình webhook trong câu lạc bộ hiện tại.',
 ];

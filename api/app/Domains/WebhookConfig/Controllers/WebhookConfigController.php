@@ -30,9 +30,9 @@ class WebhookConfigController extends BaseController
      */
     public function cursorIndex(Request $request): JsonResponse
     {
-        $filters = $request->only(['limit', 'search', 'type', 'is_active', 'is_verified', 'bank_account_id']);
+        $filters = $request->only(['limit', 'search', 'type', 'is_verified', 'bank_account_id']);
         $filters['club_id'] = $request->attributes->get('club_id');
-        return $this->cursorResponse($this->service->cursorPaginate($filters),__('domains/webhook_config.list'),WebhookConfigResource::class);
+        return $this->cursorResponse($this->service->cursorPaginate($filters), __('domains/webhook_config.list'), WebhookConfigResource::class);
     }
 
     /**
@@ -40,27 +40,25 @@ class WebhookConfigController extends BaseController
      */
     public function select(Request $request): JsonResponse
     {
-        $filters = $request->only(['search', 'type', 'is_active', 'limit']);
+        $filters = $request->only(['search', 'type', 'limit']);
         $filters['club_id'] = $request->attributes->get('club_id');
-        return $this->responseCommon(true,__('domains/webhook_config.select'),$this->service->getForSelect($filters));
+        return $this->responseCommon(true, __('domains/webhook_config.select'), $this->service->getForSelect($filters));
     }
 
     /**
      * GET /api/v1/webhook-configs/{id}
      */
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
-        return $this->responseCommon(
-            true,
-            __('domains/webhook_config.detail'),
-            new WebhookConfigResource($this->service->findWithRelations($id, ['bankAccount'])),
-        );
+        return $this->responseCommon(true, __('domains/webhook_config.detail'), new WebhookConfigResource(
+            $this->service->find($id, $request->attributes->get('club_id'))
+        ), 200);
     }
 
     /**
      * POST /api/v1/webhook-configs
      */
-    public function store(StoreWebhookConfigRequest $request, ): JsonResponse
+    public function store(StoreWebhookConfigRequest $request,): JsonResponse
     {
         $data = $request->validated();
         $data['club_id'] = $request->attributes->get('club_id');
@@ -75,34 +73,27 @@ class WebhookConfigController extends BaseController
     /**
      * PUT /api/v1/webhook-configs/{id}
      */
-    public function update(UpdateWebhookConfigRequest $request,int $id): JsonResponse
+    public function update(UpdateWebhookConfigRequest $request, int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
             __('domains/webhook_config.updated'),
-            new WebhookConfigResource($this->service->update($id, $request->validated())),
+            new WebhookConfigResource($this->service->update(
+                $id,
+                $request->validated(),
+                $request->attributes->get('club_id'),
+            )),
         );
     }
 
     /**
-     * DELETE /api/v1/webhook-configs/{id} — xoá mềm + dồn sort_order.
+     * DELETE /api/v1/webhook-configs/{id}
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        $this->service->deleteWithSortOrder($id);
+        $this->service->deleteForClub($id, $request->attributes->get('club_id'));
 
         return $this->responseCommon(true, __('domains/webhook_config.deleted'));
     }
 
-    /**
-     * PATCH /api/v1/webhook-configs/{id}/toggle-status
-     */
-    public function toggleStatus(int $id): JsonResponse
-    {
-        return $this->responseCommon(
-            true,
-            __('domains/webhook_config.status_toggled'),
-            new WebhookConfigResource($this->service->toggleStatus($id)),
-        );
-    }
 }

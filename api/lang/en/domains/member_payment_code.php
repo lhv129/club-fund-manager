@@ -21,4 +21,6 @@ return [
     'already_paid' => 'You have already paid for this month.',
     "qr_bank_not_configured" => "The bank is not configured for QR code generation.",
     'already_cancelled' => 'This monthly contribution has already been cancelled.',
+    'bank_account_not_found' => "The club has not configured a bank account for receiving payments."
+
 ];
