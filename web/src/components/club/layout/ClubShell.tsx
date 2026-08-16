@@ -15,6 +15,7 @@ export function ClubShell({
 }: {
   profile: Profile | null;
   club: Club | null;
+  hasMultipleClubs?: boolean;
   children: React.ReactNode;
 }) {
   useHydrateAuth(profile);
@@ -29,7 +30,7 @@ export function ClubShell({
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header onMenuToggle={() => setSidebarOpen((v) => !v)} />
-        <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-gray-950 p-6">
+        <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6">
           {children}
         </main>
       </div>

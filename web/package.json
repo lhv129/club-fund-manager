@@ -19,6 +19,7 @@
     "react-dom": "19.2.4",
     "react-hooks-global-state": "^2.1.0",
     "react-hot-toast": "^2.6.0",
+    "recharts": "^3.10.1",
     "server-only": "^0.0.1",
     "zustand": "^5.0.14"
   },

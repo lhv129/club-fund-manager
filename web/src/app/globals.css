@@ -8,9 +8,9 @@
   /* Background */
   --background: #ffffff;
   /* card, sidebar, panel */
-  --background-subtle: #f4f4f5;
+  --background-subtle: #f8fafc;
   /* zinc-100 — row hover, badge bg */
-  --background-muted: #e4e4e7;
+  --background-muted: #f1f5f9;
   /* zinc-200 — input, divider */
 
   /* Foreground */
@@ -33,6 +33,14 @@
   /* badge, highlight bg */
   --primary-100: #dbeafe;
   --primary-700: #1d4ed8;
+  --chart-positive: #10b981;
+  --chart-income: #0f9f8c;
+  --chart-expense: #f27662;
+  --chart-net: #5b5ce2;
+  --chart-total: #5b5ce2;
+  --chart-male: #3b82f6;
+  --chart-female: #ec4899;
+  --chart-groups: #f59e0b;
 
   @layer base {
 
@@ -63,7 +71,7 @@
   /* gray-400 */
 
   /* Border */
-  --border: #1f2937;
+  --border: #374151;
   /* gray-800 */
   --border-strong: #374151;
   /* gray-700 */
@@ -71,12 +79,20 @@
   /* Primary — sáng hơn cho dark bg */
   --primary: #60a5fa;
   /* blue-400 */
-  --primary-hover: #93c5fd;
+  --primary-hover: #3b82f6;
   /* blue-300 */
   --primary-foreground: #ffffff;
   --primary-50: #1e3a5f;
   --primary-100: #1e40af33;
   --primary-700: #93c5fd;
+  --chart-positive: #34d399;
+  --chart-income: #2dd4bf;
+  --chart-expense: #fb7b6b;
+  --chart-net: #818cf8;
+  --chart-total: #818cf8;
+  --chart-male: #60a5fa;
+  --chart-female: #f472b6;
+  --chart-groups: #fbbf24;
 }
 
 /* ── Map sang Tailwind v4 ── */

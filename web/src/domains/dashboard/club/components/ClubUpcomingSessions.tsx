@@ -1,0 +1,12 @@
+import { ArrowRight, CalendarDays, Clock3, MapPin, Users } from "lucide-react";
+import { CLUB_SUBROUTES, clubRoute } from "@/constants";
+import type { DashboardSession } from "../types";
+import { Link } from "@/i18n/routing";
+import { formatAmount, formatDate } from "@/utils";
+import { DashboardCard, DashboardState } from "./DashboardCard";
+
+export function ClubUpcomingSessions({ data, slug, locale }: { data: DashboardSession[]; slug: string; locale: string }) {
+  return <DashboardCard icon={CalendarDays} title="Buổi đánh sắp tới" description="ExchangeSession thực tế đã được lên lịch" action={<Link href={clubRoute(slug, CLUB_SUBROUTES.exchangeSessions)} className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary">Xem lịch<ArrowRight className="size-4" /></Link>}>
+    {!data.length ? <DashboardState message="Chưa có buổi đánh sắp tới." /> : <div className="divide-y divide-border px-4 sm:px-5">{data.map((session) => <article key={session.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center"><div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 text-primary"><span className="text-[10px] font-semibold">{formatDate(session.session_date, locale).split(" ")[1]}</span><strong className="text-base">{new Date(session.session_date).getDate()}</strong></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="text-sm font-semibold text-foreground">{session.court_name}</h3><span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-500">{session.type === "scheduled" ? "Theo lịch" : "Tạo tay"}</span></div><p className="mt-1 flex items-center gap-1.5 text-xs text-foreground-muted"><Clock3 className="size-3.5" />{session.start_time}–{session.end_time}</p><p className="mt-1 flex items-center gap-1.5 truncate text-xs text-foreground-muted"><MapPin className="size-3.5" />{session.court_address || session.court_name}</p></div><div className="flex items-center justify-between gap-5 sm:block sm:text-right"><p className="flex items-center gap-1.5 text-sm font-semibold text-foreground sm:justify-end"><Users className="size-4 text-foreground-muted" />{session.player_count}</p><p className="mt-1 text-xs text-foreground-muted">{formatAmount(session.amount_per_player, "₫", locale)} / người</p></div></article>)}</div>}
+  </DashboardCard>;
+}
