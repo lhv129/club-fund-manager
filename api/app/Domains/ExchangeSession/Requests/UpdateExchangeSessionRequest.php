@@ -3,8 +3,6 @@
 namespace App\Domains\ExchangeSession\Requests;
 
 use App\Base\BaseRequest;
-use App\Base\Rules\SupportedLocalesOnly;
-use App\Base\Rules\UniqueTranslation;
 
 class UpdateExchangeSessionRequest extends BaseRequest
 {
@@ -29,28 +27,12 @@ class UpdateExchangeSessionRequest extends BaseRequest
             'is_active'              => ['sometimes', 'boolean'],
             'sort_order'            => ['sometimes', 'integer', 'min:0'],
 
-            'translations' => [
-                'sometimes',
-                'array',
-                'min:1',
-                new SupportedLocalesOnly,
-                new UniqueTranslation(
-                    translationTable: 'exchange_session_translations',
-                    nameField: 'title',
-                    excludeParentId: $id,
-                    fkColumn: 'exchange_session_id',
-                ),
-            ],
-            'translations.*'             => ['array'],
-            'translations.*.title'        => ['required', 'string', 'max:255'],
-            'translations.*.note'         => ['nullable', 'string', 'max:3000'],
         ];
     }
 
     public function attributes(): array
     {
-        return array_merge(
-            [
+        return [
                 'club_id'               => __('domains/exchange_session.attributes.club_id'),
                 'playing_schedule_id'    => __('domains/exchange_session.attributes.playing_schedule_id'),
                 'transaction_id'          => __('domains/exchange_session.attributes.transaction_id'),
@@ -66,8 +48,6 @@ class UpdateExchangeSessionRequest extends BaseRequest
                 'total_amount'            => __('domains/exchange_session.attributes.total_amount'),
                 'is_active'                => __('domains/exchange_session.attributes.is_active'),
                 'sort_order'              => __('domains/exchange_session.attributes.sort_order'),
-            ],
-            $this->translationAttributes('exchange_session', ['title', 'note']),
-        );
+        ];
     }
 }

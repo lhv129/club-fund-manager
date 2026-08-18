@@ -10,15 +10,14 @@ class StoreExchangeSessionPlayerRequest extends BaseRequest
     {
         return [
             'user_id'        => ['nullable', 'integer', 'exists:users,id'],
-            'player_name'    => ['nullable', 'array'],                 // JSON mảng tên người lạ
-            'player_name.*'  => ['string', 'max:255'],
+            // 'player_name'    => ['nullable', 'array'],
+            'player_name'  => ['nullable','string', 'max:255'],
             'male'           => ['nullable', 'integer', 'min:0'],
             'female'         => ['nullable', 'integer', 'min:0'],
             'transaction_id' => ['nullable', 'integer', 'exists:transactions,id'],
 
             'amount'        => ['nullable', 'numeric', 'min:0'],
             'paid'          => ['nullable', 'boolean'],
-            'checked_in'    => ['nullable', 'boolean'],
             'is_active'      => ['nullable', 'boolean'],
             'sort_order'    => ['nullable', 'integer', 'min:0'],
         ];
@@ -60,7 +59,6 @@ class StoreExchangeSessionPlayerRequest extends BaseRequest
             'transaction_id' => __('domains/exchange_session.attributes.player_transaction_id'),
             'amount'         => __('domains/exchange_session.attributes.player_amount'),
             'paid'           => __('domains/exchange_session.attributes.player_paid'),
-            'checked_in'     => __('domains/exchange_session.attributes.player_checked_in'),
         ];
     }
 }

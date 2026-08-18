@@ -10,6 +10,7 @@ use App\Domains\Club\Requests\RejectMemberRequest;
 use App\Domains\Club\Resources\ClubMemberResource;
 use App\Domains\Club\Services\ClubMemberService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ClubMemberController extends BaseController
 {
@@ -188,5 +189,13 @@ class ClubMemberController extends BaseController
             true,
             __('domains/club_member.removed')
         );
+    }
+
+
+    public function getClubAdministrators(Request $request)
+    {
+        $clubId = $request->attributes->get('club_id');
+        $managers = $this->service->getClubAdministrators($clubId);
+        return $this->responseCommon(true, 'Lấy thành công danh sách quản trị viên của club', $managers, 200);
     }
 }

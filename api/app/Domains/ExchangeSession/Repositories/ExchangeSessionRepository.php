@@ -4,8 +4,6 @@ namespace App\Domains\ExchangeSession\Repositories;
 
 use App\Base\BaseRepository;
 use App\Domains\ExchangeSession\Models\ExchangeSession;
-use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -20,7 +18,7 @@ class ExchangeSessionRepository extends BaseRepository
 
     protected array $selectColumns = ['id', 'club_id', 'session_date', 'status', 'is_active'];
 
-    protected array $selectWith = ['translations:id,exchange_session_id,locale,title'];
+    protected array $selectWith = ['playingSchedule.translations:id,playing_schedule_id,locale,title'];
 
     public function __construct(ExchangeSession $model)
     {
@@ -51,7 +49,7 @@ class ExchangeSessionRepository extends BaseRepository
                 'sort_order',
                 'created_at',
             ])
-            ->with(['translations:id,exchange_session_id,locale,title']);
+            ->with(['playingSchedule:id', 'playingSchedule.translations:id,playing_schedule_id,locale,title']);
     }
 
     protected function applySearch(Builder $query, array $filters): void
@@ -60,7 +58,7 @@ class ExchangeSessionRepository extends BaseRepository
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search) {
-                $q->whereHas('translations', function ($t) use ($search) {
+                $q->whereHas('playingSchedule.translations', function ($t) use ($search) {
                     $t->where('title', 'like', "%{$search}%");
                 })
                     ->orWhere('court_name', 'like', "%{$search}%")
@@ -84,47 +82,6 @@ class ExchangeSessionRepository extends BaseRepository
         $this->applyStatusFilter($query, $filters, 'status', ['upcoming', 'completed', 'cancelled']);
         $this->applyStatusFilter($query, $filters, 'type', ['scheduled', 'manual']);
         $this->applyDateFilter($query, $filters, 'session_date');
-    }
-
-    public function getList(array $filters = []): LengthAwarePaginator
-    {
-        $query = $this->baseListQuery();
-
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $this->applySorting($query, $filters, $this->allowedSortColumns);
-
-        return $query->paginate(
-            $filters['limit'] ?? $this->defaultLimit,
-            ['*'],
-            'page',
-            $filters['page'] ?? $this->defaultPage
-        );
-    }
-
-    public function getCursorList(array $filters = []): CursorPaginator
-    {
-        $query = $this->baseListQuery();
-
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-        $this->applyCursorOrder($query);
-
-        return $query->cursorPaginate($filters['limit'] ?? $this->defaultLimit);
-    }
-
-    public function getForSelect(array $filters = []): Collection
-    {
-        $query = $this->baseSelectQuery();
-
-        $this->applySearch($query, $filters);
-        $this->applyFilters($query, $filters);
-
-        $query->orderBy($this->defaultOrderBy, $this->defaultOrderDirection);
-
-        return $query
-            ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
-            ->get();
     }
 
     /**

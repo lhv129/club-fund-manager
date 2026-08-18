@@ -12,6 +12,7 @@ Route::middleware('auth.jwt')->group(function () {
     Route::prefix('members')->group(function () {
         Route::get('/', [ClubMemberController::class, 'index'])->middleware('perm.club:club_member,view');
         Route::get('/select', [ClubMemberController::class, 'select'])->middleware('perm.club:club_member,view');
+        Route::get('/getClubAdministrators', [ClubMemberController::class, 'getClubAdministrators'])->middleware('perm.club:club_member,view');
         Route::get('/{memberId}', [ClubMemberController::class, 'show'])->middleware('perm.club:club_member,view');
         Route::post('/{memberId}/approve', [ClubMemberController::class, 'approve'])->middleware('perm.club:club_member,update');
         Route::post('/{memberId}/reject', [ClubMemberController::class, 'reject'])->middleware('perm.club:club_member,update');

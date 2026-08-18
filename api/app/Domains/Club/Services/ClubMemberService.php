@@ -635,4 +635,11 @@ class ClubMemberService extends BaseService
             'used_count'
         );
     }
+
+
+
+    public function getClubAdministrators(int $clubId)
+    {
+        return $this->repository->getClubAdministrators($clubId);
+    }
 }

@@ -6,6 +6,7 @@ use App\Base\BaseRepository;
 use App\Domains\Club\Models\ClubMember;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ClubMemberRepository extends BaseRepository
@@ -351,5 +352,69 @@ class ClubMemberRepository extends BaseRepository
             ->where('cmr.is_active', true)
             ->whereNull('cmr.deleted_at')
             ->exists();
+    }
+
+    /**
+     * Lấy danh sách quản trị viên đang hoạt động của Club.
+     *
+     * QUY ƯỚC NGHIỆP VỤ:
+     * - KHÔNG xác định quản trị viên dựa trực tiếp vào role slug như `owner`
+     *   hoặc `manager`.
+     * - Một user được xem là quản trị viên của Club khi role của user:
+     *   1. Đang active.
+     *   2. Có scope = `club`.
+     *   3. Được gán trong đúng Club đang xét.
+     *   4. Có permission `club.update` đang active.
+     *
+     * Permission được xác định bởi:
+     * - Module slug = `club`
+     * - Action = `update`
+     *
+     * Lý do:
+     * - Cho phép hệ thống hỗ trợ các role tùy chỉnh.
+     * - Bất kỳ role nào có quyền `club.update` đều được xem là có khả năng
+     *   quản lý Club và được tính là quản trị viên.
+     *
+     * Ví dụ:
+     * - owner + club.update           → quản trị viên
+     * - manager + club.update         → quản trị viên
+     * - custom_admin + club.update    → quản trị viên
+     * - member không có club.update   → không phải quản trị viên
+     *
+     * Lưu ý:
+     * - Không hard-code danh sách role `owner`, `manager`.
+     * - Nếu sau này tạo role mới và cấp `club.update`, role đó tự động được
+     *   tính là quản trị viên mà không cần sửa code.
+     *
+     * @param int $clubId
+     * @return Collection<int, ClubMember>
+     */
+    public function getClubAdministrators(int $clubId): Collection
+    {
+        return $this->model
+            ->where('club_members.club_id', $clubId)
+            ->active()
+            ->whereHas('user.clubMemberRoles', function ($query) use ($clubId) {
+                $query
+                    ->where('club_member_roles.club_id', $clubId)
+                    ->where('club_member_roles.is_active', true)
+                    ->whereHas('role', function ($query) {
+                        $query
+                            ->where('roles.scope', 'club')
+                            ->where('roles.is_active', true)
+                            ->whereHas('permissions', function ($query) {
+                                $query
+                                    ->where('permissions.action', 'update')
+                                    ->where('permissions.is_active', true)
+                                    ->whereHas('module', function ($query) {
+                                        $query
+                                            ->where('modules.slug', 'club')
+                                            ->where('modules.is_active', true);
+                                    });
+                            });
+                    });
+            })
+            ->with('user')
+            ->get();
     }
 }

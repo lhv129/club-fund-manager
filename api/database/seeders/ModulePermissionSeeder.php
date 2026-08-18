@@ -71,6 +71,15 @@ class ModulePermissionSeeder extends Seeder
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
         [
+            'slug' => 'exchange_session_player',
+            'sort_order' => 6,
+            'translations' => [
+                'vi' => ['name' => 'Thống kê giao lưu'],
+                'en' => ['name' => 'Exchange Statistics'],
+            ],
+            'actions' => ['view', 'create', 'update', 'delete'],
+        ],
+        [
             'slug'       => 'playing_schedule',
             'sort_order' => 7,
             'translations' => [
@@ -80,22 +89,13 @@ class ModulePermissionSeeder extends Seeder
             'actions' => ['view', 'create', 'update', 'delete'],
         ],
         [
-            'slug'       => 'member_payment_code',
+            'slug' => 'member_payment_code',
             'sort_order' => 8,
             'translations' => [
                 'vi' => ['name' => 'Mã thanh toán'],
                 'en' => ['name' => 'Payment Code'],
             ],
-            'actions' => ['view', 'update'],
-        ],
-        [
-            'slug'       => 'webhook',
-            'sort_order' => 9,
-            'translations' => [
-                'vi' => ['name' => 'Webhook'],
-                'en' => ['name' => 'Webhook'],
-            ],
-            'actions' => ['view', 'create', 'update', 'delete'],
+            'actions' => ['view', 'create'],
         ],
         [
             'slug'       => 'bank_account',
@@ -112,6 +112,15 @@ class ModulePermissionSeeder extends Seeder
             'translations' => [
                 'vi' => ['name' => 'Mời thành viên'],
                 'en' => ['name' => 'Invite Member'],
+            ],
+            'actions' => ['view', 'create', 'update', 'delete'],
+        ],
+        [
+            'slug'       => 'webhook',
+            'sort_order' => 9,
+            'translations' => [
+                'vi' => ['name' => 'Webhook'],
+                'en' => ['name' => 'Webhook'],
             ],
             'actions' => ['view', 'create', 'update', 'delete'],
         ],

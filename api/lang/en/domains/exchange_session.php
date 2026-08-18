@@ -29,7 +29,6 @@ return [
         'player_transaction_id' => 'Linked Transaction',
         'player_amount'    => 'Player Amount',
         'player_paid'      => 'Paid',
-        'player_checked_in' => 'Checked In',
     ],
 
     'list'                    => 'Exchange sessions retrieved successfully.',
@@ -44,6 +43,8 @@ return [
     'already_completed'       => 'Exchange session already completed or cancelled.',
     'missing_fund_period'     => 'No FundPeriod found for the session month. Please create a fund period before completing.',
     'not_found'               => 'Exchange session not found.',
+    'manual_title'            => 'Additional session',
+    'payment_overdue'         => 'Payment is overdue by :time.',
 
     'player_list'              => 'Session players retrieved successfully.',
     'player_detail'            => 'Session player retrieved successfully.',
@@ -51,7 +52,6 @@ return [
     'player_updated'           => 'Session player updated successfully.',
     'player_deleted'           => 'Player removed from session successfully.',
     'player_paid_toggled'      => 'Player paid status updated successfully.',
-    'player_check_in_toggled' => 'Player check-in status updated successfully.',
     'player_not_found'         => 'Session player not found.',
     'player_identifier_required' => 'Either user_id or player_name is required.',
     'player_count_required'      => 'Total male/female count must be greater than 0.',

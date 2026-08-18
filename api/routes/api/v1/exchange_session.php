@@ -9,6 +9,7 @@ Route::middleware('auth.jwt')->group(function () {
         // Tĩnh trước — bắt buộc đứng trước /{id}
         Route::get('/cursor',   [ExchangeSessionController::class, 'cursorIndex'])->middleware('perm.club:exchange_session,view');
         Route::get('/select',   [ExchangeSessionController::class, 'select'])->middleware('perm.club:exchange_session,view');
+        Route::get('/players', [ExchangeSessionController::class, 'players'])->middleware('perm.club:exchange_session_player,view');
 
         // Dynamic sau
         Route::get('/', [ExchangeSessionController::class, 'index'])->middleware('perm.club:exchange_session,view');
@@ -19,8 +20,9 @@ Route::middleware('auth.jwt')->group(function () {
         Route::put('/{id}/toggle-status', [ExchangeSessionController::class, 'toggleStatus'])->middleware('perm.club:exchange_session,update');
         Route::put('/{id}/complete', [ExchangeSessionController::class, 'complete'])->middleware('perm.club:exchange_session,update');
 
+
+        // Dynamic sau
         // Sub-resource: players của 1 session
-        Route::get('/{sessionId}/players', [ExchangeSessionPlayerController::class, 'index'])->middleware('perm.club:exchange_session,view');
         Route::get('/{sessionId}/players/{id}', [ExchangeSessionPlayerController::class, 'show'])->middleware('perm.club:exchange_session,view');
         Route::post('/{sessionId}/players', [ExchangeSessionPlayerController::class, 'store'])->middleware('perm.club:exchange_session,update');
         Route::put('/{sessionId}/players/{id}', [ExchangeSessionPlayerController::class, 'update'])->middleware('perm.club:exchange_session,update');

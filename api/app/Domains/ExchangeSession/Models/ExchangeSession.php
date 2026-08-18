@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ExchangeSession extends Model
@@ -78,17 +77,6 @@ class ExchangeSession extends Model
     public function transaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class);
-    }
-
-    public function translations(): HasMany
-    {
-        return $this->hasMany(ExchangeSessionTranslation::class);
-    }
-
-    public function translation(string $locale = null): HasOne
-    {
-        return $this->hasOne(ExchangeSessionTranslation::class)
-            ->where('locale', $locale ?? app()->getLocale());
     }
 
     public function players(): HasMany

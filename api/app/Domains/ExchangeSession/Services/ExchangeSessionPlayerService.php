@@ -6,7 +6,6 @@ use App\Base\BaseService;
 use App\Domains\ExchangeSession\Models\ExchangeSessionPlayer;
 use App\Domains\ExchangeSession\Repositories\ExchangeSessionPlayerRepository;
 use App\Exceptions\ApiException;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class ExchangeSessionPlayerService extends BaseService
@@ -18,21 +17,6 @@ class ExchangeSessionPlayerService extends BaseService
         protected ExchangeSessionService $sessionService,
     ) {
         parent::__construct($repository);
-    }
-
-    // -------------------------------------------------------------------------
-    // List
-    // -------------------------------------------------------------------------
-
-    /**
-     * Danh sách player của 1 session, phân trang offset.
-     * (Đặt tên khác paginate() để tránh xung đột signature với BaseService::paginate().)
-     */
-    public function paginateForSession(int $sessionId, array $filters = []): LengthAwarePaginator
-    {
-        $filters['exchange_session_id'] = $sessionId;
-
-        return $this->repository->getList($filters);
     }
 
     // -------------------------------------------------------------------------
@@ -78,12 +62,17 @@ class ExchangeSessionPlayerService extends BaseService
             $female = (int) ($data['female'] ?? 0);
             $data['amount'] = round(
                 ($male * (float) $session->exchange_male_amount)
-                + ($female * (float) $session->exchange_female_amount),
+                    + ($female * (float) $session->exchange_female_amount),
                 2,
             );
 
             if (!isset($data['sort_order'])) {
                 $data['sort_order'] = $this->repository->getNextSortOrder();
+            }
+
+            $data['paid'] = (bool) ($data['paid'] ?? false);
+            if (!$data['paid']) {
+                $data['transaction_id'] = null;
             }
 
             $player = $this->repository->create($data);
@@ -107,14 +96,14 @@ class ExchangeSessionPlayerService extends BaseService
                 $female = (int) ($data['female'] ?? $player->female);
                 $data['amount'] = round(
                     ($male * (float) $session->exchange_male_amount)
-                    + ($female * (float) $session->exchange_female_amount),
+                        + ($female * (float) $session->exchange_female_amount),
                     2,
                 );
             }
 
-            // Gắn transaction_id → tự set paid=1 (đối soát tay)
-            if (!empty($data['transaction_id']) && $player->transaction_id !== (int) $data['transaction_id']) {
-                $data['paid'] = true;
+            if (array_key_exists('paid', $data) && !filter_var($data['paid'], FILTER_VALIDATE_BOOLEAN)) {
+                $data['paid'] = false;
+                $data['transaction_id'] = null;
             }
 
             $player = $this->repository->update($player, $data);
@@ -151,6 +140,9 @@ class ExchangeSessionPlayerService extends BaseService
                 $player->transaction_id = null;
             }
             $player->save();
+
+            // Đồng bộ tổng tiền sau mỗi lần chuyển paid 0 <-> 1.
+            $this->sessionService->recalculateTotals($sessionId);
 
             return $player->fresh(['user:id,fullname', 'transaction:id,source,type,amount,description,transaction_date']);
         });

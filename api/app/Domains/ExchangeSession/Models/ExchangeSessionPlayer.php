@@ -26,7 +26,6 @@ class ExchangeSessionPlayer extends Model
 
         'amount',           // tự tính = male×exchange_male_amount + female×exchange_female_amount
         'paid',
-        'checked_in',
 
         'sort_order',
         'is_active',
@@ -38,9 +37,8 @@ class ExchangeSessionPlayer extends Model
             'player_name' => 'array',     // JSON ↔ PHP array
             'male'         => 'integer',
             'female'       => 'integer',
-            'amount'     => 'decimal:2',
-            'paid'       => 'boolean',
-            'checked_in' => 'boolean',
+        'amount'     => 'decimal:2',
+        'paid'       => 'boolean',
             'sort_order' => 'integer',
             'is_active'  => 'boolean',
         ];
@@ -83,8 +81,4 @@ class ExchangeSessionPlayer extends Model
         return $query->where('paid', false);
     }
 
-    public function scopeCheckedIn(Builder $query): Builder
-    {
-        return $query->where('checked_in', true);
-    }
 }

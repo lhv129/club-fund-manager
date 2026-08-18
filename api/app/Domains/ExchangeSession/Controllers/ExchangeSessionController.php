@@ -3,9 +3,11 @@
 namespace App\Domains\ExchangeSession\Controllers;
 
 use App\Base\BaseController;
+use App\Domains\ExchangeSession\Requests\FilterExchangeSessionPlayersRequest;
 use App\Domains\ExchangeSession\Requests\FilterExchangeSessionRequest;
 use App\Domains\ExchangeSession\Requests\StoreExchangeSessionRequest;
 use App\Domains\ExchangeSession\Requests\UpdateExchangeSessionRequest;
+use App\Domains\ExchangeSession\Resources\ExchangeSessionPlayerResource;
 use App\Domains\ExchangeSession\Resources\ExchangeSessionResource;
 use App\Domains\ExchangeSession\Services\ExchangeSessionService;
 use Illuminate\Http\JsonResponse;
@@ -59,12 +61,12 @@ class ExchangeSessionController extends BaseController
     /**
      * GET /api/v1/exchange-sessions/{id}
      */
-    public function show(string $clubSlug, int $id): JsonResponse
+    public function show(int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
             __('domains/exchange_session.detail'),
-            new ExchangeSessionResource($this->service->findWithRelations($id, ['translations', 'club', 'players', 'playingSchedule'])),
+            new ExchangeSessionResource($this->service->findWithRelations($id, ['club', 'players', 'playingSchedule'])),
         );
     }
 
@@ -86,7 +88,7 @@ class ExchangeSessionController extends BaseController
     /**
      * PUT /api/v1/exchange-sessions/{id}
      */
-    public function update(UpdateExchangeSessionRequest $request, string $clubSlug, int $id): JsonResponse
+    public function update(UpdateExchangeSessionRequest $request, int $id): JsonResponse
     {
         $data = $request->validated();
         $data['club_id'] = $request->attributes->get('club_id');
@@ -100,7 +102,7 @@ class ExchangeSessionController extends BaseController
     /**
      * DELETE /api/v1/exchange-sessions/{id} — xoá mềm + dồn sort_order.
      */
-    public function destroy(string $clubSlug, int $id): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
         $this->service->deleteWithSortOrder($id);
 
@@ -110,7 +112,7 @@ class ExchangeSessionController extends BaseController
     /**
      * PATCH /api/v1/exchange-sessions/{id}/toggle-status
      */
-    public function toggleStatus(string $clubSlug, int $id): JsonResponse
+    public function toggleStatus(int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -122,12 +124,31 @@ class ExchangeSessionController extends BaseController
     /**
      * PATCH /api/v1/exchange-sessions/{id}/complete — chốt buổi đánh.
      */
-    public function complete(string $clubSlug, int $id): JsonResponse
+    public function complete(int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
             __('domains/exchange_session.completed'),
             new ExchangeSessionResource($this->service->complete($id)),
         );
+    }
+
+    /**
+     * GET /api/v1/exchange-sessions/players
+     *
+     * Theo dõi thu tiền giao lưu toàn CLB.
+     */
+    public function players(
+        FilterExchangeSessionPlayersRequest $request
+    ): JsonResponse {
+        $filters = $request->validated();
+
+        $filters['club_id'] = $request->attributes->get('club_id');
+
+        if ($filters['club_id'] !== null) {
+            $filters['club_id'] = (int) $filters['club_id'];
+        }
+
+        return $this->paginateResponse($this->service->players($filters), __('domains/exchange_session.player_list'), ExchangeSessionPlayerResource::class);
     }
 }

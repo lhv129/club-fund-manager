@@ -24,11 +24,12 @@ class ClubAndManagerSeeder extends Seeder
 
         // ── User manager ──────────────────────────────────────────────────
         $userId = DB::table('users')->insertGetId([
-            'fullname'          => 'Club Manager',
+            'fullname'          => 'Luu Hoang Viet',
             'username'          => 'manager',
-            'email'             => 'manager@example.com',
+            'gender' => 'male',
+            'email'             => 'vietlh.hn@example.com',
             'phone'             => '0911111111',
-            'password'          => Hash::make('123456'),
+            'password'          => Hash::make('12345678'),
             'status'            => 'active',
             'email_verified_at' => $now,
             'created_at'        => $now,

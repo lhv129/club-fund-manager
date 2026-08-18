@@ -3,9 +3,6 @@
 namespace App\Domains\ExchangeSession\Requests;
 
 use App\Base\BaseRequest;
-use App\Base\Rules\RequiredLocales;
-use App\Base\Rules\SupportedLocalesOnly;
-use App\Base\Rules\UniqueTranslation;
 
 class StoreExchangeSessionRequest extends BaseRequest
 {
@@ -27,23 +24,12 @@ class StoreExchangeSessionRequest extends BaseRequest
             'is_active'              => ['nullable', 'boolean'],
             'sort_order'            => ['nullable', 'integer', 'min:0'],
 
-            'translations' => [
-                'required',
-                'array',
-                new RequiredLocales,
-                new SupportedLocalesOnly,
-                new UniqueTranslation('exchange_session_translations', nameField: 'title'),
-            ],
-            'translations.*'             => ['array'],
-            'translations.*.title'        => ['required', 'string', 'max:255'],
-            'translations.*.note'         => ['nullable', 'string', 'max:3000'],
         ];
     }
 
     public function attributes(): array
     {
-        return array_merge(
-            [
+        return [
                 'club_id'               => __('domains/exchange_session.attributes.club_id'),
                 'playing_schedule_id'    => __('domains/exchange_session.attributes.playing_schedule_id'),
                 'transaction_id'          => __('domains/exchange_session.attributes.transaction_id'),
@@ -59,8 +45,6 @@ class StoreExchangeSessionRequest extends BaseRequest
                 'total_amount'            => __('domains/exchange_session.attributes.total_amount'),
                 'is_active'                => __('domains/exchange_session.attributes.is_active'),
                 'sort_order'              => __('domains/exchange_session.attributes.sort_order'),
-            ],
-            $this->translationAttributes('exchange_session', ['title', 'note']),
-        );
+        ];
     }
 }

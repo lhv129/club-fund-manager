@@ -17,7 +17,6 @@ class UpdateExchangeSessionPlayerRequest extends BaseRequest
             'transaction_id' => ['sometimes', 'nullable', 'integer', 'exists:transactions,id'],
             'amount'         => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'paid'           => ['sometimes', 'boolean'],
-            'checked_in'     => ['sometimes', 'boolean'],
             'is_active'      => ['sometimes', 'boolean'],
             'sort_order'     => ['sometimes', 'integer', 'min:0'],
         ];
@@ -57,7 +56,6 @@ class UpdateExchangeSessionPlayerRequest extends BaseRequest
             'transaction_id' => __('domains/exchange_session.attributes.player_transaction_id'),
             'amount'         => __('domains/exchange_session.attributes.player_amount'),
             'paid'           => __('domains/exchange_session.attributes.player_paid'),
-            'checked_in'     => __('domains/exchange_session.attributes.player_checked_in'),
         ];
     }
 }

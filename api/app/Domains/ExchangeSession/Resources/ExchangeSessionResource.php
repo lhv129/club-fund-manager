@@ -29,14 +29,6 @@ class ExchangeSessionResource extends JsonResource
             'is_active'            => $this->is_active,
             'sort_order'          => $this->sort_order,
 
-            'translations' => $this->whenLoaded('translations', function () {
-                return $this->translations->map(fn ($t) => [
-                    'locale' => $t->locale,
-                    'title'  => $t->title,
-                    'note'   => $t->note,
-                ]);
-            }),
-
             'club' => $this->whenLoaded('club', fn () => [
                 'id' => $this->club->id,
             ]),

@@ -29,7 +29,6 @@ return [
         'player_transaction_id' => 'Giao dịch đối soát',
         'player_amount'    => 'Số tiền người chơi',
         'player_paid'      => 'Đã thanh toán',
-        'player_checked_in' => 'Đã check-in',
     ],
 
     'list'                    => 'Lấy danh sách buổi đánh thành công.',
@@ -44,6 +43,8 @@ return [
     'already_completed'       => 'Buổi đánh đã chốt hoặc đã huỷ, không thể chốt lại.',
     'missing_fund_period'     => 'Chưa có kỳ quỹ (FundPeriod) cho tháng của buổi đánh. Vui lòng tạo kỳ quỹ trước khi chốt.',
     'not_found'               => 'Không tìm thấy buổi đánh.',
+    'manual_title'            => 'Buổi đánh thêm',
+    'payment_overdue'         => 'Đã quá hạn thanh toán :time.',
 
     'player_list'              => 'Lấy danh sách người chơi giao lưu của buổi đánh thành công.',
     'player_detail'            => 'Lấy chi tiết người chơi giao lưu của buổi đánh thành công.',
@@ -51,7 +52,6 @@ return [
     'player_updated'           => 'Cập nhật người chơi giao lưu của buổi đánh thành công.',
     'player_deleted'           => 'Xoá người chơi giao lưu khỏi buổi đánh thành công.',
     'player_paid_toggled'      => 'Cập nhật trạng thái thanh toán của người chơi giao lưu thành công.',
-    'player_check_in_toggled' => 'Cập nhật trạng thái check-in của người chơi giao lưu thành công.',
     'player_not_found'         => 'Không tìm thấy người chơi giao lưu trong buổi đánh.',
     'player_identifier_required' => 'Phải có ít nhất user_id hoặc player_name.',
     'player_count_required'      => 'Tổng số nam/nữ phải lớn hơn 0.',

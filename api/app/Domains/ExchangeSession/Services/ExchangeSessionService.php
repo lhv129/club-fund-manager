@@ -4,6 +4,7 @@ namespace App\Domains\ExchangeSession\Services;
 
 use App\Base\BaseService;
 use App\Domains\ExchangeSession\Models\ExchangeSession;
+use App\Domains\ExchangeSession\Repositories\ExchangeSessionPlayerRepository;
 use App\Domains\ExchangeSession\Repositories\ExchangeSessionRepository;
 use App\Domains\FundPeriod\Repositories\FundPeriodRepository;
 use App\Exceptions\ApiException;
@@ -21,6 +22,7 @@ class ExchangeSessionService extends BaseService
     public function __construct(
         ExchangeSessionRepository $repository,
         protected FundPeriodRepository $fundPeriodRepository,
+        protected ExchangeSessionPlayerRepository $exchangeSessionPlayerRepository
     ) {
         parent::__construct($repository);
     }
@@ -75,14 +77,11 @@ class ExchangeSessionService extends BaseService
     public function create(array $data): ExchangeSession
     {
         return DB::transaction(function () use ($data) {
-            $translations = $data['translations'] ?? [];
-            unset($data['translations']);
-
             if (! isset($data['sort_order'])) {
                 $data['sort_order'] = $this->repository->getNextSortOrder();
             }
 
-            $session = $this->repository->createWithTranslations($data, $translations);
+            $session = $this->repository->create($data);
 
             // Cập nhật player_count từ số player thực tế (nếu cần)
             $this->syncPlayerCount($session);
@@ -96,14 +95,7 @@ class ExchangeSessionService extends BaseService
         return DB::transaction(function () use ($id, $data) {
             $session = $this->find($id);
 
-            $translations = $data['translations'] ?? [];
-            unset($data['translations']);
-
-            $session = $this->repository->updateWithTranslations(
-                $session,
-                $data,
-                $translations
-            );
+            $session = $this->repository->update($session, $data);
 
             $this->syncPlayerCount($session);
 
@@ -117,7 +109,7 @@ class ExchangeSessionService extends BaseService
         $session->is_active = ! $session->is_active;
         $session->save();
 
-        return $session->fresh('translations');
+        return $session->fresh('playingSchedule');
     }
 
     /**
@@ -129,10 +121,11 @@ class ExchangeSessionService extends BaseService
      *   1. Tìm FundPeriod theo club_id + (year, month) của session_date.
      *      - Nếu CÓ FundPeriod → snapshot exchange_male_amount / exchange_female_amount
      *        lên session, tính lại amount mỗi nhóm giao lưu từ rates, rồi tổng
-     *        total_amount = sum(amount). player_count = sum(male + female).
-     *      - Nếu KHÔNG có FundPeriod → chỉ đếm player_count = sum(male+female),
-     *        để total_amount nguyên, KHÔNG throw (cho phép thêm/xoá player trước
-     *        khi tạo FundPeriod). Throw chỉ xảy ra ở complete().
+     *        total_amount = sum(amount) của các nhóm paid=true.
+     *        player_count = sum(male + female) của tất cả nhóm active.
+     *      - Nếu KHÔNG có FundPeriod → giữ amount hiện có trên từng nhóm và
+     *        chỉ cộng amount của các nhóm paid=true. Không throw để vẫn cho
+     *        phép quản lý player trước khi tạo FundPeriod.
      *   2. amount_per_player = total_amount / max(player_count, 1) (trung bình).
      *
      * Gọi sau khi thêm/sửa/xoá player trong ExchangeSessionPlayerService.
@@ -143,7 +136,7 @@ class ExchangeSessionService extends BaseService
 
         $players = $session->players()->where('is_active', true)->get();
 
-        $playerCount = (int) $players->sum(fn ($p) => (int) $p->male + (int) $p->female);
+        $playerCount = (int) $players->sum(fn($p) => (int) $p->male + (int) $p->female);
 
         $data = [
             'player_count' => $playerCount,
@@ -162,14 +155,17 @@ class ExchangeSessionService extends BaseService
             $data['exchange_male_amount'] = $exchangeMale;
             $data['exchange_female_amount'] = $exchangeFemale;
 
-            // Tính lại amount mỗi nhóm giao lưu từ rates + tổng total_amount
+            // Tính lại amount mỗi nhóm giao lưu từ rates.
+            // total_amount chỉ bao gồm các nhóm đã được xác nhận thanh toán.
             $totalAmount = 0;
             foreach ($players as $player) {
                 $rowAmount = ((int) $player->male * $exchangeMale)
                     + ((int) $player->female * $exchangeFemale);
                 $player->amount = round($rowAmount, 2);
                 $player->save();
-                $totalAmount += $rowAmount;
+                if ($player->paid) {
+                    $totalAmount += $rowAmount;
+                }
             }
 
             $data['total_amount'] = round($totalAmount, 2);
@@ -177,10 +173,13 @@ class ExchangeSessionService extends BaseService
                 ? round($totalAmount / $playerCount, 2)
                 : 0;
         } else {
-            // Không có FundPeriod → total = sum(amount) hiện có (thường 0)
-            $data['total_amount'] = round((float) $players->sum('amount'), 2);
+            // Không có FundPeriod → chỉ tổng hợp amount của nhóm đã trả.
+            $paidAmount = $players
+                ->where('paid', true)
+                ->sum('amount');
+            $data['total_amount'] = round((float) $paidAmount, 2);
             $data['amount_per_player'] = $playerCount > 0
-                ? round((float) $players->sum('amount') / $playerCount, 2)
+                ? round((float) $paidAmount / $playerCount, 2)
                 : 0;
         }
 
@@ -229,7 +228,7 @@ class ExchangeSessionService extends BaseService
 
             $this->repository->update($session, ['status' => 'completed']);
 
-            return $session->fresh(['translations', 'players']);
+            return $session->fresh(['playingSchedule', 'players']);
         });
     }
 
@@ -269,5 +268,86 @@ class ExchangeSessionService extends BaseService
         // Khi tạo mới, chưa có player → giữ nguyên giá trị truyền vào (mặc định 0)
         // Khi update, không tự đếm lại để tránh đè giá trị admin set tay.
         // Việc tính lại qua recalculateTotals() khi thao tác player.
+    }
+
+    /**
+     * Danh sách các nhóm giao lưu cần theo dõi thu tiền
+     * trên toàn bộ CLB.
+     */
+    public function players(array $filters = []): LengthAwarePaginator
+    {
+        $paginator = $this->exchangeSessionPlayerRepository->getPlayerList($filters);
+
+        foreach ($paginator->items() as $player) {
+            $this->applyPaymentWarning($player);
+        }
+
+        return $paginator;
+    }
+
+    /**
+     * Calculate payment warning metadata for the player list response.
+     * This is deliberately kept out of the repository because it is business
+     * presentation logic, not a database filter.
+     */
+    private function applyPaymentWarning($player): void
+    {
+        $none = [
+            'warning' => false,
+            'warning_level' => 'none',
+            'warning_message' => null,
+        ];
+
+        if ($player->paid || !$player->exchangeSession?->session_date) {
+            $player->setAttribute('warning', $none['warning']);
+            $player->setAttribute('warning_level', $none['warning_level']);
+            $player->setAttribute('warning_message', $none['warning_message']);
+            return;
+        }
+
+        $sessionDate = $player->exchangeSession->session_date->copy()->startOfDay();
+        $today = Carbon::today();
+
+        if ($today->lessThanOrEqualTo($sessionDate)) {
+            $player->setAttribute('warning', $none['warning']);
+            $player->setAttribute('warning_level', $none['warning_level']);
+            $player->setAttribute('warning_message', $none['warning_message']);
+            return;
+        }
+
+        $level = 'normal';
+        $isWarning = false;
+
+        if ($today->greaterThanOrEqualTo($sessionDate->copy()->addMonth())) {
+            $level = 'critical';
+            $isWarning = true;
+        } elseif ($today->diffInDays($sessionDate) > 7) {
+            $level = 'warning';
+            $isWarning = true;
+        }
+
+        $warningMessages = collect(config('app.supported_locales', ['vi', 'en']))
+            ->map(function (string $locale) use ($today, $sessionDate): array {
+                $overdueTime = $today->copy()->locale($locale)->diffForHumans(
+                    $sessionDate,
+                    Carbon::DIFF_ABSOLUTE,
+                );
+
+                return [
+                    'locale' => $locale,
+                    'message' => __('domains/exchange_session.payment_overdue', [
+                        'time' => $overdueTime,
+                    ], $locale),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $player->setAttribute('warning', $isWarning);
+        $player->setAttribute('warning_level', $level);
+        $player->setAttribute(
+            'warning_message',
+            $warningMessages,
+        );
     }
 }
