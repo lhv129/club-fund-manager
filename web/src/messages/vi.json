@@ -102,7 +102,10 @@
     "superAdmin": "Super Admin"
   },
   "metadata": {
-    "webhookConfigs": { "title": "Cấu hình webhook", "description": "Quản lý cấu hình webhook của câu lạc bộ" },
+    "webhookConfigs": {
+      "title": "Cấu hình webhook",
+      "description": "Quản lý cấu hình webhook của câu lạc bộ"
+    },
     "users": {
       "title": "Quản lý người dùng",
       "description": "Danh sách và quản lý người dùng"
@@ -230,6 +233,7 @@
     "playingSchedulesMenu": "Lịch đánh",
     "playingSchedules": "Lịch các buổi",
     "exchangeSessions": "Buổi cố định",
+    "exchangeSessionPlayerPayments": "Theo dõi tiền người chơi",
     "transactions": "Thu chi",
     "paymentCodes": "Mã thanh toán",
     "webhookConfigs": "Cấu hình webhook"
@@ -773,6 +777,11 @@
     "create": "Thêm buổi đánh",
     "edit": "Sửa buổi đánh",
     "players": "Người chơi giao lưu",
+    "session": "Buổi đánh",
+    "playerPaymentTracking": "Theo dõi tiền đóng của người chơi giao lưu",
+    "playerPaymentTrackingDescription": "Theo dõi số tiền và trạng thái thanh toán theo từng buổi đánh.",
+    "paidYes": "Đã thanh toán",
+    "paidNo": "Chưa thanh toán",
     "stt": "STT",
     "sessionDate": "Ngày đánh",
     "courtName": "Tên sân",
@@ -793,7 +802,7 @@
     "deleteConfirmMsg": "Bạn có chắc muốn xóa \"{name}\"?",
     "user": "Thành viên",
     "placeholderUser": "Vui lòng chọn thành viên...",
-    "playerName": "Tên người chơi giao lưu",
+    "groupName": "Tên khách hoặc nhóm giao lưu",
     "male": "Nam",
     "female": "Nữ",
     "amount": "Số tiền",

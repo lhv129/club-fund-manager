@@ -102,7 +102,10 @@
     "superAdmin": "Super Admin"
   },
   "metadata": {
-    "webhookConfigs": { "title": "Webhook configurations", "description": "Manage club webhook configurations" },
+    "webhookConfigs": {
+      "title": "Webhook configurations",
+      "description": "Manage club webhook configurations"
+    },
     "users": {
       "title": "User Management",
       "description": "Manage users and view the user list"
@@ -231,6 +234,7 @@
     "playingSchedulesMenu": "Playing Schedule",
     "playingSchedules": "Scheduled Sessions",
     "exchangeSessions": "Regular Sessions",
+    "exchangeSessionPlayerPayments": "Player payment tracking",
     "transactions": "Income & Expenses",
     "paymentCodes": "Payment Codes",
     "webhookConfigs": "Webhook configurations"
@@ -771,18 +775,23 @@
     "deleteConfirmMsg": "Are you sure you want to delete the {type} configuration?"
   },
   "exchangeSession": {
-    "title": "Sessions",
-    "totalCount": "{count} sessions",
-    "create": "Add session",
-    "edit": "Edit session",
-    "players": "Guests",
+    "title": "Exchange Session",
+    "totalCount": "{count} exchange sessions",
+    "create": "Add exchange session",
+    "edit": "Edit exchange session",
+    "players": "Exchange Players",
+    "session": "Exchange Session",
+    "playerPaymentTracking": "Exchange Player Payment Tracking",
+    "playerPaymentTrackingDescription": "Track the amount due and payment status for each exchange session.",
+    "paidYes": "Paid",
+    "paidNo": "Unpaid",
     "stt": "No.",
-    "sessionDate": "Session date",
-    "courtName": "Court name",
-    "courtAddress": "Court address",
-    "startTime": "Start time",
-    "endTime": "End time",
-    "schedule": "Playing schedule",
+    "sessionDate": "Session Date",
+    "courtName": "Court Name",
+    "courtAddress": "Court Address",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "schedule": "Playing Schedule",
     "type": "Type",
     "scheduled": "Scheduled",
     "manual": "Manual",
@@ -792,19 +801,20 @@
     "complete": "Complete",
     "titleField": "Title",
     "note": "Note",
-    "notFound": "No sessions found",
+    "notFound": "Exchange session not found",
     "deleteConfirmMsg": "Are you sure you want to delete \"{name}\"?",
-    "user": "User",
-    "playerName": "Guest name",
+    "user": "Member",
+    "placeholderUser": "Please select a member...",
+    "groupName": "Exchange guest or group name",
     "male": "Male",
     "female": "Female",
     "amount": "Amount",
     "paid": "Paid",
-    "totalReceivable": "Total receivable",
-    "totalPaid": "Total paid",
-    "noPlayers": "No guests",
-    "createPlayer": "Add guest",
-    "editPlayer": "Edit guest",
-    "deletePlayerConfirm": "Are you sure you want to delete this guest?"
+    "totalReceivable": "Total Amount Due",
+    "totalPaid": "Total Amount Collected",
+    "noPlayers": "No exchange players yet",
+    "createPlayer": "Add exchange player",
+    "editPlayer": "Edit exchange player",
+    "deletePlayerConfirm": "Are you sure you want to delete this exchange player?"
   }
 }

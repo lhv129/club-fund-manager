@@ -22,7 +22,7 @@ import type {
     ExchangeSessionPlayerFilters,
     ExchangeSessionPlayer,
 } from "./types";
-import { useUserSelect } from "@/domains/user/hooks/useUsers";
+import { useClubMemberSelect } from "@/domains/members/hooks/useClubMembers";
 import { formatAmount } from "@/utils";
 
 export function ExchangeSessionPlayersPageClient() {
@@ -43,15 +43,13 @@ export function ExchangeSessionPlayersPageClient() {
     } = useListParams<ExchangeSessionPlayerFilters>({
         defaultFilters: {
             paid: undefined,
-            checked_in: undefined,
-            is_active: undefined,
         },
         defaultSortBy: "sort_order",
         defaultSortDir: "asc",
     });
 
     const players = useExchangeSessionPlayers({ ...params, club_slug: slug, exchange_session_id: id });
-    const users = useUserSelect({ club_slug: slug });
+    const users = useClubMemberSelect({ club_slug: slug, status: 'approved' });
 
     const [isOpen, setIsOpen] = useState(false);
     const [selected, setSelected] =
@@ -66,14 +64,14 @@ export function ExchangeSessionPlayersPageClient() {
                 label: x("user"),
                 placeholder: x("placeholderUser"),
                 type: "select",
-                options: users.data.map((user) => ({
-                    value: String(user.id),
-                    label: user.fullname,
+                options: users.data.map((member) => ({
+                    value: String(member.user_id),
+                    label: member.user.fullname,
                 })),
             },
             {
-                name: "player_name",
-                label: x("playerName"),
+                name: "group_name",
+                label: x("groupName"),
                 type: "text",
             },
             {
@@ -93,13 +91,13 @@ export function ExchangeSessionPlayersPageClient() {
     const initialValues = selected
         ? {
             user_id: selected.user_id ? String(selected.user_id) : "",
-            player_name: selected.player_name ?? "",
+            group_name: selected.group_name ?? "",
             male: String(selected.male),
             female: String(selected.female),
         }
         : {
             user_id: "",
-            player_name: "",
+            group_name: "",
             male: "0",
             female: "0",
         };
@@ -118,9 +116,9 @@ export function ExchangeSessionPlayersPageClient() {
             render: (row) => row.user?.fullname || "—",
         },
         {
-            key: "player_name",
-            label: x("playerName"),
-            render: (row) => row.player_name || "—",
+            key: "group_name",
+            label: x("groupName"),
+            render: (row) => row.group_name || "—",
         },
         {
             key: "male",
@@ -222,20 +220,20 @@ export function ExchangeSessionPlayersPageClient() {
                     keyExtractor: (row) => row.id,
                     emptyText: x("noPlayers"),
                     renderActions: (row) => (
-                    <TableActions>
-                        <TableActionItem
-                            icon={<Pencil className="h-4 w-4" />}
-                            label={t("edit")}
-                            onClick={() => handleEdit(row)}
-                        />
+                        <TableActions>
+                            <TableActionItem
+                                icon={<Pencil className="h-4 w-4" />}
+                                label={t("edit")}
+                                onClick={() => handleEdit(row)}
+                            />
 
-                        <TableActionItem
-                            icon={<Trash2 className="h-4 w-4" />}
-                            label={t("delete")}
-                            variant="danger"
-                            onClick={() => setDeleteTarget(row)}
-                        />
-                    </TableActions>
+                            <TableActionItem
+                                icon={<Trash2 className="h-4 w-4" />}
+                                label={t("delete")}
+                                variant="danger"
+                                onClick={() => setDeleteTarget(row)}
+                            />
+                        </TableActions>
                     ),
                 }}
                 pagination={{

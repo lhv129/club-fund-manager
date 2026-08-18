@@ -123,3 +123,16 @@ export function useExchangeSessions(params: Params) {
         handleComplete,
     };
 }
+
+export function useExchangeSessionSelect(params?: { club_slug?: string }) {
+    const query = useQuery({
+        queryKey: ["exchange-sessions-select", params],
+        queryFn: () => exchangeSessionService.select(params) as Promise<ApiResponse<ExchangeSession[]>>,
+        enabled: Boolean(params?.club_slug),
+    });
+
+    return {
+        data: query.data?.data ?? [],
+        isLoading: query.isLoading,
+    };
+}

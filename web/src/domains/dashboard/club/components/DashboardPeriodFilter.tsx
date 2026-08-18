@@ -1,9 +1,28 @@
 "use client";
 
+import Select from "@/components/shared/ui/Select";
 import type { DashboardPeriod } from "../types";
 
-const options: Array<[DashboardPeriod, string]> = [["7d", "7 ngày"], ["month", "Tháng này"], ["previous_month", "Tháng trước"]];
+const options: Array<{ value: DashboardPeriod; label: string }> = [
+  { value: "month", label: "Tháng này" },
+  { value: "previous_month", label: "Tháng trước" },
+  { value: "3m", label: "3 tháng gần đây" },
+  { value: "6m", label: "6 tháng gần đây" },
+  { value: "this_year", label: "Năm nay" },
+  { value: "last_year", label: "Năm trước" },
+  { value: "custom", label: "Tùy chọn" },
+];
 
 export function DashboardPeriodFilter({ period, onPeriodChange }: { period: DashboardPeriod; onPeriodChange: (period: DashboardPeriod) => void }) {
-  return <div className="flex flex-wrap items-end gap-2"><select value={period} onChange={(event) => onPeriodChange(event.target.value as DashboardPeriod)} className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20">{options.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>;
+  return (
+    <Select
+      label="Khoảng thời gian"
+      options={options}
+      value={period}
+      onChange={(value) => {
+        if (value) onPeriodChange(value as DashboardPeriod);
+      }}
+      className="w-full sm:w-52"
+    />
+  );
 }

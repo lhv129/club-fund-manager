@@ -1,5 +1,3 @@
-import type { ClubDashboardData } from "./types";
-
 const cashFlowMonth = Array.from({ length: 16 }, (_, index) => {
   const day = index + 1;
   const income = 650000 + (index % 5) * 240000 + (index % 3 === 0 ? 520000 : 0);
@@ -26,7 +24,8 @@ const activityPreviousMonth = Array.from({ length: 31 }, (_, index) => {
   return { date: `2026-07-${String(index + 1).padStart(2, "0")}`, label: `${String(index + 1).padStart(2, "0")}/07`, male, female, groups: 2 + (index % 5), total: male + female };
 });
 
-export const clubDashboardMockData: ClubDashboardData = {
+// Legacy fixture retained for visual development only. The dashboard uses API hooks.
+export const clubDashboardMockData = {
   members: [], memberTotal: 62,
   memberStats: { total: 62, active: 57, inactive: 5, new_members: 4, participating: 43, outstanding: 16 },
   fundPeriods: [{ id: 1, year: 2026, month: 8, male_amount: "200000", female_amount: "150000", is_active: true, is_locked: false }],
@@ -52,7 +51,13 @@ export const clubDashboardMockData: ClubDashboardData = {
     { id: 59, type: "expense", source: "webhook", amount: "2350000", description: "Mua cầu thi đấu", reference_code: "VCB99821", transaction_date: "2026-08-14T15:45:00+07:00", sender_name: "Sport One" },
   ], transactionTotal: 42, bankAccounts: [],
   cashFlow: [
-    { date: "2026-08-10", label: "10/08", income: 900000, expense: 450000, net: 450000 }, { date: "2026-08-11", label: "11/08", income: 1200000, expense: 700000, net: 500000 }, { date: "2026-08-12", label: "12/08", income: 800000, expense: 350000, net: 450000 }, { date: "2026-08-13", label: "13/08", income: 1500000, expense: 900000, net: 600000 }, { date: "2026-08-14", label: "14/08", income: 1100000, expense: 650000, net: 450000 }, { date: "2026-08-15", label: "15/08", income: 2200000, expense: 1000000, net: 1200000 }, { date: "2026-08-16", label: "16/08", income: 950000, expense: 500000, net: 450000 },
+    { date: "2026-08-10", label: "10/08", income: 900000, expense: 450000, net: 450000 },
+    { date: "2026-08-11", label: "11/08", income: 1200000, expense: 700000, net: 500000 },
+    { date: "2026-08-12", label: "12/08", income: 800000, expense: 350000, net: 450000 },
+    { date: "2026-08-13", label: "13/08", income: 1500000, expense: 900000, net: 600000 },
+    { date: "2026-08-14", label: "14/08", income: 1100000, expense: 650000, net: 450000 },
+    { date: "2026-08-15", label: "15/08", income: 2200000, expense: 1000000, net: 1200000 },
+    { date: "2026-08-16", label: "16/08", income: 950000, expense: 500000, net: 450000 },
   ],
   activity: [
     { date: "2026-08-10", label: "10/08", male: 18, female: 12, groups: 4, total: 30 }, { date: "2026-08-11", label: "11/08", male: 22, female: 14, groups: 5, total: 36 }, { date: "2026-08-12", label: "12/08", male: 20, female: 16, groups: 4, total: 36 }, { date: "2026-08-13", label: "13/08", male: 25, female: 17, groups: 6, total: 42 }, { date: "2026-08-14", label: "14/08", male: 23, female: 15, groups: 5, total: 38 }, { date: "2026-08-15", label: "15/08", male: 27, female: 18, groups: 6, total: 45 }, { date: "2026-08-16", label: "16/08", male: 25, female: 17, groups: 6, total: 42 },

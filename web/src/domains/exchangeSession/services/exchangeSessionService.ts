@@ -2,7 +2,7 @@
 
 import { BaseRepository } from "@/lib/baseRepository";
 import { browserAdapter } from "@/lib/http/browserAdapter";
-import type { ApiResponse } from "@/types/api";
+import type { ApiResponse, ListParams, PaginatedResponse } from "@/types/api";
 import type { ExchangeSession, ExchangeSessionPlayer } from "../types";
 
 class ExchangeSessionService extends BaseRepository<ExchangeSession> {
@@ -20,12 +20,21 @@ class ExchangeSessionService extends BaseRepository<ExchangeSession> {
 class ExchangeSessionPlayerService extends BaseRepository<ExchangeSessionPlayer> {
     protected adapter = browserAdapter;
 
-    constructor(sessionId: number) {
+    constructor(sessionId?: number) {
         super();
-        this.resource = `exchange-sessions/${sessionId}/players`;
+        this.resource = sessionId
+            ? `exchange-sessions/${sessionId}/players`
+            : "exchange-sessions/players";
     }
 
     protected resource: string;
+
+    override list(params?: ListParams) {
+        return this.get<PaginatedResponse<ExchangeSessionPlayer>>(
+            "/exchange-sessions/players",
+            params
+        );
+    }
 
     togglePaid(id: number, data?: Record<string, unknown>) {
         return this.put<ApiResponse<ExchangeSessionPlayer>>(
@@ -37,6 +46,6 @@ class ExchangeSessionPlayerService extends BaseRepository<ExchangeSessionPlayer>
 
 export const exchangeSessionService = new ExchangeSessionService();
 
-export function getExchangeSessionPlayerService(sessionId: number) {
+export function getExchangeSessionPlayerService(sessionId?: number) {
     return new ExchangeSessionPlayerService(sessionId);
 }

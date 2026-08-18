@@ -46,6 +46,7 @@ export const CLUB_SUBROUTES = {
   paymentCodes: "payment-codes",
   playingSchedules: "playing-schedules",
   exchangeSessions: "exchange-sessions",
+  exchangeSessionPlayerPayments: "exchange-session-player-payments",
   webhookConfigs: "webhook-configs",
   events: "events",
   settings: "settings",

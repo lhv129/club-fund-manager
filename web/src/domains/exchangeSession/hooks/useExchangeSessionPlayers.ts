@@ -16,13 +16,15 @@ import { getExchangeSessionPlayerService } from "../services/exchangeSessionServ
 import type { ExchangeSessionPlayer, ExchangeSessionPlayerFilters } from "../types";
 
 type Params = ReturnType<typeof useListParams<ExchangeSessionPlayerFilters>>["params"] & {
-    exchange_session_id: number;
+    exchange_session_id?: number;
 };
 
 export function useExchangeSessionPlayers(params: Params) {
     const queryClient = useQueryClient();
     const t = useTranslations("common");
-    const sessionId = params.exchange_session_id;
+    const sessionId = params.exchange_session_id === undefined
+        ? undefined
+        : Number(params.exchange_session_id);
     const clubSlug = params.club_slug as string | undefined;
     const service = getExchangeSessionPlayerService(sessionId);
     const queryKey = ["exchange-session-players", params] as const;
@@ -30,7 +32,7 @@ export function useExchangeSessionPlayers(params: Params) {
 
     const makePayload = (values: Record<string, string>) => ({
         user_id: values.user_id ? Number(values.user_id) : null,
-        player_name: values.player_name || null,
+        group_name: values.group_name || null,
         male: Number(values.male || 0),
         female: Number(values.female || 0),
         ...(mutationScope ?? {}),
@@ -39,17 +41,11 @@ export function useExchangeSessionPlayers(params: Params) {
     const query = useQuery({
         queryKey,
 
-        queryFn: () => {
-            return service.list(
-                params,
-            ) as Promise<
-                PaginatedResponse<ExchangeSessionPlayer>
-            >;
-        },
+        queryFn: () => service.list(params),
 
-        enabled:    
-            Number.isFinite(sessionId) &&
-            sessionId > 0,
+        enabled:
+            Boolean(clubSlug) &&
+            (sessionId === undefined || (Number.isFinite(sessionId) && sessionId > 0)),
 
         placeholderData: keepPreviousData,
     });

@@ -12,7 +12,7 @@ Domain source:
 src/domains/dashboard/club/
 ```
 
-Dashboard hiện là một operational information system sử dụng mock data. Khi API thống kê được triển khai, chỉ cần thay data source trong `useClubDashboardData.ts`; các component hiển thị không nên phụ thuộc trực tiếp vào API client.
+Dashboard là một operational information system sử dụng bảy endpoint thống kê. Các component hiển thị không phụ thuộc trực tiếp vào API client; `useClubDashboardData.ts` aggregate data từ các hook chuyên biệt.
 
 ## Cấu trúc thư mục
 
@@ -47,8 +47,10 @@ club/
 | File | Trách nhiệm |
 | --- | --- |
 | `types.ts` | Khai báo contract của dashboard và tái sử dụng type từ các module nghiệp vụ. |
-| `mockData.ts` | Chứa toàn bộ mock data tài chính, thành viên, quỹ, giao dịch, buổi đánh và dữ liệu chart. |
-| `useClubDashboardData.ts` | Data source duy nhất của dashboard. Hiện trả mock data và mô phỏng trạng thái refresh. |
+| `mockData.ts` | Fixture cũ chỉ phục vụ phát triển giao diện; dashboard không import file này. |
+| `services/clubDashboardService.ts` | Client service cho các endpoint `/dashboard/*`. |
+| `hooks/useClubDashboardQueries.ts` | Bảy React Query hooks, dùng chung filter `club_slug`, `period`, `date_from`, `date_to`. |
+| `useClubDashboardData.ts` | Aggregate state duy nhất mà các component dashboard sử dụng. |
 
 `types.ts` sử dụng `Pick` từ các type thật như `FundPeriod`, `MonthlyContribution`, `ExchangeSession` và `Transaction`. Mock data phải tuân theo các contract này để việc chuyển sang API ít ảnh hưởng component.
 
@@ -58,7 +60,7 @@ club/
 | --- | --- |
 | `ClubDashboard.tsx` | Component điều phối chính, quản lý period, chọn dataset và truyền dữ liệu xuống các section. |
 | `ClubDashboardHeader.tsx` | Tiêu đề, period filter và thao tác refresh. |
-| `DashboardPeriodFilter.tsx` | Điều khiển ba khoảng thời gian được hỗ trợ. |
+| `DashboardPeriodFilter.tsx` | Điều khiển period backend hỗ trợ. |
 | `DashboardCard.tsx` | Khung card dùng chung, header, icon, description và empty/loading state. |
 | `index.ts` | Public export của domain component. |
 
@@ -89,40 +91,35 @@ ClubDashboardHeader
         │
         │ onPeriodChange
         ▼
-ClubDashboard period state
+ClubDashboard filter state
         │
-        ├── cashFlowByPeriod[period]
-        └── activityByPeriod[period]
+        ├── club_slug
+        ├── period
+        ├── date_from
+        └── date_to
                  │
                  ▼
-       Chart components nhận mảng đã chọn
+       7 React Query hooks gọi `/dashboard/*`
 ```
 
 `ClubDashboardHeader` là nguồn điều khiển thời gian duy nhất. Chart không được tạo thêm select thời gian riêng.
 
-Các period hợp lệ:
+Các period hợp lệ, khớp `DashboardController::resolvePeriod`:
 
 ```ts
-type DashboardChartPeriod = "7d" | "month" | "previous_month";
+type DashboardPeriod =
+  | "month"
+  | "previous_month"
+  | "3m"
+  | "6m"
+  | "this_year"
+  | "last_year"
+  | "custom";
 ```
 
-Mapping mock data:
+`custom` luôn gửi thêm `date_from` và `date_to` dạng `YYYY-MM-DD`. Header chỉ kích hoạt request khi khoảng ngày hợp lệ.
 
-```ts
-cashFlowByPeriod: {
-  "7d": DashboardCashFlowPoint[];
-  month: DashboardCashFlowPoint[];
-  previous_month: DashboardCashFlowPoint[];
-}
-
-activityByPeriod: {
-  "7d": DashboardActivityPoint[];
-  month: DashboardActivityPoint[];
-  previous_month: DashboardActivityPoint[];
-}
-```
-
-Khi period thay đổi, financial summary và hai interactive chart phải đổi dữ liệu đồng thời.
+Khi period hoặc custom date thay đổi, cả bảy endpoint được refetch với cùng filter. `transactions.meta.total` là nguồn của `transactionTotal`.
 
 ## Quy chuẩn màu sắc
 
@@ -237,18 +234,19 @@ Interactive chart không được có period select riêng. Period được qu�
 - Nội dung metric phải dùng `min-w-0`, `truncate` hoặc xuống dòng hợp lý để tránh tràn card.
 - Chart height phải cố định theo breakpoint để dữ liệu hoặc animation không làm layout dịch chuyển.
 
-## Chuyển từ mock sang API
+## API dashboard
 
-Khi backend có dashboard endpoint:
+Các endpoint dùng cùng query params `club_slug`, `period`, `date_from`, `date_to`:
 
-1. Giữ nguyên `ClubDashboardData` hoặc cập nhật contract tại `types.ts`.
-2. Thay mock return trong `useClubDashboardData.ts` bằng query/API client.
-3. Chuẩn hóa response thành `cashFlowByPeriod` và `activityByPeriod`, hoặc lưu từng response theo period.
-4. Giữ raw amount ở dạng number/string theo type nghiệp vụ; chỉ format tiền tại presentation component.
-5. Không gọi API trực tiếp trong từng card hoặc chart.
-6. Giữ các trạng thái `isLoading`, `isFetching`, `isError` và `refetch` trong data hook.
+- `/dashboard/memberStats`
+- `/dashboard/fundPeriods`
+- `/dashboard/contributions`
+- `/dashboard/sessions`
+- `/dashboard/transactions`
+- `/dashboard/cashFlow`
+- `/dashboard/activity`
 
-Mục tiêu là thay data source mà không phải viết lại layout và chart components.
+Response theo envelope `{ success, message, data }`; `transactions` trả thêm `meta` phân trang. Raw amount vẫn được giữ dạng number/string theo type nghiệp vụ và chỉ format tại presentation component.
 
 ## Checklist khi mở rộng dashboard
 

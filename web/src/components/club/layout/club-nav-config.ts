@@ -76,6 +76,16 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
                     module: MODULE_SLUGS.exchangeSession,
                     action: PERMISSION_ACTIONS.view,
                 },
+                {
+                    href: clubRoute(
+                        slug,
+                        CLUB_SUBROUTES.exchangeSessionPlayerPayments
+                    ),
+                    labelKey: "exchangeSessionPlayerPayments",
+                    icon: CalendarClock,
+                    module: MODULE_SLUGS.exchangeSessionPlayer,
+                    action: PERMISSION_ACTIONS.view,
+                },
             ],
         },
 
