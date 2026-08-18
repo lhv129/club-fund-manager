@@ -30,7 +30,7 @@ class ExchangeSessionPlayerRepository extends BaseRepository
                 'id',
                 'exchange_session_id',
                 'user_id',
-                'player_name',
+                'group_name',
                 'male',
                 'female',
                 'transaction_id',
@@ -108,7 +108,7 @@ class ExchangeSessionPlayerRepository extends BaseRepository
         |
         | Tìm:
         | - tên member mang nhóm
-        | - tên khách trong player_name
+        | - tên khách trong group_name
         |
         */
         $this->applyPlayerSearch(
@@ -154,7 +154,7 @@ class ExchangeSessionPlayerRepository extends BaseRepository
      *
      * Search theo:
      * - user.fullname
-     * - player_name
+     * - group_name
      */
     protected function applyPlayerSearch(
         Builder $query,
@@ -183,7 +183,7 @@ class ExchangeSessionPlayerRepository extends BaseRepository
                     }
                 )
                 ->orWhere(
-                    'player_name',
+                    'group_name',
                     'like',
                     "%{$search}%"
                 );

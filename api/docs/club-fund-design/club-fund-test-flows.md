@@ -335,7 +335,7 @@ php artisan exchange-sessions:sync --schedule-id=1
 ## Bước 6 — Giao lưu: thêm nhóm giao lưu + chốt buổi
 
 > Mô hình: mỗi dòng `exchange_session_players` = 1 **nhóm giao lưu** do 1 member
-> (`user_id`) mang đến, hoặc người lạ (`user_id=null`, `player_name` = JSON mảng tên).
+> (`user_id`) mang đến, hoặc người lạ (`user_id=null`, `group_name` = JSON mảng tên).
 > Cột `male`/`female` = **số lượng** nam/nữ trong nhóm. `amount` tự tính =
 > `male × exchange_male_amount + female × exchange_female_amount`. Member đóng quỹ
 > đi đánh KHÔNG tạo dòng ở đây (quỹ tháng đã bao trùm).
@@ -352,7 +352,7 @@ php artisan exchange-sessions:sync --schedule-id=1
 }
 ```
 
-> `player_name` để trống (có user_id). `amount` tự tính từ đơn giá session (0 nếu
+> `group_name` để trống (có user_id). `amount` tự tính từ đơn giá session (0 nếu
 > chưa chốt, sẽ recalc khi complete).
 
 Response `201`:
@@ -363,7 +363,7 @@ Response `201`:
     "id": 1,
     "exchange_session_id": 1,
     "user_id": 3,
-    "player_name": null,
+    "group_name": null,
     "male": 3,
     "female": 2,
     "transaction_id": null,
@@ -381,7 +381,7 @@ Response `201`:
 
 ```json
 {
-  "player_name": ["Khách A", "Khách B", "Khách C"],
+  "group_name": ["Khách A", "Khách B", "Khách C"],
   "male": 2,
   "female": 1
 }
@@ -394,7 +394,7 @@ Response `201`:
   "data": {
     "id": 2,
     "user_id": null,
-    "player_name": ["Khách A", "Khách B", "Khách C"],
+    "group_name": ["Khách A", "Khách B", "Khách C"],
     "male": 2,
     "female": 1,
     "amount": "0.00"
@@ -430,7 +430,7 @@ Response `200`:
     "exchange_female_amount": "80000.00",
     "players": [
       { "id": 1, "user_id": 3, "male": 3, "female": 2, "amount": "460000.00", "paid": false },
-      { "id": 2, "player_name": ["Khách A","Khách B","Khách C"], "male": 2, "female": 1, "amount": "280000.00", "paid": false }
+      { "id": 2, "group_name": ["Khách A","Khách B","Khách C"], "male": 2, "female": 1, "amount": "280000.00", "paid": false }
     ]
   }
 }
@@ -629,7 +629,7 @@ Status `422`.
 
 Status `422`.
 
-### 10.4 Thêm player thiếu cả user_id lẫn player_name
+### 10.4 Thêm player thiếu cả user_id lẫn group_name
 
 `POST /clubs/hanoi-bc/exchange-sessions/1/players`
 
@@ -640,7 +640,7 @@ Status `422`.
 ```json
 {
   "success": false,
-  "errors": { "player_name": ["Phải có ít nhất user_id hoặc player_name."] }
+  "errors": { "group_name": ["Phải có ít nhất user_id hoặc group_name."] }
 }
 ```
 
@@ -699,7 +699,7 @@ FundPeriod ──(create)──▶ MonthlyContribution (pending)
 PlayingSchedule ──(cron)──▶ ExchangeSession (upcoming, scheduled)
                               │
                               ▼ sửa schedule → cascade sync upcoming
-                              ▼ thêm nhóm giao lưu (user_id | player_name JSON, male, female)
+                              ▼ thêm nhóm giao lưu (user_id | group_name JSON, male, female)
                               ▼ PATCH /complete (snapshot đơn giá FundPeriod + recompute amount mỗi nhóm + total)
                          ExchangeSession (completed)
 

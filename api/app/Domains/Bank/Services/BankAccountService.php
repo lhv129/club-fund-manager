@@ -7,6 +7,7 @@ use App\Domains\Bank\Models\BankAccount;
 use App\Domains\Bank\Repositories\BankAccountRepository;
 use App\Domains\Bank\Services\BankProviderService;
 use App\Domains\Club\Repositories\ClubRepository;
+use App\Exceptions\ApiException;
 use App\Helpers\ImageHelper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
@@ -53,8 +54,30 @@ class BankAccountService extends BaseService
         $uploadedQr = null;
 
         try {
+            $club = $this->clubRepository->find(
+                (int) $data['club_id']
+            );
 
-            $club = $this->clubRepository->find($data['club_id']);
+            /*
+        |--------------------------------------------------------------------------
+        | Check duplicate bank account
+        |--------------------------------------------------------------------------
+        |
+        | Một tài khoản ngân hàng chỉ được tồn tại 1 lần trên toàn hệ thống.
+        | Không được:
+        | - Một club thêm cùng tài khoản 2 lần
+        | - Hai club khác nhau cùng gắn một tài khoản
+        |
+        */
+            if ($this->repository->existsByBankAccount(
+                (int) $data['bank_id'],
+                $data['account_number'],
+            )) {
+                throw new ApiException(
+                    __('domains/bank_account.already_exists'),
+                    422
+                );
+            }
 
             $data['is_active'] = $data['is_active'] ?? true;
 
@@ -62,10 +85,22 @@ class BankAccountService extends BaseService
                 $data['sort_order'] = $this->repository->getNextSortOrder();
             }
 
+            /*
+        |--------------------------------------------------------------------------
+        | Default account
+        |--------------------------------------------------------------------------
+        */
             if (!empty($data['is_default'])) {
-                $this->repository->clearDefault($data['club_id']);
+                $this->repository->clearDefault(
+                    (int) $data['club_id']
+                );
             }
 
+            /*
+        |--------------------------------------------------------------------------
+        | Upload QR
+        |--------------------------------------------------------------------------
+        */
             if (
                 isset($data['qr_image'])
                 && $data['qr_image'] instanceof UploadedFile
@@ -78,16 +113,26 @@ class BankAccountService extends BaseService
                 $data['qr_image'] = $uploadedQr;
             }
 
+            /*
+        |--------------------------------------------------------------------------
+        | Create
+        |--------------------------------------------------------------------------
+        */
             $bankAccount = $this->repository->create($data);
 
             DB::commit();
 
             return $bankAccount;
         } catch (\Throwable $e) {
-
             DB::rollBack();
 
-            ImageHelper::delete($uploadedQr);
+            /*
+        | Nếu DB create lỗi sau khi upload QR
+        | thì xoá file vừa upload.
+        */
+            if ($uploadedQr) {
+                ImageHelper::delete($uploadedQr);
+            }
 
             throw $e;
         }
@@ -97,22 +142,71 @@ class BankAccountService extends BaseService
     {
         DB::beginTransaction();
 
-        $bankAccount = $this->find($id);
-
-        $club = $data['club'];
-
         $newQrImage = null;
-        $oldQrImage = $bankAccount->qr_image;
 
         try {
+            /** @var BankAccount $bankAccount */
+            $bankAccount = $this->find($id);
 
-            if (!empty($data['is_default'])) {
-                $this->repository->clearDefault($bankAccount->club_id);
+            /*
+        |--------------------------------------------------------------------------
+        | Club của account hiện tại
+        |--------------------------------------------------------------------------
+        |
+        | Không lấy $data['club'].
+        | BankAccount đã thuộc club nào thì lấy club đó.
+        |
+        */
+            $club = $this->clubRepository->find(
+                (int) $bankAccount->club_id
+            );
+
+            $oldQrImage = $bankAccount->qr_image;
+
+            /*
+        |--------------------------------------------------------------------------
+        | Check duplicate bank account
+        |--------------------------------------------------------------------------
+        |
+        | Exclude chính account đang update bằng $id.
+        |
+        */
+            if (
+                $this->repository->existsByBankAccount(
+                    (int) $data['bank_id'],
+                    $data['account_number'],
+                    $id,
+                )
+            ) {
+                throw new ApiException(
+                    __('domains/bank_account.already_exists'),
+                    422
+                );
             }
 
+            /*
+        |--------------------------------------------------------------------------
+        | Default account
+        |--------------------------------------------------------------------------
+        |
+        | Nếu account này được set default,
+        | clear default của các account khác trong cùng club.
+        |
+        */
+            if (!empty($data['is_default'])) {
+                $this->repository->clearDefault(
+                    (int) $bankAccount->club_id
+                );
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | Upload QR mới
+        |--------------------------------------------------------------------------
+        */
             if (
-                isset($data['qr_image']) &&
-                $data['qr_image'] instanceof UploadedFile
+                isset($data['qr_image'])
+                && $data['qr_image'] instanceof UploadedFile
             ) {
                 $newQrImage = ImageHelper::uploadSingle(
                     $data['qr_image'],
@@ -122,22 +216,50 @@ class BankAccountService extends BaseService
                 $data['qr_image'] = $newQrImage;
             }
 
+            /*
+        |--------------------------------------------------------------------------
+        | Không cho update club_id
+        |--------------------------------------------------------------------------
+        |
+        | Một BankAccount đã thuộc club nào thì giữ nguyên club đó.
+        |
+        */
+            unset($data['club_id']);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update
+        |--------------------------------------------------------------------------
+        */
             /** @var BankAccount $bankAccount */
-            $bankAccount = parent::update($id, $data);
+            $bankAccount = parent::update(
+                $id,
+                $data
+            );
 
             DB::commit();
 
-            // Chỉ xóa ảnh cũ sau khi DB update thành công
+            /*
+        |--------------------------------------------------------------------------
+        | Delete old QR
+        |--------------------------------------------------------------------------
+        |
+        | Chỉ xoá ảnh cũ sau khi DB update thành công.
+        |
+        */
             if ($newQrImage && $oldQrImage) {
                 ImageHelper::delete($oldQrImage);
             }
 
             return $bankAccount;
         } catch (\Throwable $e) {
-
             DB::rollBack();
 
-            // Xóa ảnh mới nếu DB lỗi
+            /*
+        |--------------------------------------------------------------------------
+        | Delete new QR if DB update failed
+        |--------------------------------------------------------------------------
+        */
             if ($newQrImage) {
                 ImageHelper::delete($newQrImage);
             }

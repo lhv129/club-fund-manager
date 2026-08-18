@@ -10,8 +10,7 @@ class UpdateExchangeSessionPlayerRequest extends BaseRequest
     {
         return [
             'user_id'        => ['sometimes', 'nullable', 'integer', 'exists:users,id'],
-            'player_name'    => ['sometimes', 'nullable', 'array'],
-            'player_name.*'  => ['sometimes', 'string', 'max:255'],
+            'group_name'  => ['sometimes', 'string', 'max:255'],
             'male'           => ['sometimes', 'integer', 'min:0'],
             'female'         => ['sometimes', 'integer', 'min:0'],
             'transaction_id' => ['sometimes', 'nullable', 'integer', 'exists:transactions,id'],
@@ -26,18 +25,22 @@ class UpdateExchangeSessionPlayerRequest extends BaseRequest
     {
         $validator->after(function ($validator) {
             // Khi cả 2 đều được gửi và đều rỗng → báo lỗi
-            if ($this->has('user_id') && $this->has('player_name')
+            if (
+                $this->has('user_id') && $this->has('group_name')
                 && empty($this->input('user_id'))
-                && empty($this->input('player_name'))) {
+                && empty($this->input('group_name'))
+            ) {
                 $validator->errors()->add(
-                    'player_name',
+                    'group_name',
                     __('domains/exchange_session.player_identifier_required')
                 );
             }
 
             // Khi cả male + female đều được gửi và tổng = 0 → báo lỗi
-            if ($this->has('male') && $this->has('female')
-                && ((int) $this->input('male') + (int) $this->input('female')) === 0) {
+            if (
+                $this->has('male') && $this->has('female')
+                && ((int) $this->input('male') + (int) $this->input('female')) === 0
+            ) {
                 $validator->errors()->add(
                     'male',
                     __('domains/exchange_session.player_count_required')
@@ -50,7 +53,7 @@ class UpdateExchangeSessionPlayerRequest extends BaseRequest
     {
         return [
             'user_id'        => __('domains/exchange_session.attributes.player_user_id'),
-            'player_name'    => __('domains/exchange_session.attributes.player_name'),
+            'group_name'    => __('domains/exchange_session.attributes.group_name'),
             'male'           => __('domains/exchange_session.attributes.player_male'),
             'female'         => __('domains/exchange_session.attributes.player_female'),
             'transaction_id' => __('domains/exchange_session.attributes.player_transaction_id'),

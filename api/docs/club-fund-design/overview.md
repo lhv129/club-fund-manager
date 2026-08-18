@@ -207,7 +207,7 @@ exchange_session_translations
 ### exchange_session_players
 
 ```text
- id | exchange_session_id | user_id | player_name | amount  | paid | checked_in
+ id | exchange_session_id | user_id | group_name  | amount  | paid | checked_in
  1  | 1                   | 10      | NULL        | 50000   | 1    | 1
  2  | 1                   | 11      | NULL        | 50000   | 1    | 0
  3  | 1                   | NULL    | Khách A     | 50000   | 0    | 0

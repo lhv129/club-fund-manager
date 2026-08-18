@@ -13,7 +13,7 @@ class ExchangeSessionPlayerResource extends JsonResource
             'id'                 => $this->id,
             'exchange_session_id' => $this->exchange_session_id,
             'user_id'             => $this->user_id,
-            'player_name'         => $this->player_name,
+            'group_name'         => $this->group_name,
             'male'                => $this->male,
             'female'              => $this->female,
             'transaction_id'      => $this->transaction_id,

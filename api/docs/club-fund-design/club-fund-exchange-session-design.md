@@ -10,9 +10,9 @@
 - 1 CLB có 20 người, 10 đóng quỹ → **không quan tâm** member đó hôm nay có đi hay
   không, cũng **không thu tiền sân** riêng cho member (quỹ tháng đã bao trùm).
 - Chỉ **quan tâm tổng số người giao lưu** (không đóng quỹ) đi hôm đó, theo nam/nữ,
-  để tính tổng **thu** từ giao lưu → bù đắp **chi** tiền sân.
+  để tính tổng **thu** từ giao lưu.
 - **Mô hình giao lưu:** mỗi dòng `exchange_session_players` = 1 **nhóm giao lưu** do
-  1 member (`user_id`) mang đến, hoặc người lạ (`user_id=NULL`, `player_name` = JSON
+  1 member (`user_id`) mang đến, hoặc người lạ (`user_id=NULL`, `group_name` = JSON
   mảng tên). Cột `male`/`female` = **số lượng** nam/nữ trong nhóm. `amount` tự tính =
   `male × exchange_male_amount + female × exchange_female_amount`. Member đóng quỹ
   đi đánh KHÔNG tạo dòng ở đây (quỹ tháng đã bao trùm).
@@ -46,7 +46,7 @@
    │        của schedule đó (KHÔNG đè completed/cancelled). Có command chạy tay.
    ▼
 [Admin]  thêm nhóm giao lưu (exchange_session_players):
-   │        - user_id (member) | player_name (JSON mảng tên người lạ)
+   │        - user_id (member) | group_name (tên người lạ, nhóm)
    │        - male / female (số lượng nam/nữ trong nhóm)
    │        - amount tự tính = male×exchange_male_amount + female×exchange_female_amount
    ▼
@@ -77,7 +77,7 @@ exchange_female_amount decimal(15,2) default 0   -- snapshot đơn giá nữ t�
 
 ```text
 user_id        nullable FK users         -- member mang nhóm đến; NULL = người lạ
-player_name    JSON nullable             -- mảng tên người lạ (vd. ["Khách A","Khách B"])
+group_name    JSON nullable             -- mảng tên người lạ (vd. ["Khách A","Khách B"])
 male           smallint default 0        -- số nam trong nhóm
 female         smallint default 0        -- số nữ trong nhóm
 transaction_id nullable FK transactions  -- admin gắn tay → paid=1
@@ -86,7 +86,7 @@ paid           boolean
 checked_in     boolean
 ```
 
-> Không có cột `gender` (enum) — sai ý, đã bỏ. `player_name` là JSON (cast `array`).
+> Không có cột `gender` (enum) — sai ý, đã bỏ. `group_name` là JSON (cast `array`).
 
 ### `transactions` — không thêm cột mới
 
@@ -143,7 +143,7 @@ KHÔNG webhook cho giao lưu.
 1. Chốt buổi khi chưa có FundPeriod cho tháng `session_date` → 422.
 2. Chốt buổi đã `completed`/`cancelled` → 422 "buổi đã chốt".
 3. Sync schedule đè session `completed`/`cancelled` → skip (where clause chặn).
-4. Nhóm giao lưu thiếu cả `user_id` lẫn `player_name` → 422.
+4. Nhóm giao lưu thiếu cả `user_id` lẫn `group_name` → 422.
 5. Nhóm giao lưu `male + female = 0` → 422.
 6. Edit player đổi `male`/`female` mà không gửi `amount` → tự tính lại từ rates.
 7. Gắn `transaction_id` khác → tự set `paid=true`. Toggle paid=false → clear `transaction_id`.

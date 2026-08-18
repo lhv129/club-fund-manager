@@ -197,4 +197,19 @@ class BankAccountRepository extends BaseRepository
             ->orderBy('id')
             ->first();
     }
+
+    public function existsByBankAccount(
+        int $bankId,
+        string $accountNumber,
+        ?int $exceptId = null
+    ): bool {
+        return $this->model
+            ->where('bank_id', $bankId)
+            ->where('account_number', $accountNumber)
+            ->when(
+                $exceptId !== null,
+                fn(Builder $query) => $query->where('id', '!=', $exceptId)
+            )
+            ->exists();
+    }
 }

@@ -12,6 +12,7 @@ return [
         'account_name' => 'Tên tài khoản',
         'account_number' => 'Số tài khoản',
         'is_default' => 'Tài khoản ngân hàng mặc định',
+        'bank_id' => 'Ngân hàng'
     ],
 
     'list'           => 'Lấy danh sách tài khoản ngân hàng thành công.',
@@ -29,4 +30,6 @@ return [
     'not_found'      => 'Không tìm thấy tài khoản ngân hàng.',
     'default_set' => 'Đã đặt tài khoản này làm tài khoản ngân hàng mặc định.',
     'default_unset' => 'Đã bỏ tài khoản này khỏi tài khoản ngân hàng mặc định.',
+
+    'already_exists' => 'Tài khoản ngân hàng này đã được sử dụng.',
 ];

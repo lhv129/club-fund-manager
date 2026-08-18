@@ -420,7 +420,7 @@ class DashboardRepository extends BaseRepository
      * Dashboard Activity.
      *
      * Aggregate exchange_session_players theo session_date:
-     * male, female, groups (số buổi), total.
+     * male, female, groups (số nhóm giao lưu), total.
      */
     public function activity(array $filters = []): array
     {
@@ -442,7 +442,7 @@ class DashboardRepository extends BaseRepository
                 'SUM(exchange_session_players.female) AS female'
             )
             ->selectRaw(
-                'COUNT(DISTINCT exchange_session_players.exchange_session_id) AS group_count'
+                'COUNT(exchange_session_players.id) AS group_count'
             )
             ->when(
                 !empty($filters['club_id']),
@@ -459,6 +459,7 @@ class DashboardRepository extends BaseRepository
                 ]
             )
             ->whereNull('exchange_sessions.deleted_at')
+            ->whereNull('exchange_session_players.deleted_at')
             ->groupBy('exchange_sessions.session_date')
             ->orderBy('date')
             ->get();

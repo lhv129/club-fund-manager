@@ -19,7 +19,7 @@ class ExchangeSessionPlayer extends Model
     protected $fillable = [
         'exchange_session_id',
         'user_id',          // nullable — member mang nhóm giao lưu đến; NULL = người lạ
-        'player_name',      // JSON mảng tên (dành cho người lạ / ghi chú)
+        'group_name',      //  tên (dành cho người lạ / ghi chú)
         'male',             // số lượng nam trong nhóm giao lưu
         'female',           // số lượng nữ trong nhóm giao lưu
         'transaction_id',   // nullable — admin gắn tay để set paid=1
@@ -34,11 +34,10 @@ class ExchangeSessionPlayer extends Model
     protected function casts(): array
     {
         return [
-            'player_name' => 'array',     // JSON ↔ PHP array
             'male'         => 'integer',
             'female'       => 'integer',
-        'amount'     => 'decimal:2',
-        'paid'       => 'boolean',
+            'amount'     => 'decimal:2',
+            'paid'       => 'boolean',
             'sort_order' => 'integer',
             'is_active'  => 'boolean',
         ];
@@ -80,5 +79,4 @@ class ExchangeSessionPlayer extends Model
     {
         return $query->where('paid', false);
     }
-
 }

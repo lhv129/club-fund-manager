@@ -10,8 +10,8 @@ class StoreExchangeSessionPlayerRequest extends BaseRequest
     {
         return [
             'user_id'        => ['nullable', 'integer', 'exists:users,id'],
-            // 'player_name'    => ['nullable', 'array'],
-            'player_name'  => ['nullable','string', 'max:255'],
+            // 'group_name'    => ['nullable', 'array'],
+            'group_name'  => ['nullable','string', 'max:255'],
             'male'           => ['nullable', 'integer', 'min:0'],
             'female'         => ['nullable', 'integer', 'min:0'],
             'transaction_id' => ['nullable', 'integer', 'exists:transactions,id'],
@@ -27,12 +27,12 @@ class StoreExchangeSessionPlayerRequest extends BaseRequest
     {
         $validator->after(function ($validator) {
             $userId     = $this->input('user_id');
-            $playerName = $this->input('player_name');
+            $playerName = $this->input('group_name');
 
-            // Phải có ít nhất 1 định danh: user_id (member) hoặc player_name (người lạ)
+            // Phải có ít nhất 1 định danh: user_id (member) hoặc group_name (người lạ)
             if (empty($userId) && empty($playerName)) {
                 $validator->errors()->add(
-                    'player_name',
+                    'group_name',
                     __('domains/exchange_session.player_identifier_required')
                 );
             }
@@ -53,7 +53,7 @@ class StoreExchangeSessionPlayerRequest extends BaseRequest
     {
         return [
             'user_id'        => __('domains/exchange_session.attributes.player_user_id'),
-            'player_name'    => __('domains/exchange_session.attributes.player_name'),
+            'group_name'    => __('domains/exchange_session.attributes.group_name'),
             'male'           => __('domains/exchange_session.attributes.player_male'),
             'female'         => __('domains/exchange_session.attributes.player_female'),
             'transaction_id' => __('domains/exchange_session.attributes.player_transaction_id'),
