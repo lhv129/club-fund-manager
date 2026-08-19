@@ -214,28 +214,62 @@ class DashboardRepository extends BaseRepository
         $dateFrom = $filters['date_from'];
         $dateTo = $filters['date_to'];
 
-        $periods = $this->fundPeriodModel
+        return $this->fundPeriodModel
             ->newQuery()
             ->select([
                 'fund_periods.id as period_id',
                 'fund_periods.year',
                 'fund_periods.month',
-                'male_amount',
-                'female_amount',
-                'exchange_male_amount',
-                'exchange_female_amount',
                 'fund_periods.is_active',
                 'fund_periods.is_locked',
             ])
-            ->selectRaw("COALESCE(SUM(CASE WHEN monthly_contributions.status IN ('paid', 'pending') THEN monthly_contributions.amount ELSE 0 END), 0) AS total_expected")
-            ->selectRaw("COALESCE(SUM(CASE WHEN monthly_contributions.status = 'paid' THEN monthly_contributions.amount ELSE 0 END), 0) AS total_paid")
-            ->selectRaw("COALESCE(SUM(CASE WHEN monthly_contributions.status = 'pending' THEN monthly_contributions.amount ELSE 0 END), 0) AS total_pending")
-            ->selectRaw("SUM(CASE WHEN monthly_contributions.status = 'paid' THEN 1 ELSE 0 END) AS paid_count")
-            ->selectRaw("SUM(CASE WHEN monthly_contributions.status = 'pending' THEN 1 ELSE 0 END) AS pending_count")
+
+            // Tổng tiền đã đóng.
+            ->selectRaw("
+            COALESCE(
+                SUM(
+                    CASE
+                        WHEN monthly_contributions.status = 'paid'
+                        THEN monthly_contributions.amount
+                        ELSE 0
+                    END
+                ),
+                0
+            ) AS total_paid
+        ")
+
+            // Số contribution đã đóng.
+            ->selectRaw("
+            SUM(
+                CASE
+                    WHEN monthly_contributions.status = 'paid'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS paid_count
+        ")
+
+            // Số contribution đang pending.
+            ->selectRaw("
+            SUM(
+                CASE
+                    WHEN monthly_contributions.status = 'pending'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS pending_count
+        ")
+
             ->leftJoin('monthly_contributions', function ($join) {
-                $join->on('monthly_contributions.period_id', '=', 'fund_periods.id')
+                $join
+                    ->on(
+                        'monthly_contributions.period_id',
+                        '=',
+                        'fund_periods.id'
+                    )
                     ->whereNull('monthly_contributions.deleted_at');
             })
+
             ->when(
                 !empty($filters['club_id']),
                 fn($query) => $query->where(
@@ -243,46 +277,85 @@ class DashboardRepository extends BaseRepository
                     (int) $filters['club_id']
                 )
             )
+
             ->where(function ($query) use ($dateFrom, $dateTo) {
                 $query
                     ->where(function ($query) use ($dateFrom) {
                         $query
-                            ->where('year', '>', $dateFrom->year)
+                            ->where('fund_periods.year', '>', $dateFrom->year)
                             ->orWhere(function ($query) use ($dateFrom) {
                                 $query
-                                    ->where('year', $dateFrom->year)
-                                    ->where('month', '>=', $dateFrom->month);
+                                    ->where(
+                                        'fund_periods.year',
+                                        $dateFrom->year
+                                    )
+                                    ->where(
+                                        'fund_periods.month',
+                                        '>=',
+                                        $dateFrom->month
+                                    );
                             });
                     })
                     ->where(function ($query) use ($dateTo) {
                         $query
-                            ->where('year', '<', $dateTo->year)
+                            ->where('fund_periods.year', '<', $dateTo->year)
                             ->orWhere(function ($query) use ($dateTo) {
                                 $query
-                                    ->where('year', $dateTo->year)
-                                    ->where('month', '<=', $dateTo->month);
+                                    ->where(
+                                        'fund_periods.year',
+                                        $dateTo->year
+                                    )
+                                    ->where(
+                                        'fund_periods.month',
+                                        '<=',
+                                        $dateTo->month
+                                    );
                             });
                     });
             })
+
             ->groupBy([
-                'fund_periods.id', 'fund_periods.year', 'fund_periods.month',
-                'male_amount', 'female_amount', 'exchange_male_amount',
-                'exchange_female_amount', 'fund_periods.is_active', 'fund_periods.is_locked',
+                'fund_periods.id',
+                'fund_periods.year',
+                'fund_periods.month',
+                'fund_periods.is_active',
+                'fund_periods.is_locked',
             ])
+
             ->orderByDesc('fund_periods.year')
             ->orderByDesc('fund_periods.month')
             ->get();
-
-        return $periods;
     }
 
     public function fundBalance(array $filters = []): array
     {
-        $balance = DB::table('club_funds')
+        $periodSummary = $this->transactionModel
+            ->newQuery()
+            ->when(
+                !empty($filters['club_id']),
+                fn($query) => $query->where('club_id', (int) $filters['club_id'])
+            )
+            ->whereBetween('transaction_date', [
+                $filters['date_from'],
+                $filters['date_to'],
+            ])
+            ->selectRaw("COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income")
+            ->selectRaw("COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense")
+            ->first();
+
+        $currentBalance = DB::table('club_funds')
             ->where('club_id', (int) ($filters['club_id'] ?? 0))
             ->value('balance');
 
-        return ['balance' => (float) ($balance ?? 0)];
+        $income = (float) $periodSummary->income;
+        $expense = (float) $periodSummary->expense;
+
+        return [
+            'income' => $income,
+            'expense' => $expense,
+            'period_balance' => $income - $expense,
+            'current_balance' => (float) ($currentBalance ?? 0),
+        ];
     }
 
     /**
@@ -442,8 +515,11 @@ class DashboardRepository extends BaseRepository
             ]);
 
         $summary = (clone $query)
-            ->selectRaw("COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income")
-            ->selectRaw("COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense")
+            ->selectRaw("SUM(CASE WHEN source = 'cash' THEN 1 ELSE 0 END) AS cash_count")
+            ->selectRaw("SUM(CASE WHEN source = 'webhook' THEN 1 ELSE 0 END) AS bank_count")
+            ->selectRaw("SUM(CASE WHEN source IN ('cash', 'webhook') THEN 1 ELSE 0 END) AS total_count")
+            ->selectRaw("COALESCE(SUM(CASE WHEN source = 'cash' THEN amount ELSE 0 END), 0) AS cash_amount")
+            ->selectRaw("COALESCE(SUM(CASE WHEN source = 'webhook' THEN amount ELSE 0 END), 0) AS bank_amount")
             ->first();
 
         $items = (clone $query)
@@ -463,14 +539,13 @@ class DashboardRepository extends BaseRepository
             ->limit(5)
             ->get();
 
-        $income = (float) $summary->income;
-        $expense = (float) $summary->expense;
-
         return [
             'summary' => [
-                'income' => $income,
-                'expense' => $expense,
-                'balance' => $income - $expense,
+                'cash_count' => (int) $summary->cash_count,
+                'bank_count' => (int) $summary->bank_count,
+                'total_count' => (int) $summary->total_count,
+                'cash_amount' => (float) $summary->cash_amount,
+                'bank_amount' => (float) $summary->bank_amount,
             ],
             'items' => $items,
         ];

@@ -11,13 +11,14 @@ class FundPeriodDashboardResource extends JsonResource
     {
         return [
             'period_id' => $this->period_id,
-            'year' => $this->year,
-            'month' => $this->month,
-            'total_expected' => (float) $this->total_expected,
+            'year' => (int) $this->year,
+            'month' => (int) $this->month,
+
             'total_paid' => (float) $this->total_paid,
-            'total_pending' => (float) $this->total_pending,
+
             'paid_count' => (int) $this->paid_count,
             'pending_count' => (int) $this->pending_count,
+
             'is_active' => (bool) $this->is_active,
             'is_locked' => (bool) $this->is_locked,
         ];
