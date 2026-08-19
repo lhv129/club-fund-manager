@@ -50,7 +50,9 @@ export default async function ClubLayout({
     const res = await clubServiceServer.showBySlug(slug);
     if (res.success) club = res.data || null;
   } catch {
-    notFound();
+    // Lỗi network/backend không đồng nghĩa club không tồn tại. Throw để error
+    // boundary xử lý thay vì biến sự cố tạm thời sau restart thành 404 giả.
+    throw new Error("Unable to load club");
   }
 
   if (!club) notFound();

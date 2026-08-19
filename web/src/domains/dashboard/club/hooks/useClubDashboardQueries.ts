@@ -32,6 +32,14 @@ export function useDashboardTransactions(filters: DashboardFilters) {
   return useQuery({ queryKey: ["club-dashboard", "transactions", filters], queryFn: () => clubDashboardService.transactions(filters), enabled: canFetch(filters) });
 }
 
+export function useDashboardFundBalance(filters: DashboardFilters) {
+  return useQuery({
+    queryKey: ["club-dashboard", "fundBalance", filters.club_slug],
+    queryFn: () => clubDashboardService.fundBalance(filters),
+    enabled: Boolean(filters.club_slug),
+  });
+}
+
 export function useDashboardCashFlow(filters: DashboardFilters) {
   return useQuery({ queryKey: ["club-dashboard", "cashFlow", filters], queryFn: () => clubDashboardService.cashFlow(filters), enabled: canFetch(filters) });
 }

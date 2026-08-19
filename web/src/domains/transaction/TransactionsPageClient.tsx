@@ -40,7 +40,7 @@ export function TransactionsPageClient() {
         defaultFilters: { search: "", bank_account_id: undefined, type: undefined, is_active: undefined, from_date: undefined, to_date: undefined },
         defaultSortBy: "transaction_date",
         defaultSortDir: "desc",
-        defaultLimit: 15,
+        defaultLimit: 10,
     });
     const [draftBank, setDraftBank] = useState<number | undefined>(params.bank_account_id);
     const [draftType, setDraftType] = useState<TransactionType | undefined>(params.type);

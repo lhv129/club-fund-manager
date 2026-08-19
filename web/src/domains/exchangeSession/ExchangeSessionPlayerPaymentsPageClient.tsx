@@ -27,7 +27,7 @@ export function ExchangeSessionPlayerPaymentsPageClient() {
         defaultFilters: { search: "", exchange_session_id: undefined, paid: undefined },
         defaultSortBy: "created_at",
         defaultSortDir: "desc",
-        defaultLimit: 15,
+        defaultLimit: 10,
     });
     const [draftSessionId, setDraftSessionId] = useState(params.exchange_session_id ? String(params.exchange_session_id) : "");
     const [draftPaid, setDraftPaid] = useState<0 | 1 | undefined>(params.paid === undefined ? undefined : Number(params.paid) as 0 | 1);

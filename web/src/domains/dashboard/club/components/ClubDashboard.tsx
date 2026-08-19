@@ -145,6 +145,7 @@ export function ClubDashboard({
             cashFlow={query.data.cashFlow}
             contributions={query.data.contributions}
             transactionTotal={query.data.transactionTotal}
+            fundBalance={query.data.fundBalance.current_balance}
             locale={locale}
           />
 
@@ -163,11 +164,11 @@ export function ClubDashboard({
           <section className="space-y-5">
             <div className="grid gap-5 md:grid-cols-2">
               <ContributionStatusChart
-                data={query.data.contributions}
+                summary={query.data.contributionSummary}
               />
 
               <TransactionSourceChart
-                data={query.data.transactions}
+                summary={query.data.transactionSummary}
               />
             </div>
 
@@ -182,6 +183,8 @@ export function ClubDashboard({
             contributions={query.data.contributions}
             locale={locale}
             slug={slug}
+            period={filterValue.period}
+            balance={query.data.fundBalance}
           />
 
           <section className="space-y-5">

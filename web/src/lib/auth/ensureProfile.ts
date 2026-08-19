@@ -31,7 +31,12 @@ export async function ensureProfile(locale: string, currentPath: string): Promis
     if (accessToken) {
         try {
             const res = await authServiceServer.getProfile();
-            if (res.data) return res.data;
+            // Backend trả `data: []` cho AuthException (401). Mảng rỗng vẫn
+            // truthy trong JavaScript, nên chỉ kiểm tra `res.data` sẽ nhầm 401
+            // là profile hợp lệ và bỏ qua flow refresh token.
+            if (res.success && res.data && !Array.isArray(res.data)) {
+                return res.data;
+            }
         } catch {
             // Profile fail (có thể 401 do token vừa hết) → rơi xuống recover.
         }

@@ -15,11 +15,13 @@ export function ClubFinancialSummary({
   cashFlow,
   contributions,
   transactionTotal,
+  fundBalance,
   locale,
 }: {
   cashFlow: DashboardCashFlowPoint[];
   contributions: DashboardContribution[];
   transactionTotal: number;
+  fundBalance: number;
   locale: string;
 }) {
   const t = useTranslations("clubDashboard");
@@ -34,12 +36,7 @@ export function ClubFinancialSummary({
     0,
   );
 
-  const outstanding = contributions
-    .filter((item) => item.status === "pending")
-    .reduce(
-      (sum, item) => sum + Number(item.amount),
-      0,
-    );
+  const outstanding = fundBalance;
 
   const items = [
     {

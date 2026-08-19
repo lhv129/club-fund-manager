@@ -5,11 +5,12 @@ import {
   useDashboardCashFlow,
   useDashboardContributions,
   useDashboardFundPeriods,
+  useDashboardFundBalance,
   useDashboardMemberStats,
   useDashboardSessions,
   useDashboardTransactions,
 } from "./hooks/useClubDashboardQueries";
-import type { DashboardFilters, DashboardMemberStats, DashboardQueryState } from "./types";
+import type { DashboardContributionSummary, DashboardFilters, DashboardFundBalance, DashboardMemberStats, DashboardQueryState, DashboardSession, DashboardTransactionSummary } from "./types";
 
 /** Aggregate the seven dashboard resources behind one component-facing state. */
 const emptyMemberStats: DashboardMemberStats = {
@@ -20,6 +21,9 @@ const emptyMemberStats: DashboardMemberStats = {
   participating: 0,
   outstanding: 0,
 };
+const emptyContributionSummary: DashboardContributionSummary = { total: 0, paid: 0, pending: 0, cancelled: 0, total_amount: 0 };
+const emptyTransactionSummary: DashboardTransactionSummary = { cash_count: 0, bank_count: 0, total_count: 0, cash_amount: 0, bank_amount: 0 };
+const emptyFundBalance: DashboardFundBalance = { income: 0, expense: 0, period_balance: 0, current_balance: 0 };
 
 export function useClubDashboardData(filters: DashboardFilters): DashboardQueryState {
   const memberStats = useDashboardMemberStats(filters);
@@ -27,18 +31,25 @@ export function useClubDashboardData(filters: DashboardFilters): DashboardQueryS
   const contributions = useDashboardContributions(filters);
   const sessions = useDashboardSessions(filters);
   const transactions = useDashboardTransactions(filters);
+  const fundBalance = useDashboardFundBalance(filters);
   const cashFlow = useDashboardCashFlow(filters);
   const activity = useDashboardActivity(filters);
-  const queries = [memberStats, fundPeriods, contributions, sessions, transactions, cashFlow, activity];
+  const queries = [memberStats, fundPeriods, contributions, sessions, transactions, fundBalance, cashFlow, activity];
 
   return {
     data: {
       memberStats: memberStats.data?.data ?? emptyMemberStats,
       fundPeriods: fundPeriods.data?.data ?? [],
-      contributions: contributions.data?.data ?? [],
-      sessions: sessions.data?.data ?? [],
-      transactions: transactions.data?.data ?? [],
-      transactionTotal: transactions.data?.meta?.total ?? transactions.data?.data?.length ?? 0,
+      contributions: contributions.data?.data?.items ?? [],
+      contributionSummary: contributions.data?.data?.summary ?? emptyContributionSummary,
+      sessions: Array.isArray(sessions.data?.data)
+        ? sessions.data.data
+        : (sessions.data?.data as { items?: DashboardSession[] } | undefined)?.items ?? [],
+      transactions: transactions.data?.data?.items ?? [],
+      transactionTotal: transactions.data?.data?.summary.total_count ?? 0,
+      transactionBalance: transactions.data?.data?.summary.bank_amount + transactions.data?.data?.summary.cash_amount || 0,
+      transactionSummary: transactions.data?.data?.summary ?? emptyTransactionSummary,
+      fundBalance: fundBalance.data?.data ?? emptyFundBalance,
       cashFlow: cashFlow.data?.data ?? [],
       activity: activity.data?.data ?? [],
     },

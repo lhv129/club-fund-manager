@@ -23,12 +23,12 @@ import {
   ReceiptText,
 } from "lucide-react";
 import type {
-  DashboardContribution,
+  DashboardContributionSummary,
   DashboardSession,
   DashboardSessionChartRow,
   DashboardSessionSummary,
   DashboardSessionTooltipItem,
-  DashboardTransaction,
+  DashboardTransactionSummary,
   DashboardPieTooltipItem,
 } from "../types";
 import { formatAmount } from "@/utils";
@@ -101,9 +101,9 @@ function DonutCenter({
 }
 
 export function ContributionStatusChart({
-  data,
+  summary,
 }: {
-  data: DashboardContribution[];
+  summary: DashboardContributionSummary;
 }) {
   const t = useTranslations("clubDashboard");
 
@@ -111,42 +111,18 @@ export function ContributionStatusChart({
     () => [
       {
         name: t("fund.statusPaid"),
-        value: data.filter(
-          (item) => item.status === "paid",
-        ).length,
-        amount: data
-          .filter((item) => item.status === "paid")
-          .reduce(
-            (sum, item) => sum + Number(item.amount),
-            0,
-          ),
+        value: summary.paid,
       },
       {
         name: t("fund.statusPending"),
-        value: data.filter(
-          (item) => item.status === "pending",
-        ).length,
-        amount: data
-          .filter((item) => item.status === "pending")
-          .reduce(
-            (sum, item) => sum + Number(item.amount),
-            0,
-          ),
+        value: summary.pending,
       },
       {
         name: t("fund.statusCancelled"),
-        value: data.filter(
-          (item) => item.status === "cancelled",
-        ).length,
-        amount: data
-          .filter((item) => item.status === "cancelled")
-          .reduce(
-            (sum, item) => sum + Number(item.amount),
-            0,
-          ),
+        value: summary.cancelled,
       },
     ],
-    [data, t],
+    [summary, t],
   );
 
   return (
@@ -155,7 +131,7 @@ export function ContributionStatusChart({
       title={t("fund.distribution")}
       description={t("fund.contributionStatusDescription")}
     >
-      {!data.length ? (
+      {!summary.total ? (
         <DashboardState
           message={t("fund.noContributionData")}
         />
@@ -201,7 +177,7 @@ export function ContributionStatusChart({
           </ResponsiveContainer>
 
           <DonutCenter
-            value={data.length}
+            value={summary.total}
             label={t("fund.contributions")}
           />
         </div>
@@ -211,9 +187,9 @@ export function ContributionStatusChart({
 }
 
 export function TransactionSourceChart({
-  data,
+  summary,
 }: {
-  data: DashboardTransaction[];
+  summary: DashboardTransactionSummary;
 }) {
   const t = useTranslations("clubDashboard");
 
@@ -225,20 +201,19 @@ export function TransactionSourceChart({
     () =>
       [
         {
-          key: "webhook",
-          name: t("transactions.sourceWebhook"),
-        },
-        {
           key: "cash",
           name: t("transactions.sourceCash"),
+          value: summary.cash_count,
+          amount: summary.cash_amount,
         },
-      ].map((source) => ({
-        ...source,
-        value: data.filter(
-          (item) => item.source === source.key,
-        ).length,
-      })),
-    [data, t],
+        {
+          key: "bank",
+          name: t("transactions.sourceWebhook"),
+          value: summary.bank_count,
+          amount: summary.bank_amount,
+        },
+      ],
+    [summary, t],
   );
 
   return (
@@ -247,7 +222,7 @@ export function TransactionSourceChart({
       title={t("transactions.sources")}
       description={t("transactions.sourceDescription")}
     >
-      {!data.length ? (
+      {!summary.total_count ? (
         <DashboardState
           message={t("transactions.noTransactionData")}
         />
@@ -309,7 +284,7 @@ export function TransactionSourceChart({
           </ResponsiveContainer>
 
           <DonutCenter
-            value={data.length}
+            value={summary.total_count}
             label={t("transactions.transactions")}
           />
         </div>

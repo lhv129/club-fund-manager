@@ -34,6 +34,14 @@ type PageItem =
         pages: number[];
     };
 
+/**
+ * Desktop pagination.
+ *
+ * Ví dụ:
+ * 1 2 3 4 ... 9 10
+ * 1 ... 4 5 6 ... 10
+ * 1 2 ... 7 8 9 10
+ */
 function getPageItems(
     current: number,
     total: number,
@@ -170,6 +178,143 @@ function getPageItems(
     ];
 }
 
+/**
+ * Mobile pagination.
+ *
+ * Cố tình ít item hơn desktop để không bị chật.
+ *
+ * Ví dụ:
+ *
+ * 1 ... 10
+ * 1 2 ... 10
+ * 1 ... 5 6 7 ... 20
+ * 1 ... 19 20
+ */
+function getMobilePageItems(
+    current: number,
+    total: number,
+): PageItem[] {
+    if (total <= 5) {
+        return Array.from(
+            { length: total },
+            (_, index) => ({
+                type: "page" as const,
+                value: index + 1,
+            }),
+        );
+    }
+
+    if (current <= 3) {
+        return [
+            {
+                type: "page",
+                value: 1,
+            },
+            {
+                type: "page",
+                value: 2,
+            },
+            {
+                type: "page",
+                value: 3,
+            },
+            {
+                type: "ellipsis",
+                side: "right",
+                pages: Array.from(
+                    {
+                        length: Math.max(
+                            0,
+                            total - 4,
+                        ),
+                    },
+                    (_, index) => index + 4,
+                ),
+            },
+            {
+                type: "page",
+                value: total,
+            },
+        ];
+    }
+
+    if (current >= total - 2) {
+        return [
+            {
+                type: "page",
+                value: 1,
+            },
+            {
+                type: "ellipsis",
+                side: "left",
+                pages: Array.from(
+                    {
+                        length: Math.max(
+                            0,
+                            total - 4,
+                        ),
+                    },
+                    (_, index) => index + 2,
+                ),
+            },
+            {
+                type: "page",
+                value: total - 2,
+            },
+            {
+                type: "page",
+                value: total - 1,
+            },
+            {
+                type: "page",
+                value: total,
+            },
+        ];
+    }
+
+    return [
+        {
+            type: "page",
+            value: 1,
+        },
+        {
+            type: "ellipsis",
+            side: "left",
+            pages: Array.from(
+                {
+                    length: Math.max(
+                        0,
+                        current - 2,
+                    ),
+                },
+                (_, index) => index + 2,
+            ),
+        },
+        {
+            type: "page",
+            value: current,
+        },
+        {
+            type: "ellipsis",
+            side: "right",
+            pages: Array.from(
+                {
+                    length: Math.max(
+                        0,
+                        total - current - 1,
+                    ),
+                },
+                (_, index) =>
+                    current + 1 + index,
+            ),
+        },
+        {
+            type: "page",
+            value: total,
+        },
+    ];
+}
+
 function PageSelect({
     pages,
     currentPage,
@@ -232,18 +377,19 @@ function PageSelect({
                 className="
                     inline-flex
                     h-8
-                    min-w-8
+                    min-w-7
                     items-center
                     justify-center
                     rounded-lg
-                    px-1.5
+                    px-1
                     text-[10px]
                     font-medium
                     text-foreground-muted
                     transition-colors
                     hover:bg-background-subtle
                     hover:text-foreground
-                    sm:px-2
+                    sm:min-w-8
+                    sm:px-1.5
                     sm:text-[11px]
                     focus-visible:outline-none
                     focus-visible:ring-2
@@ -271,11 +417,12 @@ function PageSelect({
                         shadow-lg
                         shadow-foreground/10
                         sm:w-44
-                        ${align === "left"
-                            ? "left-0"
-                            : align === "right"
-                                ? "right-0"
-                                : "left-1/2 -translate-x-1/2"
+                        ${
+                            align === "left"
+                                ? "left-0"
+                                : align === "right"
+                                    ? "right-0"
+                                    : "left-1/2 -translate-x-1/2"
                         }
                     `}
                 >
@@ -380,6 +527,12 @@ export function Pagination({
         totalPages,
     );
 
+    const mobilePageItems =
+        getMobilePageItems(
+            page,
+            totalPages,
+        );
+
     const getPageSelectLabel = (
         side: "left" | "right",
     ) =>
@@ -409,28 +562,19 @@ export function Pagination({
                 ========================================================= */}
             <div
                 className="
-                    grid
+                    flex
                     w-full
-                    grid-cols-2
-                    items-center
-                    gap-y-3
+                    flex-col
+                    gap-3
                     sm:hidden
                 "
             >
-                {/* Pagination - centered */}
-                <div
-                    className="
-                        col-span-2
-                        flex
-                        min-w-0
-                        items-center
-                        justify-center
-                    "
-                >
+                {/* Pagination */}
+                <div className="flex w-full min-w-0 justify-center">
                     <PaginationControls
                         page={page}
                         totalPages={totalPages}
-                        pageItems={pageItems}
+                        pageItems={mobilePageItems}
                         onPageChange={onPageChange}
                         getPageSelectLabel={
                             getPageSelectLabel
@@ -440,44 +584,60 @@ export function Pagination({
                     />
                 </div>
 
-                {/* Showing */}
+                {/* Meta */}
                 <div
                     className="
+                        flex
+                        w-full
                         min-w-0
-                        justify-self-start
-                        text-[10px]
-                        font-medium
-                        text-foreground-muted
+                        items-center
+                        justify-between
+                        gap-2
                     "
                 >
-                    <span className="block truncate">
-                        {total === 0
-                            ? t("noResults")
-                            : t("showingResults", {
-                                from,
-                                to,
-                                total,
-                            })}
-                    </span>
-                </div>
+                    {/* Showing */}
+                    <div
+                        className="
+                            min-w-0
+                            flex-1
+                            text-[10px]
+                            font-medium
+                            text-foreground-muted
+                        "
+                    >
+                        <span className="block truncate">
+                            {total === 0
+                                ? t("noResults")
+                                : t(
+                                      "showingResults",
+                                      {
+                                          from,
+                                          to,
+                                          total,
+                                      },
+                                  )}
+                        </span>
+                    </div>
 
-                {/* Items */}
-                {onLimitChange && (
-                    <div className="justify-self-end">
+                    {/* Items */}
+                    {onLimitChange && (
                         <PaginationLimitSelect
                             value={limit}
                             options={limitOptions}
-                            onChange={onLimitChange}
-                            label={t("itemsPerPage")}
+                            onChange={
+                                onLimitChange
+                            }
+                            label={t(
+                                "itemsPerPage",
+                            )}
                         />
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* =========================================================
                 TABLET / DESKTOP
 
-                40%                  60%
                 Showing              Pagination + Items
 
                 Showing 1–10 of 100   ← 1 2 3 … 10 →   Items: 10
@@ -491,7 +651,7 @@ export function Pagination({
                     sm:flex
                 "
             >
-                {/* Left - 40% */}
+                {/* Left */}
                 <div
                     className="
                         min-w-0
@@ -506,15 +666,18 @@ export function Pagination({
                     <span className="block truncate">
                         {total === 0
                             ? t("noResults")
-                            : t("showingResults", {
-                                from,
-                                to,
-                                total,
-                            })}
+                            : t(
+                                  "showingResults",
+                                  {
+                                      from,
+                                      to,
+                                      total,
+                                  },
+                              )}
                     </span>
                 </div>
 
-                {/* Right - 60% */}
+                {/* Right */}
                 <div
                     className="
                         flex
@@ -528,7 +691,6 @@ export function Pagination({
                         lg:gap-5
                     "
                 >
-                    {/* Pagination */}
                     <PaginationControls
                         page={page}
                         totalPages={totalPages}
@@ -540,13 +702,16 @@ export function Pagination({
                         t={t}
                     />
 
-                    {/* Items */}
                     {onLimitChange && (
                         <PaginationLimitSelect
                             value={limit}
                             options={limitOptions}
-                            onChange={onLimitChange}
-                            label={t("itemsPerPage")}
+                            onChange={
+                                onLimitChange
+                            }
+                            label={t(
+                                "itemsPerPage",
+                            )}
                         />
                     )}
                 </div>
@@ -582,9 +747,10 @@ function PaginationControls({
                 items-center
                 justify-center
                 gap-0.5
-                ${mobile
-                    ? "max-w-full"
-                    : "shrink-0"
+                ${
+                    mobile
+                        ? "max-w-full"
+                        : "shrink-0"
                 }
                 sm:gap-1
             `}
@@ -639,7 +805,9 @@ function PaginationControls({
                                 <PageSelect
                                     key={`ellipsis-${item.side}-${index}`}
                                     pages={item.pages}
-                                    currentPage={page}
+                                    currentPage={
+                                        page
+                                    }
                                     onChange={
                                         onPageChange
                                     }
@@ -693,13 +861,14 @@ function PaginationControls({
                                     focus-visible:outline-none
                                     focus-visible:ring-2
                                     focus-visible:ring-primary/30
-                                    ${active
-                                        ? `
+                                    ${
+                                        active
+                                            ? `
                                                 bg-primary-50
                                                 font-semibold
                                                 text-primary-700
                                             `
-                                        : `
+                                            : `
                                                 text-foreground
                                                 hover:bg-background-subtle
                                             `
@@ -816,12 +985,12 @@ function PaginationLimitSelect({
                     shrink-0
                     items-center
                     justify-center
-                    gap-1.5
+                    gap-1
                     whitespace-nowrap
                     rounded-xl
                     border
                     border-border
-                    px-2.5
+                    px-2
                     text-[10px]
                     font-normal
                     text-foreground
@@ -847,9 +1016,10 @@ function PaginationLimitSelect({
                         shrink-0
                         text-foreground-muted
                         transition-transform
-                        ${open
-                            ? "rotate-180"
-                            : ""
+                        ${
+                            open
+                                ? "rotate-180"
+                                : ""
                         }
                     `}
                 />
@@ -884,7 +1054,9 @@ function PaginationLimitSelect({
                                     key={option}
                                     type="button"
                                     onClick={() => {
-                                        onChange(option);
+                                        onChange(
+                                            option,
+                                        );
                                         setOpen(false);
                                     }}
                                     className="
