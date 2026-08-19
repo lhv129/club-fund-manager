@@ -1118,6 +1118,24 @@ export const MODULE_SLUGS = {
 - `buildPayload` với translatable field tên `"title"`: dùng `(entry as Record<string, string>)["title"]`
 - Select hook: nếu BE có `GET /{resource}/select` → export `use{Entity}Select` trong cùng file `use{Entity}s.ts` (KHÔNG tạo file `select.ts` riêng); club-scoped thì nhận `clubSlug?` + `enabled: Boolean(clubSlug)`, system thì không cần
 
+### Cập nhật cache sau mutation toggle
+
+Khi mutation trả về entity đã cập nhật, cập nhật trực tiếp cache của query hiện tại thay vì gọi `invalidateQueries`/refetch:
+
+```ts
+queryClient.setQueryData(currentQueryKey, (old) => {
+  if (!old) return old;
+  return {
+    ...old,
+    data: (old.data ?? []).map((item) =>
+      item.id === changed.id ? { ...item, ...changed } : item,
+    ),
+  };
+});
+```
+
+Với list có filter, loại bỏ item nếu entity không còn thỏa filter hiện tại và cập nhật `meta.total`. Các endpoint có query khác nhau phải giữ query key riêng; không cập nhật toàn bộ cache chỉ vì dùng chung hook.
+
 ---
 
 ## Phụ lục: Utilities dùng chung (`src/utils/index.ts`)

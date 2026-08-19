@@ -102,6 +102,10 @@
     "superAdmin": "Super Admin"
   },
   "metadata": {
+    "clubDashboard": {
+      "title": "Tổng quan câu lạc bộ",
+      "description": "Quản lý và theo dõi hoạt động của câu lạc bộ."
+    },
     "webhookConfigs": {
       "title": "Cấu hình webhook",
       "description": "Quản lý cấu hình webhook của câu lạc bộ"
@@ -134,10 +138,6 @@
       "title": "Tham gia câu lạc bộ",
       "description": "Tìm kiếm và tham gia câu lạc bộ phù hợp với bạn."
     },
-    "clubDashboard": {
-      "title": "Bảng điều khiển",
-      "description": "Tổng quan về thành viên, quỹ, sự kiện và các thống kê của câu lạc bộ."
-    },
     "members": {
       "title": "Thành viên",
       "description": "Quản lý danh sách thành viên đang trong câu lạc bộ và vai trò trong câu lạc bộ."
@@ -165,6 +165,18 @@
     "monthlyContributions": {
       "title": "Theo dõi đóng quỹ hàng tháng",
       "description": "Theo dõi và quản lý tình trạng đóng quỹ hàng tháng của các thành viên trong câu lạc bộ"
+    },
+    "exchangeSession": {
+      "title": "Quản lý buổi đánh",
+      "description": "Quản lý và theo dõi các buổi đánh của câu lạc bộ."
+    },
+    "exchangeSessionPlayers": {
+      "title": "Người chơi giao lưu",
+      "description": "Quản lý danh sách người chơi giao lưu trong các buổi đánh."
+    },
+    "exchangeSessionPlayerPayments": {
+      "title": "Theo dõi tiền giao lưu",
+      "description": "Theo dõi số tiền phải thu và tình trạng thanh toán của người chơi giao lưu."
     }
   },
   "header": {
@@ -782,6 +794,11 @@
     "playerPaymentTrackingDescription": "Theo dõi số tiền và trạng thái thanh toán theo từng buổi đánh.",
     "paidYes": "Đã thanh toán",
     "paidNo": "Chưa thanh toán",
+    "warning": "Cảnh báo",
+    "noWarning": "Không có cảnh báo",
+    "warningLevel_normal": "Bình thường",
+    "warningLevel_warning": "Cảnh báo quá hạn",
+    "warningLevel_critical": "Quá hạn nghiêm trọng",
     "stt": "STT",
     "sessionDate": "Ngày đánh",
     "courtName": "Tên sân",
@@ -813,5 +830,168 @@
     "createPlayer": "Thêm người chơi giao lưu",
     "editPlayer": "Sửa người chơi giao lưu",
     "deletePlayerConfirm": "Bạn có chắc muốn xóa người chơi giao lưu này?"
+  },
+  "clubDashboard": {
+    "header": {
+      "workspace": "Không gian câu lạc bộ",
+      "overview": "Tổng quan câu lạc bộ",
+      "description": "Dữ liệu trực tiếp từ các module tài chính, quỹ, thành viên và buổi đánh.",
+      "period": "Khoảng thời gian",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày",
+      "refresh": "Làm mới dữ liệu",
+      "invalidRange": "Vui lòng chọn khoảng ngày hợp lệ.",
+      "loading": "Đang tải dữ liệu dashboard...",
+      "loadError": "Không thể tải dữ liệu dashboard. Hãy thử làm mới.",
+      "periods": {
+        "month": "Tháng này",
+        "previous_month": "Tháng trước",
+        "3m": "3 tháng gần đây",
+        "6m": "6 tháng gần đây",
+        "this_year": "Năm nay",
+        "last_year": "Năm trước",
+        "custom": "Tùy chọn"
+      }
+    },
+    "common": {
+      "day": "Ngày",
+      "month": "Tháng",
+      "year": "Năm",
+      "total": "Tổng",
+      "people": "người",
+      "groups": "nhóm",
+      "days": "ngày",
+      "guest": "khách giao lưu",
+      "perPerson": "/ người",
+      "details": "Chi tiết",
+      "manage": "Quản lý",
+      "viewAll": "Xem tất cả",
+      "noData": "Chưa có dữ liệu.",
+      "noDataRange": "Chưa có dữ liệu trong khoảng thời gian này."
+    },
+    "financial": {
+      "title": "Tổng quan tài chính",
+      "income": "Tổng thu",
+      "expense": "Tổng chi",
+      "netCashFlow": "Dòng tiền ròng",
+      "outstanding": "Còn phải thu",
+      "transactionsInPeriod": "{count} giao dịch trong kỳ",
+      "expenseInRange": "Chi phí trong khoảng lọc",
+      "incomeMinusExpense": "Tổng thu trừ tổng chi",
+      "pendingContributions": "{count} khoản đang chờ",
+      "outstandingDescription": "Bao gồm khoản quỹ và chi phí buổi đánh đang chờ."
+    },
+    "members": {
+      "title": "Tổng quan thành viên",
+      "description": "Mức độ hoạt động trong kỳ hiện tại",
+      "participating": "Có tham gia",
+      "newMembers": "Thành viên mới",
+      "inactiveMembers": "Ít hoạt động",
+      "activeRate": "Tỷ lệ hoạt động",
+      "members": "thành viên",
+      "membersTotal": "{active} trong tổng số {total} thành viên",
+      "membersOutstanding": "{count} thành viên còn nghĩa vụ",
+      "male": "Nam",
+      "female": "Nữ",
+      "active": "Hoạt động"
+    },
+    "cashFlow": {
+      "title": "Dòng tiền",
+      "description": "Theo dõi thu, chi và dòng tiền ròng trong khoảng lọc",
+      "chartInfo": "Dữ liệu theo khoảng thời gian ở phần đầu trang",
+      "income": "Tổng thu",
+      "expense": "Tổng chi",
+      "net": "Dòng tiền thuần",
+      "incomeShort": "Thu",
+      "expenseShort": "Chi",
+      "netShort": "Dòng tiền thuần",
+      "average": "Trung bình",
+      "highest": "Cao nhất",
+      "coverage": "Độ phủ dữ liệu",
+      "perDay": "người/ngày",
+      "resetSeries": "Đặt lại series",
+      "dragHint": "Dùng thanh kéo bên dưới để xem chi tiết từng mốc",
+      "hoverHint": "Di chuột lên đường biểu diễn để xem chi tiết",
+      "dataPoints": "{count} mốc dữ liệu",
+      "tooltipDate": "{day} {date}"
+    },
+    "activity": {
+      "title": "Mức độ tham gia",
+      "description": "Tổng người, nam, nữ và nhóm giao lưu trong khoảng lọc",
+      "total": "Tổng",
+      "male": "Nam",
+      "female": "Nữ",
+      "groups": "Nhóm giao lưu"
+    },
+    "fund": {
+      "title": "Phân bổ đóng quỹ",
+      "description": "Dữ liệu trực tiếp từ FundPeriod và MonthlyContribution",
+      "fundPeriod": "Kỳ quỹ tháng {month}/{year}",
+      "currentPeriod": "Kỳ quỹ hiện tại",
+      "status": "Trạng thái kỳ quỹ",
+      "locked": "Đã khóa",
+      "active": "Đang hoạt động",
+      "inactive": "Không hoạt động",
+      "maleFee": "Phí thành viên nam",
+      "femaleFee": "Phí thành viên nữ",
+      "pending": "Đang chờ",
+      "pendingInLoadedData": "Khoản đóng đang chờ trong dữ liệu tải về",
+      "noPendingInCurrentPage": "Không có khoản đang chờ trong trang dữ liệu hiện tại.",
+      "noFundPeriod": "Chưa có kỳ quỹ nào.",
+      "noContributionData": "Chưa có dữ liệu khoản đóng.",
+      "distribution": "Phân bổ đóng quỹ",
+      "contributionStatusDescription": "Phân bổ các khoản đóng theo trạng thái.",
+      "statusPaid": "Đã đóng",
+      "statusPending": "Đang chờ",
+      "statusCancelled": "Đã hủy",
+      "contributions": "khoản đóng"
+    },
+    "transactions": {
+      "title": "Giao dịch gần đây",
+      "description": "Giao dịch thu, chi mới nhất của câu lạc bộ",
+      "viewAll": "Xem tất cả",
+      "transaction": "Giao dịch",
+      "noTransactions": "Chưa có giao dịch nào.",
+      "noDescription": "Không có mô tả",
+      "sources": "Nguồn giao dịch",
+      "sourceDescription": "Phân bổ giao dịch theo nguồn ghi nhận.",
+      "sourceWebhook": "Chuyển khoản",
+      "sourceCash": "Tiền mặt",
+      "sourceManual": "Thủ công",
+      "transactions": "giao dịch",
+      "noTransactionData": "Chưa có dữ liệu giao dịch."
+    },
+    "sessions": {
+      "title": "Buổi đánh sắp tới",
+      "description": "ExchangeSession thực tế đã được lên lịch",
+      "viewSchedule": "Xem lịch",
+      "scheduled": "Theo lịch",
+      "manual": "Tạo thủ công",
+      "amountPerGuest": "Phí mỗi khách",
+      "totalAmount": "Tổng tiền",
+      "guest": "khách giao lưu",
+      "sessionInformation": "Thông tin buổi đánh",
+      "noUpcomingSessions": "Chưa có buổi đánh sắp tới.",
+      "noSessionData": "Chưa có dữ liệu buổi đánh.",
+      "participants": "Người tham gia",
+      "participantCount": "{count} người",
+      "average": "Trung bình",
+      "perSession": "người / buổi",
+      "busiestSession": "Buổi đông nhất",
+      "noData": "Chưa có dữ liệu",
+      "collectedAmount": "Tiền thu",
+      "tooltipTitle": "Buổi đánh · {date}",
+      "totalCollected": "Tổng tiền thu",
+      "highest": "Cao nhất",
+      "status": {
+        "upcoming": "Sắp tới",
+        "completed": "Đã hoàn tất",
+        "cancelled": "Đã hủy"
+      },
+      "type": {
+        "scheduled": "Theo lịch",
+        "manual": "Tạo thủ công"
+      }
+    }
   }
 }

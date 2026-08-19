@@ -19,26 +19,27 @@ class ExchangeSessionService extends BaseRepository<ExchangeSession> {
 
 class ExchangeSessionPlayerService extends BaseRepository<ExchangeSessionPlayer> {
     protected adapter = browserAdapter;
+    protected resource = "exchange-sessions/players";
 
     constructor(sessionId?: number) {
         super();
-        this.resource = sessionId
-            ? `exchange-sessions/${sessionId}/players`
-            : "exchange-sessions/players";
+        this.sessionId = sessionId;
     }
 
-    protected resource: string;
+    private sessionId?: number;
 
     override list(params?: ListParams) {
         return this.get<PaginatedResponse<ExchangeSessionPlayer>>(
-            "/exchange-sessions/players",
-            params
+            `/${this.resource}`,
+            this.sessionId === undefined
+                ? params
+                : { ...params, exchange_session_id: this.sessionId }
         );
     }
 
-    togglePaid(id: number, data?: Record<string, unknown>) {
+    togglePaid(id: number, sessionId: number, data?: Record<string, unknown>) {
         return this.put<ApiResponse<ExchangeSessionPlayer>>(
-            `/${this.resource}/${id}/toggle-paid`,
+            `/exchange-sessions/${sessionId}/players/${id}/toggle-paid`,
             data
         );
     }

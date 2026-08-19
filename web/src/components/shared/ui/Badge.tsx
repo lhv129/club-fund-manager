@@ -27,7 +27,10 @@ export type BadgeVariant =
   | "manual"
   | "upcoming"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "normal"
+  | "warning"
+  | "critical";
 
 interface BadgeProps {
   /** Key khai báo màu — không cần truyền màu thủ công */
@@ -189,6 +192,24 @@ const CONFIG: Record<
     dot: "bg-rose-500",
     bg: "bg-rose-500/10",
     text: "text-rose-600 dark:text-rose-400",
+    ring: "ring-rose-500/20",
+  },
+  normal: {
+    dot: "bg-slate-500",
+    bg: "bg-slate-500/10",
+    text: "text-slate-600 dark:text-slate-300",
+    ring: "ring-slate-500/20",
+  },
+  warning: {
+    dot: "bg-amber-500",
+    bg: "bg-amber-500/10",
+    text: "text-amber-700 dark:text-amber-300",
+    ring: "ring-amber-500/20",
+  },
+  critical: {
+    dot: "bg-rose-500",
+    bg: "bg-rose-500/10",
+    text: "text-rose-700 dark:text-rose-300",
     ring: "ring-rose-500/20",
   },
 };

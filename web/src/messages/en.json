@@ -102,6 +102,10 @@
     "superAdmin": "Super Admin"
   },
   "metadata": {
+    "clubDashboard": {
+      "title": "Club Dashboard",
+      "description": "Manage and monitor your club activities."
+    },
     "webhookConfigs": {
       "title": "Webhook configurations",
       "description": "Manage club webhook configurations"
@@ -134,10 +138,6 @@
       "title": "Join club",
       "description": "Search and join clubs that match your interests."
     },
-    "clubDashboard": {
-      "title": "Dashboard",
-      "description": "Overview of your club activities, members, funds, and statistics."
-    },
     "members": {
       "title": "Members",
       "description": "Manage club members and their roles."
@@ -165,6 +165,18 @@
     "monthlyContributions": {
       "title": "Monthly Contribution Tracking",
       "description": "Track and manage the monthly contribution status of club members."
+    },
+    "exchangeSession": {
+      "title": "Exchange Sessions",
+      "description": "Manage and track the club's exchange sessions."
+    },
+    "exchangeSessionPlayers": {
+      "title": "Exchange Players",
+      "description": "Manage exchange players participating in the club's sessions."
+    },
+    "exchangeSessionPlayerPayments": {
+      "title": "Exchange Player Payment Tracking",
+      "description": "Track the amount due and payment status of exchange players."
     }
   },
   "header": {
@@ -785,6 +797,11 @@
     "playerPaymentTrackingDescription": "Track the amount due and payment status for each exchange session.",
     "paidYes": "Paid",
     "paidNo": "Unpaid",
+    "warning": "Warning",
+    "noWarning": "No warning",
+    "warningLevel_normal": "Normal",
+    "warningLevel_warning": "Overdue warning",
+    "warningLevel_critical": "Critically overdue",
     "stt": "No.",
     "sessionDate": "Session Date",
     "courtName": "Court Name",
@@ -816,5 +833,168 @@
     "createPlayer": "Add exchange player",
     "editPlayer": "Edit exchange player",
     "deletePlayerConfirm": "Are you sure you want to delete this exchange player?"
+  },
+  "clubDashboard": {
+    "header": {
+      "workspace": "Club Workspace",
+      "overview": "Club Overview",
+      "description": "Live data from the club's finance, fund, member, and session modules.",
+      "period": "Time Period",
+      "fromDate": "From date",
+      "toDate": "To date",
+      "refresh": "Refresh data",
+      "invalidRange": "Please select a valid date range.",
+      "loading": "Loading dashboard data...",
+      "loadError": "Unable to load dashboard data. Please try refreshing.",
+      "periods": {
+        "month": "This month",
+        "previous_month": "Previous month",
+        "3m": "Last 3 months",
+        "6m": "Last 6 months",
+        "this_year": "This year",
+        "last_year": "Last year",
+        "custom": "Custom"
+      }
+    },
+    "common": {
+      "day": "Day",
+      "month": "Month",
+      "year": "Year",
+      "total": "Total",
+      "people": "people",
+      "groups": "groups",
+      "days": "days",
+      "guest": "guest",
+      "perPerson": "/ person",
+      "details": "Details",
+      "manage": "Manage",
+      "viewAll": "View all",
+      "noData": "No data available.",
+      "noDataRange": "No data available for this period."
+    },
+    "financial": {
+      "title": "Financial Overview",
+      "income": "Total Income",
+      "expense": "Total Expenses",
+      "netCashFlow": "Net Cash Flow",
+      "outstanding": "Outstanding",
+      "transactionsInPeriod": "{count} transactions in this period",
+      "expenseInRange": "Expenses within the selected range",
+      "incomeMinusExpense": "Total income minus total expenses",
+      "pendingContributions": "{count} pending contributions",
+      "outstandingDescription": "Includes pending fund contributions and session expenses."
+    },
+    "members": {
+      "title": "Member Overview",
+      "description": "Activity level during the current period",
+      "participating": "Participating",
+      "newMembers": "New Members",
+      "inactiveMembers": "Less Active",
+      "activeRate": "Activity Rate",
+      "members": "members",
+      "membersTotal": "{active} of {total} members",
+      "membersOutstanding": "{count} members with outstanding obligations",
+      "male": "Male",
+      "female": "Female",
+      "active": "Active"
+    },
+    "cashFlow": {
+      "title": "Cash Flow",
+      "description": "Track income, expenses, and net cash flow within the selected period",
+      "chartInfo": "Data based on the selected period at the top of the page",
+      "income": "Total Income",
+      "expense": "Total Expenses",
+      "net": "Net Cash Flow",
+      "incomeShort": "Income",
+      "expenseShort": "Expenses",
+      "netShort": "Net Cash Flow",
+      "average": "Average",
+      "highest": "Highest",
+      "coverage": "Data Coverage",
+      "perDay": "people/day",
+      "resetSeries": "Reset series",
+      "dragHint": "Use the slider below to view details for each data point",
+      "hoverHint": "Hover over the chart to view details",
+      "dataPoints": "{count} data points",
+      "tooltipDate": "{day} {date}"
+    },
+    "activity": {
+      "title": "Participation Level",
+      "description": "Total participants, male, female, and guest groups within the selected period",
+      "total": "Total",
+      "male": "Male",
+      "female": "Female",
+      "groups": "Guest Groups"
+    },
+    "fund": {
+      "title": "Fund Contribution Distribution",
+      "description": "Live data from FundPeriod and MonthlyContribution",
+      "fundPeriod": "Fund period {month}/{year}",
+      "currentPeriod": "Current fund period",
+      "status": "Fund period status",
+      "locked": "Locked",
+      "active": "Active",
+      "inactive": "Inactive",
+      "maleFee": "Male member fee",
+      "femaleFee": "Female member fee",
+      "pending": "Pending",
+      "pendingInLoadedData": "Pending contributions in the loaded data",
+      "noPendingInCurrentPage": "No pending contributions on the current page.",
+      "noFundPeriod": "No fund periods available.",
+      "noContributionData": "No contribution data available.",
+      "distribution": "Fund Contribution Distribution",
+      "contributionStatusDescription": "Distribution of contributions by status.",
+      "statusPaid": "Paid",
+      "statusPending": "Pending",
+      "statusCancelled": "Cancelled",
+      "contributions": "contributions"
+    },
+    "transactions": {
+      "title": "Recent Transactions",
+      "description": "Latest income and expense transactions of the club",
+      "viewAll": "View all",
+      "transaction": "Transaction",
+      "noTransactions": "No transactions yet.",
+      "noDescription": "No description",
+      "sources": "Transaction Sources",
+      "sourceDescription": "Distribution of transactions by recorded source.",
+      "sourceWebhook": "Bank Transfer",
+      "sourceCash": "Cash",
+      "sourceManual": "Manual",
+      "transactions": "transactions",
+      "noTransactionData": "No transaction data available."
+    },
+    "sessions": {
+      "title": "Upcoming Sessions",
+      "description": "Actual scheduled ExchangeSession sessions",
+      "viewSchedule": "View schedule",
+      "scheduled": "Scheduled",
+      "manual": "Created manually",
+      "amountPerGuest": "Fee per guest",
+      "totalAmount": "Total amount",
+      "guest": "guest",
+      "sessionInformation": "Session Information",
+      "noUpcomingSessions": "No upcoming sessions.",
+      "noSessionData": "No session data available.",
+      "participants": "Participants",
+      "participantCount": "{count} people",
+      "average": "Average",
+      "perSession": "people / session",
+      "busiestSession": "Busiest Session",
+      "noData": "No data available",
+      "collectedAmount": "Collected Amount",
+      "tooltipTitle": "Session · {date}",
+      "totalCollected": "Total Collected",
+      "highest": "Highest",
+      "status": {
+        "upcoming": "Upcoming",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "type": {
+        "scheduled": "Scheduled",
+        "manual": "Manual"
+      }
+    }
   }
 }
