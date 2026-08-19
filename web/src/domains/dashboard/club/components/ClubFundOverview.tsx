@@ -36,7 +36,6 @@ type ClubFundOverviewProps = {
   locale: string;
   slug: string;
   period?: DashboardPeriod;
-  balance: DashboardFundBalance;
 };
 
 export function ClubFundOverview({
@@ -44,7 +43,6 @@ export function ClubFundOverview({
   locale,
   slug,
   period = "month",
-  balance,
 }: ClubFundOverviewProps) {
   const t = useTranslations("clubDashboard");
 

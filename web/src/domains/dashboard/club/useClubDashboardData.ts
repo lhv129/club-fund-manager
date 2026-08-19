@@ -47,7 +47,9 @@ export function useClubDashboardData(filters: DashboardFilters): DashboardQueryS
         : (sessions.data?.data as { items?: DashboardSession[] } | undefined)?.items ?? [],
       transactions: transactions.data?.data?.items ?? [],
       transactionTotal: transactions.data?.data?.summary.total_count ?? 0,
-      transactionBalance: transactions.data?.data?.summary.bank_amount + transactions.data?.data?.summary.cash_amount || 0,
+      transactionBalance:
+        (transactions.data?.data?.summary?.bank_amount ?? 0) +
+        (transactions.data?.data?.summary?.cash_amount ?? 0),
       transactionSummary: transactions.data?.data?.summary ?? emptyTransactionSummary,
       fundBalance: fundBalance.data?.data ?? emptyFundBalance,
       cashFlow: cashFlow.data?.data ?? [],

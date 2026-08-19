@@ -180,11 +180,9 @@ export function ClubDashboard({
 
           <ClubFundOverview
             periods={query.data.fundPeriods}
-            contributions={query.data.contributions}
             locale={locale}
             slug={slug}
             period={filterValue.period}
-            balance={query.data.fundBalance}
           />
 
           <section className="space-y-5">
