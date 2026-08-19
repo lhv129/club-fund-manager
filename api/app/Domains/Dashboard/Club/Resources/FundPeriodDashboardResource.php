@@ -10,17 +10,14 @@ class FundPeriodDashboardResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'club_id' => $this->club_id,
+            'period_id' => $this->period_id,
             'year' => $this->year,
             'month' => $this->month,
-
-            'male_amount' => $this->male_amount,
-            'female_amount' => $this->female_amount,
-
-            'exchange_male_amount' => $this->exchange_male_amount,
-            'exchange_female_amount' => $this->exchange_female_amount,
-
+            'total_expected' => (float) $this->total_expected,
+            'total_paid' => (float) $this->total_paid,
+            'total_pending' => (float) $this->total_pending,
+            'paid_count' => (int) $this->paid_count,
+            'pending_count' => (int) $this->pending_count,
             'is_active' => (bool) $this->is_active,
             'is_locked' => (bool) $this->is_locked,
         ];

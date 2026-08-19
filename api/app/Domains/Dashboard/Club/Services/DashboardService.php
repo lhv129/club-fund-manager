@@ -4,8 +4,6 @@ namespace App\Domains\Dashboard\Club\Services;
 
 use App\Base\BaseService;
 use App\Domains\Dashboard\Club\Repositories\DashboardRepository;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class DashboardService extends BaseService
 {
@@ -42,14 +40,14 @@ class DashboardService extends BaseService
                 now()->endOfYear(),
             ],
 
-            '6m' => [
-                now()->subMonths(6)->startOfDay(),
-                now()->endOfDay(),
+            '3m' => [
+                now()->subMonths(2)->startOfMonth(),
+                now()->endOfMonth(),
             ],
 
-            '3m' => [
-                now()->subMonths(3)->startOfDay(),
-                now()->endOfDay(),
+            '6m' => [
+                now()->subMonths(5)->startOfMonth(),
+                now()->endOfMonth(),
             ],
 
             'previous_month' => [
@@ -77,6 +75,21 @@ class DashboardService extends BaseService
         $filters['date_from'] = $dateFrom;
         $filters['date_to'] = $dateTo;
 
+        // Dashboard charts default to daily data for a single month period.
+        // Custom ranges up to 31 inclusive days are also readable at day level;
+        // longer ranges are aggregated by month (including both boundary months).
+        if (!array_key_exists('granularity', $filters) || $filters['granularity'] === null) {
+            $filters['granularity'] = match ($period) {
+                'month', 'previous_month' => 'day',
+                'custom' => $dateFrom->copy()->startOfDay()->diffInDays($dateTo->copy()->startOfDay()) + 1 <= 31
+                    ? 'day'
+                    : 'month',
+                default => 'month',
+            };
+        } else {
+            $filters['granularity'] = $filters['granularity'] === 'day' ? 'day' : 'month';
+        }
+
         return $filters;
     }
 
@@ -95,17 +108,24 @@ class DashboardService extends BaseService
     /**
      * GET /api/v1/dashboard/fundPeriods
      */
-    public function fundPeriods(array $filters = []): Collection
+    public function fundPeriods(array $filters = [])
     {
         $filters = $this->resolvePeriod($filters);
 
         return $this->repository->fundPeriods($filters);
     }
 
+    public function fundBalance(array $filters = []): array
+    {
+        $filters = $this->resolvePeriod($filters);
+
+        return $this->repository->fundBalance($filters);
+    }
+
     /**
      * GET /api/v1/dashboard/contributions
      */
-    public function contributions(array $filters = []): LengthAwarePaginator
+    public function contributions(array $filters = []): array
     {
         $filters = $this->resolvePeriod($filters);
 
@@ -115,7 +135,7 @@ class DashboardService extends BaseService
     /**
      * GET /api/v1/dashboard/sessions
      */
-    public function sessions(array $filters = []): LengthAwarePaginator
+    public function sessions(array $filters = []): array
     {
         $filters = $this->resolvePeriod($filters);
 
@@ -125,7 +145,7 @@ class DashboardService extends BaseService
     /**
      * GET /api/v1/dashboard/transactions
      */
-    public function transactions(array $filters = []): LengthAwarePaginator
+    public function transactions(array $filters = []): array
     {
         $filters = $this->resolvePeriod($filters);
 

@@ -13,10 +13,14 @@ use Illuminate\Http\JsonResponse;
 
 class DashboardController extends BaseController
 {
-    public function __construct(protected DashboardService $service) {}
+    public function __construct(
+        protected DashboardService $service,
+    ) {}
 
-    protected function injectClubId(FilterDashboardRequest $request, array &$filters): void
-    {
+    protected function injectClubId(
+        FilterDashboardRequest $request,
+        array &$filters,
+    ): void {
         $clubId = $request->attributes->get('club_id');
 
         if ($clubId !== null) {
@@ -27,97 +31,163 @@ class DashboardController extends BaseController
     /**
      * GET /api/v1/dashboard/memberStats
      */
-    public function memberStats(FilterDashboardRequest $request): JsonResponse
-    {
+    public function memberStats(
+        FilterDashboardRequest $request,
+    ): JsonResponse {
         $filters = $request->validated();
+
         $this->injectClubId($request, $filters);
 
         $data = $this->service->memberStats($filters);
 
-        return $this->responseCommon(true, __('domains/dashboard.member_stats'), $data, 200);
+        return $this->responseCommon(
+            true,
+            __('domains/dashboard.member_stats'),
+            $data,
+            200,
+        );
     }
 
     /**
      * GET /api/v1/dashboard/fundPeriods
      */
-    public function fundPeriods(FilterDashboardRequest $request): JsonResponse
-    {
+    public function fundPeriods(
+        FilterDashboardRequest $request,
+    ): JsonResponse {
         $filters = $request->validated();
+
         $this->injectClubId($request, $filters);
 
         $data = $this->service->fundPeriods($filters);
 
-        return $this->responseCommon(true, __('domains/dashboard.fund_periods'), FundPeriodDashboardResource::collection($data), 200);
+        return $this->responseCommon(true, __('domains/dashboard.fund_periods'), FundPeriodDashboardResource::collection($data), 200,);
+    }
+
+    public function fundBalance(FilterDashboardRequest $request): JsonResponse
+    {
+        $filters = $request->validated();
+        $this->injectClubId($request, $filters);
+
+        return $this->responseCommon(
+            true,
+            __('domains/dashboard.fund_periods'),
+            $this->service->fundBalance($filters),
+            200,
+        );
     }
 
     /**
      * GET /api/v1/dashboard/contributions
      */
-    public function contributions(FilterDashboardRequest $request): JsonResponse
-    {
+    public function contributions(
+        FilterDashboardRequest $request,
+    ): JsonResponse {
         $filters = $request->validated();
+
         $this->injectClubId($request, $filters);
 
-        return $this->paginateResponse(
-            $this->service->contributions($filters),
+        $data = $this->service->contributions($filters);
+
+        return $this->responseCommon(
+            true,
             __('domains/dashboard.contributions'),
-            ContributionDashboardResource::class,
+            [
+                'summary' => $data['summary'],
+                'items' => ContributionDashboardResource::collection(
+                    $data['items'],
+                ),
+            ],
+            200,
         );
     }
 
     /**
      * GET /api/v1/dashboard/sessions
      */
-    public function sessions(FilterDashboardRequest $request): JsonResponse
-    {
+    public function sessions(
+        FilterDashboardRequest $request,
+    ): JsonResponse {
         $filters = $request->validated();
+
         $this->injectClubId($request, $filters);
 
-        return $this->paginateResponse(
-            $this->service->sessions($filters),
+        $data = $this->service->sessions($filters);
+
+        return $this->responseCommon(
+            true,
             __('domains/dashboard.sessions'),
-            SessionDashboardResource::class,
+            [
+                'summary' => $data['summary'],
+                'items' => SessionDashboardResource::collection(
+                    $data['items'],
+                ),
+            ],
+            200,
         );
     }
 
     /**
      * GET /api/v1/dashboard/transactions
      */
-    public function transactions(FilterDashboardRequest $request): JsonResponse
-    {
+    public function transactions(
+        FilterDashboardRequest $request,
+    ): JsonResponse {
         $filters = $request->validated();
+
         $this->injectClubId($request, $filters);
 
-        return $this->paginateResponse(
-            $this->service->transactions($filters),
+        $data = $this->service->transactions($filters);
+
+        return $this->responseCommon(
+            true,
             __('domains/dashboard.transactions'),
-            TransactionDashboardResource::class,
+            [
+                'summary' => $data['summary'],
+                'items' => TransactionDashboardResource::collection(
+                    $data['items'],
+                ),
+            ],
+            200,
         );
     }
 
     /**
      * GET /api/v1/dashboard/cashFlow
      */
-    public function cashFlow(FilterDashboardRequest $request): JsonResponse
-    {
+    public function cashFlow(
+        FilterDashboardRequest $request,
+    ): JsonResponse {
         $filters = $request->validated();
+
         $this->injectClubId($request, $filters);
 
         $data = $this->service->cashFlow($filters);
 
-        return $this->responseCommon(true, __('domains/dashboard.cash_flow'), $data, 200);
+        return $this->responseCommon(
+            true,
+            __('domains/dashboard.cash_flow'),
+            $data,
+            200,
+        );
     }
 
     /**
      * GET /api/v1/dashboard/activity
      */
-    public function activity(FilterDashboardRequest $request): JsonResponse
-    {
+    public function activity(
+        FilterDashboardRequest $request,
+    ): JsonResponse {
         $filters = $request->validated();
+
         $this->injectClubId($request, $filters);
 
         $data = $this->service->activity($filters);
 
-        return $this->responseCommon(true, __('domains/dashboard.activity'), $data, 200);
+        return $this->responseCommon(
+            true,
+            __('domains/dashboard.activity'),
+            $data,
+            200,
+        );
     }
 }

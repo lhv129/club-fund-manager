@@ -16,8 +16,7 @@ class FilterDashboardRequest extends BaseRequest
             'period' => ['nullable', 'string', 'in:last_year,6m,3m,previous_month,previous_week,month,custom'],
             'date_from' => ['nullable', 'required_if:period,custom', 'date', 'date_format:Y-m-d', 'before_or_equal:date_to'],
             'date_to'   => ['nullable', 'required_if:period,custom', 'date', 'date_format:Y-m-d', 'after_or_equal:date_from'],
-            'limit'     => ['nullable', 'integer', 'min:1', 'max:100'],
-            'page'      => ['nullable', 'integer', 'min:1'],
+            'granularity' => ['nullable', 'string', 'in:day,month'],
         ];
     }
 

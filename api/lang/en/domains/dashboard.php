@@ -14,6 +14,6 @@ return [
     'sessions' => 'Sessions retrieved successfully.',
     'transactions' => 'Transactions retrieved successfully.',
     'cash_flow' => 'Cash flow retrieved successfully.',
-    'activity' => 'Activity retrieved successfully.',
+    'activity' => 'Exchange sessions retrieved successfully.',
     'not_found' => 'Dashboard data not found.',
 ];

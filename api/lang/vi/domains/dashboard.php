@@ -14,6 +14,6 @@ return [
     'sessions' => 'Danh sách phiên đánh.',
     'transactions' => 'Danh sách giao dịch.',
     'cash_flow' => 'Dòng tiền.',
-    'activity' => 'Hoạt động.',
+    'activity' => 'Giao lưu.',
     'not_found' => 'Không tìm thấy dữ liệu dashboard.',
 ];

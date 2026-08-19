@@ -10,7 +10,10 @@ use App\Domains\FundPeriod\Models\FundPeriod;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\Transaction\Models\Transaction;
 use App\Domains\User\Models\User;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class DashboardRepository extends BaseRepository
 {
@@ -209,33 +212,77 @@ class DashboardRepository extends BaseRepository
     public function fundPeriods(array $filters = [])
     {
         $dateFrom = $filters['date_from'];
+        $dateTo = $filters['date_to'];
 
-        return $this->fundPeriodModel
+        $periods = $this->fundPeriodModel
             ->newQuery()
             ->select([
-                'id',
-                'club_id',
-                'year',
-                'month',
+                'fund_periods.id as period_id',
+                'fund_periods.year',
+                'fund_periods.month',
                 'male_amount',
                 'female_amount',
                 'exchange_male_amount',
                 'exchange_female_amount',
-                'is_active',
-                'is_locked',
+                'fund_periods.is_active',
+                'fund_periods.is_locked',
             ])
+            ->selectRaw("COALESCE(SUM(CASE WHEN monthly_contributions.status IN ('paid', 'pending') THEN monthly_contributions.amount ELSE 0 END), 0) AS total_expected")
+            ->selectRaw("COALESCE(SUM(CASE WHEN monthly_contributions.status = 'paid' THEN monthly_contributions.amount ELSE 0 END), 0) AS total_paid")
+            ->selectRaw("COALESCE(SUM(CASE WHEN monthly_contributions.status = 'pending' THEN monthly_contributions.amount ELSE 0 END), 0) AS total_pending")
+            ->selectRaw("SUM(CASE WHEN monthly_contributions.status = 'paid' THEN 1 ELSE 0 END) AS paid_count")
+            ->selectRaw("SUM(CASE WHEN monthly_contributions.status = 'pending' THEN 1 ELSE 0 END) AS pending_count")
+            ->leftJoin('monthly_contributions', function ($join) {
+                $join->on('monthly_contributions.period_id', '=', 'fund_periods.id')
+                    ->whereNull('monthly_contributions.deleted_at');
+            })
             ->when(
                 !empty($filters['club_id']),
                 fn($query) => $query->where(
-                    'club_id',
+                    'fund_periods.club_id',
                     (int) $filters['club_id']
                 )
             )
-            ->where('year', $dateFrom->year)
-            ->where('month', $dateFrom->month)
-            ->orderByDesc('year')
-            ->orderByDesc('month')
+            ->where(function ($query) use ($dateFrom, $dateTo) {
+                $query
+                    ->where(function ($query) use ($dateFrom) {
+                        $query
+                            ->where('year', '>', $dateFrom->year)
+                            ->orWhere(function ($query) use ($dateFrom) {
+                                $query
+                                    ->where('year', $dateFrom->year)
+                                    ->where('month', '>=', $dateFrom->month);
+                            });
+                    })
+                    ->where(function ($query) use ($dateTo) {
+                        $query
+                            ->where('year', '<', $dateTo->year)
+                            ->orWhere(function ($query) use ($dateTo) {
+                                $query
+                                    ->where('year', $dateTo->year)
+                                    ->where('month', '<=', $dateTo->month);
+                            });
+                    });
+            })
+            ->groupBy([
+                'fund_periods.id', 'fund_periods.year', 'fund_periods.month',
+                'male_amount', 'female_amount', 'exchange_male_amount',
+                'exchange_female_amount', 'fund_periods.is_active', 'fund_periods.is_locked',
+            ])
+            ->orderByDesc('fund_periods.year')
+            ->orderByDesc('fund_periods.month')
             ->get();
+
+        return $periods;
+    }
+
+    public function fundBalance(array $filters = []): array
+    {
+        $balance = DB::table('club_funds')
+            ->where('club_id', (int) ($filters['club_id'] ?? 0))
+            ->value('balance');
+
+        return ['balance' => (float) ($balance ?? 0)];
     }
 
     /**
@@ -244,10 +291,19 @@ class DashboardRepository extends BaseRepository
      * Tìm FundPeriod có year/month nằm trong date_from/date_to,
      * rồi lấy contributions cho các period đó.
      */
-    public function contributions(array $filters = []): LengthAwarePaginator
+    public function contributions(array $filters = []): array
     {
-        return $this->monthlyContributionModel
-            ->newQuery()
+        $query = $this->contributionQuery($filters);
+
+        $summary = (clone $query)
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw("SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid")
+            ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending")
+            ->selectRaw("SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled")
+            ->selectRaw("COALESCE(SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END), 0) AS total_amount")
+            ->first();
+
+        $items = (clone $query)
             ->select([
                 'id',
                 'club_id',
@@ -256,6 +312,30 @@ class DashboardRepository extends BaseRepository
                 'amount',
                 'status',
             ])
+            ->with([
+                'user:id,fullname',
+                'period:id,year,month',
+            ])
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
+
+        return [
+            'summary' => [
+                'total' => (int) $summary->total,
+                'paid' => (int) $summary->paid,
+                'pending' => (int) $summary->pending,
+                'cancelled' => (int) $summary->cancelled,
+                'total_amount' => (float) $summary->total_amount,
+            ],
+            'items' => $items,
+        ];
+    }
+
+    private function contributionQuery(array $filters): Builder
+    {
+        return $this->monthlyContributionModel
+            ->newQuery()
             ->when(
                 !empty($filters['club_id']),
                 fn($query) => $query->where(
@@ -286,18 +366,7 @@ class DashboardRepository extends BaseRepository
                                     ->where('month', '<=', $dateTo->month);
                             });
                     });
-            })
-            ->with([
-                'user:id,fullname',
-                'period:id,year,month',
-            ])
-            ->orderByDesc('id')
-            ->paginate(
-                $filters['limit'] ?? 15,
-                ['*'],
-                'page',
-                $filters['page'] ?? 1
-            );
+            });
     }
 
     /**
@@ -305,10 +374,26 @@ class DashboardRepository extends BaseRepository
      *
      * Lấy exchange sessions theo session_date trong date range.
      */
-    public function sessions(array $filters = []): LengthAwarePaginator
+    public function sessions(array $filters = []): array
     {
-        return $this->exchangeSessionModel
+        $query = $this->exchangeSessionModel
             ->newQuery()
+            ->when(
+                !empty($filters['club_id']),
+                fn($query) => $query->where('club_id', (int) $filters['club_id'])
+            )
+            ->whereBetween('session_date', [
+                $filters['date_from']->toDateString(),
+                $filters['date_to']->toDateString(),
+            ]);
+
+        $summary = (clone $query)
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw("SUM(CASE WHEN status = 'upcoming' THEN 1 ELSE 0 END) AS upcoming")
+            ->selectRaw("SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed")
+            ->first();
+
+        $items = (clone $query)
             ->select([
                 'id',
                 'club_id',
@@ -323,22 +408,19 @@ class DashboardRepository extends BaseRepository
                 'total_amount',
                 'amount_per_player',
             ])
-            ->when(
-                !empty($filters['club_id']),
-                fn($query) => $query->where('club_id', (int) $filters['club_id'])
-            )
-            ->whereBetween('session_date', [
-                $filters['date_from']->toDateString(),
-                $filters['date_to']->toDateString(),
-            ])
             ->orderByDesc('session_date')
             ->orderByDesc('start_time')
-            ->paginate(
-                $filters['limit'] ?? 15,
-                ['*'],
-                'page',
-                $filters['page'] ?? 1
-            );
+            ->limit(5)
+            ->get();
+
+        return [
+            'summary' => [
+                'total' => (int) $summary->total,
+                'upcoming' => (int) $summary->upcoming,
+                'completed' => (int) $summary->completed,
+            ],
+            'items' => $items,
+        ];
     }
 
     /**
@@ -346,10 +428,25 @@ class DashboardRepository extends BaseRepository
      *
      * Lấy transactions theo transaction_date trong date range.
      */
-    public function transactions(array $filters = []): LengthAwarePaginator
+    public function transactions(array $filters = []): array
     {
-        return $this->transactionModel
+        $query = $this->transactionModel
             ->newQuery()
+            ->when(
+                !empty($filters['club_id']),
+                fn($query) => $query->where('club_id', (int) $filters['club_id'])
+            )
+            ->whereBetween('transaction_date', [
+                $filters['date_from'],
+                $filters['date_to'],
+            ]);
+
+        $summary = (clone $query)
+            ->selectRaw("COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income")
+            ->selectRaw("COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense")
+            ->first();
+
+        $items = (clone $query)
             ->select([
                 'id',
                 'club_id',
@@ -361,34 +458,39 @@ class DashboardRepository extends BaseRepository
                 'sender_name',
                 'transaction_date',
             ])
-            ->when(
-                !empty($filters['club_id']),
-                fn($query) => $query->where('club_id', (int) $filters['club_id'])
-            )
-            ->whereBetween('transaction_date', [
-                $filters['date_from'],
-                $filters['date_to'],
-            ])
             ->orderByDesc('transaction_date')
             ->orderByDesc('id')
-            ->paginate(
-                $filters['limit'] ?? 15,
-                ['*'],
-                'page',
-                $filters['page'] ?? 1
-            );
+            ->limit(5)
+            ->get();
+
+        $income = (float) $summary->income;
+        $expense = (float) $summary->expense;
+
+        return [
+            'summary' => [
+                'income' => $income,
+                'expense' => $expense,
+                'balance' => $income - $expense,
+            ],
+            'items' => $items,
+        ];
     }
 
     /**
      * Dashboard Cash Flow.
      *
-     * Aggregate transactions theo ngày: income, expense, net.
+     * Aggregate transactions theo granularity: income, expense, net.
      */
     public function cashFlow(array $filters = []): array
     {
+        $granularity = $filters['granularity'] ?? 'month';
+        $dateExpression = $granularity === 'day'
+            ? 'DATE(transaction_date)'
+            : "DATE_FORMAT(transaction_date, '%Y-%m-01')";
+
         $rows = $this->transactionModel
             ->newQuery()
-            ->selectRaw('DATE(transaction_date) AS date')
+            ->selectRaw("{$dateExpression} AS date")
             ->selectRaw("
                 SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) AS income
             ")
@@ -403,17 +505,26 @@ class DashboardRepository extends BaseRepository
                 $filters['date_from'],
                 $filters['date_to'],
             ])
-            ->groupByRaw('DATE(transaction_date)')
+            ->groupByRaw($dateExpression)
             ->orderBy('date')
-            ->get();
+            ->get()
+            ->keyBy('date');
 
-        return $rows->map(fn($row) => [
-            'date' => $row->date,
-            'label' => \Carbon\Carbon::parse($row->date)->format('d/m'),
-            'income' => (float) $row->income,
-            'expense' => (float) $row->expense,
-            'net' => (float) ($row->income - $row->expense),
-        ])->values()->toArray();
+        return $this->timeline($filters, function (Carbon $date) use ($rows, $granularity): array {
+            $key = $date->format('Y-m-d');
+            $row = $rows->get($key);
+            $income = (float) ($row->income ?? 0);
+            $expense = (float) ($row->expense ?? 0);
+
+            return [
+                'key' => $granularity,
+                'date' => $key,
+                'label' => $date->format($granularity === 'day' ? 'd/m' : 'm/Y'),
+                'income' => $income,
+                'expense' => $expense,
+                'net' => $income - $expense,
+            ];
+        });
     }
 
     /**
@@ -424,6 +535,11 @@ class DashboardRepository extends BaseRepository
      */
     public function activity(array $filters = []): array
     {
+        $granularity = $filters['granularity'] ?? 'month';
+        $dateExpression = $granularity === 'day'
+            ? 'exchange_sessions.session_date'
+            : "DATE_FORMAT(exchange_sessions.session_date, '%Y-%m-01')";
+
         $rows = $this->exchangeSessionPlayerModel
             ->newQuery()
             ->join(
@@ -433,7 +549,7 @@ class DashboardRepository extends BaseRepository
                 'exchange_session_players.exchange_session_id'
             )
             ->selectRaw(
-                'exchange_sessions.session_date AS date'
+                "{$dateExpression} AS date"
             )
             ->selectRaw(
                 'SUM(exchange_session_players.male) AS male'
@@ -460,17 +576,48 @@ class DashboardRepository extends BaseRepository
             )
             ->whereNull('exchange_sessions.deleted_at')
             ->whereNull('exchange_session_players.deleted_at')
-            ->groupBy('exchange_sessions.session_date')
+            ->groupByRaw($dateExpression)
             ->orderBy('date')
-            ->get();
+            ->get()
+            ->keyBy('date');
 
-        return $rows->map(fn($row) => [
-            'date' => $row->date,
-            'label' => \Carbon\Carbon::parse($row->date)->format('d/m'),
-            'male' => (int) $row->male,
-            'female' => (int) $row->female,
-            'groups' => (int) $row->group_count,
-            'total' => (int) $row->male + (int) $row->female,
-        ])->values()->toArray();
+        return $this->timeline($filters, function (Carbon $date) use ($rows, $granularity): array {
+            $key = $date->format('Y-m-d');
+            $row = $rows->get($key);
+            $male = (int) ($row->male ?? 0);
+            $female = (int) ($row->female ?? 0);
+
+            return [
+                'key' => $granularity,
+                'date' => $key,
+                'label' => $date->format($granularity === 'day' ? 'd/m' : 'm/Y'),
+                'male' => $male,
+                'female' => $female,
+                'groups' => (int) ($row->group_count ?? 0),
+                'total' => $male + $female,
+            ];
+        });
+    }
+
+    private function timeline(array $filters, callable $map): array
+    {
+        $granularity = $filters['granularity'] ?? 'month';
+        $start = $filters['date_from']->copy();
+        $end = $filters['date_to']->copy();
+
+        if ($granularity === 'day') {
+            $start->startOfDay();
+            $end->startOfDay();
+            $period = CarbonPeriod::create($start, '1 day', $end);
+        } else {
+            $start->startOfMonth();
+            $end->startOfMonth();
+            $period = CarbonPeriod::create($start, '1 month', $end);
+        }
+
+        return collect($period)
+            ->map(fn(Carbon $date) => $map($date))
+            ->values()
+            ->toArray();
     }
 }
