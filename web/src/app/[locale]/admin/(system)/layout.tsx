@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { cache } from "react";
+import { headers } from "next/headers";
 
 import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { systemPermissions } from "@/lib/permissions";
@@ -14,7 +15,11 @@ import { APP_ROUTES } from "@/constants";
  * Dùng ensureProfile để recover session khi access_token hết hạn.
  */
 const getProfile = cache(async (locale: string): Promise<Profile> => {
-  return ensureProfile(locale, `/${locale}${APP_ROUTES.admin}`);
+  // x-pathname do middleware inject — quay lại đúng page hiện tại
+  // (vd /vi/admin/roles) sau khi refresh token.
+  const currentPath =
+    (await headers()).get("x-pathname") ?? `/${locale}${APP_ROUTES.admin}`;
+  return ensureProfile(locale, currentPath);
 });
 
 /**

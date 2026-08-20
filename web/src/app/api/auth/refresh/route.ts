@@ -2,7 +2,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { getRefreshToken, setAuthCookies, clearAuthCookies } from "@/lib/cookies";
-import { API_URL } from "@/lib/config";
+import { refreshWithToken, type RefreshResult } from "@/lib/http/tokenRefresh";
 import { FALLBACK_LOCALE } from "@/lib/locales";
 import { APP_ROUTES } from "@/constants";
 
@@ -38,43 +38,17 @@ function localeFromNext(next: string): string {
     return m ? m[1] : FALLBACK_LOCALE;
 }
 
-type RefreshResult =
-    | { ok: true; access_token: string; refresh_token: string; message?: string }
-    | { ok: false; status: number; message?: string };
-
 async function performRefresh(request: NextRequest): Promise<RefreshResult> {
     const refreshToken = await getRefreshToken();
     if (!refreshToken) {
         return { ok: false, status: 401, message: "No refresh token" };
     }
 
-    const response = await fetch(`${API_URL}/auth/refresh`, {
-        method: "POST",
-        headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "Accept-Language": request.headers.get("Accept-Language") ?? FALLBACK_LOCALE,
-            locale: request.headers.get("Accept-Language") ?? FALLBACK_LOCALE,
-        },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-        cache: "no-store",
-    });
-
-    const json = await response.json().catch(() => null);
-    if (!response.ok || !json?.success || !json?.data?.access_token) {
-        return {
-            ok: false,
-            status: response.status,
-            message: json?.message ?? "Refresh failed",
-        };
-    }
-
-    return {
-        ok: true,
-        access_token: json.data.access_token,
-        refresh_token: json.data.refresh_token,
-        message: json.message,
-    };
+    // Dùng chung single-flight + grace period với serverAdapter (proxy) —
+    // tránh 2 đường refresh cùng đánh một refresh_token khiến Laravel
+    // rotate 2 lần và request thua cuộc bị clear cookie oan.
+    const locale = request.headers.get("Accept-Language") ?? FALLBACK_LOCALE;
+    return refreshWithToken(refreshToken, locale);
 }
 
 async function handle(request: NextRequest) {
@@ -89,11 +63,22 @@ async function handle(request: NextRequest) {
             if (isRedirectMode) {
                 const locale = localeFromNext(next);
                 const safeNext = sanitizeNext(next, locale);
-                const loginUrl = new URL(`/${locale}${APP_ROUTES.login}`, request.url);
-                loginUrl.searchParams.set("redirect", safeNext);
-                const res = NextResponse.redirect(loginUrl);
-                clearAuthCookies(res);
-                return res;
+
+                // Chỉ 401/403 mới là session thật sự invalid → login + clear cookie.
+                // Lỗi khác (5xx/network) là tạm thời: GIỮ cookie, trả 503 để tránh
+                // redirect loop giữa middleware (bounce về home vì còn token) và
+                // SSR recovery (redirect sang refresh vì hết access_token).
+                if (result.status === 401 || result.status === 403) {
+                    const loginUrl = new URL(`/${locale}${APP_ROUTES.login}`, request.url);
+                    loginUrl.searchParams.set("redirect", safeNext);
+                    const res = NextResponse.redirect(loginUrl);
+                    clearAuthCookies(res);
+                    return res;
+                }
+
+                return new NextResponse("Session refresh temporarily unavailable. Please retry.", {
+                    status: 503,
+                });
             }
 
             const res = NextResponse.json(

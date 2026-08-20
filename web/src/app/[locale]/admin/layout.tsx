@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { cache } from "react";
+import { headers } from "next/headers";
 
 import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { hasAnySystemPermission } from "@/lib/permissions";
@@ -17,7 +18,11 @@ import { APP_ROUTES } from "@/constants";
  * ensureProfile không return null — nó throw redirect khi recover thất bại.
  */
 const getProfile = cache(async (locale: string): Promise<Profile> => {
-  return ensureProfile(locale, `/${locale}${APP_ROUTES.admin}`);
+  // x-pathname do middleware inject — quay lại đúng page hiện tại
+  // (vd /vi/admin/users) sau khi refresh token, không phải /admin chung chung.
+  const currentPath =
+    (await headers()).get("x-pathname") ?? `/${locale}${APP_ROUTES.admin}`;
+  return ensureProfile(locale, currentPath);
 });
 
 /**

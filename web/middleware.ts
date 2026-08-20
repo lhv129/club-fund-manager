@@ -78,7 +78,23 @@ export default async function middleware(request: NextRequest) {
   }
 
   // 3. Còn lại → next-intl xử lý locale (rewrite/redirect thêm locale)
-  return intlMiddleware(request);
+  const intlResponse = intlMiddleware(request);
+
+  // Inject x-pathname vào request headers phía dưới (Server Component đọc
+  // qua headers().get("x-pathname")) — dùng làm `next` khi recover session
+  // sau refresh để quay lại đúng sub-page đang đứng thay vì dashboard.
+  // next-intl đã set request headers qua convention x-middleware-override-headers
+  // → append key của mình vào list đó.
+  const overrideList = intlResponse.headers.get("x-middleware-override-headers");
+  if (overrideList !== null) {
+    intlResponse.headers.set(
+      "x-middleware-override-headers",
+      `${overrideList},x-pathname`,
+    );
+    intlResponse.headers.set("x-middleware-request-x-pathname", pathname);
+  }
+
+  return intlResponse;
 }
 
 export const config = {

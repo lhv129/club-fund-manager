@@ -340,15 +340,26 @@ export function ModulesPageClient() {
 
 ## 6. Auth — refresh token tự động
 - Token trong httpOnly cookie (access_token 1h, refresh_token 7d).
+- **Một flow refresh dùng chung** (`lib/http/tokenRefresh.ts`): single-flight dedupe
+  theo refresh_token + grace period 30s cho token vừa rotate — mọi đường refresh
+  (proxy auto-refresh, /api/auth/refresh, SSR recovery) cùng dùng module này để
+  không bao giờ 2 request đánh cùng một refresh_token khi Laravel rotate single-use.
+- **serverAdapter throw ApiError khi HTTP error** (!res.ok) — caller phân biệt được
+  404/401/5xx. Proxy route catch ApiError và map về JSON envelope + đúng status.
 - **Hai ngữ cảnh refresh khác nhau** (Next.js 16: Server Component không set cookie được):
-  - **Route Handler (/api/proxy, /api/auth/refresh)**: `createServerAdapter(locale, { autoRefresh: true })` → request trả 401 tự gọi Laravel /auth/refresh bằng refresh_token, set cookie mới qua cookies().set(), retry 1 lần. Refresh concurrent được dedupe theo refresh_token (single-flight) tránh race.
-  - **Server Component (SSR — page/layout)**: KHÔNG auto-refresh trong serverAdapter (cookie set không persist). Thay vào dùng `ensureProfile(locale, currentPath)` (src/lib/auth/ensureProfile.ts):
+  - **Route Handler (/api/proxy, /api/auth/refresh)**: `createServerAdapter(locale, { autoRefresh: true })` → request trả 401 tự refresh, set cookie mới, retry 1 lần.
+  - **Server Component (SSR — page/layout)**: KHÔNG auto-refresh trong serverAdapter. Thay vào dùng `ensureProfile(locale, currentPath)`:
     1. access_token còn → gọi /auth/profile trực tiếp.
-    2. access_token hết/thiếu → `redirect('/api/auth/refresh?next=<currentPath>')` (Route Handler) rotate cookie rồi quay lại trang hiện tại. SSR chạy lại với access_token mới.
-    3. refresh thất bại (refresh_token invalid) → Route Handler tự redirect về /login?redirect=<next>.
-- Middleware không chặn sớm khi thiếu access_token nếu vẫn còn refresh_token (cho request đi tiếp để SSR/proxy refresh on-demand).
-- Middleware chặn auth route (login/register): chỉ cho phép vào khi **cả access_token và refresh_token đều không có** (có 1 trong 2 → redirect về home để recover session).
-- Refresh thất bại do token invalid/expired (401/403) → clear auth cookies, request sau sẽ về /login đúng flow.
+    2. access_token hết (401) hoặc thiếu → `redirect('/api/auth/refresh?next=<currentPath>')` rotate cookie rồi quay lại trang hiện tại.
+    3. refresh thất bại do token invalid (401/403) → Route Handler redirect /login?redirect=<next> + clear cookie. Lỗi tạm thời (5xx/network) → trả 503, GIỮ cookie (không clear oan session đang tốt).
+- **currentPath lấy từ header `x-pathname`** do middleware inject (append vào
+  x-middleware-override-headers của response next-intl) — sau refresh quay lại
+  đúng sub-page đang đứng (vd /vi/admin/users), không phải /admin hay dashboard chung chung.
+- Middleware không chặn sớm khi thiếu access_token nếu vẫn còn refresh_token.
+- Middleware chặn auth route (login/register): chỉ cho phép vào khi **cả access_token và refresh_token đều không có**.
+- **404 chỉ khi resource thật sự không tồn tại**: club layout gọi notFound() chỉ khi
+  backend trả 404 hoặc club null; 401 → flow refresh; 5xx/network → throw lên error
+  boundary. KHÔNG biến lỗi tạm thời thành 404 giả.
 - Login route (POST /api/auth/login) CHỈ set cookie + return JSON { user }. KHÔNG có logic redirect ở server — LoginForm push về "/" và root page tự phân luồng.
 
 

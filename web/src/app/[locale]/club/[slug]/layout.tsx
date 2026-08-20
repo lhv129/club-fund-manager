@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { setRequestLocale } from "next-intl/server";
 import { clubServiceServer } from "@/domains/club/services/clubServiceServer";
 import { canAccessClub, hasAnySystemPermission, isClubKey } from "@/lib/permissions"; //  thêm isClubKey
 import { ensureProfile } from "@/lib/auth/ensureProfile";
+import { ApiError } from "@/lib/errors";
 import type { Club } from "@/domains/club/types";
 import { ClubShell } from "@/components/club/layout/ClubShell";
 import { clubRoute, CLUB_SUBROUTES } from "@/constants";
@@ -33,7 +35,12 @@ export default async function ClubLayout({
   const { locale, slug } = await params;
   setRequestLocale(locale);
 
-  const currentPath = `/${locale}${clubRoute(slug, CLUB_SUBROUTES.dashboard)}`;
+  // Middleware inject x-pathname vào mọi request — dùng làm `next` khi recover
+  // session để quay lại đúng sub-page (members/funds/...) thay vì dashboard.
+  const headerList = await headers();
+  const currentPath =
+    headerList.get("x-pathname") ??
+    `/${locale}${clubRoute(slug, CLUB_SUBROUTES.dashboard)}`;
   const profile = await ensureProfile(locale, currentPath);
 
   //  Zero API call — đọc từ profile có sẵn
@@ -49,10 +56,15 @@ export default async function ClubLayout({
   try {
     const res = await clubServiceServer.showBySlug(slug);
     if (res.success) club = res.data || null;
-  } catch {
-    // Lỗi network/backend không đồng nghĩa club không tồn tại. Throw để error
-    // boundary xử lý thay vì biến sự cố tạm thời sau restart thành 404 giả.
-    throw new Error("Unable to load club");
+  } catch (err) {
+    // Chỉ 404 thật sự (club không tồn tại/sai slug) mới là notFound.
+    // 401 về ensureProfile đã xử lý phía trên (token còn thì không xảy ra);
+    // lỗi 5xx/network là tạm thời → throw để error boundary hiển thị, không
+    // biến sự cố backend thành 404 giả.
+    if (err instanceof ApiError && err.isNotFound) {
+      notFound();
+    }
+    throw err;
   }
 
   if (!club) notFound();

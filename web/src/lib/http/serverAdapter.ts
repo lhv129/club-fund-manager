@@ -4,7 +4,9 @@ import { getLocale } from "next-intl/server";
 import { COOKIE_NAMES, COOKIE_MAX_AGE } from "@/constants";
 import { API_URL } from "@/lib/config";
 import { FALLBACK_LOCALE } from "@/lib/locales";
+import { ApiError } from "@/lib/errors";
 import { buildQueryString } from "./queryString";
+import { refreshWithToken } from "./tokenRefresh";
 import type { HttpAdapter } from "./types";
 
 async function resolveLocale(override?: string): Promise<string> {
@@ -23,19 +25,10 @@ const BASE_COOKIE_OPTIONS = {
     path: "/",
 };
 
-type RefreshJson = {
-    success?: boolean;
-    data?: {
-        access_token?: string;
-        refresh_token?: string;
-    };
-};
-
 /**
- * Deduplicate refresh requests theo refresh_token để tránh race:
- * nhiều request cùng 401 chỉ gọi /auth/refresh đúng 1 lần.
+ * Dedupe + grace period cho refresh live ở `tokenRefresh.ts` (dùng chung
+ * với /api/auth/refresh route handler) — xem comment ở đó.
  */
-const inFlightRefreshByToken = new Map<string, Promise<string | null>>();
 
 function clearAuthCookiesFromStore(cookieStore: Awaited<ReturnType<typeof cookies>>) {
     cookieStore.set({
@@ -57,72 +50,39 @@ function clearAuthCookiesFromStore(cookieStore: Awaited<ReturnType<typeof cookie
  * rồi set lại access_token + refresh_token mới vào cookie.
  *
  * Trả về access_token mới, hoặc null nếu refresh thất bại.
- * Dùng cookies().set() trực tiếp — khả thi trong Server Component
- * và Route Handler (Next.js 16).
+ * Dùng cookies().set() trực tiếp — khả thi trong Route Handler
+ * (Next.js 16). Server Component phải để autoRefresh = false và
+ * recover qua ensureProfile → /api/auth/refresh.
  */
 async function refreshAccessToken(locale: string): Promise<string | null> {
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get(COOKIE_NAMES.refreshToken)?.value;
     if (!refreshToken) return null;
 
-    const inFlight = inFlightRefreshByToken.get(refreshToken);
-    if (inFlight) {
-        return inFlight;
+    const result = await refreshWithToken(refreshToken, locale);
+    if (!result.ok) {
+        // Chỉ clear cookie khi refresh_token thật sự invalid (401/403).
+        // Lỗi 5xx/network là tạm thời — giữ cookie để retry sau.
+        if (result.status === 401 || result.status === 403) {
+            clearAuthCookiesFromStore(cookieStore);
+        }
+        return null;
     }
 
-    const refreshPromise = (async () => {
-        try {
-            const res = await fetch(`${API_URL}/auth/refresh`, {
-                method: "POST",
-                headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json",
-                    "Accept-Language": locale,
-                    locale,
-                },
-                body: JSON.stringify({ refresh_token: refreshToken }),
-                cache: "no-store",
-            });
+    cookieStore.set({
+        ...BASE_COOKIE_OPTIONS,
+        name: COOKIE_NAMES.accessToken,
+        value: result.access_token,
+        maxAge: COOKIE_MAX_AGE.accessToken,
+    });
+    cookieStore.set({
+        ...BASE_COOKIE_OPTIONS,
+        name: COOKIE_NAMES.refreshToken,
+        value: result.refresh_token,
+        maxAge: COOKIE_MAX_AGE.refreshToken,
+    });
 
-            const json = (await res.json().catch(() => null)) as RefreshJson | null;
-            if (!res.ok || !json?.success) {
-                // Refresh token invalid/expired → clear cookie để tránh loop login/home.
-                if (res.status === 401 || res.status === 403) {
-                    clearAuthCookiesFromStore(cookieStore);
-                }
-                return null;
-            }
-
-            const accessToken = json.data?.access_token;
-            const nextRefreshToken = json.data?.refresh_token;
-            if (!accessToken || !nextRefreshToken) {
-                return null;
-            }
-
-            // Set cookie mới trực tiếp (Server Component + Route Handler)
-            cookieStore.set({
-                ...BASE_COOKIE_OPTIONS,
-                name: COOKIE_NAMES.accessToken,
-                value: accessToken,
-                maxAge: COOKIE_MAX_AGE.accessToken,
-            });
-            cookieStore.set({
-                ...BASE_COOKIE_OPTIONS,
-                name: COOKIE_NAMES.refreshToken,
-                value: nextRefreshToken,
-                maxAge: COOKIE_MAX_AGE.refreshToken,
-            });
-
-            return accessToken;
-        } catch {
-            return null;
-        } finally {
-            inFlightRefreshByToken.delete(refreshToken);
-        }
-    })();
-
-    inFlightRefreshByToken.set(refreshToken, refreshPromise);
-    return refreshPromise;
+    return result.access_token;
 }
 
 function createRequest(localeOverride?: string, autoRefresh = false) {
@@ -199,8 +159,34 @@ function createRequest(localeOverride?: string, autoRefresh = false) {
             }
         }
 
-        return (await res.json().catch(() => null)) as T;
+        return (await parseResponse<T>(res)) as T;
     };
+}
+
+/**
+ * Parse response body thành JSON, throw ApiError khi HTTP error.
+ *
+ * Trước đây adapter nuốt mọi HTTP error (chỉ return JSON đã parse) → caller
+ * không phân biệt được "không tồn tại" (404) với "token hết hạn" (401) hay
+ * "backend đang lỗi" (5xx) — club layout từng biến tất cả thành 404 giả.
+ *
+ * Proxy route đã catch ApiError và map về JSON envelope + đúng status,
+ * nên client-side qua /api/proxy không bị ảnh hưởng.
+ */
+async function parseResponse<T>(res: Response): Promise<T> {
+    const json = await res.json().catch(() => null);
+
+    if (!res.ok) {
+        throw new ApiError(
+            json?.message ?? `Request failed with status ${res.status}`,
+            res.status,
+            json?.code ?? "ERROR",
+            json?.errors,
+            json?.data,
+        );
+    }
+
+    return json as T;
 }
 
 /**

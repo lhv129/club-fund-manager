@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { COOKIE_NAMES, APP_ROUTES } from "@/constants";
 import { authServiceServer } from "@/domains/auth/services/authServiceServer";
+import { ApiError } from "@/lib/errors";
 import type { Profile } from "@/domains/auth/types";
 
 /**
@@ -37,8 +38,13 @@ export async function ensureProfile(locale: string, currentPath: string): Promis
             if (res.success && res.data && !Array.isArray(res.data)) {
                 return res.data;
             }
-        } catch {
-            // Profile fail (có thể 401 do token vừa hết) → rơi xuống recover.
+        } catch (err) {
+            // 401 → access_token hết hạn → rơi xuống recover qua Route Handler.
+            // Lỗi khác (5xx/network) là tạm thời — rethrow để error boundary
+            // xử lý, tránh redirect loop giữa middleware và SSR recovery.
+            if (!(err instanceof ApiError && err.isUnauthorized)) {
+                throw err;
+            }
         }
     }
 
