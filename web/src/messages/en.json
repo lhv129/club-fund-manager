@@ -101,6 +101,40 @@
     "systemAdmin": "System Admin",
     "superAdmin": "Super Admin"
   },
+  "notification": {
+    "title": "Notifications",
+    "count": "{count} notifications",
+    "unread": "Unread",
+    "unreadCount": "{count} unread notifications",
+    "allRead": "You have read all notifications",
+    "new": "New",
+    "markAsRead": "Mark as read",
+    "markAllAsRead": "Mark all as read",
+    "viewDetail": "View details",
+    "viewAll": "View all notifications",
+    "close": "Close",
+    "loadMore": "Load more",
+    "category": {
+      "income": "Income",
+      "expense": "Expense",
+      "normal": "Notification"
+    },
+    "events": {
+      "fund_due": "Fund reminder",
+      "monthly_contribution_created": "New contribution",
+      "monthly_contribution_updated": "Contribution updated",
+      "monthly_contribution_cancelled": "Contribution cancelled",
+      "monthly_contribution_deleted": "Contribution deleted",
+      "transaction_confirmed": "Bank transfer confirmed",
+      "cash_payment_confirmed": "Cash payment confirmed",
+      "club_transaction_received": "Club income",
+      "club_expense_created": "Club expense"
+    },
+    "empty": {
+      "title": "No notifications",
+      "description": "New club and finance activity notifications will appear here."
+    }
+  },
   "metadata": {
     "clubDashboard": {
       "title": "Club Dashboard",
@@ -180,6 +214,7 @@
     }
   },
   "header": {
+    "toggleMenu": "Toggle menu",
     "myAccount": "My Account",
     "darkMode": "Dark Mode",
     "logout": "Log out"

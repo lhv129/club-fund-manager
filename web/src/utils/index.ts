@@ -43,3 +43,30 @@ export function formatAmount(
     num.toLocaleString(locale === "vi" ? "vi-VN" : "en-US") + " " + currency
   );
 }
+
+/**
+ * Format thời gian tương đối ("5 phút trước", "3 hours ago").
+ * Dùng Intl.RelativeTimeFormat — tự bản địa hóa theo locale.
+ */
+export function formatAgo(
+  iso: string | null | undefined,
+  locale: string = "vi",
+): string {
+  if (!iso) return "—";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  if (isNaN(diffMs)) return "—";
+
+  const rtf = new Intl.RelativeTimeFormat(
+    locale === "vi" ? "vi-VN" : "en-US",
+    { numeric: "auto" },
+  );
+  const minutes = Math.floor(diffMs / 60_000);
+
+  if (minutes < 1) return rtf.format(0, "minute");
+  if (minutes < 60) return rtf.format(-minutes, "minute");
+  if (minutes < 1440) return rtf.format(-Math.floor(minutes / 60), "hour");
+  if (minutes < 43_200) return rtf.format(-Math.floor(minutes / 1440), "day");
+  if (minutes < 525_600)
+    return rtf.format(-Math.floor(minutes / 43_200), "week");
+  return rtf.format(-Math.floor(minutes / 525_600), "year");
+}

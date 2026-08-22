@@ -101,6 +101,40 @@
     "systemAdmin": "Quản trị hệ thống",
     "superAdmin": "Super Admin"
   },
+  "notification": {
+    "title": "Thông báo",
+    "count": "{count} thông báo",
+    "unread": "Chưa đọc",
+    "unreadCount": "{count} thông báo chưa đọc",
+    "allRead": "Bạn đã đọc tất cả thông báo",
+    "new": "Mới",
+    "markAsRead": "Đánh dấu đã đọc",
+    "markAllAsRead": "Đọc tất cả",
+    "viewDetail": "Xem chi tiết",
+    "viewAll": "Xem tất cả thông báo",
+    "close": "Đóng",
+    "loadMore": "Xem thêm",
+    "category": {
+      "income": "Khoản thu",
+      "expense": "Khoản chi",
+      "normal": "Thông báo"
+    },
+    "events": {
+      "fund_due": "Nhắc đóng quỹ",
+      "monthly_contribution_created": "Đóng quỹ mới",
+      "monthly_contribution_updated": "Cập nhật đóng quỹ",
+      "monthly_contribution_cancelled": "Hủy đóng quỹ",
+      "monthly_contribution_deleted": "Xóa đóng quỹ",
+      "transaction_confirmed": "Xác nhận chuyển khoản",
+      "cash_payment_confirmed": "Xác nhận tiền mặt",
+      "club_transaction_received": "Khoản thu CLB",
+      "club_expense_created": "Khoản chi CLB"
+    },
+    "empty": {
+      "title": "Chưa có thông báo",
+      "description": "Các thông báo mới về hoạt động thu chi và câu lạc bộ sẽ hiển thị tại đây."
+    }
+  },
   "metadata": {
     "clubDashboard": {
       "title": "Tổng quan câu lạc bộ",
@@ -180,6 +214,7 @@
     }
   },
   "header": {
+    "toggleMenu": "Mở hoặc đóng menu",
     "myAccount": "Tài khoản của tôi",
     "darkMode": "Chế độ tối",
     "logout": "Đăng xuất"

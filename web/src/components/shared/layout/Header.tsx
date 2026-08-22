@@ -7,6 +7,7 @@ import { APP_ROUTES } from "@/constants";
 import { Menu } from "lucide-react";
 import { AvatarDropdown } from "./AvatarDropdown";
 import { useThemeMode } from "@/utils/useThemeMode";
+import { NotificationDropdown } from "@/components/shared/layout/NotificationDropdown";
 
 // ─── Header Skeleton ──────────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
       {/* Right: locale switcher + avatar */}
       <div className="flex items-center gap-2">
         <LocaleSwitcher />
+        <NotificationDropdown />
         <AvatarDropdown user={user} onLogout={handleLogout} />
       </div>
     </header>
