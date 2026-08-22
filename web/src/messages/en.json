@@ -119,6 +119,18 @@
       "expense": "Expense",
       "normal": "Notification"
     },
+    "dataFields": {
+      "description": "Description",
+      "amount": "Amount",
+      "referenceCode": "Reference code",
+      "transactionDate": "Transaction date",
+      "period": "Period",
+      "paidBy": "Payment method",
+      "memberName": "Member",
+      "confirmedBy": "Confirmed by",
+      "status": "Status",
+      "eventDate": "Event date"
+    },
     "events": {
       "fund_due": "Fund reminder",
       "monthly_contribution_created": "New contribution",

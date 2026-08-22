@@ -119,6 +119,18 @@
       "expense": "Khoản chi",
       "normal": "Thông báo"
     },
+    "dataFields": {
+      "description": "Nội dung",
+      "amount": "Số tiền",
+      "referenceCode": "Mã tham chiếu",
+      "transactionDate": "Ngày giao dịch",
+      "period": "Kỳ đóng quỹ",
+      "paidBy": "Phương thức thanh toán",
+      "memberName": "Thành viên",
+      "confirmedBy": "Xác nhận bởi",
+      "status": "Trạng thái",
+      "eventDate": "Ngày sự kiện"
+    },
     "events": {
       "fund_due": "Nhắc đóng quỹ",
       "monthly_contribution_created": "Đóng quỹ mới",

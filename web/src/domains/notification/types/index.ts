@@ -3,6 +3,7 @@ import type { PaginatedResponse } from "@/types/api";
 export interface NotificationClub {
   id: number;
   name: string;
+  slug?: string;
 }
 
 export interface Notification {
@@ -15,6 +16,7 @@ export interface Notification {
   is_read: boolean;
   read_at?: string | null;
   created_at: string;
+  href?: string | { slug?: string; id?: number | string; path?: string } | null;
 }
 
 export interface NotificationMeta {

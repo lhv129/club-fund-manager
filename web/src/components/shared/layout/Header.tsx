@@ -7,7 +7,7 @@ import { APP_ROUTES } from "@/constants";
 import { Menu } from "lucide-react";
 import { AvatarDropdown } from "./AvatarDropdown";
 import { useThemeMode } from "@/utils/useThemeMode";
-import { NotificationDropdown } from "@/components/shared/layout/NotificationDropdown";
+import { NotificationDropdown } from "@/components/shared/layout/NotificationDropDown/NotificationDropdown";
 
 // ─── Header Skeleton ──────────────────────────────────────────────────────────
 

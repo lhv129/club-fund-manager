@@ -2,7 +2,6 @@
 
 import {
   Fragment,
-  type ReactNode,
   useEffect,
   useState,
 } from "react";
@@ -21,70 +20,22 @@ import { useLocale, useTranslations } from "next-intl";
 import { useNotifications } from "@/domains/notification/hooks/useNotifications";
 import {
   getNotificationEvent,
-  type NotificationCategory,
 } from "@/domains/notification/config/events";
 import type { Notification } from "@/domains/notification/types";
-import { cn, formatAgo } from "@/utils";
+import { cn, formatAgo, formatAmount } from "@/utils";
 import { APP_ROUTES } from "@/constants";
+import {
+  CATEGORY_STYLES,
+  NOTIFICATION_TYPE_CONFIG,
+  type DataField,
+  type NotificationData,
+  type NotificationTypeConfig,
+} from "./notification.config";
 
 const PAGE_SIZE = 10;
 
-type NotificationData = Record<string, unknown>;
-
-type DataField = {
-  key: string;
-  labelKey?: string;
-  type?: "text" | "amount" | "date" | "month" | "status";
-};
-
-type NotificationTypeConfig = {
-  category: NotificationCategory;
-  translationKey: string;
-  fields: DataField[];
-  badgeClassName?: string;
-};
-
-const CATEGORY_STYLES: Record<
-  NotificationCategory,
-  {
-    icon: string;
-    badge: string;
-    typeBadge: string;
-  }
-> = {
-  income: {
-    icon: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40",
-    badge:
-      "border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
-    typeBadge:
-      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
-  },
-  expense: {
-    icon: "text-rose-600 bg-rose-50 dark:bg-rose-950/40",
-    badge:
-      "border-rose-200 bg-rose-100 text-rose-800 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-300",
-    typeBadge:
-      "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300",
-  },
-  normal: {
-    icon: "text-blue-600 bg-blue-50 dark:bg-blue-950/40",
-    badge:
-      "border-blue-200 bg-blue-100 text-blue-800 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-300",
-    typeBadge:
-      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
-  },
-};
-
-/**
- * Registry cho từng event type.
- *
- * Khi backend bổ sung type mới, chỉ cần thêm config vào đây.
- * Các type chưa khai báo vẫn được render bằng generic fallback.
- */
-const NOTIFICATION_TYPE_CONFIG: Record<
-  string,
-  NotificationTypeConfig
-> = {
+/* notification config lives in notification.config.ts */
+/*
   club_expense_created: {
     category: "expense",
     translationKey: "events.club_expense_created",
@@ -108,6 +59,43 @@ const NOTIFICATION_TYPE_CONFIG: Record<
         key: "transaction_date",
         labelKey: "dataFields.transactionDate",
         type: "date",
+      },
+    ],
+  },
+
+  club_transaction_received: {
+    category: "income",
+    translationKey: "events.club_transaction_received",
+    fields: [
+      {
+        key: "month",
+        labelKey: "dataFields.period",
+        type: "month",
+      },
+      {
+        key: "amount",
+        labelKey: "dataFields.amount",
+        type: "amount",
+      },
+      {
+        key: "paid_by",
+        labelKey: "dataFields.paidBy",
+        type: "status",
+      },
+      {
+        key: "member_name",
+        labelKey: "dataFields.memberName",
+        type: "text",
+      },
+      {
+        key: "confirmed_by",
+        labelKey: "dataFields.confirmedBy",
+        type: "text",
+      },
+      {
+        key: "reference_code",
+        labelKey: "dataFields.referenceCode",
+        type: "text",
       },
     ],
   },
@@ -297,7 +285,7 @@ const NOTIFICATION_TYPE_CONFIG: Record<
     translationKey: "events.system_alert",
     fields: [],
   },
-};
+*/
 
 function isRecord(value: unknown): value is NotificationData {
   return typeof value === "object" && value !== null;
@@ -306,10 +294,14 @@ function isRecord(value: unknown): value is NotificationData {
 function getNotificationData(
   notification: Notification,
 ): NotificationData {
-  return isRecord(notification.data) ? notification.data : {};
+  return isRecord(notification.data)
+    ? notification.data
+    : {};
 }
 
-function getTypeConfig(type: string): NotificationTypeConfig {
+function getTypeConfig(
+  type: string,
+): NotificationTypeConfig {
   const configuredType = NOTIFICATION_TYPE_CONFIG[type];
 
   if (configuredType) {
@@ -325,24 +317,16 @@ function getTypeConfig(type: string): NotificationTypeConfig {
   };
 }
 
-function humanizeType(type: string) {
-  return type
+function humanizeText(value: string) {
+  return value
     .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
-function humanizeKey(key: string) {
-  return key
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
-function getFallbackTypeLabel(type: string) {
-  return humanizeType(type);
+    .replace(/\b\w/g, (character) =>
+      character.toUpperCase(),
+    );
 }
 
 function getFallbackFieldLabel(key: string) {
-  return humanizeKey(key);
+  return humanizeText(key);
 }
 
 function getFieldTranslation(
@@ -357,43 +341,10 @@ function getFieldTranslation(
   return t.has(key) ? t(key) : fallback;
 }
 
-function formatAmountValue(
+function formatDateValue(
   value: unknown,
-  data: NotificationData,
   locale: string,
 ) {
-  if (typeof value !== "number" && typeof value !== "string") {
-    return null;
-  }
-
-  const numericValue =
-    typeof value === "number"
-      ? value
-      : Number(value.replaceAll(",", ""));
-
-  if (!Number.isFinite(numericValue)) {
-    return String(value);
-  }
-
-  const currency =
-    typeof data.currency === "string"
-      ? data.currency
-      : "VND";
-
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(numericValue);
-  } catch {
-    return new Intl.NumberFormat(locale, {
-      maximumFractionDigits: 0,
-    }).format(numericValue);
-  }
-}
-
-function formatDateValue(value: unknown, locale: string) {
   if (typeof value !== "string") {
     return null;
   }
@@ -407,7 +358,7 @@ function formatDateValue(value: unknown, locale: string) {
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "short",
-    day: "2-digit",
+    day: "numeric",
   }).format(date);
 }
 
@@ -453,7 +404,7 @@ function formatStatusValue(
     return t(paymentMethodKey);
   }
 
-  return humanizeType(value);
+  return humanizeText(value);
 }
 
 function formatFieldValue(
@@ -468,12 +419,16 @@ function formatFieldValue(
 
   const value = data[field.key];
 
-  if (value === null || value === undefined || value === "") {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return null;
   }
 
   if (field.type === "amount") {
-    return formatAmountValue(value, data, locale);
+    return formatAmount(value as string | number, "đ", locale);
   }
 
   if (field.type === "date") {
@@ -494,6 +449,19 @@ function formatFieldValue(
 
   return null;
 }
+
+const DATA_FIELD_TRANSLATION_KEYS: Record<string, string> = {
+  description: "dataFields.description",
+  amount: "dataFields.amount",
+  reference_code: "dataFields.referenceCode",
+  transaction_date: "dataFields.transactionDate",
+  month: "dataFields.period",
+  paid_by: "dataFields.paidBy",
+  member_name: "dataFields.memberName",
+  confirmed_by: "dataFields.confirmedBy",
+  status: "dataFields.status",
+  event_date: "dataFields.eventDate",
+};
 
 function getGenericFields(
   data: NotificationData,
@@ -524,11 +492,15 @@ function getGenericFields(
     .slice(0, 4)
     .map((key) => ({
       key,
-      labelKey: undefined,
+      labelKey: DATA_FIELD_TRANSLATION_KEYS[key],
       type: "text" as const,
     }));
 }
 
+/**
+ * Hiển thị data của notification theo giao diện trung tính,
+ * thống nhất màu sắc và không làm nổi bật riêng từng loại field.
+ */
 function NotificationDataPreview({
   notification,
 }: {
@@ -541,13 +513,25 @@ function NotificationDataPreview({
   const config = getTypeConfig(notification.type);
 
   const configuredFields = config.fields;
-  const genericFields = getGenericFields(data, configuredFields);
-  const fields = [...configuredFields, ...genericFields];
+  const genericFields = getGenericFields(
+    data,
+    configuredFields,
+  );
+
+  const fields = [
+    ...configuredFields,
+    ...genericFields,
+  ];
 
   const visibleFields = fields
     .map((field) => ({
       field,
-      value: formatFieldValue(field, data, locale, t),
+      value: formatFieldValue(
+        field,
+        data,
+        locale,
+        t,
+      ),
     }))
     .filter(
       (
@@ -563,44 +547,34 @@ function NotificationDataPreview({
   }
 
   return (
-    <div className="mt-2 grid min-w-0 grid-cols-1 gap-1.5 sm:grid-cols-2">
-      {visibleFields.map(({ field, value }) => {
-        const label = getFieldTranslation(
-          t,
-          field.labelKey,
-          getFallbackFieldLabel(field.key),
-        );
+    <div className="mt-3 min-w-0 max-w-full overflow-hidden">
+      <div className="divide-y divide-zinc-200/70 dark:divide-gray-700/60">
+        {visibleFields.map(({ field, value }) => {
+          const label = getFieldTranslation(
+            t,
+            field.labelKey,
+            getFallbackFieldLabel(field.key),
+          );
 
-        const isAmount = field.type === "amount";
-
-        return (
-          <div
-            key={field.key}
-            className={cn(
-              "flex min-w-0 items-center justify-between gap-2 rounded-lg border px-2 py-1.5",
-              isAmount
-                ? "border-emerald-100 bg-emerald-50/70 dark:border-emerald-900/70 dark:bg-emerald-950/20"
-                : "border-zinc-100 bg-zinc-50/80 dark:border-gray-800 dark:bg-gray-800/40",
-            )}
-          >
-            <span className="min-w-0 truncate text-[10px] text-zinc-400 dark:text-gray-500">
-              {label}
-            </span>
-
-            <span
-              className={cn(
-                "min-w-0 truncate text-right text-[10px] font-semibold",
-                isAmount
-                  ? "text-emerald-700 dark:text-emerald-300"
-                  : "text-zinc-700 dark:text-gray-300",
-              )}
-              title={value}
+          return (
+            <div
+              key={field.key}
+              className="flex min-w-0 items-start justify-between gap-3 px-3 py-2.5"
             >
-              {value}
-            </span>
-          </div>
-        );
-      })}
+              <span className="shrink-0 text-[10px] font-medium text-zinc-500 dark:text-gray-400">
+                {label}:
+              </span>
+
+              <span
+                className="min-w-0 max-w-[72%] break-words text-right text-[11px] font-semibold leading-4 text-zinc-700 dark:text-gray-200"
+                title={value}
+              >
+                {value}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -614,12 +588,12 @@ function EventBadge({ type }: { type: string }) {
     ? t(config.translationKey as never)
     : t.has(`events.${type}`)
       ? t(`events.${type}` as never)
-      : getFallbackTypeLabel(type);
+      : humanizeText(type);
 
   return (
     <span
       className={cn(
-        "inline-flex max-w-full shrink-0 items-center rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide",
+        "inline-flex max-w-full shrink-0 items-center rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide",
         categoryStyle.badge,
         config.badgeClassName,
       )}
@@ -671,13 +645,15 @@ function NotificationItem({
     <div
       className={cn(
         "group flex min-w-0 gap-3 px-3 py-3.5 transition-colors hover:bg-zinc-50 dark:hover:bg-gray-800/60 sm:px-4",
-        !item.is_read && "bg-blue-50/50 dark:bg-blue-950/20",
+        !item.is_read &&
+        "bg-blue-50/50 dark:bg-blue-950/20",
       )}
     >
-      {/* Icon */}
-      <EventIcon type={item.type} className="mt-0.5" />
+      <EventIcon
+        type={item.type}
+        className="mt-0.5"
+      />
 
-      {/* Content */}
       <button
         type="button"
         onClick={() => onOpen(item)}
@@ -695,7 +671,9 @@ function NotificationItem({
           </p>
         )}
 
-        <NotificationDataPreview notification={item} />
+        <NotificationDataPreview
+          notification={item}
+        />
 
         <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <p className="break-words text-[11px] text-zinc-400 dark:text-gray-500">
@@ -716,7 +694,6 @@ function NotificationItem({
         </div>
       </button>
 
-      {/* Actions */}
       <div className="flex shrink-0 flex-col items-center gap-1.5">
         {!item.is_read && (
           <span
@@ -785,10 +762,15 @@ function RealtimeBanner({
               </p>
             )}
 
-            <NotificationDataPreview notification={notification} />
+            <NotificationDataPreview
+              notification={notification}
+            />
 
             <p className="mt-1.5 break-words text-[11px] text-zinc-400">
-              {formatAgo(notification.created_at, locale)}
+              {formatAgo(
+                notification.created_at,
+                locale,
+              )}
             </p>
           </div>
         </div>
@@ -821,7 +803,10 @@ function LoadingNotifications() {
   return (
     <div className="space-y-3 p-3 sm:p-4">
       {[1, 2, 3].map((index) => (
-        <div key={index} className="flex min-w-0 gap-3">
+        <div
+          key={index}
+          className="flex min-w-0 gap-3"
+        >
           <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-zinc-100 dark:bg-gray-800" />
 
           <div className="min-w-0 flex-1 space-y-2 py-1">
@@ -843,7 +828,8 @@ export function NotificationDropdown() {
   const router = useRouter();
 
   const [limit, setLimit] = useState(PAGE_SIZE);
-  const [banner, setBanner] = useState<Notification | null>(null);
+  const [banner, setBanner] =
+    useState<Notification | null>(null);
 
   const state = useNotifications(
     locale,
@@ -885,7 +871,8 @@ export function NotificationDropdown() {
   };
 
   const hasMore =
-    limit < 50 && state.notifications.length < state.total;
+    limit < 50 &&
+    state.notifications.length < state.total;
 
   return (
     <>
@@ -967,7 +954,7 @@ export function NotificationDropdown() {
                       )}
                     </div>
 
-                    {/* Notification list */}
+                    {/* List */}
                     <div className="table-scroll max-h-[calc(100dvh-9rem)] min-w-0 overflow-x-hidden overflow-y-auto divide-y divide-zinc-50 sm:max-h-[min(32rem,70vh)] dark:divide-gray-800/60">
                       {state.loading ? (
                         <LoadingNotifications />
