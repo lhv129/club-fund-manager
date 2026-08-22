@@ -51,19 +51,39 @@ class NotificationRepository extends BaseRepository
             ->count();
     }
 
-    public function markRead(Notification $notification): void
+    public function markRead(Notification $notification): Notification
     {
         if ($notification->read_at === null) {
             $notification->update(['read_at' => now()]);
         }
+
+        return $notification->refresh()->load('club.translation');
     }
 
-    public function markAllRead(int $userId): int
+    public function markAllRead(array $data): array
     {
-        return $this->model->newQuery()
+        $userId = (int) $data['user_id'];
+        $now = now();
+
+        $query = $this->model->newQuery()
             ->where('user_id', $userId)
-            ->whereNull('read_at')
-            ->update(['read_at' => now(), 'updated_at' => now()]);
+            ->whereNull('read_at');
+
+        if (! empty($data['ids'])) {
+            $query->whereIn('id', $data['ids']);
+        }
+
+        $query->update([
+            'read_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        return [
+            'ids' => ! empty($data['ids']) ? array_values($data['ids']) : null,
+            'all' => empty($data['ids']),
+            'read_at' => $now->toISOString(),
+            'unread_count' => $this->unreadCount($userId),
+        ];
     }
 
     public function findOwned(int $id, int $userId): ?Notification
@@ -72,5 +92,13 @@ class NotificationRepository extends BaseRepository
             ->where('id', $id)
             ->where('user_id', $userId)
             ->first();
+    }
+
+    public function deleteOwned(Notification $notification): int
+    {
+        $userId = (int) $notification->user_id;
+        $notification->delete();
+
+        return $this->unreadCount($userId);
     }
 }

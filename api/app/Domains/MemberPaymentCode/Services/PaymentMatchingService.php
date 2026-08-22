@@ -2,9 +2,11 @@
 
 namespace App\Domains\MemberPaymentCode\Services;
 
+use App\Domains\Club\Repositories\ClubMemberRepository;
 use App\Domains\MemberPaymentCode\Repositories\MemberPaymentCodeRepository;
 use App\Domains\MonthlyContribution\Models\MonthlyContribution;
 use App\Domains\MonthlyContribution\Repositories\MonthlyContributionRepository;
+use App\Domains\Notification\Services\NotificationService;
 use App\Domains\Transaction\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +16,8 @@ class PaymentMatchingService
     public function __construct(
         protected MemberPaymentCodeRepository $paymentCodeRepository,
         protected MonthlyContributionRepository $monthlyContributionRepository,
+        protected ClubMemberRepository $clubMemberRepository,
+        protected NotificationService $notificationService,
     ) {}
 
     /**
@@ -90,8 +94,79 @@ class PaymentMatchingService
                 'contribution_id' => $contribution->id,
             ]);
 
+            // 3. Báo member + quản trị CLB (cùng transaction; event realtime chờ after-commit)
+            $this->notifySettledBankPayment($transaction, $contribution);
+
             return $contribution;
         });
+    }
+
+    /**
+     * Member nhận transaction_confirmed, quản trị CLB nhận club_transaction_received.
+     */
+    private function notifySettledBankPayment(
+        Transaction $transaction,
+        MonthlyContribution $contribution,
+    ): void {
+        $contribution->loadMissing('user', 'period');
+
+        $clubId = (int) $contribution->club_id;
+        $memberUserId = (int) $contribution->user_id;
+
+        // 1. Member luôn nhận thông báo thanh toán thành công
+        $this->notificationService->send(
+            userId: $memberUserId,
+            type: 'transaction_confirmed',
+            data: [
+                'transaction_id' => (int) $transaction->id,
+                'contribution_id' => (int) $contribution->id,
+                'period_id' => (int) $contribution->period_id,
+                'month' => (int) $contribution->period->month,
+                'year' => (int) $contribution->period->year,
+                'amount' => (float) $transaction->amount,
+                'paid_by' => 'bank',
+                'reference_code' => $transaction->reference_code,
+            ],
+            clubId: $clubId,
+        );
+
+        // 2. Lấy tất cả quản trị CLB
+        $administratorUserIds = $this->clubMemberRepository
+            ->getClubAdministrators($clubId)
+            ->pluck('user_id')
+            ->map(fn($userId) => (int) $userId);
+
+        // 3. Loại member vừa thanh toán khỏi danh sách admin
+        //
+        // Nếu member cũng là admin:
+        // - đã nhận transaction_confirmed ở trên
+        // - không nhận club_transaction_received
+        $otherAdministratorUserIds = $administratorUserIds
+            ->reject(fn(int $userId) => $userId === $memberUserId)
+            ->values();
+
+        // Không còn admin nào khác thì không cần gửi
+        if ($otherAdministratorUserIds->isEmpty()) {
+            return;
+        }
+
+        // 4. Các admin khác nhận thông báo giao dịch
+        $this->notificationService->sendToMany(
+            userIds: $otherAdministratorUserIds,
+            type: 'club_transaction_received',
+            data: [
+                'transaction_id' => (int) $transaction->id,
+                'contribution_id' => (int) $contribution->id,
+                'member_name' => $contribution->user?->fullname,
+                'month' => (int) $contribution->period->month,
+                'year' => (int) $contribution->period->year,
+                'amount' => (float) $transaction->amount,
+                'paid_by' => 'bank',
+                'reference_code' => $transaction->reference_code,
+                'confirmed_by' => 'system',
+            ],
+            clubId: $clubId,
+        );
     }
 
     /**

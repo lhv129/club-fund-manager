@@ -13,6 +13,8 @@ class DashboardDemoSeeder extends Seeder
 
     private const YEAR = 2026;
 
+    private const DEMO_ROLE_ID = 5;
+
     /**
      * Các tháng dùng để tạo dữ liệu demo.
      */
@@ -78,6 +80,12 @@ class DashboardDemoSeeder extends Seeder
         $this->command?->info(
             'Transaction source: cash / webhook.'
         );
+
+        $this->command?->info(
+            'Da gan role_id='
+                . self::DEMO_ROLE_ID
+                . ' cho cac dashboard demo members.'
+        );
     }
 
     /**
@@ -99,7 +107,7 @@ class DashboardDemoSeeder extends Seeder
             ['Dang Gia Bao', 'male'],
             ['Ngo Khanh Linh', 'female'],
 
-            // Thêm member
+            // Them member
             ['Pham Thu Trang', 'female'],
             ['Nguyen Duc Manh', 'male'],
             ['Le Thi Hong', 'female'],
@@ -155,6 +163,11 @@ class DashboardDemoSeeder extends Seeder
 
             $userIds[] = $userId;
 
+            /**
+             * -----------------------------------------------------------------
+             * Club member
+             * -----------------------------------------------------------------
+             */
             DB::table('club_members')->updateOrInsert(
                 [
                     'club_id' => $clubId,
@@ -163,6 +176,7 @@ class DashboardDemoSeeder extends Seeder
                 [
                     'join_type' => 'request',
                     'status' => 'approved',
+
                     'reviewed_at' => Carbon::create(
                         self::YEAR,
                         1,
@@ -176,9 +190,40 @@ class DashboardDemoSeeder extends Seeder
                     )->addDays($index),
 
                     'sort_order' => $number,
+
                     'is_active' => true,
+
                     'deleted_at' => null,
+
                     'updated_at' => $now,
+
+                    'created_at' => $now,
+                ]
+            );
+
+            /**
+             * -----------------------------------------------------------------
+             * Club member role
+             *
+             * Demo:
+             * - club_id = club demo hiện tại
+             * - user_id = user demo
+             * - role_id = 5
+             * -----------------------------------------------------------------
+             */
+            DB::table('club_member_roles')->updateOrInsert(
+                [
+                    'club_id' => $clubId,
+                    'user_id' => $userId,
+                    'role_id' => self::DEMO_ROLE_ID,
+                ],
+                [
+                    'is_active' => true,
+
+                    'deleted_at' => null,
+
+                    'updated_at' => $now,
+
                     'created_at' => $now,
                 ]
             );
@@ -213,6 +258,7 @@ class DashboardDemoSeeder extends Seeder
                         : 230000,
 
                     'exchange_male_amount' => 80000,
+
                     'exchange_female_amount' => 70000,
 
                     'is_locked' => $month <= 6,
@@ -222,7 +268,9 @@ class DashboardDemoSeeder extends Seeder
                     'is_active' => true,
 
                     'deleted_at' => null,
+
                     'updated_at' => now(),
+
                     'created_at' => now(),
                 ]
             );
@@ -293,7 +341,9 @@ class DashboardDemoSeeder extends Seeder
                 );
 
                 $transactionId = null;
+
                 $paymentDate = null;
+
                 $paidBy = null;
 
                 if ($status === 'paid') {
@@ -356,19 +406,30 @@ class DashboardDemoSeeder extends Seeder
                     ->updateOrInsert(
                         [
                             'club_id' => $clubId,
+
                             'user_id' => $userId,
+
                             'period_id' => $periodId,
                         ],
                         [
                             'transaction_id' => $transactionId,
+
                             'amount' => $amount,
+
                             'status' => $status,
+
                             'paid_by' => $paidBy,
+
                             'payment_date' => $paymentDate,
+
                             'sort_order' => $index + 1,
+
                             'is_active' => true,
+
                             'deleted_at' => null,
+
                             'updated_at' => now(),
+
                             'created_at' => now(),
                         ]
                     );
@@ -445,18 +506,28 @@ class DashboardDemoSeeder extends Seeder
         $definitions = [
             [
                 'weekday' => 3,
+
                 'court_name' => 'San Cau Giay',
+
                 'start_time' => '19:00:00',
+
                 'end_time' => '21:00:00',
+
                 'vi' => 'Buoi thu Tu',
+
                 'en' => 'Wednesday Session',
             ],
             [
                 'weekday' => 6,
+
                 'court_name' => 'San My Dinh',
+
                 'start_time' => '18:00:00',
+
                 'end_time' => '20:00:00',
+
                 'vi' => 'Buoi thu Bay',
+
                 'en' => 'Saturday Session',
             ],
         ];
@@ -467,21 +538,34 @@ class DashboardDemoSeeder extends Seeder
             DB::table('playing_schedules')->updateOrInsert(
                 [
                     'club_id' => $clubId,
+
                     'weekday' => $definition['weekday'],
+
                     'court_name' => $definition['court_name'],
                 ],
                 [
                     'court_address' => 'Ha Noi',
+
                     'start_time' => $definition['start_time'],
+
                     'end_time' => $definition['end_time'],
+
                     'auto_generate' => false,
+
                     'weeks_ahead' => 8,
+
                     'start_date' => self::YEAR . '-02-01',
+
                     'end_date' => self::YEAR . '-08-31',
+
                     'sort_order' => $index + 1,
+
                     'is_active' => true,
+
                     'deleted_at' => null,
+
                     'updated_at' => now(),
+
                     'created_at' => now(),
                 ]
             );
@@ -489,7 +573,9 @@ class DashboardDemoSeeder extends Seeder
             $scheduleId = (int) DB::table('playing_schedules')
                 ->where([
                     'club_id' => $clubId,
+
                     'weekday' => $definition['weekday'],
+
                     'court_name' => $definition['court_name'],
                 ])
                 ->value('id');
@@ -501,15 +587,22 @@ class DashboardDemoSeeder extends Seeder
                     ->updateOrInsert(
                         [
                             'playing_schedule_id' => $scheduleId,
+
                             'locale' => $locale,
                         ],
                         [
                             'title' => $definition[$locale],
+
                             'note' => null,
+
                             'sort_order' => 0,
+
                             'is_active' => true,
+
                             'deleted_at' => null,
+
                             'updated_at' => now(),
+
                             'created_at' => now(),
                         ]
                     );
@@ -593,7 +686,9 @@ class DashboardDemoSeeder extends Seeder
                 ->updateOrInsert(
                     [
                         'club_id' => $clubId,
+
                         'session_date' => $date->toDateString(),
+
                         'court_name' => $courtName,
                     ],
                     [
@@ -650,7 +745,9 @@ class DashboardDemoSeeder extends Seeder
             )
                 ->where([
                     'club_id' => $clubId,
+
                     'session_date' => $date->toDateString(),
+
                     'court_name' => $courtName,
                 ])
                 ->value('id');

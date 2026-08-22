@@ -4,6 +4,7 @@ namespace App\Domains\MonthlyContribution\Services;
 
 use App\Base\BaseService;
 use App\Domains\Club\Models\ClubMember;
+use App\Domains\Club\Repositories\ClubMemberRepository;
 use App\Domains\ClubFund\Services\ClubFundService;
 use App\Domains\FundPeriod\Models\FundPeriod;
 use App\Domains\FundPeriod\Repositories\FundPeriodRepository;
@@ -37,6 +38,7 @@ class MonthlyContributionService extends BaseService
         protected TransactionRepository $transactionRepository,
         protected ClubFundService $clubFundService,
         protected NotificationService $notificationService,
+        protected ClubMemberRepository $clubMemberRepository,
     ) {
         parent::__construct($repository);
 
@@ -214,6 +216,8 @@ class MonthlyContributionService extends BaseService
                 $data,
                 (int) $data['club_id'],
             );
+
+            $this->notifyCashPaymentSettled($contribution);
 
             $this->notifyContribution(
                 'monthly_contribution_created',
@@ -422,6 +426,10 @@ class MonthlyContributionService extends BaseService
                 $data,
                 (int) $contribution->club_id,
             );
+
+            if ($oldStatus !== MonthlyContribution::STATUS_PAID) {
+                $this->notifyCashPaymentSettled($contribution);
+            }
 
             $this->notifyContributionUpdate(
                 $contribution,
@@ -842,6 +850,60 @@ class MonthlyContributionService extends BaseService
                 'amount' => (float) $contribution->amount,
                 'status' => $contribution->status,
                 'paid_by' => $contribution->paid_by,
+            ],
+            clubId: (int) $contribution->club_id,
+        );
+    }
+
+    /**
+     * Khi contribution vừa được ghi nhận thanh toán bằng tiền mặt:
+     * member nhận cash_payment_confirmed, quản trị CLB nhận club_transaction_received.
+     * Caller chỉ gọi lúc "mới chuyển sang paid" để không báo lại khi sửa amount/payment_date.
+     */
+    private function notifyCashPaymentSettled(
+        MonthlyContribution $contribution,
+    ): void {
+        if ($contribution->status !== MonthlyContribution::STATUS_PAID
+            || $contribution->paid_by !== MonthlyContribution::PAID_BY_CASH
+        ) {
+            return;
+        }
+
+        $contribution->loadMissing('user', 'period');
+
+        $confirmedBy = auth()->user()?->fullname ?? 'admin';
+
+        $this->notificationService->send(
+            userId: (int) $contribution->user_id,
+            type: 'cash_payment_confirmed',
+            data: [
+                'transaction_id' => (int) $contribution->transaction_id,
+                'contribution_id' => (int) $contribution->id,
+                'period_id' => (int) $contribution->period_id,
+                'month' => (int) $contribution->period->month,
+                'year' => (int) $contribution->period->year,
+                'amount' => (float) $contribution->amount,
+                'paid_by' => MonthlyContribution::PAID_BY_CASH,
+                'confirmed_by' => $confirmedBy,
+            ],
+            clubId: (int) $contribution->club_id,
+        );
+
+        $this->notificationService->sendToMany(
+            userIds: $this->clubMemberRepository
+                ->getClubAdministrators((int) $contribution->club_id)
+                ->pluck('user_id'),
+            type: 'club_transaction_received',
+            data: [
+                'transaction_id' => (int) $contribution->transaction_id,
+                'contribution_id' => (int) $contribution->id,
+                'member_name' => $contribution->user?->fullname,
+                'month' => (int) $contribution->period->month,
+                'year' => (int) $contribution->period->year,
+                'amount' => (float) $contribution->amount,
+                'paid_by' => MonthlyContribution::PAID_BY_CASH,
+                'reference_code' => null,
+                'confirmed_by' => $confirmedBy,
             ],
             clubId: (int) $contribution->club_id,
         );

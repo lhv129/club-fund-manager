@@ -4,6 +4,7 @@ namespace App\Domains\Notification\Controllers;
 
 use App\Base\BaseController;
 use App\Domains\Notification\Requests\FilterNotificationRequest;
+use App\Domains\Notification\Requests\MarkAllReadRequest;
 use App\Domains\Notification\Resources\NotificationResource;
 use App\Domains\Notification\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
@@ -18,11 +19,12 @@ class NotificationController extends BaseController
         $filters = $request->validated();
         $filters['user_id'] = Auth::id();
 
-        return $this->paginateResponse(
-            $this->service->paginate($filters),
-            __('domains/notification.list'),
-            NotificationResource::class,
-        );
+        $paginator = $this->service->paginate($filters);
+        $response = $this->paginateResponse($paginator, __('domains/notification.list'), NotificationResource::class);
+        $payload = $response->getData(true);
+        $payload['meta']['unread_count'] = $this->service->unreadCount((int) Auth::id());
+
+        return response()->json($payload);
     }
 
     public function unreadCount(): JsonResponse
@@ -34,22 +36,33 @@ class NotificationController extends BaseController
 
     public function markRead(int $id): JsonResponse
     {
-        $this->service->markRead($id, (int) Auth::id());
+        $result = $this->service->markRead($id, (int) Auth::id());
 
-        return $this->responseCommon(true, __('domains/notification.marked_read'));
+        return $this->responseCommon(true, __('domains/notification.marked_read'), [
+            'notification' => (new NotificationResource($result['notification']))->resolve(),
+            'unread_count' => $result['unread_count'],
+        ]);
     }
 
-    public function markAllRead(): JsonResponse
+    public function markAllRead(MarkAllReadRequest $request): JsonResponse
     {
-        $count = $this->service->markAllRead((int) Auth::id());
+        $data = $request->validated();
 
-        return $this->responseCommon(true, __('domains/notification.marked_all_read'), ['count' => $count]);
+        $data['user_id'] = (int) Auth::id();
+
+        $result = $this->service->markAllRead($data);
+
+        return $this->responseCommon(
+            true,
+            __('domains/notification.marked_all_read'),
+            $result
+        );
     }
 
     public function destroy(int $id): JsonResponse
     {
-        $this->service->deleteOwned($id, (int) Auth::id());
+        $result = $this->service->deleteOwned($id, (int) Auth::id());
 
-        return $this->responseCommon(true, __('domains/notification.deleted'));
+        return $this->responseCommon(true, __('domains/notification.deleted'), $result);
     }
 }

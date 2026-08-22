@@ -6,6 +6,8 @@ use App\Base\BaseService;
 use App\Domains\Transaction\Models\Transaction;
 use App\Domains\MemberPaymentCode\Services\PaymentMatchingService;
 use App\Domains\Transaction\Services\TransactionService;
+use App\Domains\Club\Repositories\ClubMemberRepository;
+use App\Domains\Notification\Services\NotificationService;
 use App\Domains\Webhook\Repositories\SePayWebhookRepository;
 use App\Domains\WebhookConfig\Repositories\WebhookConfigRepository;
 use Illuminate\Http\Request;
@@ -25,6 +27,8 @@ class SePayWebhookService extends BaseService
         WebhookConfigRepository   $webhookConfigRepository,
         TransactionService        $transactionService,
         PaymentMatchingService    $paymentMatchingService,   // ← inject mới
+        protected ClubMemberRepository $clubMemberRepository,
+        protected NotificationService $notificationService,
     ) {
         parent::__construct($repository);
         $this->webhookConfigRepository = $webhookConfigRepository;
@@ -54,7 +58,33 @@ class SePayWebhookService extends BaseService
         // Bước 2: Tìm và settle payment code (nếu match)
         $this->paymentMatchingService->matchAndSettle($transaction);
 
+        if ($transaction->type === Transaction::TYPE_EXPENSE) {
+            $this->notifyClubMembersAboutExpense($transaction);
+        }
+
         return $transaction;
+    }
+
+    private function notifyClubMembersAboutExpense(Transaction $transaction): void
+    {
+        $userIds = $this->clubMemberRepository->getActiveUserIds((int) $transaction->club_id);
+
+        if ($userIds->isEmpty()) {
+            return;
+        }
+
+        $this->notificationService->sendToMany(
+            $userIds,
+            'club_expense_created',
+            [
+                'transaction_id' => (int) $transaction->id,
+                'amount' => (float) $transaction->amount,
+                'description' => $transaction->description,
+                'transaction_date' => $transaction->transaction_date?->toISOString(),
+                'reference_code' => $transaction->reference_code,
+            ],
+            (int) $transaction->club_id,
+        );
     }
 
     private function verifySignature(Request $request, string $secret): bool

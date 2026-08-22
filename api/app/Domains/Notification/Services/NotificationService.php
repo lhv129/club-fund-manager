@@ -29,7 +29,7 @@ class NotificationService extends BaseService
         return $this->repository->unreadCount($userId);
     }
 
-    public function markRead(int $id, int $userId): void
+    public function markRead(int $id, int $userId): array
     {
         $notification = $this->repository->findOwned($id, $userId);
 
@@ -37,15 +37,20 @@ class NotificationService extends BaseService
             throw new ApiException(__('domains/notification.not_found'), 404);
         }
 
-        $this->repository->markRead($notification);
+        $notification = $this->repository->markRead($notification);
+
+        return [
+            'notification' => $notification,
+            'unread_count' => $this->repository->unreadCount($userId),
+        ];
     }
 
-    public function markAllRead(int $userId): int
+    public function markAllRead(array $data): array
     {
-        return $this->repository->markAllRead($userId);
+        return $this->repository->markAllRead($data);
     }
 
-    public function deleteOwned(int $id, int $userId): void
+    public function deleteOwned(int $id, int $userId): array
     {
         $notification = $this->repository->findOwned($id, $userId);
 
@@ -53,7 +58,12 @@ class NotificationService extends BaseService
             throw new ApiException(__('domains/notification.not_found'), 404);
         }
 
-        $this->repository->delete($notification);
+        $unreadCount = $this->repository->deleteOwned($notification);
+
+        return [
+            'id' => $id,
+            'unread_count' => $unreadCount,
+        ];
     }
 
     public function send(int $userId, string $type, array $data = [], ?int $clubId = null): Notification
@@ -70,5 +80,21 @@ class NotificationService extends BaseService
         NotificationCreated::dispatch($notification);
 
         return $notification;
+    }
+
+    /**
+     * Fan-out cùng một notification cho nhiều người nhận.
+     * Mỗi người nhận một bản ghi riêng kèm event realtime riêng.
+     */
+    public function sendToMany(iterable $userIds, string $type, array $data = [], ?int $clubId = null): int
+    {
+        $sent = 0;
+
+        foreach ($userIds as $userId) {
+            $this->send((int) $userId, $type, $data, $clubId);
+            $sent++;
+        }
+
+        return $sent;
     }
 }

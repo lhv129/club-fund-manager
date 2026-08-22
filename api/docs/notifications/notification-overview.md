@@ -342,7 +342,9 @@ Mỗi `type` phải có contract payload rõ ràng:
 | `club_invite` | `club_id`, `club_name`, `invite_code` |
 | `member_approved` | `club_id`, `club_name` |
 | `fund_due` | `contribution_id`, `club_name`, `month`, `year`, `amount` |
-| `transaction_confirmed` | `transaction_id`, `amount`, `reference_code` |
+| `transaction_confirmed` | `transaction_id`, `contribution_id`, `period_id`, `month`, `year`, `amount`, `paid_by`, `reference_code` |
+| `cash_payment_confirmed` | `transaction_id`, `contribution_id`, `period_id`, `month`, `year`, `amount`, `paid_by`, `confirmed_by` |
+| `club_transaction_received` | `transaction_id`, `contribution_id`, `member_name`, `month`, `year`, `amount`, `paid_by`, `reference_code`, `confirmed_by` |
 | `exchange_session_created` | `session_id`, `club_name`, `session_date`, `start_time` |
 | `monthly_contribution_created` | `period_id`, `contribution_id`, `month`, `year`, `amount`, `status`, `paid_by` |
 | `monthly_contribution_updated` | `period_id`, `contribution_id`, `month`, `year`, `amount`, `status`, `paid_by` |

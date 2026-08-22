@@ -2,9 +2,11 @@
 
 namespace App\Domains\Club\Models;
 
+use App\Domains\ClubMemberRole\Models\ClubMemberRole;
 use App\Domains\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ClubMember extends Model
@@ -172,6 +174,21 @@ class ClubMember extends Model
         return $this->belongsTo(
             User::class,
             'banned_by'
+        );
+    }
+
+    /**
+     * Các role của member trong Club.
+     */
+    public function clubMemberRoles(): HasMany
+    {
+        return $this->hasMany(
+            ClubMemberRole::class,
+            'user_id',
+            'user_id'
+        )->whereColumn(
+            'club_member_roles.club_id',
+            'club_members.club_id'
         );
     }
 
