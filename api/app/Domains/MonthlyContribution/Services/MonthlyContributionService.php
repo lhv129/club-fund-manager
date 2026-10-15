@@ -19,12 +19,13 @@ use App\Exceptions\ApiException;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class MonthlyContributionService extends BaseService
 {
     protected string $notFoundMessage =
-        'domains/monthly_contribution.not_found';
+    'domains/monthly_contribution.not_found';
 
     protected object $userRepository;
 
@@ -567,7 +568,7 @@ class MonthlyContributionService extends BaseService
         $now = now();
 
         $rows = $members
-            ->map(fn ($member) => [
+            ->map(fn($member) => [
                 'club_id' => $period->club_id,
                 'user_id' => $member->user_id,
                 'period_id' => $period->id,
@@ -593,7 +594,7 @@ class MonthlyContributionService extends BaseService
         );
         $newRows = array_values(array_filter(
             $rows,
-            fn (array $row) => ! in_array((int) $row['user_id'], $existingUserIds, true),
+            fn(array $row) => ! in_array((int) $row['user_id'], $existingUserIds, true),
         ));
 
         $created =
@@ -608,7 +609,8 @@ class MonthlyContributionService extends BaseService
                 $userIds,
             );
 
-            $contributions->each(fn (MonthlyContribution $contribution) => $this->notifyContribution('fund_due', $contribution, $period)
+            $contributions->each(
+                fn(MonthlyContribution $contribution) => $this->notifyContribution('fund_due', $contribution, $period)
             );
         }
 
@@ -828,8 +830,8 @@ class MonthlyContributionService extends BaseService
     ): void {
         $type = $contribution->status === MonthlyContribution::STATUS_CANCELLED
             && $oldStatus !== MonthlyContribution::STATUS_CANCELLED
-                ? 'monthly_contribution_cancelled'
-                : 'monthly_contribution_updated';
+            ? 'monthly_contribution_cancelled'
+            : 'monthly_contribution_updated';
 
         $this->notifyContribution($type, $contribution, $period);
     }
@@ -863,7 +865,8 @@ class MonthlyContributionService extends BaseService
     private function notifyCashPaymentSettled(
         MonthlyContribution $contribution,
     ): void {
-        if ($contribution->status !== MonthlyContribution::STATUS_PAID
+        if (
+            $contribution->status !== MonthlyContribution::STATUS_PAID
             || $contribution->paid_by !== MonthlyContribution::PAID_BY_CASH
         ) {
             return;
@@ -871,7 +874,7 @@ class MonthlyContributionService extends BaseService
 
         $contribution->loadMissing('user', 'period');
 
-        $confirmedBy = auth()->user()?->fullname ?? 'admin';
+        $confirmedBy = Auth::user()?->fullname ?? 'admin';
 
         $this->notificationService->send(
             userId: (int) $contribution->user_id,
@@ -885,6 +888,7 @@ class MonthlyContributionService extends BaseService
                 'amount' => (float) $contribution->amount,
                 'paid_by' => MonthlyContribution::PAID_BY_CASH,
                 'confirmed_by' => $confirmedBy,
+                'href' => Auth::user()->id
             ],
             clubId: (int) $contribution->club_id,
         );
@@ -895,8 +899,11 @@ class MonthlyContributionService extends BaseService
                 ->pluck('user_id'),
             type: 'club_transaction_received',
             data: [
-                'transaction_id' => (int) $contribution->transaction_id,
-                'contribution_id' => (int) $contribution->id,
+                // 'transaction_id' => (int) $contribution->transaction_id,
+                // 'contribution_id' => (int) $contribution->id,
+
+                'href' => (int) $contribution->transaction_id,
+
                 'member_name' => $contribution->user?->fullname,
                 'month' => (int) $contribution->period->month,
                 'year' => (int) $contribution->period->year,

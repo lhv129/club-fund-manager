@@ -317,6 +317,32 @@ function getTypeConfig(
   };
 }
 
+function getNotificationHref(notification: Notification) {
+  if (typeof notification.href === "string") {
+    return notification.href;
+  }
+
+  if (
+    notification.href &&
+    typeof notification.href === "object" &&
+    notification.href.path
+  ) {
+    return notification.href.path;
+  }
+
+  const dataHref = notification.data?.href;
+
+  if (typeof dataHref === "string") {
+    return dataHref;
+  }
+
+  if (dataHref && typeof dataHref === "object" && "path" in dataHref && typeof dataHref.path === "string") {
+    return dataHref.path;
+  }
+
+  return getTypeConfig(notification.type).getHref?.(notification) ?? null;
+}
+
 function humanizeText(value: string) {
   return value
     .replace(/[_-]+/g, " ")
@@ -475,6 +501,7 @@ function getGenericFields(
     "transaction_id",
     "contribution_id",
     "period_id",
+    "href",
     "currency",
     "year",
     "month",
@@ -855,11 +882,27 @@ export function NotificationDropdown() {
     item: Notification,
     close: () => void,
   ) => {
-    if (!item.is_read) {
-      await state.markAsRead(item.id);
+    const href = getNotificationHref(item);
+
+    // Navigate immediately; marking as read must not block the click action.
+    close();
+
+    if (href) {
+      const isAbsoluteUrl = /^https?:\/\//i.test(href);
+      const localizedHref = href.startsWith(`/${locale}/`)
+        ? href
+        : `/${locale}${href.startsWith("/") ? href : `/${href}`}`;
+
+      if (isAbsoluteUrl) {
+        window.location.assign(href);
+      } else {
+        router.push(localizedHref);
+      }
     }
 
-    close();
+    if (!item.is_read) {
+      void state.markAsRead(item.id);
+    }
   };
 
   const handleReadAll = async () => {

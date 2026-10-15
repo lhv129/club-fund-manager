@@ -740,7 +740,8 @@
     "sortOrder": "Sort order",
     "updatedAt": "Updated at",
     "descriptionPlaceholder": "Enter transaction content or notes...",
-    "deleteConfirmMsg": "Are you sure you want to delete transaction #{id}?"
+    "deleteConfirmMsg": "Are you sure you want to delete transaction #{id}?",
+    "sourceWebhook": "Webhook"
   },
   "notFound": {
     "title": "Page not found",

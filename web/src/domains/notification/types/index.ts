@@ -16,7 +16,7 @@ export interface Notification {
   is_read: boolean;
   read_at?: string | null;
   created_at: string;
-  href?: string | { slug?: string; id?: number | string; path?: string } | null;
+  href?: number | string | { slug?: string; id?: number | string; path?: string } | null;
 }
 
 export interface NotificationMeta {

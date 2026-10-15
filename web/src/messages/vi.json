@@ -737,7 +737,8 @@
     "sortOrder": "Thứ tự sắp xếp",
     "updatedAt": "Ngày cập nhật",
     "descriptionPlaceholder": "Nhập nội dung hoặc ghi chú giao dịch...",
-    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa giao dịch #{id}?"
+    "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa giao dịch #{id}?",
+    "sourceWebhook": "Webhook"
   },
   "notFound": {
     "title": "Trang bạn tìm không tồn tại",

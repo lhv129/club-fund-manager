@@ -118,9 +118,10 @@ class PaymentMatchingService
             userId: $memberUserId,
             type: 'transaction_confirmed',
             data: [
-                'transaction_id' => (int) $transaction->id,
-                'contribution_id' => (int) $contribution->id,
-                'period_id' => (int) $contribution->period_id,
+                // 'transaction_id' => (int) $transaction->id,
+                // 'contribution_id' => (int) $contribution->id,
+                // 'period_id' => (int) $contribution->period_id,
+                'href' => (int) $transaction->id,
                 'month' => (int) $contribution->period->month,
                 'year' => (int) $contribution->period->year,
                 'amount' => (float) $transaction->amount,
@@ -155,8 +156,11 @@ class PaymentMatchingService
             userIds: $otherAdministratorUserIds,
             type: 'club_transaction_received',
             data: [
-                'transaction_id' => (int) $transaction->id,
-                'contribution_id' => (int) $contribution->id,
+                // 'transaction_id' => (int) $transaction->id,
+                // 'contribution_id' => (int) $contribution->id,
+
+                'href' => (int) $transaction->id,
+
                 'member_name' => $contribution->user?->fullname,
                 'month' => (int) $contribution->period->month,
                 'year' => (int) $contribution->period->year,
