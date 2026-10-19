@@ -109,7 +109,7 @@ export const MODULE_SLUGS = {
   // ── Club-scoped modules ───────────────────────────────────────────────────
   clubMember: "club_member",
   clubInvite: "club_invite",
-  fundPeriod: "fund_periods",
+  fundPeriod: "fund_period",
   transaction: "transaction",
   exchangeSession: "exchange_session",
   webhook: "webhook",

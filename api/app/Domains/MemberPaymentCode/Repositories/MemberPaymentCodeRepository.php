@@ -50,6 +50,28 @@ class MemberPaymentCodeRepository extends BaseRepository
             $query->where('monthly_contribution_id', (int) $filters['monthly_contribution_id']);
         }
 
+        if (!empty($filters['club_slug'])) {
+            $query->whereHas(
+                'monthlyContribution.club',
+                function (Builder $clubQuery) use ($filters) {
+                    $clubQuery->whereHas(
+                        'translations',
+                        function (Builder $translationQuery) use ($filters) {
+                            $translationQuery
+                                ->where('slug', $filters['club_slug'])
+                                ->when(
+                                    !empty($filters['locale']),
+                                    fn(Builder $q) => $q->where(
+                                        'locale',
+                                        $filters['locale']
+                                    )
+                                );
+                        }
+                    );
+                }
+            );
+        }
+
         $this->applyStatusFilter($query, $filters, 'status', ['pending', 'used', 'expired']);
     }
 

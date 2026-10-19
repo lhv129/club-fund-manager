@@ -10,6 +10,7 @@ class FilterMemberPaymentCodeRequest extends BaseRequest
     {
         return [
             'monthly_contribution_id' => ['nullable', 'integer', 'min:1'],
+            'club_slug' => ['nullable','string','max:255'],
             'status'                  => ['nullable', 'in:pending,used,expired'],
             'is_active'               => ['nullable', 'boolean'],
             'limit'                   => ['nullable', 'integer', 'min:1', 'max:100'],

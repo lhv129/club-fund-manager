@@ -60,7 +60,7 @@ class PlayingScheduleController extends BaseController
     /**
      * GET /api/v1/playing-schedules/{id}
      */
-    public function show(string $clubSlug, int $id): JsonResponse
+    public function show(int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
@@ -87,7 +87,7 @@ class PlayingScheduleController extends BaseController
     /**
      * PUT /api/v1/playing-schedules/{id}
      */
-    public function update(UpdatePlayingScheduleRequest $request, string $clubSlug, int $id): JsonResponse
+    public function update(UpdatePlayingScheduleRequest $request, int $id): JsonResponse
     {
         $data = $request->validated();
         return $this->responseCommon(
@@ -100,7 +100,7 @@ class PlayingScheduleController extends BaseController
     /**
      * DELETE /api/v1/playing-schedules/{id} — xoá mềm + dồn sort_order.
      */
-    public function destroy(string $clubSlug, int $id): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
         $this->service->deleteWithSortOrder($id);
 
@@ -110,7 +110,7 @@ class PlayingScheduleController extends BaseController
     /**
      * PATCH /api/v1/playing-schedules/{id}/toggle-status
      */
-    public function toggleStatus(string $clubSlug, int $id): JsonResponse
+    public function toggleStatus(int $id): JsonResponse
     {
         return $this->responseCommon(
             true,
