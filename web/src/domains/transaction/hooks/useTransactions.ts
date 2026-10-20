@@ -1,7 +1,12 @@
 // src/domains/transaction/hooks/useTransactions.ts
 "use client";
 
-import { keepPreviousData, useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useQueryClient,
+    useQuery,
+    useMutation,
+} from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
@@ -9,13 +14,9 @@ import { getTransactionService } from "@/domains/transaction/services/transactio
 import type {
     Transaction,
     TransactionFilters,
-    TransactionSelect,
 } from "@/domains/transaction/types";
 import type { useListParams } from "@/hooks/useListParams";
-import type {
-    ApiResponse,
-    PaginatedResponse,
-} from "@/types/api";
+import type { ApiResponse } from "@/types/api";
 import type {
     SubmitResult,
     ServerErrorResponse,
@@ -45,13 +46,27 @@ function getServerError(err: unknown): ServerErrorResponse | null {
 }
 
 function buildPayload(
-    values: Record<string, string>
+    values: Record<string, string>,
+    clubSlug?: string,
+    includeSource = false,
 ): FormData {
     const formData = new FormData();
+    const fields = includeSource
+        ? ["source", "type", "amount", "bank_account_id", "transaction_date", "description"]
+        : ["type", "amount", "bank_account_id", "transaction_date", "description"];
 
-    formData.append("description", values.description ?? "");
+    for (const field of fields) {
+        if (Object.prototype.hasOwnProperty.call(values, field)) {
+            formData.append(field, values[field] ?? "");
+        }
+    }
 
+    if (clubSlug) formData.set("club_slug", clubSlug);
     return formData;
+}
+
+function getResponseMessage<T>(response: ApiResponse<T>, fallback: string): string {
+    return response.message || fallback;
 }
 
 export function useTransactions(
@@ -62,83 +77,130 @@ export function useTransactions(
     const clubSlug = params.club_slug as string | undefined;
     const queryClient = useQueryClient();
     const t = useTranslations("common");
-
     const service = getTransactionService();
-
     const queryKey = ["transactions", clubSlug, params] as const;
 
-    const { data: listData, isLoading, isFetching } = useQuery({
+    const {
+        data: listData,
+        isLoading,
+        isFetching,
+    } = useQuery({
         queryKey,
         queryFn: () => service.list(params),
-        enabled: !!clubSlug,
+        enabled: Boolean(clubSlug),
+        placeholderData: keepPreviousData,
     });
 
-    const {
-        data: selectResponse,
-        isLoading: isSelectLoading,
-    } = useQuery({
-        queryKey: ["transactions-select", clubSlug],
-        queryFn: () =>
-            service.select() as Promise<
-                ApiResponse<TransactionSelect[]>
-            >,
-        placeholderData: keepPreviousData,
-        enabled: !!clubSlug,
+    const createMutation = useMutation({
+        mutationFn: (payload: FormData) => service.create(payload),
     });
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, payload }: { id: number; payload: FormData }) =>
+            service.update(id, payload),
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => service.destroy(
+            id,
+            clubSlug ? { club_slug: clubSlug } : undefined,
+        ),
+    });
+
+    const invalidateTransactions = async () => {
+        await queryClient.invalidateQueries({
+            queryKey: ["transactions", clubSlug],
+        });
+    };
 
     const data = listData?.data ?? [];
     const total = listData?.meta?.total ?? 0;
-    const selectData = selectResponse?.data ?? [];
 
-    const updateMutation = useMutation({
-        mutationFn: ({
-            id,
-            payload,
-        }: {
-            id: number;
-            payload: FormData;
-        }) => { if (clubSlug) payload.set("club_slug", clubSlug); return service.update(id, payload); },
-    });
+    const handleCreate = async (
+        values: Record<string, string>,
+    ): Promise<SubmitResult> => {
+        try {
+            const raw = await createMutation.mutateAsync(
+                buildPayload(values, clubSlug, true),
+            );
+            const response = raw as ApiResponse<Transaction>;
+
+            if (!response.success) {
+                return {
+                    success: false,
+                    message: response.message,
+                    errors: response.errors,
+                };
+            }
+
+            await invalidateTransactions();
+            toast.success(getResponseMessage(response, t("createSuccess")));
+            return;
+        } catch (error: unknown) {
+            const serverError = getServerError(error);
+            if (serverError) return serverError;
+
+            toast.error((error as Error)?.message || t("loadError"));
+            return { success: false };
+        }
+    };
 
     const handleEdit = async (
         id: number,
-        values: Record<string, string>
+        values: Record<string, string>,
     ): Promise<SubmitResult> => {
         try {
             const raw = await updateMutation.mutateAsync({
                 id,
-                payload: buildPayload(values),
+                payload: buildPayload(values, clubSlug),
             });
+            const response = raw as ApiResponse<Transaction>;
 
-            const res = raw as ApiResponse<Transaction>;
-
-            if (!res.success) {
+            if (!response.success) {
                 return {
                     success: false,
-                    message: res.message,
-                    errors: res.errors,
+                    message: response.message,
+                    errors: response.errors,
                 };
             }
 
-            await queryClient.invalidateQueries({
-                queryKey: ["transactions", clubSlug],
-            });
-
-            toast.success(res.message || t("updateSuccess"));
-
+            await invalidateTransactions();
+            toast.success(getResponseMessage(response, t("updateSuccess")));
             return;
         } catch (error: unknown) {
             const serverError = getServerError(error);
-
             if (serverError) return serverError;
 
-            toast.error(
-                (error as Error)?.message || t("loadError")
-            );
+            toast.error((error as Error)?.message || t("loadError"));
+            return { success: false };
+        }
+    };
 
-            return {
-                success: false,
-            };
+    const handleDeleteConfirm = async (id: number): Promise<boolean> => {
+        try {
+            const raw = await deleteMutation.mutateAsync(id);
+            const response = raw as unknown as ApiResponse<unknown>;
+
+            // BaseRepository.destroy is typed as PaginatedResponse, while the
+            // controller may return ApiResponse or an empty success body.
+            // Only an explicit API failure should keep the confirm modal open.
+            if (response?.success === false) {
+                toast.error(response?.message || t("loadError"));
+                return false;
+            }
+
+            await invalidateTransactions();
+            toast.success(response.message || t("deleteSuccess"));
+            return true;
+        } catch (error: unknown) {
+            const serverError = getServerError(error);
+            if (serverError) {
+                toast.error(serverError.message || t("loadError"));
+                return false;
+            }
+
+            toast.error((error as Error)?.message || t("loadError"));
+            return false;
         }
     };
 
@@ -147,49 +209,22 @@ export function useTransactions(
         total,
         isLoading,
         isFetching,
-
-        selectData,
-        isSelectLoading,
-
+        isCreating: createMutation.isPending,
         isUpdating: updateMutation.isPending,
+        isDeleting: deleteMutation.isPending,
+        handleCreate,
         handleEdit,
+        handleDeleteConfirm,
     };
 }
 
-export function useTransaction(clubSlug: string, id: number) {
+export function useTransaction(
+    clubSlug: string,
+    id: number,
+) {
     return useQuery({
         queryKey: ["transactions", clubSlug, id],
         queryFn: () => getTransactionService().show(id, clubSlug),
         enabled: Boolean(clubSlug) && Number.isFinite(id) && id > 0,
     });
-}
-
-export function useTransactionSelect(
-    params?: Partial<TransactionFilters> & { club_slug?: string | null }
-) {
-    const clubSlug = params?.club_slug as string | undefined;
-    const query = useQuery({
-        queryKey: [
-            "transactions-select",
-            clubSlug,
-            params,
-        ],
-
-        queryFn: () => {
-            if (!clubSlug) {
-                throw new Error("Club slug is required");
-            }
-
-            return getTransactionService().select(params) as Promise<
-                ApiResponse<TransactionSelect[]>
-            >;
-        },
-
-        enabled: true,
-    });
-
-    return {
-        data: query.data?.data ?? [],
-        isLoading: query.isLoading,
-    };
 }

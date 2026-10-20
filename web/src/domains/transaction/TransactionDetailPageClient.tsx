@@ -1,29 +1,158 @@
 "use client";
 
-import { ArrowDownLeft, ArrowLeft, ArrowUpRight, Landmark, ReceiptText } from "lucide-react";
+import { ArrowLeft, Landmark, ReceiptText, SearchX } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Badge } from "@/components/shared/ui/Badge";
 import { Breadcrumb } from "@/components/shared/layout/Breadcrumb";
 import { CLUB_NAV_ITEMS } from "@/components/club/layout/club-nav-config";
-import { ContributionDetailCard } from "@/domains/monthlyContribution/components/ContributionDetailCard";
-import { ContributionDetailRow } from "@/domains/monthlyContribution/components/ContributionDetailRow";
 import { clubRoute, CLUB_SUBROUTES } from "@/constants";
 import { useClub } from "@/domains/club/hooks/useClub";
 import { useTransaction } from "@/domains/transaction/hooks/useTransactions";
+import { TransactionBankCard } from "@/domains/transaction/components/TransactionBankCard";
+import { TransactionDetailHero } from "@/domains/transaction/components/TransactionDetailHero";
+import { DetailRow } from "@/components/shared/ui/DetailRow";
+import { DetailSection } from "@/components/shared/ui/DetailSection";
+import { TransactionDetailActions } from "@/domains/transaction/components/TransactionDetailActions";
 import { useRouter } from "@/i18n/routing";
-import { formatAmount, formatDateTime } from "@/utils";
+import { formatDateTime } from "@/utils";
+
+const Skeleton = ({ className }: { className: string }) => (
+    <div className={`animate-pulse rounded-full bg-foreground/[0.06] ${className}`} />
+);
 
 export function TransactionDetailPageClient({ id }: { id: number }) {
-    const locale = useLocale(); const t = useTranslations("common"); const tt = useTranslations("transaction"); const router = useRouter(); const { club, slug } = useClub(); const query = useTransaction(slug ?? "", id); const item = query.data?.data;
+    const locale = useLocale();
+    const t = useTranslations("common");
+    const tt = useTranslations("transaction");
+    const router = useRouter();
+    const { club, slug } = useClub();
+    const query = useTransaction(slug ?? "", id);
+    const item = query.data?.data;
+
     if (!club || !slug) return null;
+
     const listHref = clubRoute(slug, CLUB_SUBROUTES.transactions);
-    if (query.isLoading) return <div className="space-y-6"><Breadcrumb navItems={CLUB_NAV_ITEMS(slug)} homeHref={clubRoute(slug)} /><div className="h-40 animate-pulse rounded-2xl border border-border bg-background-subtle" /><div className="grid gap-5 lg:grid-cols-2"><div className="h-72 animate-pulse rounded-2xl border border-border bg-background-subtle" /><div className="h-72 animate-pulse rounded-2xl border border-border bg-background-subtle" /></div></div>;
-    if (!item) return <div className="space-y-6"><Breadcrumb navItems={CLUB_NAV_ITEMS(slug)} homeHref={clubRoute(slug)} /><div className="rounded-2xl border border-dashed border-border bg-background-subtle py-14 text-center text-sm text-foreground-muted">{tt("detailNotFound")}</div></div>;
-    const isIncome = item.type === "income"; const FlowIcon = isIncome ? ArrowDownLeft : ArrowUpRight;
-    return <div className="mx-auto w-full max-w-6xl space-y-5 sm:space-y-6"><Breadcrumb navItems={CLUB_NAV_ITEMS(slug)} homeHref={clubRoute(slug)} extraItems={[{ label: tt("detailTitle") }]} /><button type="button" onClick={() => router.push(listHref as never)} className="group inline-flex min-h-10 items-center gap-2 px-1 text-sm font-medium text-foreground-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />{tt("backToList")}</button>
-        <section className={`relative overflow-hidden rounded-2xl border px-5 py-5 shadow-sm sm:px-7 sm:py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500 ${isIncome ? "border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.10] via-background to-background" : "border-rose-500/20 bg-gradient-to-br from-rose-500/[0.10] via-background to-background"}`}><div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-center gap-4"><span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isIncome ? "bg-emerald-500/15 text-emerald-600" : "bg-rose-500/15 text-rose-600"}`}><FlowIcon className="h-6 w-6" /></span><div><Badge variant={isIncome ? "active" : "cancelled"} title={tt(item.type)} /><p className="mt-2 text-sm text-foreground-muted">{formatDateTime(item.transaction_date, locale)}</p></div></div><div className="sm:text-right"><p className="text-xs font-medium text-foreground-muted">{tt("amount")}</p><p className={`mt-1 text-3xl font-bold tabular-nums sm:text-4xl ${isIncome ? "text-emerald-600" : "text-rose-600"}`}>{isIncome ? "+" : "−"}{formatAmount(item.amount, "đ", locale)}</p><p className="mt-1 text-xs text-foreground-muted">{tt("balance")}: {formatAmount(item.balance, "đ", locale)}</p></div></div></section>
-        <div className="grid gap-5 lg:grid-cols-2"><ContributionDetailCard icon={ReceiptText} title={tt("transactionInformation")} description={tt("transactionInformationDescription")}><dl><ContributionDetailRow label={tt("transactionDate")} value={formatDateTime(item.transaction_date, locale)} /><ContributionDetailRow label={tt("source")} value={item.source ? tt(`source${item.source.charAt(0).toUpperCase()}${item.source.slice(1)}`) : "—"} /><ContributionDetailRow label={tt("referenceCode")} value={item.reference_code} mono /><ContributionDetailRow label={tt("webhookSource")} value={item.webhook_config?.type?.toUpperCase()} /><ContributionDetailRow label={t("description")} value={item.description} /></dl></ContributionDetailCard>
-        <ContributionDetailCard icon={Landmark} title={tt("bankInformation")} description={tt("bankInformationDescription")} delay="short"><dl><ContributionDetailRow label={tt("bank")} value={item.bank_account?.bank ? `${item.bank_account.bank.name} (${item.bank_account.bank.code})` : "—"} /><ContributionDetailRow label={tt("accountNumber")} value={item.bank_account?.account_number} mono /><ContributionDetailRow label={tt("accountName")} value={item.bank_account?.account_name} /></dl></ContributionDetailCard>
+    const goBack = () => router.push(listHref as never);
+
+    const breadcrumb = (
+        <Breadcrumb
+            navItems={CLUB_NAV_ITEMS(slug)}
+            homeHref={clubRoute(slug)}
+            extraItems={item ? [{ label: tt("detailTitle") }] : undefined}
+        />
+    );
+
+    const backButton = (
+        <button
+            type="button"
+            onClick={goBack}
+            className="group -ml-2 inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-sm font-medium text-foreground-muted transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+        >
+            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+            {tt("backToList")}
+        </button>
+    );
+
+    /* ------------------------------ Loading ------------------------------ */
+    if (query.isLoading) {
+        return (
+            <div className="w-full" aria-busy="true">
+                {breadcrumb}
+                <div className="space-y-4 rounded-3xl bg-foreground/[0.03] px-5 py-8 sm:px-8">
+                    <Skeleton className="h-6 w-28" />
+                    <Skeleton className="h-11 w-64" />
+                    <Skeleton className="h-4 w-80 max-w-full" />
+                </div>
+                <div className="grid gap-10 px-1 lg:grid-cols-2">
+                    {[0, 1].map((col) => (
+                        <div key={col} className="space-y-5">
+                            <Skeleton className="h-5 w-40" />
+                            {[0, 1, 2, 3].map((row) => (
+                                <div key={row} className="flex justify-between gap-6">
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-4 w-32" />
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    /* ----------------------------- Not found ----------------------------- */
+    if (!item) {
+        return (
+            <div className="w-full">
+                {breadcrumb}
+                <div className="flex flex-col items-center px-6 py-16 text-center">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-foreground/[0.05] text-foreground-muted">
+                        <SearchX className="h-6 w-6" />
+                    </span>
+                    <p className="mt-4 max-w-sm text-sm text-foreground-muted">{tt("detailNotFound")}</p>
+                    <div className="mt-4">{backButton}</div>
+                </div>
+            </div>
+        );
+    }
+
+    /* ------------------------------- Detail ------------------------------ */
+    const sourceLabel = item.source
+        ? tt(`source${item.source.charAt(0).toUpperCase()}${item.source.slice(1)}`)
+        : null;
+
+    console.log(club);
+
+    return (
+        <div className="w-full">
+
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4 sm:mt-6">
+                {breadcrumb}
+                <TransactionDetailActions transaction={item} />
+            </div>
+
+            <div className="mb-4 sm:mb-6">
+                <TransactionDetailHero transaction={item} />
+            </div>
+
+            {/* One calm surface, two columns split by a hairline — no stacked boxes */}
+            <div className="grid gap-10 px-1 sm:px-2 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-border/60">
+                <DetailSection
+                    icon={ReceiptText}
+                    title={tt("transactionInformation")}
+                    description={tt("transactionInformationDescription")}
+                    className="lg:pr-10"
+                    delay={80}
+                >
+                    <dl>
+                        <DetailRow
+                            label={tt("transactionDate")}
+                            value={formatDateTime(item.transaction_date, locale)}
+                        />
+                        <DetailRow label={tt("source")} value={sourceLabel} />
+                        <DetailRow
+                            label={tt("referenceCode")}
+                            value={item.reference_code}
+                            copyValue={item.reference_code}
+                            mono
+                        />
+                        <DetailRow
+                            label={tt("webhookSource")}
+                            value={item.webhook_config?.type?.toUpperCase()}
+                        />
+                        <DetailRow label={t("description")} value={item.description} />
+                    </dl>
+                </DetailSection>
+
+                <DetailSection
+                    icon={Landmark}
+                    title={tt("bankInformation")}
+                    description={tt("bankInformationDescription")}
+                    className="lg:pl-10"
+                    delay={160}
+                >
+                    <TransactionBankCard account={item.bank_account ?? null} />
+                </DetailSection>
+            </div>
         </div>
-    </div>;
+    );
 }

@@ -1,4 +1,6 @@
 // src/domains/transaction/types/index.ts
+import type { BankAccount } from "@/domains/bankAccount/types/index";
+
 
 export type TransactionType = "income" | "expense";
 export type TransactionSource = "webhook" | "manual" | "cash";
@@ -23,18 +25,7 @@ export interface Transaction {
 
     is_active: boolean;
     sort_order: number;
-    bank_account: {
-        id: number;
-        account_number: string;
-        account_name: string;
-        bank: {
-            id: number;
-            code: string;
-            name: string;
-            short_name: string | null;
-            logo: string | null;
-        } | null;
-    } | null;
+    bank_account: BankAccount | null;
     webhook_config: {
         id: number;
         type: string;

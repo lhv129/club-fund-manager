@@ -428,7 +428,7 @@ export function useFundPeriodSelect(
         queryFn: () => {
             return getFundPeriodService().select(params);
         },
-        enabled: true,
+        enabled: Boolean(clubSlug),
     });
 
     return {

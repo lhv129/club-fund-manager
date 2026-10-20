@@ -99,7 +99,9 @@
     "allLoaded": "Đã hiển thị tất cả dữ liệu",
     "noResultsFound": "Không tìm thấy kết quả phù hợp",
     "systemAdmin": "Quản trị hệ thống",
-    "superAdmin": "Super Admin"
+    "superAdmin": "Super Admin",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép"
   },
   "notification": {
     "title": "Thông báo",
@@ -738,7 +740,20 @@
     "updatedAt": "Ngày cập nhật",
     "descriptionPlaceholder": "Nhập nội dung hoặc ghi chú giao dịch...",
     "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa giao dịch #{id}?",
-    "sourceWebhook": "Webhook"
+    "sourceWebhook": "Webhook",
+    "cash": "Tiền mặt",
+    "manual": "Thủ công",
+    "share": "Chia sẻ",
+    "shareDone": "Đã chia sẻ",
+    "shareText": "{type} {amount} • {date}",
+    "downloadReceipt": "Tải biên lai",
+    "downloadImage": "Tải biên lai dạng ảnh (PNG)",
+    "downloadImageShort": "Ảnh",
+    "downloadPdf": "Tải biên lai dạng PDF",
+    "actionFailed": "Thất bại, thử lại",
+    "receiptTitle": "Biên lai giao dịch",
+    "receiptFileName": "bien-lai",
+    "receiptGeneratedAt": "Tạo lúc {date}"
   },
   "notFound": {
     "title": "Trang bạn tìm không tồn tại",
@@ -760,6 +775,7 @@
     "accountName": "Tên chủ tài khoản",
     "accountNamePlaceholder": "Nhập tên chủ tài khoản",
     "qrImage": "Ảnh mã QR",
+    "qrImageDefault": "Ảnh mã QR mặc định của ngân hàng",
     "isDefault": "Tài khoản mặc định",
     "deleteConfirmMsg": "Bạn có chắc chắn muốn xóa tài khoản ngân hàng của {name}?"
   },
@@ -867,7 +883,7 @@
     "deleteConfirmMsg": "Bạn có chắc muốn xóa \"{name}\"?",
     "user": "Thành viên",
     "placeholderUser": "Vui lòng chọn thành viên...",
-    "groupName": "Tên khách hoặc nhóm giao lưu",
+    "groupName": "Tên hoặc nhóm giao lưu",
     "male": "Nam",
     "female": "Nữ",
     "amount": "Số tiền",

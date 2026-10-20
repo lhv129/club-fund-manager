@@ -7,6 +7,7 @@ export interface BankAccount {
         code: string;
         name: string;
         logo: string | null;
+        short_name: string | null;
     } | null;
     account_number: string;
     account_name: string;

@@ -304,7 +304,7 @@ export function BankAccountsPageClient() {
     const imageFields = [
         {
             name: "qr_image",
-            label: tb("qrImage"),
+            label: tb("qrImageDefault"),
             initialUrl: selected?.qr_image ?? null,
             required: !selected,
         },

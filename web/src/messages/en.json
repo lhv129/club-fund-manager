@@ -99,7 +99,9 @@
     "allLoaded": "All items loaded",
     "noResultsFound": "No results found",
     "systemAdmin": "System Admin",
-    "superAdmin": "Super Admin"
+    "superAdmin": "Super Admin",
+    "copy": "Copy",
+    "copied": "Copied"
   },
   "notification": {
     "title": "Notifications",
@@ -741,7 +743,20 @@
     "updatedAt": "Updated at",
     "descriptionPlaceholder": "Enter transaction content or notes...",
     "deleteConfirmMsg": "Are you sure you want to delete transaction #{id}?",
-    "sourceWebhook": "Webhook"
+    "sourceWebhook": "Webhook",
+    "cash": "Cash",
+    "manual": "Manual",
+    "share": "Share",
+    "shareDone": "Shared",
+    "shareText": "{type} {amount} • {date}",
+    "downloadReceipt": "Download receipt",
+    "downloadImage": "Download receipt as image (PNG)",
+    "downloadImageShort": "Image",
+    "downloadPdf": "Download receipt as PDF",
+    "actionFailed": "Failed, try again",
+    "receiptTitle": "Transaction receipt",
+    "receiptFileName": "receipt",
+    "receiptGeneratedAt": "Generated at {date}"
   },
   "notFound": {
     "title": "Page not found",
@@ -763,6 +778,7 @@
     "accountName": "Account Holder",
     "accountNamePlaceholder": "Enter account holder name",
     "qrImage": "QR Code Image",
+    "qrImageDefault": "Default QR Code Image Bank",
     "isDefault": "Default Account",
     "deleteConfirmMsg": "Are you sure you want to delete the bank account \"{name}\"?"
   },
