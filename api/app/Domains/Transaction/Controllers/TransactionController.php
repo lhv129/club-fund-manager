@@ -4,6 +4,7 @@ namespace App\Domains\Transaction\Controllers;
 
 use App\Base\BaseController;
 use App\Domains\Transaction\Requests\FilterTransactionRequest;
+use App\Domains\Transaction\Requests\StoreTransactionRequest;
 use App\Domains\Transaction\Requests\UpdateTransactionRequest;
 use App\Domains\Transaction\Resources\TransactionResource;
 use App\Domains\Transaction\Services\TransactionService;
@@ -59,9 +60,24 @@ class TransactionController extends BaseController
             true,
             __('domains/transaction.list'),
             $this->service->getForSelect($filters),
+            200
         );
     }
 
+    /**
+     * POST /api/v1/transactions/store
+     */
+    public function store(StoreTransactionRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $data['club_id'] = $request->attributes->get('club_id');
+        return $this->responseCommon(true, __('domains/transaction.created'), new TransactionResource($this->service->createManual($data)), 201);
+    }
+
+
+    /**
+     * PUT /api/v1/transactions/update
+     */
     public function update(UpdateTransactionRequest $request, int $id): JsonResponse
     {
         return $this->responseCommon(
@@ -72,6 +88,24 @@ class TransactionController extends BaseController
                 (int) $request->attributes->get('club_id'),
                 $request->validated(),
             )),
+            200
+        );
+    }
+
+    /**
+     * DELETE /api/v1/transactions/update
+     */
+
+    public function destroy(Request $request, int $id)
+    {
+        return $this->responseCommon(
+            true,
+            __('domains/transaction.deleted'),
+            $this->service->deleteForClub(
+                $id,
+                (int) $request->attributes->get('club_id')
+                ),
+            200
         );
     }
 }

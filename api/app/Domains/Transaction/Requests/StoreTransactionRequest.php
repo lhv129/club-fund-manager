@@ -27,16 +27,13 @@ class StoreTransactionRequest extends BaseRequest
                 ),
             ],
 
-            'type' => ['required', 'in:income'],
+            'type' => ['required', 'in:income,expense'],
 
             'source' => ['nullable', 'in:manual,cash'],
 
             'amount' => ['required', 'numeric', 'min:0'],
 
             'description' => ['nullable', 'string', 'max:1000'],
-            'reference_code' => ['nullable', 'string', 'max:255'],
-            'sender_name' => ['nullable', 'string', 'max:255'],
-            'sender_account' => ['nullable', 'string', 'max:255'],
 
             'transaction_date' => ['nullable', 'date'],
         ];
@@ -50,9 +47,6 @@ class StoreTransactionRequest extends BaseRequest
             'source' => __('domains/transaction.attributes.source'),
             'amount' => __('domains/transaction.attributes.amount'),
             'description' => __('domains/transaction.attributes.description'),
-            'reference_code' => __('domains/transaction.attributes.reference_code'),
-            'sender_name' => __('domains/transaction.attributes.sender_name'),
-            'sender_account' => __('domains/transaction.attributes.sender_account'),
             'transaction_date' => __('domains/transaction.attributes.transaction_date'),
         ];
     }

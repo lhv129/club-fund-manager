@@ -5,14 +5,11 @@ namespace App\Domains\Transaction\Repositories;
 use App\Base\BaseRepository;
 use App\Domains\Transaction\Models\Transaction;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class TransactionRepository extends BaseRepository
 {
-    // ------------------------------------------------------------------
-    // Cấu hình — Base sử dụng trực tiếp
-    // ------------------------------------------------------------------
-
     protected string $defaultOrderBy = 'transaction_date';
 
     protected string $defaultOrderDirection = 'desc';
@@ -47,14 +44,7 @@ class TransactionRepository extends BaseRepository
         parent::__construct($model);
     }
 
-    // ------------------------------------------------------------------
-    // Hook overrides
-    // ------------------------------------------------------------------
-
-    /**
-     * Query cơ sở cho getList() / getCursorList().
-     * Select cột cần thiết + eager load user để tránh N+1 khi render list.
-     */
+    /** Query cơ sở cho danh sách, eager load quan hệ cần render. */
     protected function baseListQuery(): Builder
     {
         return $this->model
@@ -84,10 +74,7 @@ class TransactionRepository extends BaseRepository
             ]);
     }
 
-    /**
-     * Search theo description hoặc reference_code.
-     * (Không có cột title trên transactions — fix bug cũ.)
-     */
+    /** Search theo description hoặc reference_code. */
     protected function applySearch(Builder $query, array $filters): void
     {
         if (! empty($filters['search'])) {
@@ -101,10 +88,7 @@ class TransactionRepository extends BaseRepository
         }
     }
 
-    /**
-     * Filter đặc thù Transaction: is_active + user_id + type + bank_account_id
-     * + khoảng ngày (from_date / to_date).
-     */
+    /** Filter đặc thù Transaction. */
     protected function applyFilters(Builder $query, array $filters): void
     {
         $this->applyActiveFilter($query, $filters);
@@ -134,11 +118,7 @@ class TransactionRepository extends BaseRepository
         }
     }
 
-    // ------------------------------------------------------------------
-    // Domain-specific queries
-    // ------------------------------------------------------------------
-
-    /** Tìm chi tiết giao dịch trong phạm vi club và eager-load thông tin ngân hàng. */
+    /** Tìm chi tiết giao dịch trong phạm vi club và eager-load ngân hàng. */
     public function findDetail(int $id, ?int $clubId = null): ?Transaction
     {
         $query = $this->model
@@ -164,7 +144,7 @@ class TransactionRepository extends BaseRepository
             ->find($id);
     }
 
-    /** Khóa giao dịch trong club để cập nhật quỹ và transaction nguyên tử. */
+    /** Khóa một transaction theo ID trong phạm vi club. */
     public function lockByIdForClub(int $id, int $clubId): Transaction
     {
         return $this->model
@@ -172,6 +152,39 @@ class TransactionRepository extends BaseRepository
             ->where('club_id', $clubId)
             ->lockForUpdate()
             ->findOrFail($id);
+    }
+
+    /**
+     * Khóa ledger của club theo id tăng dần để tái tính balance snapshots.
+     * Soft-deleted rows bị loại bởi global scope của model.
+     */
+    public function lockLedgerForClub(int $clubId): Collection
+    {
+        return $this->model
+            ->newQuery()
+            ->select([
+                'id',
+                'club_id',
+                'bank_account_id',
+                'webhook_config_id',
+                'source',
+                'type',
+                'amount',
+                'balance',
+                'description',
+                'reference_code',
+                'sender_name',
+                'sender_account',
+                'transaction_date',
+                'is_active',
+                'sort_order',
+                'created_at',
+                'updated_at',
+            ])
+            ->where('club_id', $clubId)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
     }
 
     /**
@@ -225,9 +238,9 @@ class TransactionRepository extends BaseRepository
             ->whereNull('deleted_at')
             ->exists()
             || DB::table('exchange_session_players')
-                ->where('transaction_id', $id)
-                ->whereNull('deleted_at')
-                ->exists();
+            ->where('transaction_id', $id)
+            ->whereNull('deleted_at')
+            ->exists();
     }
 
     /** Vô hiệu hóa rồi soft-delete transaction do hệ thống quản lý. */
