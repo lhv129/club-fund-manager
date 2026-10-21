@@ -4,7 +4,7 @@ import { useCallback, useEffect } from "react";
 import { useAuthStore } from "../stores/authStore";
 import { authService } from "../services/authService";
 import { can, canAccessClub, hasAnyClubPermission, hasAnySystemPermission, clubPermissionCount } from "@/lib/permissions";
-import type { LoginPayload, RegisterPayload, Profile } from "../types";
+import type { LoginPayload, RegisterPayload, Profile, ClubRole } from "../types";
 
 /**
  * useAuth — main auth hook for client components.
@@ -122,6 +122,27 @@ export function useAuth() {
     (user?.is_system_admin ?? false) ||
     (user ? hasAnySystemPermission(user.permissions, false) : false);
 
+  const getClubRole = useCallback(
+    (clubId?: number | null): ClubRole | null => {
+      if (!user || !clubId) return null;
+
+      // Superadmin: roles = ["*"]
+      if (Array.isArray(user.roles)) {
+        return null;
+      }
+
+      return user.roles[`club_${clubId}`] ?? null;
+    },
+    [user],
+  );
+
+  const hasClubRole = useCallback(
+    (clubId: number | null | undefined, roleSlug: string): boolean => {
+      return getClubRole(clubId)?.slug === roleSlug;
+    },
+    [getClubRole],
+  );
+
   return {
     user,
     isAuthenticated,
@@ -137,6 +158,8 @@ export function useAuth() {
     hasAnyClubPermission: checkAnyClubPermission,
     hasMultipleClubs,
     clearError: () => setError(null),
+    getClubRole,
+    hasClubRole
   };
 }
 

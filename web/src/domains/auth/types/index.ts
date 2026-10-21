@@ -17,6 +17,30 @@ export type PermissionMap =
   | ["*"]
   | Record<string, string[] | Record<string, string[]>>;
 
+/**
+ * Role của user trong một club.
+ */
+export interface ClubRole {
+  id: number;
+  slug: string;
+  name: string | null;
+}
+
+/**
+ * Role map theo club.
+ *
+ * Ví dụ:
+ *
+ * {
+ *   club_7: {
+ *     id: 3,
+ *     slug: "owner",
+ *     name: "Chủ CLB"
+ *   }
+ * }
+ */
+export type ClubRoleMap = Record<`club_${number}`, ClubRole>;
+
 /** User profile — matches Auth/Resources/ProfileResource. */
 export interface Profile {
   id: number;
@@ -25,10 +49,28 @@ export interface Profile {
   phone: string | null;
   avatar: string | null;
   is_superadmin: boolean;
+
   /** admin (system scope) — true nếu user có role `admin` do superadmin cấp. */
   is_system_admin: boolean;
+
   is_active: boolean | null;
+
   permissions: PermissionMap;
+
+  /**
+   * Roles của user theo từng club.
+   *
+   * Ví dụ:
+   *
+   * roles: {
+   *   club_7: {
+   *     id: 3,
+   *     slug: "owner",
+   *     name: "Chủ CLB"
+   *   }
+   * }
+   */
+  roles: ClubRoleMap | ["*"];
 }
 
 /** Login request payload. */
