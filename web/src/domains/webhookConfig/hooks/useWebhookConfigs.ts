@@ -30,8 +30,13 @@ function buildPayload(values: WebhookConfigFormValues): FormData {
     return payload;
 }
 
+type UseWebhookConfigsOptions = {
+    requireClubSlug?: boolean;
+};
+
 export function useWebhookConfigs(
     params: ReturnType<typeof useListParams<WebhookConfigFilters>>["params"],
+    options: UseWebhookConfigsOptions = {},
 ) {
     const queryClient = useQueryClient();
     const t = useTranslations("common");
@@ -42,6 +47,7 @@ export function useWebhookConfigs(
     const query = useQuery<PaginatedResponse<WebhookConfig>>({
         queryKey,
         queryFn: () => service.list(params),
+        enabled: !options.requireClubSlug || Boolean(clubSlug),
         placeholderData: keepPreviousData,
     });
 

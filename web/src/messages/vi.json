@@ -845,7 +845,12 @@
     "yes": "Có",
     "no": "Không",
     "notFound": "Chưa có cấu hình webhook",
-    "deleteConfirmMsg": "Bạn có chắc muốn xóa cấu hình {type}?"
+    "deleteConfirmMsg": "Bạn có chắc muốn xóa cấu hình {type}?",
+    "default": "Mặc định",
+    "searchBankPlaceholder": "Tìm ngân hàng, số tài khoản…",
+    "copyAccountNumber": "Sao chép số tài khoản",
+    "selectClubFirst": "Vui lòng chọn câu lạc bộ trước",
+    "noBankAccounts": "Câu lạc bộ này chưa có tài khoản ngân hàng"
   },
   "exchangeSession": {
     "title": "Buổi đánh",

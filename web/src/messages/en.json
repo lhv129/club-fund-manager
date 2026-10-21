@@ -848,7 +848,12 @@
     "yes": "Yes",
     "no": "No",
     "notFound": "No webhook configurations found",
-    "deleteConfirmMsg": "Are you sure you want to delete the {type} configuration?"
+    "deleteConfirmMsg": "Are you sure you want to delete the {type} configuration?",
+    "default": "Default",
+    "searchBankPlaceholder": "Search bank, account number…",
+    "copyAccountNumber": "Copy account number",
+    "selectClubFirst": "Select a club first",
+    "noBankAccounts": "This club has no bank accounts"
   },
   "exchangeSession": {
     "title": "Exchange Session",

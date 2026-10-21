@@ -1,10 +1,12 @@
-// ══════════════════════════════════════════════════════════════════
-// 2. @/domains/club/hooks/useClubs.ts
-// ══════════════════════════════════════════════════════════════════
 "use client";
 
 import { useState } from "react";
-import { keepPreviousData, useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useQueryClient,
+    useQuery,
+    useMutation,
+} from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
@@ -14,21 +16,12 @@ import type { Club, ClubFilters } from "@/domains/club/types";
 import type { SubmitResult } from "@/components/shared/forms/FormModalWithMedia";
 import type { useListParams } from "@/hooks/useListParams";
 
-// ─── Private helper ───────────────────────────────────────────────────────────
 function getServerError(err: unknown) {
     return (err as { response?: { data?: unknown } })?.response?.data ?? null;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-/**
- * Cache strategy:
- *   - list          → useQuery
- *   - create/update → invalidateQueries (fetch lại để đảm bảo đúng)
- *   - delete        → setQueryData với data + meta trả về từ BE
- *   - toggle        → setQueryData (flip is_active hoặc merge res.data)
- */
 export function useClubsQuery(
-    params: ReturnType<typeof useListParams<ClubFilters>>["params"]
+    params: ReturnType<typeof useListParams<ClubFilters>>["params"],
 ) {
     const queryClient = useQueryClient();
     const t = useTranslations("common");
@@ -37,7 +30,6 @@ export function useClubsQuery(
 
     const queryKey = ["clubs", params] as const;
 
-    // ── Fetch list ────────────────────────────────────────────────────────────
     const { data: listData, isLoading, isFetching } = useQuery({
         queryKey,
         queryFn: () => clubServiceClient.list(params),
@@ -47,18 +39,15 @@ export function useClubsQuery(
     const data = listData?.data ?? [];
     const total = listData?.meta?.total ?? 0;
 
-    // ── Create → invalidateQueries ────────────────────────────────────────────
     const createMutation = useMutation({
         mutationFn: (payload: FormData) => clubServiceClient.create(payload),
     });
 
-    // ── Update → invalidateQueries ────────────────────────────────────────────
     const updateMutation = useMutation({
         mutationFn: ({ id, payload }: { id: number; payload: FormData }) =>
             clubServiceClient.update(id, payload),
     });
 
-    // ── Delete → setQueryData với data + meta trả về từ BE ───────────────────
     const deleteMutation = useMutation({
         mutationFn: (id: number) => clubServiceClient.destroy(id, params),
         onSuccess: (res, deletedId) => {
@@ -74,7 +63,7 @@ export function useClubsQuery(
                             total: Math.max(0, (old.meta?.total ?? 1) - 1),
                         },
                     };
-                }
+                },
             );
             toast.success(res.message || t("deleteSuccess"));
         },
@@ -83,7 +72,6 @@ export function useClubsQuery(
         },
     });
 
-    // ── Toggle → setQueryData ─────────────────────────────────────────────────
     const toggleMutation = useMutation({
         mutationFn: (id: number) =>
             clubServiceClient.toggleStatus(id) as Promise<ApiResponse<Club>>,
@@ -101,10 +89,10 @@ export function useClubsQuery(
                                 ? item
                                 : saved
                                     ? { ...item, ...saved }
-                                    : { ...item, is_active: !item.is_active }
+                                    : { ...item, is_active: !item.is_active },
                         ),
                     };
-                }
+                },
             );
             toast.success(res.message || t("updateSuccess"));
         },
@@ -113,14 +101,17 @@ export function useClubsQuery(
         },
     });
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
-
-    // FormModalWithMedia tự build FormData → hook chỉ cần nhận và gửi
     const handleCreate = async (formData: FormData): Promise<SubmitResult> => {
         try {
             const raw = await createMutation.mutateAsync(formData);
             const res = raw as unknown as ApiResponse<Club>;
-            if (!res.success) return { success: false, message: res.message, errors: res.errors };
+            if (!res.success) {
+                return {
+                    success: false,
+                    message: res.message,
+                    errors: res.errors,
+                };
+            }
             queryClient.invalidateQueries({ queryKey: ["clubs"] });
             toast.success(res.message || t("saveSuccess"));
             return;
@@ -132,11 +123,20 @@ export function useClubsQuery(
         }
     };
 
-    const handleEdit = async (id: number, formData: FormData): Promise<SubmitResult> => {
+    const handleEdit = async (
+        id: number,
+        formData: FormData,
+    ): Promise<SubmitResult> => {
         try {
             const raw = await updateMutation.mutateAsync({ id, payload: formData });
             const res = raw as unknown as ApiResponse<Club>;
-            if (!res.success) return { success: false, message: res.message, errors: res.errors };
+            if (!res.success) {
+                return {
+                    success: false,
+                    message: res.message,
+                    errors: res.errors,
+                };
+            }
             queryClient.invalidateQueries({ queryKey: ["clubs"] });
             toast.success(res.message || t("updateSuccess"));
             return;
@@ -152,18 +152,17 @@ export function useClubsQuery(
 
     const handleToggle = (row: Club) => {
         if (togglingIds.has(row.id)) return;
-        setTogglingIds((prev) => new Set(prev).add(row.id));
+        setTogglingIds((previous) => new Set(previous).add(row.id));
         toggleMutation.mutate(row.id, {
             onSettled: () =>
-                setTogglingIds((prev) => {
-                    const next = new Set(prev);
+                setTogglingIds((previous) => {
+                    const next = new Set(previous);
                     next.delete(row.id);
                     return next;
                 }),
         });
     };
 
-    // ── Return ────────────────────────────────────────────────────────────────
     return {
         data,
         total,
@@ -180,12 +179,16 @@ export function useClubsQuery(
     };
 }
 
-// ─── Select hook (dùng bởi module khác cần dropdown club) ─────────────────────
-export function useClubSelect() {
+/**
+ * Select hook dùng cho dropdown club.
+ * Có thể tắt request khi màn hình không cần danh sách club.
+ */
+export function useClubSelect(enabled = true) {
     const query = useQuery({
         queryKey: ["clubs-select"],
         queryFn: () =>
             clubServiceClient.select() as Promise<ApiResponse<Club[]>>,
+        enabled,
     });
 
     return {

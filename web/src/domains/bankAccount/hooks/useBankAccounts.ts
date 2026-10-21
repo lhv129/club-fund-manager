@@ -11,7 +11,6 @@ import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
 import { getBankAccountService } from "@/domains/bankAccount/services/bankAccountService";
-import { useBankSelect } from "@/domains/bank/hooks/useBanks";
 
 import type {
     BankAccount,
@@ -74,6 +73,44 @@ function getServerError(
     return null;
 }
 
+export type BankAccountSelectParams = {
+    club_slug?: string;
+    search?: string;
+};
+
+/**
+ * Fetch bank account options only.
+ * This hook calls GET /bank-accounts/select and never fetches the CRUD list.
+ */
+export function useBankAccountSelect(
+    params: BankAccountSelectParams,
+) {
+    const service = getBankAccountService();
+
+    const query = useQuery<ApiResponse<BankAccount[]>>({
+        queryKey: [
+            "bank-accounts-select",
+            params.club_slug,
+            params.search ?? "",
+        ],
+        queryFn: () => {
+            return service.select(
+                params as unknown as Parameters<
+                    typeof service.select
+                >[0],
+            );
+        },
+        enabled: Boolean(params.club_slug),
+    });
+
+    return {
+        data: query.data?.data ?? [],
+        isLoading: query.isLoading,
+        isPending: query.isPending,
+        isFetching: query.isFetching,
+    };
+}
+
 export function useBankAccounts(
     params: ReturnType<
         typeof useListParams<BankAccountFilters>
@@ -89,10 +126,26 @@ export function useBankAccounts(
     const service =
         getBankAccountService();
 
+    /**
+     * Select bank accounts từ endpoint
+     * GET /bank-accounts/select.
+     */
     const {
-        data: banks,
-        isLoading: isBanksLoading
-    } = useBankSelect();
+        data: bankAccountSelectData,
+        isLoading: isBanksLoading,
+    } = useQuery<ApiResponse<BankAccount[]>>({
+        queryKey: [
+            "bank-accounts-select",
+            params,
+        ],
+        queryFn: () => {
+            return service.select(params);
+        },
+        enabled: Boolean(clubSlug),
+    });
+
+    const banks =
+        bankAccountSelectData?.data ?? [];
 
     /**
      * Query key phải được dùng thống nhất khi đọc

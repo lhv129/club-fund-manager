@@ -1,6 +1,3 @@
-// src/components/shared/ui/Select.tsx
-// Giống SelectDropdown nhưng KHÔNG có search — dùng cho filter status, email_verified_at, ...
-// Fix responsive triệt để: dropdown dùng position:fixed + tính toán JS để không bao giờ tràn ra ngoài màn hình
 "use client";
 
 import {
@@ -24,7 +21,8 @@ interface SelectProps {
     label: string;
     options: SelectOption[];
     value: string;
-    onChange: (v: string) => void;
+    onChange: (value: string) => void;
+    onSearch?: (search: string) => void;
     loading?: boolean;
     disabled?: boolean;
     error?: boolean;
@@ -42,6 +40,7 @@ export default function Select({
     options,
     value,
     onChange,
+    onSearch,
     loading = false,
     disabled = false,
     error = false,
@@ -52,8 +51,7 @@ export default function Select({
     const t = useTranslations("common");
     const [open, setOpen] = useState(false);
     const [keyword, setKeyword] = useState("");
-    const [dropStyle, setDropStyle] =
-        useState<CSSProperties | null>(null);
+    const [dropStyle, setDropStyle] = useState<CSSProperties | null>(null);
     const [dropReady, setDropReady] = useState(false);
     const [mounted, setMounted] = useState(false);
 
@@ -63,35 +61,45 @@ export default function Select({
 
     useEffect(() => setMounted(true), []);
 
-    // ── Tính vị trí dropdown bằng fixed + JS → không bao giờ tràn viewport ──────
     const calcPosition = () => {
-        const el = triggerRef.current;
-        if (!el) return;
+        const element = triggerRef.current;
+        if (!element) return;
 
-        const rect = el.getBoundingClientRect();
+        const rect = element.getBoundingClientRect();
         const viewport = window.visualViewport;
-        const vw = viewport?.width ?? window.innerWidth;
-        const vh = viewport?.height ?? window.innerHeight;
+        const viewportWidth = viewport?.width ?? window.innerWidth;
+        const viewportHeight = viewport?.height ?? window.innerHeight;
         const offsetLeft = viewport?.offsetLeft ?? 0;
         const offsetTop = viewport?.offsetTop ?? 0;
 
-        const dropW = Math.min(Math.max(rect.width, DROPDOWN_MIN_W), vw - EDGE * 2);
+        const dropWidth = Math.min(
+            Math.max(rect.width, DROPDOWN_MIN_W),
+            viewportWidth - EDGE * 2,
+        );
 
         let left = rect.left + offsetLeft;
-        if (left + dropW > offsetLeft + vw - EDGE) left = rect.right + offsetLeft - dropW;
+        if (left + dropWidth > offsetLeft + viewportWidth - EDGE) {
+            left = rect.right + offsetLeft - dropWidth;
+        }
         if (left < offsetLeft + EDGE) left = offsetLeft + EDGE;
 
-        const estimatedPanelH = Math.min(panelRef.current?.offsetHeight ?? 300, vh - EDGE * 2);
+        const estimatedPanelHeight = Math.min(
+            panelRef.current?.offsetHeight ?? 300,
+            viewportHeight - EDGE * 2,
+        );
         let top = rect.bottom + offsetTop + GAP;
-        if (top + estimatedPanelH > offsetTop + vh - EDGE) {
-            top = Math.max(offsetTop + EDGE, rect.top + offsetTop - estimatedPanelH - GAP);
+        if (top + estimatedPanelHeight > offsetTop + viewportHeight - EDGE) {
+            top = Math.max(
+                offsetTop + EDGE,
+                rect.top + offsetTop - estimatedPanelHeight - GAP,
+            );
         }
 
         setDropStyle({
             position: "fixed",
             top,
             left,
-            width: dropW,
+            width: dropWidth,
             zIndex: 9999,
         });
     };
@@ -104,7 +112,6 @@ export default function Select({
         }
 
         setDropReady(false);
-
         calcPosition();
 
         const rafId = requestAnimationFrame(() => {
@@ -112,108 +119,106 @@ export default function Select({
             setDropReady(true);
         });
 
-        const handleScroll = (e: Event) => {
-            const target = e.target as Node | null;
+        const handleScroll = (event: Event) => {
+            const target = event.target as Node | null;
 
-            if (target && panelRef.current?.contains(target)) {
-                return;
-            }
-
-            if (target && wrapRef.current?.contains(target)) {
-                return;
-            }
+            if (target && panelRef.current?.contains(target)) return;
+            if (target && wrapRef.current?.contains(target)) return;
 
             setOpen(false);
         };
 
         window.addEventListener("scroll", handleScroll, true);
         window.addEventListener("resize", calcPosition);
-        window.visualViewport?.addEventListener(
-            "resize",
-            calcPosition
-        );
+        window.visualViewport?.addEventListener("resize", calcPosition);
 
         const observer = new ResizeObserver(() => {
             calcPosition();
         });
 
-        if (triggerRef.current) {
-            observer.observe(triggerRef.current);
-        }
-
-        if (panelRef.current) {
-            observer.observe(panelRef.current);
-        }
+        if (triggerRef.current) observer.observe(triggerRef.current);
+        if (panelRef.current) observer.observe(panelRef.current);
 
         return () => {
             cancelAnimationFrame(rafId);
-
-            window.removeEventListener(
-                "scroll",
-                handleScroll,
-                true
-            );
-
+            window.removeEventListener("scroll", handleScroll, true);
             window.removeEventListener("resize", calcPosition);
-
-            window.visualViewport?.removeEventListener(
-                "resize",
-                calcPosition
-            );
-
+            window.visualViewport?.removeEventListener("resize", calcPosition);
             observer.disconnect();
         };
     }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // ── Click outside ─────────────────────────────────────────────────────────────
     useEffect(() => {
-        const handler = (e: globalThis.MouseEvent) => {
-            const target = e.target as Node;
+        if (!open) {
+            setKeyword("");
+            onSearch?.("");
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            onSearch?.(keyword.trim());
+        }, 250);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [open, keyword, onSearch]);
+
+    useEffect(() => {
+        const handler = (event: globalThis.MouseEvent) => {
+            const target = event.target as Node;
             if (wrapRef.current?.contains(target)) return;
             if (panelRef.current?.contains(target)) return;
             setOpen(false);
         };
+
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
     }, []);
 
-    // ── ESC close ───────────────────────────────────────────────────────────────
     useEffect(() => {
         if (!open) return;
-        const handler = (e: KeyboardEvent) => {
-            if (e.key === "Escape") setOpen(false);
+        const handler = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setOpen(false);
         };
+
         document.addEventListener("keydown", handler);
         return () => document.removeEventListener("keydown", handler);
     }, [open]);
 
     const selectedOption = useMemo(
-        () => options.find((o) => o.value === value) ?? null,
+        () => options.find((option) => option.value === value) ?? null,
         [options, value],
     );
+
     const filteredOptions = useMemo(() => {
-        const q = keyword.trim().toLowerCase();
-        return q ? options.filter((o) => `${o.label} ${o.value}`.toLowerCase().includes(q)) : options;
+        const query = keyword.trim().toLowerCase();
+        return query
+            ? options.filter((option) =>
+                `${option.label} ${option.value}`.toLowerCase().includes(query),
+            )
+            : options;
     }, [keyword, options]);
 
-    const handleSelect = (val: string) => { onChange(val); setOpen(false); };
-    const handleClear = (e: MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const handleSelect = (selectedValue: string) => {
+        onChange(selectedValue);
+        setOpen(false);
+    };
+
+    const handleClear = (event: MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
         onChange("");
     };
 
     const buttonLabel = selectedOption?.label ?? placeholder ?? label;
-    const hasValue = !!value;
+    const hasValue = Boolean(value);
 
     return (
         <div className={`relative ${className}`} ref={wrapRef}>
-            {/* ── Trigger ─────────────────────────────────────────────────────── */}
             <button
                 ref={triggerRef}
                 type="button"
                 disabled={disabled}
-                onClick={() => !disabled && setOpen((v) => !v)}
+                onClick={() => !disabled && setOpen((current) => !current)}
                 className={[
                     "flex w-full items-center gap-1.5 px-3 py-2 rounded-xl border",
                     "text-sm font-medium transition-colors",
@@ -236,9 +241,7 @@ export default function Select({
                 <span className="flex items-center gap-1 shrink-0">
                     {hasValue && !disabled && (
                         <span
-                            onMouseDown={(event) => {
-                                event.preventDefault();
-                            }}
+                            onMouseDown={(event) => event.preventDefault()}
                             onClick={handleClear}
                             aria-label={t("clearSelection")}
                             className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
@@ -252,7 +255,6 @@ export default function Select({
                 </span>
             </button>
 
-            {/* ── Dropdown (fixed — không bao giờ tràn ra ngoài màn hình) ─────── */}
             {open &&
                 mounted &&
                 createPortal(
@@ -264,22 +266,22 @@ export default function Select({
                             left: 0,
                             width: DROPDOWN_MIN_W,
                             zIndex: 9999,
-                            visibility: dropReady
-                                ? "visible"
-                                : "hidden",
+                            visibility: dropReady ? "visible" : "hidden",
                             ...dropStyle,
                         }}
                         className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden"
                     >
-                        <div className="px-3 pt-3 pb-2 border-b border-gray-100 dark:border-gray-800
-                        flex items-center justify-between gap-3">
+                        <div className="px-3 pt-3 pb-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
                             <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                 {label}
                             </p>
                             {hasValue && (
                                 <button
                                     type="button"
-                                    onClick={() => { onChange(""); setOpen(false); }}
+                                    onClick={() => {
+                                        onChange("");
+                                        setOpen(false);
+                                    }}
                                     className="text-xs font-medium text-gray-400 hover:text-rose-500 transition-colors"
                                 >
                                     {t("clearSelection")}
@@ -287,15 +289,27 @@ export default function Select({
                             )}
                         </div>
 
-                        {!loading && options.length > 0 && (
+                        {(onSearch || (!loading && options.length > 0)) && (
                             <div className="border-b border-gray-100 p-3 dark:border-gray-800">
-                                <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t("quickSearch")} className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm dark:border-gray-700 dark:bg-gray-800" /></div>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        value={keyword}
+                                        onChange={(event) => setKeyword(event.target.value)}
+                                        placeholder={t("quickSearch")}
+                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm dark:border-gray-700 dark:bg-gray-800"
+                                    />
+                                </div>
                             </div>
                         )}
+
                         {loading ? (
                             <div className="px-3 py-2 space-y-2">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="h-4 rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                                {[1, 2, 3].map((item) => (
+                                    <div
+                                        key={item}
+                                        className="h-4 rounded bg-gray-100 dark:bg-gray-800 animate-pulse"
+                                    />
                                 ))}
                             </div>
                         ) : filteredOptions.length === 0 ? (
@@ -304,16 +318,14 @@ export default function Select({
                             </p>
                         ) : (
                             <div className="max-h-60 overflow-y-auto py-1.5">
-                                {filteredOptions.map((opt) => {
-                                    const selected = opt.value === value;
+                                {filteredOptions.map((option) => {
+                                    const selected = option.value === value;
                                     return (
                                         <button
-                                            key={opt.value}
+                                            key={option.value}
                                             type="button"
-                                            onMouseDown={(event) => {
-                                                event.preventDefault();
-                                            }}
-                                            onClick={() => handleSelect(opt.value)}
+                                            onMouseDown={(event) => event.preventDefault()}
+                                            onClick={() => handleSelect(option.value)}
                                             className={[
                                                 "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors",
                                                 selected
@@ -331,7 +343,7 @@ export default function Select({
                                             >
                                                 {selected && <Check className="w-2.5 h-2.5 text-white" />}
                                             </div>
-                                            <span className="line-clamp-2 leading-snug">{opt.label}</span>
+                                            <span className="line-clamp-2 leading-snug">{option.label}</span>
                                         </button>
                                     );
                                 })}
