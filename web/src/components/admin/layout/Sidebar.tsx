@@ -1,343 +1,104 @@
-//sidebarAdmin
-
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Link, usePathname } from "@/i18n/routing";
+import { usePathname } from "@/i18n/routing";
+
 import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { cn } from "@/utils";
-import { ChevronDown, X } from "lucide-react";
-import { ADMIN_NAV_ITEMS, NavItem, filterNav } from "./nav-config";
-import { APP_VERSION, APP_ENV } from "@/lib/config";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { ADMIN_NAV_ITEMS, filterNav } from "./nav-config";
+import { AdminSidebarHeader } from "@/components/admin/layout/AdminSidebarHeader";
+import { AdminSidebarMain } from "@/components/admin/layout/AdminSidebarMain";
+import { AdminSidebarFooter } from "@/components/admin/layout/AdminSidebarFooter";
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
 }
 
-// ─── SidebarLogo ─────────────────────────────────────────────────────────────
-
-const SidebarLogo = memo(function SidebarLogo({
-  onClose,
-}: {
-  onClose: () => void;
-}) {
-  const t = useTranslations("app") as (key: string) => string;
-
-  return (
-    <div className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-border shrink-0">
-      <div className="flex items-center gap-3 min-w-0">
-        {/* Logo mark */}
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-sm">
-          <span className="text-primary-foreground font-black text-base leading-none">
-            C
-          </span>
-        </div>
-
-        {/* Name + badge */}
-        <div className="min-w-0">
-          <p className="font-semibold text-sm text-foreground tracking-tight leading-tight truncate">
-            {t('name')}
-          </p>
-        </div>
-      </div>
-
-      {/* Mobile close */}
-      <button
-        aria-label="Close sidebar"
-        onClick={onClose}
-        className="lg:hidden rounded-lg p-1.5 text-foreground-muted hover:bg-background-muted transition-all duration-200 hover:rotate-90 shrink-0"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  );
-});
-
-// ─── SidebarItem ─────────────────────────────────────────────────────────────
-
-interface SidebarItemProps {
-  item: NavItem;
-  pathname: string;
-  onClose: () => void;
-  t: (key: string) => string;
-  depth?: number;
-}
-
-const SidebarItem = memo(function SidebarItem({
-  item,
-  pathname,
-  onClose,
-  t,
-  depth = 0,
-}: SidebarItemProps) {
-  const Icon = item.icon;
-
-  const isActive = useMemo(() => {
-    if (!item.href) return false;
-    if (item.href === "/") return pathname === "/";
-    return item.exact
-      ? pathname === item.href
-      : pathname === item.href || pathname.startsWith(`${item.href}/`);
-  }, [item.href, item.exact, pathname]);
-
-  return (
-    <div className="relative">
-      {/* Left active indicator */}
-      {isActive && (
-        <span
-          aria-hidden="true"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2.5px] h-5 bg-primary rounded-full"
-        />
-      )}
-
-      <Link
-        href={(item.href ?? "/") as never}
-        onClick={onClose}
-        aria-current={isActive ? "page" : undefined}
-        className={cn(
-          "group flex items-center gap-2.5 rounded-lg text-sm transition-all duration-200 outline-none",
-          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
-          depth === 0 ? "px-3 py-2" : "px-2.5 py-1.5",
-          isActive
-            ? "bg-primary/10 text-primary font-semibold"
-            : "text-foreground-muted hover:bg-background-muted hover:text-foreground"
-        )}
-      >
-        <Icon
-          className={cn(
-            "w-4 h-4 shrink-0 transition-all duration-200",
-            isActive
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-foreground-muted text-foreground-muted group-hover:text-foreground dark:group-hover:text-zinc-300"
-          )}
-          strokeWidth={isActive ? 2.5 : 2}
-        />
-        <span className="truncate leading-tight">{t(item.labelKey)}</span>
-      </Link>
-    </div>
-  );
-});
-
-// ─── SidebarGroup ─────────────────────────────────────────────────────────────
-
-interface SidebarGroupProps {
-  item: NavItem;
-  pathname: string;
-  onClose: () => void;
-  t: (key: string) => string;
-}
-
-const SidebarGroup = memo(function SidebarGroup({
-  item,
-  pathname,
-  onClose,
-  t,
-}: SidebarGroupProps) {
-  const Icon = item.icon;
-
-  const isChildActive = useMemo(
-    () => item.children?.some((c) => c.href && pathname.startsWith(c.href)) ?? false,
-    [item.children, pathname]
-  );
-
-  const [expanded, setExpanded] = useState(isChildActive);
-
-  // Auto-expand nếu child active (khi pathname thay đổi từ ngoài)
-  useEffect(() => {
-    if (isChildActive) setExpanded(true);
-  }, [isChildActive]);
-
-  const toggle = useCallback(() => setExpanded((v) => !v), []);
-
-  return (
-    <div>
-      <button
-        onClick={toggle}
-        aria-expanded={expanded}
-        aria-label={`${t(item.labelKey)} menu`}
-        className={cn(
-          "group w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 outline-none",
-          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
-          isChildActive
-            ? "text-foreground"
-            : "text-foreground-muted hover:bg-primary/10 hover:bg-background-muted hover:text-zinc-900 hover:text-foreground"
-        )}
-      >
-        <Icon
-          className={cn(
-            "w-4 h-4 shrink-0 transition-all duration-200",
-            isChildActive
-              ? "text-primary"
-              : "text-foreground-muted text-foreground-muted group-hover:text-foreground dark:group-hover:text-zinc-300"
-          )}
-          strokeWidth={isChildActive ? 2.5 : 2}
-        />
-        <span className="flex-1 text-left truncate leading-tight">{t(item.labelKey)}</span>
-
-        {/* Active dot */}
-        {isChildActive && (
-          <span
-            aria-hidden="true"
-            className="w-1.5 h-1.5 rounded-full bg-primary dark:bg-blue-400 shrink-0"
-          />
-        )}
-
-        <ChevronDown
-          aria-hidden="true"
-          className={cn(
-            "h-3.5 w-3.5 shrink-0 text-foreground-muted transition-transform duration-250 ease-out",
-            expanded && "rotate-180"
-          )}
-        />
-      </button>
-
-      {/* Collapsible children — CSS grid trick, no JS height calc */}
-      <div
-        className={cn(
-          "grid transition-[grid-template-rows] duration-250 ease-out",
-          expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-        )}
-      >
-        <div className="overflow-hidden">
-          <div className="mt-1 ml-[22px] pl-3 py-0.5 border-l border-border space-y-0.5">
-            {item.children?.map((child) => (
-              <SidebarItem
-                key={child.href ?? child.labelKey}
-                item={child}
-                pathname={pathname}
-                onClose={onClose}
-                t={t}
-                depth={1}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-// ─── SidebarNav ───────────────────────────────────────────────────────────────
-
-const SidebarNav = memo(function SidebarNav({
-  items,
-  pathname,
-  onClose,
-  t,
-}: {
-  items: NavItem[];
-  pathname: string;
-  onClose: () => void;
-  t: (key: string) => string;
-}) {
-  return (
-    <nav
-      role="navigation"
-      aria-label="Main navigation"
-      className="flex-1 py-6 px-3 lg:px-5 space-y-1.5"
-    >
-      {items.map((item) =>
-        item.children ? (
-          <SidebarGroup
-            key={item.labelKey}
-            item={item}
-            pathname={pathname}
-            onClose={onClose}
-            t={t}
-          />
-        ) : (
-          <SidebarItem
-            key={item.href ?? item.labelKey}
-            item={item}
-            pathname={pathname}
-            onClose={onClose}
-            t={t}
-          />
-        )
-      )}
-    </nav>
-  );
-});
-
-// ─── SidebarFooter ────────────────────────────────────────────────────────────
-
-const SidebarFooter = memo(function SidebarFooter() {
-  const t = useTranslations("app") as (key: string) => string;
-
-  return (
-    <div className="px-4 lg:px-6 py-4 border-t border-border shrink-0 space-y-2">
-      <div className="flex items-center justify-between text-[11px]">
-        <span className="text-foreground-muted">
-          {t("version")}
-        </span>
-        <span className="font-medium text-foreground dark:text-zinc-200">
-          v{APP_VERSION}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between text-[11px]">
-        <span className="text-foreground-muted">
-          {t("environment")}
-        </span>
-
-        <span
-          className={cn(
-            "rounded-md px-2 py-0.5 font-medium",
-            APP_ENV === "production"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-          )}
-        >
-          {APP_ENV === "production"
-            ? t("production")
-            : t("development")}
-        </span>
-      </div>
-
-      <div className="pt-2 border-t border-border">
-        <p className="text-center text-[11px] text-foreground-muted text-foreground-muted">
-          © {new Date().getFullYear()} {t("fullName")}
-        </p>
-      </div>
-    </div>
-  );
-});
-
-// ─── Sidebar (main) ───────────────────────────────────────────────────────────
-
 export function Sidebar({ open, onClose }: SidebarProps) {
   const t = useTranslations("menu") as (key: string) => string;
   const pathname = usePathname() as string;
-  const { hasPermission, isSuperAdmin, isSystemAdmin } = useAuth();
+
+  const {
+    user,
+    hasPermission,
+    isSuperAdmin,
+    isSystemAdmin,
+  } = useAuth();
+
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Admin sidebar dùng SYSTEM SCOPE — không truyền clubId. Logic không đổi.
-  const filtered = useMemo(
+  // ───────────────────────────────────────────────────────────────────────────
+  // Role hiển thị
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const sidebarRole = useMemo(() => {
+    if (isSuperAdmin) {
+      return {
+        slug: "superadmin",
+        name: "Super Admin",
+      };
+    }
+
+    if (
+      user?.roles &&
+      !Array.isArray(user.roles) &&
+      user.roles.global
+    ) {
+      return user.roles.global;
+    }
+
+    if (isSystemAdmin) {
+      return {
+        slug: "system_admin",
+        name: "System Administrator",
+      };
+    }
+
+    return null;
+  }, [user?.roles, isSuperAdmin, isSystemAdmin]);
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Filter navigation
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const filteredItems = useMemo(
     () =>
       filterNav(
         ADMIN_NAV_ITEMS,
-        (module, action) => hasPermission(module!, action!),
-        isSuperAdmin || isSystemAdmin
+        (module, action) =>
+          hasPermission(module!, action!),
+        isSuperAdmin || isSystemAdmin,
       ),
-    [hasPermission, isSuperAdmin, isSystemAdmin]
+    [hasPermission, isSuperAdmin, isSystemAdmin],
   );
 
-  // Close on outside click (mobile)
+  // ───────────────────────────────────────────────────────────────────────────
+  // Close sidebar khi click outside trên mobile
+  // ───────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    if (!open) return;
+
+    function handleClickOutside(event: MouseEvent) {
       if (
         sidebarRef.current &&
-        !sidebarRef.current.contains(e.target as Node)
+        !sidebarRef.current.contains(event.target as Node)
       ) {
         onClose();
       }
     }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside,
+      );
+    };
   }, [open, onClose]);
 
   return (
@@ -346,35 +107,41 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <div
         aria-hidden="true"
         className={cn(
-          "fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          "fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]",
+          "transition-opacity duration-300 lg:hidden",
+          open
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none",
         )}
         onClick={onClose}
       />
 
-      {/* Sidebar panel */}
+      {/* Sidebar */}
       <aside
         ref={sidebarRef}
         className={cn(
           "fixed top-0 left-0 z-50 h-full w-[264px] flex flex-col",
-          "bg-background",
-          "border-r border-border",
+          "bg-background border-r border-border",
           "shadow-[1px_0_0_0_rgba(0,0,0,0.04)]",
           "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          "lg:relative lg:translate-x-0 lg:z-auto lg:shadow-none lg:sticky lg:top-0 lg:h-screen",
-          open ? "translate-x-0" : "-translate-x-full"
+          "lg:relative lg:translate-x-0 lg:z-auto",
+          "lg:shadow-none lg:sticky lg:top-0 lg:h-screen",
+          open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <SidebarLogo onClose={onClose} />
+        <AdminSidebarHeader
+          role={sidebarRole}
+          onClose={onClose}
+        />
 
-        <SidebarNav
-          items={filtered}
+        <AdminSidebarMain
+          items={filteredItems}
           pathname={pathname}
           onClose={onClose}
           t={t}
         />
 
-        <SidebarFooter />
+        <AdminSidebarFooter />
       </aside>
     </>
   );

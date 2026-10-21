@@ -56,6 +56,12 @@ class PermissionService
 
         $roles = [];
 
+        // Global / System role
+        if (!empty($payload['system_role'])) {
+            $roles['global'] = $payload['system_role'];
+        }
+
+        // Club roles
         foreach ($payload['club_roles'] ?? [] as $clubId => $role) {
             $roles["club_{$clubId}"] = $role;
         }

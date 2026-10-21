@@ -3,19 +3,51 @@
 import { useCallback, useEffect } from "react";
 import { useAuthStore } from "../stores/authStore";
 import { authService } from "../services/authService";
-import { can, canAccessClub, hasAnyClubPermission, hasAnySystemPermission, clubPermissionCount } from "@/lib/permissions";
-import type { LoginPayload, RegisterPayload, Profile, ClubRole } from "../types";
+import {
+  can,
+  canAccessClub,
+  hasAnyClubPermission,
+  clubPermissionCount,
+} from "@/lib/permissions";
+import type {
+  LoginPayload,
+  RegisterPayload,
+  Profile,
+  ClubRole,
+} from "../types";
 
 /**
  * useAuth — main auth hook for client components.
  *
- * Permission check mirrors backend `User::hasPermission(module, action, clubId)`:
- *   - is_superadmin → bypass all (permissions === ["*"])
- *   - is_system_admin: true  OR flat permission keys (không có club_X)
- *     → isSystemAdmin = true (system role)
- *   - permissions có club_X keys → club scope
+ * Permission / role model:
  *
- * Xem docs/permission-guide.md §2, §4-§5.
+ * Global scope:
+ *   user.is_superadmin
+ *   user.is_system_admin
+ *   user.roles.global
+ *
+ * Club scope:
+ *   user.roles.club_{clubId}
+ *
+ * Example:
+ *
+ * roles: {
+ *   global: {
+ *     id: 2,
+ *     slug: "system_admin",
+ *     name: "System Administrator"
+ *   },
+ *   club_5: {
+ *     id: 8,
+ *     slug: "manager",
+ *     name: "Manager"
+ *   }
+ * }
+ *
+ * Important:
+ * - Global role and Club role are two different scopes.
+ * - getClubRole() only returns the role for the requested Club.
+ * - Global role does NOT become a Club role.
  */
 export function useAuth() {
   const {
@@ -29,17 +61,27 @@ export function useAuth() {
     reset,
   } = useAuthStore();
 
+  /* ---------------------------------------------------------------- */
+  /* Auth actions */
+  /* ---------------------------------------------------------------- */
+
   const login = useCallback(
     async (payload: LoginPayload): Promise<Profile | null> => {
       setLoading(true);
       setError(null);
+
       try {
         const profile = await authService.login(payload);
+
         setUser(profile);
+
         return profile;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Login failed";
+        const message =
+          err instanceof Error ? err.message : "Login failed";
+
         setError(message);
+
         return null;
       } finally {
         setLoading(false);
@@ -51,16 +93,32 @@ export function useAuth() {
   const register = useCallback(
     async (
       payload: RegisterPayload,
-    ): Promise<{ success: boolean; message: string | undefined }> => {
+    ): Promise<{
+      success: boolean;
+      message: string | undefined;
+    }> => {
       setLoading(true);
       setError(null);
+
       try {
         const response = await authService.register(payload);
-        return { success: response.success, message: response.message };
+
+        return {
+          success: response.success,
+          message: response.message,
+        };
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Registration failed";
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Registration failed";
+
         setError(message);
-        return { success: false, message };
+
+        return {
+          success: false,
+          message,
+        };
       } finally {
         setLoading(false);
       }
@@ -76,58 +134,162 @@ export function useAuth() {
     }
   }, [reset]);
 
+  /* ---------------------------------------------------------------- */
+  /* Global role */
+  /* ---------------------------------------------------------------- */
+
   /**
-   * Check permission — mirror backend hasPermission(module, action, clubId).
+   * Superadmin is a global role with full authorization bypass.
+   */
+  const isSuperAdmin = user?.is_superadmin ?? false;
+
+  /**
+   * System admin is a global role.
    *
-   * @param module  module slug (e.g. 'club', 'user', 'member', 'fund')
-   * @param action  action (e.g. 'view', 'create', 'update', 'delete')
-   * @param clubId  undefined/null → SYSTEM SCOPE; number → CLUB SCOPE
+   * Do NOT infer this from permissions.
+   * Backend already provides the authoritative flag.
+   */
+  const isSystemAdmin = user?.is_system_admin ?? false;
+
+  /**
+   * Get the global/system role.
+   *
+   * Example:
+   *
+   * {
+   *   id: 2,
+   *   slug: "system_admin",
+   *   name: "System Administrator"
+   * }
+   */
+  const getGlobalRole = useCallback(() => {
+    if (!user || !user.roles) {
+      return null;
+    }
+
+    if (Array.isArray(user.roles)) {
+      return null;
+    }
+
+    return user.roles.global ?? null;
+  }, [user]);
+
+  /* ---------------------------------------------------------------- */
+  /* Permission */
+  /* ---------------------------------------------------------------- */
+
+  /**
+   * Check permission.
+   *
+   * Mirrors backend:
+   *
+   * User::hasPermission(module, action, clubId)
+   *
+   * clubId:
+   *   null / undefined → global/system scope
+   *   number           → club scope
    */
   const hasPermission = useCallback(
-    (module: string, action: string, clubId?: number | null): boolean => {
-      if (!user) return false;
-      return can(user.permissions, user.is_superadmin, module, action, clubId);
+    (
+      module: string,
+      action: string,
+      clubId?: number | null,
+    ): boolean => {
+      if (!user) {
+        return false;
+      }
+
+      return can(
+        user.permissions,
+        user.is_superadmin,
+        module,
+        action,
+        clubId,
+      );
     },
     [user],
   );
 
-  const hasMultipleClubs = clubPermissionCount(user?.permissions) > 1;
+  /* ---------------------------------------------------------------- */
+  /* Club access */
+  /* ---------------------------------------------------------------- */
 
-  /** Check user có truy cập club workspace này không (club layout guard). */
-  const checkClubAccess = useCallback(
-    (clubId: number): boolean =>
-      user ? canAccessClub(user.permissions, user.is_superadmin, clubId) : false,
-    [user],
-  );
-
-  /** Check user có quyền ở bất kỳ club nào (cho nút "← Quay lại CLB"). */
-  const checkAnyClubPermission = useCallback(
-    (): boolean =>
-      user ? hasAnyClubPermission(user.permissions, user.is_superadmin) : false,
-    [user],
-  );
-
-  const isSuperAdmin = user?.is_superadmin ?? false;
+  const hasMultipleClubs =
+    clubPermissionCount(user?.permissions) > 1;
 
   /**
-   * isSystemAdmin = true khi:
-   *   1. user.is_system_admin === true  (flag từ backend), HOẶC
-   *   2. permissions có flat keys (không phải club_X) — shape của system role
-   *      ví dụ: { "club": ["view"], "fund": ["create", ...] }
-   *      → detect ngay cả khi backend chưa set is_system_admin: true
-   *
-   * Superadmin (["*"]) không cần check — isSuperAdmin đã bypass.
+   * Check whether the user can access a Club workspace.
    */
-  const isSystemAdmin =
-    (user?.is_system_admin ?? false) ||
-    (user ? hasAnySystemPermission(user.permissions, false) : false);
+  const checkClubAccess = useCallback(
+    (clubId: number): boolean =>
+      user
+        ? canAccessClub(
+            user.permissions,
+            user.is_superadmin,
+            clubId,
+          )
+        : false,
+    [user],
+  );
 
+  /**
+   * Check whether the user has permission in at least one Club.
+   */
+  const checkAnyClubPermission = useCallback(
+    (): boolean =>
+      user
+        ? hasAnyClubPermission(
+            user.permissions,
+            user.is_superadmin,
+          )
+        : false,
+    [user],
+  );
+
+  /* ---------------------------------------------------------------- */
+  /* Club roles */
+  /* ---------------------------------------------------------------- */
+
+  /**
+   * Get the user's role in a specific Club.
+   *
+   * IMPORTANT:
+   *
+   * This only reads:
+   *
+   *   roles.club_{clubId}
+   *
+   * It does NOT return roles.global.
+   *
+   * Example:
+   *
+   * roles: {
+   *   global: {
+   *     id: 2,
+   *     slug: "system_admin",
+   *     name: "System Administrator"
+   *   },
+   *   club_5: {
+   *     id: 8,
+   *     slug: "manager",
+   *     name: "Manager"
+   *   }
+   * }
+   *
+   * getClubRole(5)
+   * → {
+   *     id: 8,
+   *     slug: "manager",
+   *     name: "Manager"
+   *   }
+   */
   const getClubRole = useCallback(
     (clubId?: number | null): ClubRole | null => {
-      if (!user || !clubId) return null;
+      if (!user || clubId == null) {
+        return null;
+      }
 
-      // Superadmin: roles = ["*"]
-      if (Array.isArray(user.roles)) {
+      if (!user.roles || Array.isArray(user.roles)) {
         return null;
       }
 
@@ -136,41 +298,85 @@ export function useAuth() {
     [user],
   );
 
+  /**
+   * Check whether the user has a specific role in a Club.
+   *
+   * Example:
+   *
+   * hasClubRole(5, "manager")
+   */
   const hasClubRole = useCallback(
-    (clubId: number | null | undefined, roleSlug: string): boolean => {
+    (
+      clubId: number | null | undefined,
+      roleSlug: string,
+    ): boolean => {
       return getClubRole(clubId)?.slug === roleSlug;
     },
     [getClubRole],
   );
 
+  /**
+   * Check whether the user has a specific global role.
+   *
+   * Example:
+   *
+   * hasGlobalRole("system_admin")
+   * hasGlobalRole("superadmin")
+   */
+  const hasGlobalRole = useCallback(
+    (roleSlug: string): boolean => {
+      return getGlobalRole()?.slug === roleSlug;
+    },
+    [getGlobalRole],
+  );
+
+  /* ---------------------------------------------------------------- */
+  /* Return */
+  /* ---------------------------------------------------------------- */
+
   return {
     user,
+
     isAuthenticated,
     isLoading,
     error,
+
+    // Global role state
     isSuperAdmin,
     isSystemAdmin,
+
+    // Auth actions
     login,
     register,
     logout,
+
+    // Permissions
     hasPermission,
+
+    // Club access
     canAccessClub: checkClubAccess,
     hasAnyClubPermission: checkAnyClubPermission,
     hasMultipleClubs,
-    clearError: () => setError(null),
+
+    // Global role
+    getGlobalRole,
+    hasGlobalRole,
+
+    // Club role
     getClubRole,
-    hasClubRole
+    hasClubRole,
+
+    // Error
+    clearError: () => setError(null),
   };
 }
 
 /**
  * Hydrate auth store from a server-fetched profile.
  *
- * Chạy trong useLayoutEffect (không phải trong thân render) để:
- *  - Không còn cảnh báo "Cannot update a component while rendering another".
- *  - Vẫn không bị flash user=null, vì useLayoutEffect chạy trước khi
- *    browser paint — tất cả component subscribe store re-render xong
- *    rồi mới vẽ lên màn hình.
+ * Chạy trong useEffect để:
+ * - Không update Zustand store trong render.
+ * - Hydrate auth state sau khi profile được load.
  */
 export function useHydrateAuth(profile: Profile | null) {
   useEffect(() => {
@@ -179,6 +385,7 @@ export function useHydrateAuth(profile: Profile | null) {
     } else {
       useAuthStore.getState().reset();
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }

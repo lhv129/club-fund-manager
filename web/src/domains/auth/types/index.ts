@@ -3,33 +3,78 @@
  */
 
 /**
- * Permission map từ backend — 4 shape (xem docs/permission-guide.md §2).
+ * Permission map từ backend.
  *
- * ["*"]                                   → superadmin (bypass)
- * { [module]: string[] }                  → admin (system scope, flat)
- * { [clubId: `club_${number}`]: {...} }  → owner/manager/member (club scope, nested)
- * { ...merge... }                         → hybrid (admin + club member)
+ * Superadmin:
+ *   ["*"]
  *
- * Lưu ý: key top-level có thể là module slug (string) HOẶC `club_{id}`.
- * Phân biệt bằng helper isClubKey() / scopeKey() trong lib/permissions.ts.
+ * Global/system permissions:
+ *   {
+ *     club: ["view", "create", ...],
+ *     fund_period: ["view", ...]
+ *   }
+ *
+ * Mixed global + club permissions:
+ *   {
+ *     club: ["view", ...],
+ *     club_7: {
+ *       club: ["view", ...]
+ *     }
+ *   }
  */
 export type PermissionMap =
   | ["*"]
   | Record<string, string[] | Record<string, string[]>>;
 
 /**
- * Role của user trong một club.
+ * Role dùng chung cho cả Global/System role và Club role.
  */
-export interface ClubRole {
+export interface UserRole {
   id: number;
   slug: string;
   name: string | null;
 }
 
 /**
- * Role map theo club.
+ * Role của user trong một Club.
  *
  * Ví dụ:
+ *
+ * {
+ *   id: 3,
+ *   slug: "owner",
+ *   name: "Chủ CLB"
+ * }
+ */
+export type ClubRole = UserRole;
+
+/**
+ * Global/System role của user.
+ *
+ * Ví dụ:
+ *
+ * {
+ *   id: 2,
+ *   slug: "system_admin",
+ *   name: "System Administrator"
+ * }
+ */
+export type GlobalRole = UserRole;
+
+/**
+ * Role map của user.
+ *
+ * Global role:
+ *
+ * {
+ *   global: {
+ *     id: 2,
+ *     slug: "system_admin",
+ *     name: "System Administrator"
+ *   }
+ * }
+ *
+ * Club role:
  *
  * {
  *   club_7: {
@@ -38,44 +83,69 @@ export interface ClubRole {
  *     name: "Chủ CLB"
  *   }
  * }
+ *
+ * Có thể tồn tại đồng thời:
+ *
+ * {
+ *   global: {...},
+ *   club_7: {...},
+ *   club_10: {...}
+ * }
  */
-export type ClubRoleMap = Record<`club_${number}`, ClubRole>;
+export type UserRoleMap = {
+  global?: GlobalRole | null;
+} & Partial<Record<`club_${number}`, ClubRole>>;
 
-/** User profile — matches Auth/Resources/ProfileResource. */
+/**
+ * User profile — matches Auth/Resources/ProfileResource.
+ */
 export interface Profile {
   id: number;
+
+  first_name?: string | null;
+  last_name?: string | null;
   fullname: string;
+
   email: string;
   phone: string | null;
   avatar: string | null;
+
+  date_of_birth?: string | null;
+  gender?: "male" | "female" | "other" | null;
+  address?: string | null;
+
   is_superadmin: boolean;
 
-  /** admin (system scope) — true nếu user có role `admin` do superadmin cấp. */
+  /**
+   * True khi user có Global/System role.
+   *
+   * Ví dụ:
+   *   system_admin
+   */
   is_system_admin: boolean;
 
-  is_active: boolean | null;
+  is_active?: boolean | null;
 
+  /**
+   * Permissions được trả từ backend.
+   */
   permissions: PermissionMap;
 
   /**
-   * Roles của user theo từng club.
+   * Roles của user theo scope.
    *
-   * Ví dụ:
+   * Global:
+   *   roles.global
    *
-   * roles: {
-   *   club_7: {
-   *     id: 3,
-   *     slug: "owner",
-   *     name: "Chủ CLB"
-   *   }
-   * }
+   * Club:
+   *   roles.club_{clubId}
    */
-  roles: ClubRoleMap | ["*"];
+  roles: UserRoleMap | ["*"];
 }
 
 /** Login request payload. */
 export interface LoginPayload {
-  login: string; // email or username
+  login: string;
   password: string;
 }
 
