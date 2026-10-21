@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth.jwt')->group(function () {
     Route::prefix('bank-accounts')->group(function () {
         Route::get('/', [BankAccountController::class, 'index'])->middleware('perm.club:bank_account,view');
+        Route::get('/select', [BankAccountController::class, 'select'])->middleware('perm.club:bank_account,view');
         Route::get('/{id}', [BankAccountController::class, 'show'])->middleware('perm.club:bank_account,view');
         Route::post('/', [BankAccountController::class, 'store'])->middleware('perm.club:bank_account,create');
         Route::put('/{id}', [BankAccountController::class, 'update'])->middleware('perm.club:bank_account,update');

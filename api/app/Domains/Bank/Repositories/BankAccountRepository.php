@@ -20,11 +20,13 @@ class BankAccountRepository extends BaseRepository
     protected string $defaultOrderDirection = 'asc';
 
     /** Whitelist cột sort cho getList() — chống cột lạ xuống Query Builder */
-    protected array $allowedSortColumns = ['id', 'title', 'sort_order', 'created_at'];
+    protected array $allowedSortColumns = ['id', 'account_number', 'account_name', 'sort_order', 'created_at'];
 
     /** Cột cho getForSelect() — dropdown trả [{id, title, slug}] */
-    protected array $selectColumns = ['id', 'title', 'slug'];
-    protected array $selectWith    = [];
+    protected array $selectColumns = ['id', 'club_id', 'bank_id', 'account_number', 'account_name', 'qr_image','is_default','is_active','sort_order'];
+    protected array $selectWith = [
+        'bank:id,code,name,short_name,logo,bin,swift_code',
+    ];
 
     public function __construct(BankAccount $model)
     {
@@ -148,11 +150,15 @@ class BankAccountRepository extends BaseRepository
         $this->applySearch($query, $filters);
         $this->applyFilters($query, $filters);
 
-        $query->orderBy($this->defaultOrderBy, $this->defaultOrderDirection);
+        $query
+            ->with($this->selectWith)
+            ->orderBy($this->defaultOrderBy, $this->defaultOrderDirection);
 
-        return $query
-            ->limit(min((int) ($filters['limit'] ?? $this->selectDefaultLimit), $this->selectMaxLimit))
-            ->get();
+        if (isset($filters['limit']) && (int) $filters['limit'] > 0) {
+            $query->limit((int) $filters['limit']);
+        }
+
+        return $query->get();
     }
 
     public function clearDefault(int $clubId): void

@@ -24,6 +24,7 @@ class ProfileResource extends JsonResource
             'is_system_admin' => $this->isSystemAdmin(),
 
             'permissions'    => $this->permissionsGroupedByClub(),
+            'roles'       => $this->rolesGroupedByClub(),
         ];
     }
 }

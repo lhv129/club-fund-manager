@@ -43,6 +43,23 @@ class BankAccountService extends BaseService
         return $this->repository->getList($filters);
     }
 
+    /**
+     * GET /api/v1/bank-accounts
+     *   ?search=abc &is_active=1 $limit=1
+     */
+
+    public function getForSelect(array $filters = [])
+    {
+        if (!$filters['club_id']) {
+            throw new ApiException(
+                __('domains/club.not_found'),
+                422
+            );
+        }
+        return $this->repository->getForSelect($filters);
+    }
+
+
     // -------------------------------------------------------------------------
     // Write
     // -------------------------------------------------------------------------
@@ -59,16 +76,16 @@ class BankAccountService extends BaseService
             );
 
             /*
-        |--------------------------------------------------------------------------
-        | Check duplicate bank account
-        |--------------------------------------------------------------------------
-        |
-        | Một tài khoản ngân hàng chỉ được tồn tại 1 lần trên toàn hệ thống.
-        | Không được:
-        | - Một club thêm cùng tài khoản 2 lần
-        | - Hai club khác nhau cùng gắn một tài khoản
-        |
-        */
+            |--------------------------------------------------------------------------
+            | Check duplicate bank account
+            |--------------------------------------------------------------------------
+            |
+            | Một tài khoản ngân hàng chỉ được tồn tại 1 lần trên toàn hệ thống.
+            | Không được:
+            | - Một club thêm cùng tài khoản 2 lần
+            | - Hai club khác nhau cùng gắn một tài khoản
+            |
+            */
             if ($this->repository->existsByBankAccount(
                 (int) $data['bank_id'],
                 $data['account_number'],

@@ -8,6 +8,7 @@ use App\Domains\Bank\Requests\StoreBankAccountRequest;
 use App\Domains\Bank\Requests\UpdateBankAccountRequest;
 use App\Domains\Bank\Resources\BankAccountResource;
 use App\Domains\Bank\Services\BankAccountService;
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class BankAccountController extends BaseController
@@ -27,6 +28,25 @@ class BankAccountController extends BaseController
             $this->service->paginate($filters),
             __('domains/bank_account.list'),
             BankAccountResource::class,
+        );
+    }
+
+    /**
+     * GET /api/v1/bank-accounts/select
+     */
+    public function select(Request $request): JsonResponse
+    {
+        $filters = $request->only([
+            'search',
+            'is_active',
+            'limit',
+        ]);
+        $filters['club_id'] = $request->attributes->get('club_id');
+        return $this->responseCommon(
+            true,
+            __('domains/bank_account.select'),
+            $this->service->getForSelect($filters),
+            200
         );
     }
 

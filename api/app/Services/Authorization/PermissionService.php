@@ -45,4 +45,21 @@ class PermissionService
 
         return $permissions;
     }
+
+    public function rolesGroupedByClub(User $user): array
+    {
+        $payload = $this->cache->getPermissionPayload($user);
+
+        if ($payload['is_superadmin']) {
+            return ['*'];
+        }
+
+        $roles = [];
+
+        foreach ($payload['club_roles'] ?? [] as $clubId => $role) {
+            $roles["club_{$clubId}"] = $role;
+        }
+
+        return $roles;
+    }
 }

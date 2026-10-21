@@ -179,6 +179,11 @@ class User extends Authenticatable implements JWTSubject
         return app(PermissionService::class)->permissionsGroupedByClub($this);
     }
 
+    public function rolesGroupedByClub(): array
+    {
+        return app(PermissionService::class)->rolesGroupedByClub($this);
+    }
+
     // Chưa xác thực email
     public function isPendingVerification(): bool
     {
