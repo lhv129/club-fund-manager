@@ -189,6 +189,7 @@ export function useAuth() {
    *   null / undefined → global/system scope
    *   number           → club scope
    */
+
   const hasPermission = useCallback(
     (
       module: string,
@@ -199,14 +200,13 @@ export function useAuth() {
         return false;
       }
 
-      // Global roles have full permission.
-      if (
-        user.is_superadmin ||
-        user.is_system_admin
-      ) {
+      // Chỉ Super Admin được bypass toàn bộ permission.
+      if (user.is_superadmin) {
         return true;
       }
 
+      // System Admin và user thông thường đều phải
+      // có permission tương ứng.
       return can(
         user.permissions,
         false,
@@ -217,6 +217,7 @@ export function useAuth() {
     },
     [user],
   );
+
 
   /* ---------------------------------------------------------------- */
   /* Club access */

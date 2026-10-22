@@ -247,16 +247,18 @@ export function useRoles(
     };
 }
 
+
 // ─── Select hook (dùng bởi module khác cần dropdown role) ──────────────────────
-export function useRoleSelect() {
+export function useRoleSelect(params?: RoleFilters) {
     const query = useQuery({
-        queryKey: ["roles-select"],
+        queryKey: ["roles-select", params],
         queryFn: () =>
-            roleService.select() as Promise<ApiResponse<Role[]>>,
+            roleService.select(params) as Promise<ApiResponse<Role[]>>,
     });
 
     return {
         data: query.data?.data ?? [],
         isLoading: query.isLoading,
+        isFetching: query.isFetching,
     };
 }

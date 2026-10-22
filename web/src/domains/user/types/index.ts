@@ -4,6 +4,12 @@ export type UserStatus = "active" | "inactive" | "banned";
 
 export type UserGender = "male" | "female" | "other";
 
+export interface UserRoles {
+  global?: Role;
+  [key: `club_${number}`]: Role | undefined;
+}
+
+
 export interface User {
   id: number;
   first_name: string | null;
@@ -24,6 +30,7 @@ export interface User {
   created_at: string | null;
   updated_at: string | null;
   deleted_at: string | null;
+  roles: UserRoles | [];
 }
 
 /** Dùng type (không dùng interface) để thoả Record<string, FilterValue> trong useListParams. */

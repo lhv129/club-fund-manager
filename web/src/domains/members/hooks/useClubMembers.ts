@@ -1,4 +1,3 @@
-// src/domains/club/hooks/useClubMembers.ts
 "use client";
 
 import {
@@ -11,6 +10,7 @@ import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
 import { getClubMemberService } from "@/domains/members/services/ClubMemberService";
+import { clubMemberRoleService } from "@/domains/clubMemberRole/services/clubMemberRoleService";
 
 import type {
     MemberFilters,
@@ -25,51 +25,31 @@ import type {
     PaginatedResponse,
 } from "@/types/api";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
-
-type ClubMemberListCache =
-    PaginatedResponse<ClubMember>;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
+type ClubMemberListCache = PaginatedResponse<ClubMember>;
 
 function updateMemberInCache(
     queryClient: ReturnType<typeof useQueryClient>,
     queryKey: readonly unknown[],
     memberId: number,
-    updater: (
-        member: ClubMember
-    ) => ClubMember
+    updater: (member: ClubMember) => ClubMember,
+    matchUserId = false
 ) {
     queryClient.setQueriesData<ClubMemberListCache>(
-        {
-            queryKey,
-        },
+        { queryKey },
         (old) => {
-            if (!old) {
-                return old;
-            }
+            if (!old) return old;
 
             return {
                 ...old,
-
-                data: (old.data ?? []).map(
-                    (member) =>
-                        member.id === memberId
-                            ? updater(member)
-                            : member
+                data: (old.data ?? []).map((member) =>
+                    (matchUserId ? member.user.id : member.id) === memberId
+                        ? updater(member)
+                        : member
                 ),
             };
         }
     );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Members hook
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function useClubMembers(
     params: MemberFilters & {
@@ -79,22 +59,10 @@ export function useClubMembers(
     },
     fixedParams?: Record<string, unknown>
 ) {
-    /**
-     * Normalize về string để không còn lỗi:
-     *
-     * Type 'string | undefined' is not assignable to type 'string'
-     */
-    const clubSlug =
-        params.club_slug ?? "";
-
-    const queryClient =
-        useQueryClient();
-
-    const t =
-        useTranslations("common");
-
-    const service =
-        getClubMemberService();
+    const clubSlug = params.club_slug ?? "";
+    const queryClient = useQueryClient();
+    const t = useTranslations("common");
+    const service = getClubMemberService();
 
     const queryKey = [
         "club-members",
@@ -103,163 +71,225 @@ export function useClubMembers(
         fixedParams,
     ] as const;
 
-    const mergedParams =
-        fixedParams
-            ? {
-                ...params,
-                ...fixedParams,
-            }
-            : params;
+    const mergedParams = fixedParams
+        ? { ...params, ...fixedParams }
+        : params;
 
     const {
         data: listData,
         isLoading,
         isFetching,
-    } = useQuery<
-        PaginatedResponse<ClubMember>
-    >({
+    } = useQuery<PaginatedResponse<ClubMember>>({
         queryKey,
-
         queryFn: () =>
-            service.list(
-                mergedParams
-            ) as Promise<
+            service.list(mergedParams) as Promise<
                 PaginatedResponse<ClubMember>
             >,
-
-        placeholderData:
-            keepPreviousData,
-
+        placeholderData: keepPreviousData,
         enabled: Boolean(clubSlug),
     });
 
-    const data =
-        listData?.data ?? [];
+    const data = listData?.data ?? [];
+    const total = listData?.meta?.total ?? 0;
 
-    const total =
-        listData?.meta?.total ?? 0;
+    const deleteMutation = useMutation({
+        mutationFn: async (id: number) =>
+            service.destroy(id, { club_slug: clubSlug }),
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Remove
-    // ─────────────────────────────────────────────────────────────────────────
+        onSuccess: (result, deletedId) => {
+            const response = result as ApiResponse<ClubMember>;
 
-    const deleteMutation =
-        useMutation({
-            mutationFn: async (
-                id: number
-            ) => {
-                return service.destroy(id, {
-                    club_slug:
-                        clubSlug,
-                });
-            },
+            if (!response.success) {
+                toast.error(response.message || t("updateError"));
+                return;
+            }
 
-            onSuccess: (
-                result,
-                deletedId
-            ) => {
-                const response =
-                    result as ApiResponse<ClubMember>;
+            queryClient.setQueriesData<ClubMemberListCache>(
+                { queryKey: ["club-members", clubSlug] },
+                (old) => {
+                    if (!old) return old;
 
-                if (!response.success) {
-                    toast.error(
-                        response.message ||
-                        t(
-                            "updateError"
-                        )
-                    );
-
-                    return;
-                }
-
-                /**
-                 * Không fetch lại.
-                 *
-                 * Remove row trực tiếp khỏi
-                 * cache hiện tại.
-                 */
-                queryClient.setQueriesData<ClubMemberListCache>(
-                    {
-                        queryKey: [
-                            "club-members",
-                            clubSlug,
-                        ],
-                    },
-                    (old) => {
-                        if (!old) {
-                            return old;
-                        }
-
-                        return {
-                            ...old,
-
-                            data: (
-                                old.data ??
-                                []
-                            ).filter(
-                                (item) =>
-                                    item.id !==
-                                    deletedId
+                    return {
+                        ...old,
+                        data: (old.data ?? []).filter(
+                            (item) => item.id !== deletedId
+                        ),
+                        meta: {
+                            ...old.meta,
+                            total: Math.max(
+                                0,
+                                (old.meta?.total ?? 1) - 1
                             ),
+                        },
+                    };
+                }
+            );
 
-                            meta: {
-                                ...old.meta,
+            toast.success(response.message || t("updateSuccess"));
+        },
 
-                                total: Math.max(
-                                    0,
-                                    (old.meta
-                                        ?.total ??
-                                        1) - 1
-                                ),
-                            },
-                        };
-                    }
-                );
+        onError: (error: unknown) => {
+            toast.error(
+                (error as Error)?.message || t("loadError")
+            );
+        },
+    });
 
-                toast.success(
-                    response.message ||
-                    t(
-                        "updateSuccess"
-                    )
-                );
-            },
-
-            onError: (
-                error: unknown
-            ) => {
-                toast.error(
-                    (error as Error)
-                        ?.message ||
-                    t(
-                        "loadError"
-                    )
-                );
-            },
-        });
-
-    const handleDeleteConfirm = (
-        id: number
-    ) => {
+    const handleDeleteConfirm = (id: number) => {
         deleteMutation.mutate(id);
     };
 
     return {
         data,
         total,
-
         isLoading,
         isFetching,
-
-        isDeleting:
-            deleteMutation.isPending,
-
+        isDeleting: deleteMutation.isPending,
         handleDeleteConfirm,
     };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Member History
-// approve / reject / remove / ban
+// Club member role sync
+// ─────────────────────────────────────────────────────────────────────────────
+
+type SyncClubMemberRolePayload = {
+    user_id: number;
+    role_slug: string;
+    club_slug: string;
+};
+
+type SyncClubMemberRoleResponse = {
+    success: boolean;
+    message?: string;
+    data?: {
+        id: number;
+        club_id: number;
+        user_id: number;
+        role?: ClubMember["role"];
+        is_active?: boolean;
+        sort_order?: number;
+    };
+};
+
+function getClubRoleMutationErrorMessage(
+    error: unknown,
+    fallback: string
+): string {
+    const responseData = (
+        error as {
+            response?: {
+                data?: {
+                    message?: string;
+                };
+            };
+        }
+    )?.response?.data;
+
+    if (responseData?.message) {
+        return responseData.message;
+    }
+
+    if (error && typeof error === "object" && "message" in error) {
+        const message = (error as { message?: unknown }).message;
+
+        if (typeof message === "string" && message) {
+            return message;
+        }
+    }
+
+    return fallback;
+}
+
+/**
+ * Cập nhật role trong club context.
+ * Sau khi API thành công, cập nhật cache trực tiếp, không refetch.
+ */
+export function useSyncClubMemberRole(clubSlug?: string | null) {
+    const normalizedClubSlug = clubSlug ?? "";
+    const queryClient = useQueryClient();
+    const t = useTranslations("common");
+
+    const mutation = useMutation({
+        mutationFn: (payload: SyncClubMemberRolePayload) =>
+            clubMemberRoleService.syncMemberRole(
+                payload as unknown as Parameters<
+                    typeof clubMemberRoleService.syncMemberRole
+                >[0]
+            ),
+    });
+
+    const handleSyncClubMemberRole = async (
+        userId: number,
+        roleSlug: string,
+        selectedRole: NonNullable<ClubMember["role"]>
+    ): Promise<boolean> => {
+        if (!normalizedClubSlug) {
+            toast.error("Không tìm thấy club_slug của câu lạc bộ.");
+            return false;
+        }
+
+        try {
+            const payload: SyncClubMemberRolePayload = {
+                user_id: userId,
+                role_slug: roleSlug,
+                club_slug: normalizedClubSlug,
+            };
+
+            const response =
+                (await mutation.mutateAsync(
+                    payload
+                )) as SyncClubMemberRoleResponse;
+
+            if (!response.success) {
+                toast.error(response.message || t("loadError"));
+                return false;
+            }
+
+            // Ưu tiên role từ API vì chứa translation.name chính xác.
+            const syncedRole =
+                response.data?.role ?? selectedRole;
+
+            updateMemberInCache(
+                queryClient,
+                ["club-members", normalizedClubSlug],
+                userId,
+                (member) => ({
+                    ...member,
+                    role: syncedRole,
+                }),
+                true
+            );
+
+            updateMemberInCache(
+                queryClient,
+                ["club-members-history", normalizedClubSlug],
+                userId,
+                (member) => ({
+                    ...member,
+                    role: syncedRole,
+                }),
+                true
+            );
+
+            toast.success(response.message || t("saveSuccess"));
+            return true;
+        } catch (error: unknown) {
+            toast.error(
+                getClubRoleMutationErrorMessage(error, t("loadError"))
+            );
+            return false;
+        }
+    };
+
+    return {
+        handleSyncClubMemberRole,
+        isSyncing: mutation.isPending,
+    };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Member History: approve / reject / remove / ban
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useClubMemberHistory(
@@ -269,23 +299,10 @@ export function useClubMemberHistory(
         club_slug?: string | null;
     }
 ) {
-    /**
-     * Normalize string.
-     *
-     * Không còn:
-     * Type 'string | undefined' is not assignable to type 'string'
-     */
-    const clubSlug =
-        params.club_slug ?? "";
-
-    const queryClient =
-        useQueryClient();
-
-    const t =
-        useTranslations("common");
-
-    const service =
-        getClubMemberService();
+    const clubSlug = params.club_slug ?? "";
+    const queryClient = useQueryClient();
+    const t = useTranslations("common");
+    const service = getClubMemberService();
 
     const queryKey = [
         "club-members-history",
@@ -293,655 +310,297 @@ export function useClubMemberHistory(
         params,
     ] as const;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Get list
-    // ─────────────────────────────────────────────────────────────────────────
-
     const {
         data: listData,
         isLoading,
         isFetching,
-    } = useQuery<
-        PaginatedResponse<ClubMember>
-    >({
+    } = useQuery<PaginatedResponse<ClubMember>>({
         queryKey,
-
         queryFn: () =>
-            service.list(
-                params
-            ) as Promise<
+            service.list(params) as Promise<
                 PaginatedResponse<ClubMember>
             >,
-
-        placeholderData:
-            keepPreviousData,
-
+        placeholderData: keepPreviousData,
         enabled: Boolean(clubSlug),
     });
 
-    const data =
-        listData?.data ?? [];
+    const data = listData?.data ?? [];
+    const total = listData?.meta?.total ?? 0;
 
-    const total =
-        listData?.meta?.total ?? 0;
+    const approveMutation = useMutation({
+        mutationFn: async (id: number) =>
+            service.approve(id, { club_slug: clubSlug }),
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Approve
-    // ─────────────────────────────────────────────────────────────────────────
+        onSuccess: (result, memberId) => {
+            const response = result as ApiResponse<ClubMember>;
 
-    const approveMutation =
-        useMutation({
-            mutationFn: async (
-                id: number
-            ) => {
-                return service.approve(
-                    id,
-                    {
-                        club_slug:
-                            clubSlug,
-                    }
-                );
-            },
+            if (!response.success) {
+                toast.error(response.message || t("updateError"));
+                return;
+            }
 
-            onSuccess: (
-                result,
-                memberId
-            ) => {
-                const response =
-                    result as ApiResponse<ClubMember>;
+            const updatedMember = (member: ClubMember): ClubMember => ({
+                ...member,
+                ...(response.data ?? {}),
+                status: response.data?.status ?? "approved",
+                is_active: response.data?.is_active ?? true,
+            });
 
-                if (!response.success) {
-                    toast.error(
-                        response.message ||
-                        t(
-                            "updateError"
-                        )
-                    );
+            updateMemberInCache(
+                queryClient,
+                ["club-members-history", clubSlug],
+                memberId,
+                updatedMember
+            );
 
-                    return;
-                }
+            updateMemberInCache(
+                queryClient,
+                ["club-members", clubSlug],
+                memberId,
+                updatedMember
+            );
 
-                /**
-                 * Update history cache.
-                 *
-                 * Nếu backend trả data thì dùng
-                 * data backend.
-                 * Nếu không thì tự update status.
-                 */
-                updateMemberInCache(
-                    queryClient,
-                    [
-                        "club-members-history",
-                        clubSlug,
-                    ],
-                    memberId,
-                    (member) => ({
-                        ...member,
+            toast.success(response.message || t("updateSuccess"));
+        },
 
-                        ...(response.data ??
-                            {}),
+        onError: (error: unknown) => {
+            toast.error(
+                (error as Error)?.message || t("loadError")
+            );
+        },
+    });
 
-                        status:
-                            response.data
-                                ?.status ??
-                            "approved",
+    const rejectMutation = useMutation({
+        mutationFn: async ({
+            id,
+            payload,
+        }: {
+            id: number;
+            payload: RejectPayload;
+        }) =>
+            service.reject(id, {
+                ...payload,
+                club_slug: clubSlug,
+            }),
 
-                        is_active:
-                            response.data
-                                ?.is_active ??
-                            true,
-                    })
-                );
+        onSuccess: (result, variables) => {
+            const response = result as ApiResponse<ClubMember>;
 
-                /**
-                 * Update current members cache
-                 * luôn, nhưng không fetch.
-                 */
-                updateMemberInCache(
-                    queryClient,
-                    [
-                        "club-members",
-                        clubSlug,
-                    ],
-                    memberId,
-                    (member) => ({
-                        ...member,
+            if (!response.success) {
+                toast.error(response.message || t("updateError"));
+                return;
+            }
 
-                        ...(response.data ??
-                            {}),
+            const memberId = variables.id;
 
-                        status:
-                            response.data
-                                ?.status ??
-                            "approved",
+            const updatedMember = (member: ClubMember): ClubMember => ({
+                ...member,
+                ...(response.data ?? {}),
+                status: response.data?.status ?? "rejected",
+                is_active: response.data?.is_active ?? false,
+                rejected_reason:
+                    response.data?.rejected_reason ??
+                    variables.payload.rejected_reason ??
+                    null,
+            });
 
-                        is_active:
-                            response.data
-                                ?.is_active ??
-                            true,
-                    })
-                );
+            updateMemberInCache(
+                queryClient,
+                ["club-members-history", clubSlug],
+                memberId,
+                updatedMember
+            );
 
-                toast.success(
-                    response.message ||
-                    t(
-                        "updateSuccess"
-                    )
-                );
-            },
+            updateMemberInCache(
+                queryClient,
+                ["club-members", clubSlug],
+                memberId,
+                updatedMember
+            );
 
-            onError: (
-                error: unknown
-            ) => {
-                toast.error(
-                    (error as Error)
-                        ?.message ||
-                    t(
-                        "loadError"
-                    )
-                );
-            },
-        });
+            toast.success(response.message || t("updateSuccess"));
+        },
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Reject
-    // ─────────────────────────────────────────────────────────────────────────
+        onError: (error: unknown) => {
+            toast.error(
+                (error as Error)?.message || t("loadError")
+            );
+        },
+    });
 
-    const rejectMutation =
-        useMutation({
-            mutationFn: async ({
-                id,
-                payload,
-            }: {
-                id: number;
-                payload: RejectPayload;
-            }) => {
-                return service.reject(
-                    id,
-                    {
-                        ...payload,
+    const deleteMutation = useMutation({
+        mutationFn: async (id: number) =>
+            service.destroy(id, { club_slug: clubSlug }),
 
-                        club_slug:
-                            clubSlug,
-                    }
-                );
-            },
+        onSuccess: (result, memberId) => {
+            const response = result as ApiResponse<ClubMember>;
 
-            onSuccess: (
-                result,
-                variables
-            ) => {
-                const response =
-                    result as ApiResponse<ClubMember>;
+            if (!response.success) {
+                toast.error(response.message || t("updateError"));
+                return;
+            }
 
-                if (!response.success) {
-                    toast.error(
-                        response.message ||
-                        t(
-                            "updateError"
-                        )
-                    );
+            updateMemberInCache(
+                queryClient,
+                ["club-members-history", clubSlug],
+                memberId,
+                (member) => ({
+                    ...member,
+                    ...(response.data ?? {}),
+                    status: response.data?.status ?? "removed",
+                    is_active: response.data?.is_active ?? false,
+                    removed_at:
+                        response.data?.removed_at ??
+                        new Date().toISOString(),
+                })
+            );
 
-                    return;
-                }
+            queryClient.setQueriesData<ClubMemberListCache>(
+                { queryKey: ["club-members", clubSlug] },
+                (old) => {
+                    if (!old) return old;
 
-                const memberId =
-                    variables.id;
-
-                updateMemberInCache(
-                    queryClient,
-                    [
-                        "club-members-history",
-                        clubSlug,
-                    ],
-                    memberId,
-                    (member) => ({
-                        ...member,
-
-                        ...(response.data ??
-                            {}),
-
-                        status:
-                            response.data
-                                ?.status ??
-                            "rejected",
-
-                        is_active:
-                            response.data
-                                ?.is_active ??
-                            false,
-
-                        rejected_reason:
-                            response.data
-                                ?.rejected_reason ??
-                            variables.payload
-                                .rejected_reason ??
-                            null,
-                    })
-                );
-
-                updateMemberInCache(
-                    queryClient,
-                    [
-                        "club-members",
-                        clubSlug,
-                    ],
-                    memberId,
-                    (member) => ({
-                        ...member,
-
-                        ...(response.data ??
-                            {}),
-
-                        status:
-                            response.data
-                                ?.status ??
-                            "rejected",
-
-                        is_active:
-                            response.data
-                                ?.is_active ??
-                            false,
-
-                        rejected_reason:
-                            response.data
-                                ?.rejected_reason ??
-                            variables.payload
-                                .rejected_reason ??
-                            null,
-                    })
-                );
-
-                toast.success(
-                    response.message ||
-                    t(
-                        "updateSuccess"
-                    )
-                );
-            },
-
-            onError: (
-                error: unknown
-            ) => {
-                toast.error(
-                    (error as Error)
-                        ?.message ||
-                    t(
-                        "loadError"
-                    )
-                );
-            },
-        });
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Remove
-    // ─────────────────────────────────────────────────────────────────────────
-
-    const deleteMutation =
-        useMutation({
-            mutationFn: async (
-                id: number
-            ) => {
-                return service.destroy(
-                    id,
-                    {
-                        club_slug:
-                            clubSlug,
-                    }
-                );
-            },
-
-            onSuccess: (
-                result,
-                memberId
-            ) => {
-                const response =
-                    result as ApiResponse<ClubMember>;
-
-                if (!response.success) {
-                    toast.error(
-                        response.message ||
-                        t(
-                            "updateError"
-                        )
-                    );
-
-                    return;
-                }
-
-                /**
-                 * History:
-                 *
-                 * Không remove row.
-                 * Chỉ chuyển:
-                 *
-                 * approved -> removed
-                 */
-                updateMemberInCache(
-                    queryClient,
-                    [
-                        "club-members-history",
-                        clubSlug,
-                    ],
-                    memberId,
-                    (member) => ({
-                        ...member,
-
-                        ...(response.data ??
-                            {}),
-
-                        status:
-                            response.data
-                                ?.status ??
-                            "removed",
-
-                        is_active:
-                            response.data
-                                ?.is_active ??
-                            false,
-
-                        removed_at:
-                            response.data
-                                ?.removed_at ??
-                            new Date().toISOString(),
-                    })
-                );
-
-                /**
-                 * Current members:
-                 *
-                 * Member vừa bị remove không còn
-                 * nằm trong danh sách active members.
-                 */
-                queryClient.setQueriesData<ClubMemberListCache>(
-                    {
-                        queryKey: [
-                            "club-members",
-                            clubSlug,
-                        ],
-                    },
-                    (old) => {
-                        if (!old) {
-                            return old;
-                        }
-
-                        return {
-                            ...old,
-
-                            data: (
-                                old.data ??
-                                []
-                            ).filter(
-                                (item) =>
-                                    item.id !==
-                                    memberId
+                    return {
+                        ...old,
+                        data: (old.data ?? []).filter(
+                            (item) => item.id !== memberId
+                        ),
+                        meta: {
+                            ...old.meta,
+                            total: Math.max(
+                                0,
+                                (old.meta?.total ?? 1) - 1
                             ),
-
-                            meta: {
-                                ...old.meta,
-
-                                total: Math.max(
-                                    0,
-                                    (old.meta
-                                        ?.total ??
-                                        1) - 1
-                                ),
-                            },
-                        };
-                    }
-                );
-
-                toast.success(
-                    response.message ||
-                    t(
-                        "updateSuccess"
-                    )
-                );
-            },
-
-            onError: (
-                error: unknown
-            ) => {
-                toast.error(
-                    (error as Error)
-                        ?.message ||
-                    t(
-                        "loadError"
-                    )
-                );
-            },
-        });
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Ban
-    // ─────────────────────────────────────────────────────────────────────────
-
-    const banMutation =
-        useMutation({
-            mutationFn: async ({
-                id,
-                payload,
-            }: {
-                id: number;
-                payload: BanMemberPayload;
-            }) => {
-                return service.ban(
-                    id,
-                    {
-                        ...payload,
-
-                        club_slug:
-                            clubSlug,
-                    }
-                );
-            },
-
-            onSuccess: (
-                result,
-                variables
-            ) => {
-                const response =
-                    result as ApiResponse<ClubMember>;
-
-                if (!response.success) {
-                    toast.error(
-                        response.message ||
-                        t(
-                            "updateError"
-                        )
-                    );
-
-                    return;
+                        },
+                    };
                 }
+            );
 
-                const memberId =
-                    variables.id;
+            toast.success(response.message || t("updateSuccess"));
+        },
 
-                updateMemberInCache(
-                    queryClient,
-                    [
-                        "club-members-history",
-                        clubSlug,
-                    ],
-                    memberId,
-                    (member) => ({
-                        ...member,
+        onError: (error: unknown) => {
+            toast.error(
+                (error as Error)?.message || t("loadError")
+            );
+        },
+    });
 
-                        ...(response.data ??
-                            {}),
+    const banMutation = useMutation({
+        mutationFn: async ({
+            id,
+            payload,
+        }: {
+            id: number;
+            payload: BanMemberPayload;
+        }) =>
+            service.ban(id, {
+                ...payload,
+                club_slug: clubSlug,
+            }),
 
-                        status:
-                            response.data
-                                ?.status ??
-                            "banned",
+        onSuccess: (result, variables) => {
+            const response = result as ApiResponse<ClubMember>;
 
-                        is_active:
-                            response.data
-                                ?.is_active ??
-                            false,
+            if (!response.success) {
+                toast.error(response.message || t("updateError"));
+                return;
+            }
 
-                        banned_reason:
-                            response.data
-                                ?.banned_reason ??
-                            variables.payload
-                                .banned_reason ??
-                            member.banned_reason ??
-                            null,
+            const memberId = variables.id;
 
-                        banned_at:
-                            response.data
-                                ?.banned_at ??
-                            member.banned_at ??
-                            new Date().toISOString(),
-                    })
-                );
+            updateMemberInCache(
+                queryClient,
+                ["club-members-history", clubSlug],
+                memberId,
+                (member) => ({
+                    ...member,
+                    ...(response.data ?? {}),
+                    status: response.data?.status ?? "banned",
+                    is_active: response.data?.is_active ?? false,
+                    banned_reason:
+                        response.data?.banned_reason ??
+                        variables.payload.banned_reason ??
+                        member.banned_reason ??
+                        null,
+                    banned_at:
+                        response.data?.banned_at ??
+                        member.banned_at ??
+                        new Date().toISOString(),
+                })
+            );
 
-                /**
-                 * Banned member không còn nằm
-                 * trong current members.
-                 */
-                queryClient.setQueriesData<ClubMemberListCache>(
-                    {
-                        queryKey: [
-                            "club-members",
-                            clubSlug,
-                        ],
-                    },
-                    (old) => {
-                        if (!old) {
-                            return old;
-                        }
+            queryClient.setQueriesData<ClubMemberListCache>(
+                { queryKey: ["club-members", clubSlug] },
+                (old) => {
+                    if (!old) return old;
 
-                        return {
-                            ...old,
-
-                            data: (
-                                old.data ??
-                                []
-                            ).filter(
-                                (item) =>
-                                    item.id !==
-                                    memberId
+                    return {
+                        ...old,
+                        data: (old.data ?? []).filter(
+                            (item) => item.id !== memberId
+                        ),
+                        meta: {
+                            ...old.meta,
+                            total: Math.max(
+                                0,
+                                (old.meta?.total ?? 1) - 1
                             ),
+                        },
+                    };
+                }
+            );
 
-                            meta: {
-                                ...old.meta,
+            toast.success(response.message || t("updateSuccess"));
+        },
 
-                                total: Math.max(
-                                    0,
-                                    (old.meta
-                                        ?.total ??
-                                        1) - 1
-                                ),
-                            },
-                        };
-                    }
-                );
+        onError: (error: unknown) => {
+            toast.error(
+                (error as Error)?.message || t("loadError")
+            );
+        },
+    });
 
-                toast.success(
-                    response.message ||
-                    t(
-                        "updateSuccess"
-                    )
-                );
-            },
-
-            onError: (
-                error: unknown
-            ) => {
-                toast.error(
-                    (error as Error)
-                        ?.message ||
-                    t(
-                        "loadError"
-                    )
-                );
-            },
-        });
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Handlers
-    // ─────────────────────────────────────────────────────────────────────────
-
-    const handleApprove = (
-        id: number
-    ) => {
-        if (
-            approveMutation.isPending
-        ) {
-            return;
+    const handleApprove = (id: number) => {
+        if (!approveMutation.isPending) {
+            approveMutation.mutate(id);
         }
-
-        approveMutation.mutate(id);
     };
 
     const handleReject = async (
         id: number,
         payload: RejectPayload
     ) => {
-        await rejectMutation.mutateAsync(
-            {
-                id,
-                payload,
-            }
-        );
+        await rejectMutation.mutateAsync({ id, payload });
     };
 
-    const handleDeleteConfirm = (
-        id: number
-    ) => {
-        if (
-            deleteMutation.isPending
-        ) {
-            return;
+    const handleDeleteConfirm = (id: number) => {
+        if (!deleteMutation.isPending) {
+            deleteMutation.mutate(id);
         }
-
-        deleteMutation.mutate(id);
     };
 
     const handleBan = async (
         id: number,
         payload: BanMemberPayload = {}
     ) => {
-        if (
-            banMutation.isPending
-        ) {
-            return;
+        if (!banMutation.isPending) {
+            await banMutation.mutateAsync({ id, payload });
         }
-
-        await banMutation.mutateAsync(
-            {
-                id,
-                payload,
-            }
-        );
     };
 
     return {
         data,
         total,
-
         isLoading,
         isFetching,
-
-        // Approve
-        isApproving:
-            approveMutation.isPending,
+        isApproving: approveMutation.isPending,
         handleApprove,
-
-        // Reject
-        isRejecting:
-            rejectMutation.isPending,
+        isRejecting: rejectMutation.isPending,
         handleReject,
-
-        // Remove
-        isDeleting:
-            deleteMutation.isPending,
+        isDeleting: deleteMutation.isPending,
         handleDeleteConfirm,
-
-        // Ban
-        isBanning:
-            banMutation.isPending,
+        isBanning: banMutation.isPending,
         handleBan,
     };
 }
@@ -955,8 +614,7 @@ export function useClubMemberSelect(
         club_slug?: string | null;
     }
 ) {
-    const clubSlug =
-        params?.club_slug ?? "";
+    const clubSlug = params?.club_slug ?? "";
 
     const query = useQuery({
         queryKey: [
@@ -964,27 +622,18 @@ export function useClubMemberSelect(
             clubSlug,
             params,
         ],
-
         queryFn: () => {
             if (!clubSlug) {
-                throw new Error(
-                    "Club slug is required"
-                );
+                throw new Error("Club slug is required");
             }
 
-            return getClubMemberService().select(
-                params
-            );
+            return getClubMemberService().select(params);
         },
-
         enabled: Boolean(clubSlug),
     });
 
     return {
-        data:
-            query.data?.data ?? [],
-
-        isLoading:
-            query.isLoading,
+        data: query.data?.data ?? [],
+        isLoading: query.isLoading,
     };
 }

@@ -13,8 +13,7 @@ class ClubMemberRoleRepository extends BaseRepository
     public function __construct(
         ClubMemberRole $model,
         protected PermissionCacheService $permissionCache,
-    )
-    {
+    ) {
         parent::__construct($model);
     }
 
@@ -151,5 +150,80 @@ class ClubMemberRoleRepository extends BaseRepository
         $this->permissionCache->forgetUser($member->user_id);
 
         return $role;
+    }
+
+
+    /**
+     * Tìm bản ghi role đang tồn tại theo ID, bao gồm bản ghi đã soft delete.
+     */
+    public function findRoleIncludingTrashed(int $id): ?ClubMemberRole
+    {
+        return $this->model->withTrashed()->find($id);
+    }
+
+    /**
+     * Tìm role global của user.
+     * Chỉ lấy bản ghi chưa bị soft delete.
+     */
+    public function findGlobalRoleByUserId(int $userId): ?ClubMemberRole
+    {
+        return $this->model
+            ->where('user_id', $userId)
+            ->whereNull('club_id')
+            ->first();
+    }
+
+    /**
+     * Tạo hoặc cập nhật role global của user.
+     */
+    public function syncGlobalRole(int $userId, int $roleId): ClubMemberRole
+    {
+        $globalRole = $this->findGlobalRoleByUserId($userId);
+
+        if ($globalRole) {
+            $globalRole->update([
+                'role_id' => $roleId,
+                'is_active' => true,
+            ]);
+
+            return $globalRole->load('role', 'role.translation:id,role_id,locale,name');
+        }
+
+        // Nếu đã có bản ghi global bị soft delete thì khôi phục.
+        $deletedGlobalRole = $this->model
+            ->onlyTrashed()
+            ->where('user_id', $userId)
+            ->whereNull('club_id')
+            ->first();
+
+        if ($deletedGlobalRole) {
+            $deletedGlobalRole->restore();
+
+            $deletedGlobalRole->update([
+                'role_id' => $roleId,
+                'is_active' => true,
+            ]);
+
+            return $deletedGlobalRole->load(
+                'role',
+                'role.translation:id,role_id,locale,name'
+            );
+        }
+
+        return $this->model->create([
+            'user_id' => $userId,
+            'role_id' => $roleId,
+            'club_id' => null,
+            'is_active' => true,
+        ])->load('role', 'role.translation:id,role_id,locale,name');
+    }
+
+
+    public function findByUserIdAndClubId(int $userId, int $clubId)
+    {
+        return $this->model
+            ->where('user_id', $userId)
+            ->where('club_id', $clubId)
+            ->first();
     }
 }

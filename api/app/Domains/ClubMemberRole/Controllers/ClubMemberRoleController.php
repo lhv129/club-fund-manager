@@ -4,6 +4,7 @@ namespace App\Domains\ClubMemberRole\Controllers;
 
 use App\Base\BaseController;
 use App\Domains\ClubMemberRole\Requests\SyncClubMemberRoleRequest;
+use App\Domains\ClubMemberRole\Requests\SyncUserRoleRequest;
 use App\Domains\ClubMemberRole\Resources\ClubMemberRoleResource;
 use App\Domains\ClubMemberRole\Services\ClubMemberRoleService;
 
@@ -21,5 +22,27 @@ class ClubMemberRoleController extends BaseController
     {
         $data = $this->service->syncClubMemberRole($request->validated());
         return $this->responseCommon(true, __('domains/club_member_role.sync_role_success'), new ClubMemberRoleResource($data), 200);
+    }
+
+
+
+    // Scope Global
+
+    public function syncUserRole(SyncUserRoleRequest $request)
+    {
+        $result = $this->service->syncUserRole($request->validated());
+        return $this->responseCommon(true, __('domains/club_member_role.sync_role_success'), new ClubMemberRoleResource($result), 200);
+    }
+
+    public function destroyUserRole(int $userId)
+    {
+        $this->service->destroyUserRole($userId);
+
+        return $this->responseCommon(
+            true,
+            __('domains/club_member_role.delete_role_success'),
+            null,
+            200
+        );
     }
 }

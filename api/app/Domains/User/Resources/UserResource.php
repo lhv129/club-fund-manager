@@ -27,6 +27,7 @@ class UserResource extends JsonResource
             'is_system_admin' => $this->isSystemAdmin(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
+            'roles' => $this->rolesGroupedByClub()
         ];
     }
 }

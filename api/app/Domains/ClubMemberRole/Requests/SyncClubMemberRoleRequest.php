@@ -9,7 +9,7 @@ class SyncClubMemberRoleRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'club_member_role_id' => 'required|exists:club_member_roles,id',
+            'user_id' => 'required|integer|exists:users,id',
             'role_slug' => 'required|string|exists:roles,slug',
             'club_slug' => 'required|string|exists:club_translations,slug',
         ];
@@ -18,7 +18,7 @@ class SyncClubMemberRoleRequest extends BaseRequest
     public function attributes(): array
     {
         return [
-            'club_member_role_id'       => __('domains/club_member_role.attributes.club_member_role_id'),
+            'user_id' => __('domains/club_member_role.attributes.user_id'),
             'role_slug' => __('domains/club_member_role.attributes.role_slug'),
             'club_slug' => __('domains/club_member_role.attributes.club_slug'),
         ];

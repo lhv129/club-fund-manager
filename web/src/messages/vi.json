@@ -421,7 +421,9 @@
     "phonePlaceholder": "vd: 0901234567",
     "addressPlaceholder": "Nhập địa chỉ",
     "rolePlaceholder": "Chọn chức vụ",
-    "searchPlaceholder": "Nhập tên, email hoặc số điện thoại..."
+    "searchPlaceholder": "Nhập tên, email hoặc số điện thoại...",
+    "removeRoleConfirmTitle": "Gỡ chức vụ",
+    "removeRoleConfirmMsg": "Bạn có chắc chắn muốn gỡ chức vụ \"{role}\" khỏi người dùng này? Người dùng sẽ không còn được gán chức vụ này."
   },
   "richEditor": {
     "paragraph": "Đoạn văn",

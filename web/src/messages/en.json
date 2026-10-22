@@ -422,7 +422,9 @@
     "phonePlaceholder": "e.g. 0901234567",
     "addressPlaceholder": "Enter address",
     "rolePlaceholder": "Select role",
-    "searchPlaceholder": "Enter name, email, or phone number..."
+    "searchPlaceholder": "Enter name, email, or phone number...",
+    "removeRoleConfirmTitle": "Remove Role",
+    "removeRoleConfirmMsg": "Are you sure you want to remove the \"{role}\" role from this user? The user will no longer be assigned this role."
   },
   "richEditor": {
     "paragraph": "Paragraph",
