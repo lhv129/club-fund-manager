@@ -199,9 +199,17 @@ export function useAuth() {
         return false;
       }
 
+      // Global roles have full permission.
+      if (
+        user.is_superadmin ||
+        user.is_system_admin
+      ) {
+        return true;
+      }
+
       return can(
         user.permissions,
-        user.is_superadmin,
+        false,
         module,
         action,
         clubId,
@@ -224,10 +232,10 @@ export function useAuth() {
     (clubId: number): boolean =>
       user
         ? canAccessClub(
-            user.permissions,
-            user.is_superadmin,
-            clubId,
-          )
+          user.permissions,
+          user.is_superadmin,
+          clubId,
+        )
         : false,
     [user],
   );
@@ -239,9 +247,9 @@ export function useAuth() {
     (): boolean =>
       user
         ? hasAnyClubPermission(
-            user.permissions,
-            user.is_superadmin,
-          )
+          user.permissions,
+          user.is_superadmin,
+        )
         : false,
     [user],
   );
