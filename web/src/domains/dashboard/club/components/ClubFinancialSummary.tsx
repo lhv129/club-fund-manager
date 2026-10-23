@@ -76,46 +76,41 @@ export function ClubFinancialSummary({
   ];
 
   return (
-    <section
-      aria-label={t("financial.title")}
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
-    >
-      {items.map(
-        ({
-          label,
-          value,
-          detail,
-          icon: Icon,
-          tone,
-        }) => (
+    <section aria-label={t("financial.title")} className="space-y-3.5">
+      {/* <h2 className="text-sm font-semibold tracking-wide text-foreground">
+        {t("financial.title")}
+      </h2> */}
+
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+        {items.map(({ label, value, detail, icon: Icon, tone }) => (
           <article
             key={label}
-            className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm"
+            className="group rounded-2xl border border-border bg-background p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5"
           >
-            <div className="flex items-center justify-between border-b border-border bg-background-subtle/60 px-4 py-3.5">
-              <p className="text-sm font-medium text-foreground-muted">
-                {label}
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground-muted">
+                  {label}
+                </p>
+                <p className="mt-1.5 line-clamp-2 min-h-8 text-xs leading-5 text-foreground-muted">
+                  {detail}
+                </p>
+              </div>
 
               <span
-                className={`flex size-9 items-center justify-center rounded-xl ${tone}`}
+                aria-hidden="true"
+                className={"flex size-10 shrink-0 items-center justify-center rounded-xl " + tone + " transition-transform duration-200 group-hover:scale-105"}
               >
-                <Icon className="size-[18px]" />
+                <Icon className="size-[18px]" strokeWidth={1.8} />
               </span>
             </div>
 
-            <div className="px-4 py-4">
-              <p className="text-xl font-bold text-foreground sm:text-2xl">
-                {formatAmount(value, "₫", locale)}
-              </p>
-
-              <p className="mt-2 text-xs text-foreground-muted">
-                {detail}
-              </p>
-            </div>
+            <p className="mt-5 truncate text-2xl font-semibold tracking-tight text-foreground tabular-nums sm:text-[1.75rem]">
+              {formatAmount(value, "₫", locale)}
+            </p>
           </article>
-        ),
-      )}
+        ))}
+      </div>
     </section>
   );
 }

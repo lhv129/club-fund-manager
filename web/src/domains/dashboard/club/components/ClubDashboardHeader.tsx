@@ -45,10 +45,6 @@ export function ClubDashboardHeader({
     <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       {/* Header */}
       <div>
-        <p className="text-sm font-medium text-primary">
-          {t("header.workspace")}
-        </p>
-
         <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">
           {t("header.overview")}
         </h1>
@@ -81,7 +77,7 @@ export function ClubDashboardHeader({
             disabled={isFetching || invalidCustomRange}
             title={t("header.refresh")}
             aria-label={t("header.refresh")}
-            className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground transition-colors hover:bg-background-muted disabled:pointer-events-none disabled:opacity-50"
+            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-background-subtle/70 text-foreground-muted transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-50"
           >
             <RefreshCw
               className={`size-4 ${isFetching ? "animate-spin" : ""}`}
@@ -106,7 +102,7 @@ export function ClubDashboardHeader({
                   })
                 }
                 rightIcon={<CalendarDays className="size-4" />}
-                className="h-10 w-full py-2"
+                className="h-10 w-full rounded-xl border-0 bg-background-subtle/70 py-2 shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               />
             </div>
 
@@ -124,7 +120,7 @@ export function ClubDashboardHeader({
                   })
                 }
                 rightIcon={<CalendarDays className="size-4" />}
-                className="h-10 w-full py-2"
+                className="h-10 w-full rounded-xl border-0 bg-background-subtle/70 py-2 shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               />
             </div>
           </div>

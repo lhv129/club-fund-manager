@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -24,6 +25,16 @@ import {
 } from "./DashboardInsightsCharts";
 import { DashboardState } from "./DashboardCard";
 
+// Skeleton components
+import { ClubFinancialSummarySkeleton } from "./ClubFinancialSummarySkeleton";
+import { ClubFundOverviewSkeleton } from "./ClubFundOverviewSkeleton";
+import { CashFlowInteractiveSkeleton } from "./CashFlowInteractiveSkeleton";
+import { ClubMemberHealthSkeleton } from "./ClubMemberHealthSkeleton";
+import { ClubUpcomingSessionsSkeleton } from "./ClubUpcomingSessionsSkeleton";
+import { DashboardInsightsChartsSkeleton } from "./DashboardInsightsChartsSkeleton";
+import { ActivityInteractiveSkeleton } from "./ActivityInteractiveSkeleton";
+import { ClubRecentTransactionsSkeleton } from "./ClubRecentTransactionsSkeleton";
+
 const dashboardPeriods: DashboardPeriod[] = [
   "month",
   "previous_month",
@@ -38,7 +49,7 @@ function toIsoDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return year + "-" + month + "-" + day;
 }
 
 function getDefaultCustomRange() {
@@ -112,16 +123,14 @@ export function ClubDashboard({
     }
 
     const queryString = params.toString();
+    const nextUrl =
+      window.location.pathname + (queryString ? "?" + queryString : "");
 
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}${queryString ? `?${queryString}` : ""}`,
-    );
+    window.history.replaceState(null, "", nextUrl);
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-5">
+    <div className="mx-auto w-full max-w-[1500px] space-y-6">
       <ClubBreadcrumb slug={slug} />
 
       <ClubDashboardHeader
@@ -132,15 +141,54 @@ export function ClubDashboard({
       />
 
       {query.isLoading ? (
-        <div className="rounded-2xl border border-border bg-background">
-          <DashboardState message={t("header.loading")} />
+        <div
+          role="status"
+          aria-label={t("header.loading")}
+          className="space-y-6 sm:space-y-7"
+        >
+          <ClubFinancialSummarySkeleton />
+
+          <ClubFundOverviewSkeleton />
+
+          <CashFlowInteractiveSkeleton />
+
+          <section className="grid min-w-0 gap-5 lg:grid-cols-2">
+            <div className="min-w-0">
+              <ClubMemberHealthSkeleton />
+            </div>
+
+            <div className="min-w-0">
+              <ClubUpcomingSessionsSkeleton />
+            </div>
+          </section>
+
+          <section className="space-y-5">
+            <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+              <div className="min-w-0">
+                <DashboardInsightsChartsSkeleton />
+              </div>
+
+              <div className="min-w-0">
+                <DashboardInsightsChartsSkeleton />
+              </div>
+            </div>
+
+            <DashboardInsightsChartsSkeleton />
+          </section>
+
+          <ActivityInteractiveSkeleton />
+
+          <ClubRecentTransactionsSkeleton />
         </div>
       ) : query.isError ? (
-        <div className="rounded-2xl border border-red-500/30 bg-background">
+        <div
+          role="alert"
+          className="overflow-hidden rounded-2xl border border-red-500/30 bg-background shadow-sm"
+        >
           <DashboardState message={t("header.loadError")} />
         </div>
       ) : (
-        <>
+        <div className="space-y-6 sm:space-y-7">
           <ClubFinancialSummary
             cashFlow={query.data.cashFlow}
             contributions={query.data.contributions}
@@ -149,27 +197,48 @@ export function ClubDashboard({
             locale={locale}
           />
 
-          <section className="space-y-5">
-            <CashFlowInteractive
-              data={query.data.cashFlow}
-              locale={locale}
-            />
+          <ClubFundOverview
+            periods={query.data.fundPeriods}
+            locale={locale}
+            slug={slug}
+            period={filterValue.period}
+          />
 
-            <ClubMemberHealth
-              data={query.data.memberStats}
-              slug={slug}
-            />
+          <CashFlowInteractive
+            data={query.data.cashFlow}
+            locale={locale}
+          />
+
+          <section className="grid min-w-0 gap-5 lg:grid-cols-2">
+            <div className="min-w-0">
+              <ClubMemberHealth
+                data={query.data.memberStats}
+                slug={slug}
+              />
+            </div>
+
+            <div className="min-w-0">
+              <ClubUpcomingSessions
+                data={query.data.sessions}
+                locale={locale}
+                slug={slug}
+              />
+            </div>
           </section>
 
           <section className="space-y-5">
-            <div className="grid gap-5 md:grid-cols-2">
-              <ContributionStatusChart
-                summary={query.data.contributionSummary}
-              />
+            <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+              <div className="min-w-0">
+                <ContributionStatusChart
+                  summary={query.data.contributionSummary}
+                />
+              </div>
 
-              <TransactionSourceChart
-                summary={query.data.transactionSummary}
-              />
+              <div className="min-w-0">
+                <TransactionSourceChart
+                  summary={query.data.transactionSummary}
+                />
+              </div>
             </div>
 
             <SessionScaleChart
@@ -178,29 +247,14 @@ export function ClubDashboard({
             />
           </section>
 
-          <ClubFundOverview
-            periods={query.data.fundPeriods}
-            locale={locale}
-            slug={slug}
-            period={filterValue.period}
-          />
-
-          <section className="space-y-5">
-            <ActivityInteractive data={query.data.activity} />
-
-            <ClubUpcomingSessions
-              data={query.data.sessions}
-              locale={locale}
-              slug={slug}
-            />
-          </section>
+          <ActivityInteractive data={query.data.activity} />
 
           <ClubRecentTransactions
             data={query.data.transactions}
             locale={locale}
             slug={slug}
           />
-        </>
+        </div>
       )}
     </div>
   );

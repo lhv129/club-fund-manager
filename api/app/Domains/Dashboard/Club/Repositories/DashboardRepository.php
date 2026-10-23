@@ -91,7 +91,10 @@ class DashboardRepository extends BaseRepository
             );
 
         $result = $query
-            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw(
+                'SUM(CASE WHEN club_members.status = ? THEN 1 ELSE 0 END) AS total',
+                [ClubMember::STATUS_APPROVED]
+            )
 
             ->selectRaw(
                 '

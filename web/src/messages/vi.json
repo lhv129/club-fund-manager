@@ -904,7 +904,6 @@
   },
   "clubDashboard": {
     "header": {
-      "workspace": "Không gian câu lạc bộ",
       "overview": "Tổng quan câu lạc bộ",
       "description": "Dữ liệu trực tiếp từ các module tài chính, quỹ, thành viên và buổi đánh.",
       "period": "Khoảng thời gian",
@@ -957,14 +956,17 @@
       "description": "Mức độ hoạt động trong kỳ hiện tại",
       "participating": "Có tham gia",
       "newMembers": "Thành viên mới",
-      "inactiveMembers": "Ít hoạt động",
       "activeRate": "Tỷ lệ hoạt động",
       "members": "thành viên",
       "membersTotal": "{active} trong tổng số {total} thành viên",
       "membersOutstanding": "{count} thành viên còn nghĩa vụ",
       "male": "Nam",
       "female": "Nữ",
-      "active": "Hoạt động"
+      "active": "Hoạt động",
+      "inactiveMembers": "Không hoạt động",
+      "pendingMembers": "Chờ duyệt",
+      "rejectedMembers": "Bị từ chối",
+      "removedMembers": "Đã rời clb"
     },
     "cashFlow": {
       "title": "Dòng tiền",

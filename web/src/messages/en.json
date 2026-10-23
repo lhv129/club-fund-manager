@@ -960,14 +960,17 @@
       "description": "Activity level during the current period",
       "participating": "Participating",
       "newMembers": "New Members",
-      "inactiveMembers": "Less Active",
       "activeRate": "Activity Rate",
       "members": "members",
       "membersTotal": "{active} of {total} members",
       "membersOutstanding": "{count} members with outstanding obligations",
       "male": "Male",
       "female": "Female",
-      "active": "Active"
+      "active": "Active",
+      "inactiveMembers": "Inactive",
+      "pendingMembers": "Pending",
+      "rejectedMembers": "Rejected",
+      "removedMembers": "Removed"
     },
     "cashFlow": {
       "title": "Cash Flow",
