@@ -50,7 +50,8 @@ export const CLUB_SUBROUTES = {
   exchangeSessionPlayerPayments: "exchange-session-player-payments",
   webhookConfigs: "webhook-configs",
   events: "events",
-  settings: "settings",
+  notifications: "notifications",
+  settings: "settings"
 } as const;
 
 /**
@@ -118,5 +119,6 @@ export const MODULE_SLUGS = {
   bankAccount: "bank_account"
   ,memberPaymentCode: "member_payment_code"
   ,playingSchedule: "playing_schedule"
-  ,exchangeSessionPlayer: "exchange_session_player"
+  ,exchangeSessionPlayer: "exchange_session_player",
+  notification: "notification"
 } as const;

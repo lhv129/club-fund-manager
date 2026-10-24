@@ -298,7 +298,8 @@
     "exchangeSessionPlayerPayments": "Player payment tracking",
     "transactions": "Income & Expenses",
     "paymentCodes": "Payment Codes",
-    "webhookConfigs": "Webhook configurations"
+    "webhookConfigs": "Webhook configurations",
+    "notifications": "Notifications"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -356,7 +357,8 @@
     "switchClub": "Switch club",
     "inviteLinkHint": "Share this link to invite others to join the club.",
     "inviteLinkCopy": "Copy invite link",
-    "yourRole": "Your role"
+    "yourRole": "Your role",
+    "joinClub": "Join a Club"
   },
   "noClub": {
     "breadcrumb": "Join club",

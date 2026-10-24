@@ -100,8 +100,6 @@ export function TransactionDetailPageClient({ id }: { id: number }) {
         ? tt(`source${item.source.charAt(0).toUpperCase()}${item.source.slice(1)}`)
         : null;
 
-    console.log(club);
-
     return (
         <div className="w-full">
 

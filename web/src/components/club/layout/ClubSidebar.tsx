@@ -87,12 +87,17 @@ export function ClubSidebar({
   const backHref =
     isSuperAdmin || isSystemAdmin
       ? APP_ROUTES.adminClubs
-      : "/";
+      : APP_ROUTES.home;
 
   const showBackToClubs =
     isSuperAdmin ||
     isSystemAdmin ||
     hasMultipleClubs;
+
+  const showJoinClub =
+    !isSuperAdmin &&
+    !isSystemAdmin &&
+    !hasMultipleClubs;
 
   // ───────────────────────────────────────────────────────────────────────────
   // Navigation
@@ -208,6 +213,7 @@ export function ClubSidebar({
           t={t}
           tWorkspace={tWorkspace}
           showBackToClubs={showBackToClubs}
+          showJoinClub={showJoinClub}
           canCreateInvite={canCreateInvite}
           backHref={backHref}
           slug={slug}

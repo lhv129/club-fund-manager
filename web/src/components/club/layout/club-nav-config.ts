@@ -11,6 +11,7 @@ import {
     Landmark,
     ScanLine,
     Webhook,
+    Bell,
 } from "lucide-react";
 
 import {
@@ -203,6 +204,17 @@ export function CLUB_NAV_ITEMS(slug: string): NavItem[] {
             icon: ScanLine,
             module: MODULE_SLUGS.memberPaymentCode,
             action: PERMISSION_ACTIONS.view,
+        },
+
+        // ── Cài đặt ───────────────────────────────────────────────────────────
+        {
+            href: clubRoute(
+                slug,
+                CLUB_SUBROUTES.notifications
+            ),
+            labelKey: "notifications",
+            icon: Bell,
+            module: MODULE_SLUGS.notification
         },
 
         // ── Cài đặt ───────────────────────────────────────────────────────────

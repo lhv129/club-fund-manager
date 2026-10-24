@@ -59,8 +59,26 @@ function getNotificationHrefId(notification: Notification): string | undefined {
 }
 
 export const NOTIFICATION_TYPE_CONFIG: Record<string, NotificationTypeConfig> = {
-  club_expense_created: { category: "expense", translationKey: "events.club_expense_created", fields: [{ key: "description", labelKey: "dataFields.description", type: "text" }, { key: "amount", labelKey: "dataFields.amount", type: "amount" }, { key: "reference_code", labelKey: "dataFields.referenceCode", type: "text" }, { key: "transaction_date", labelKey: "dataFields.transactionDate", type: "date" }] },
-  
+
+  club_expense_created: {
+    category: "expense",
+    translationKey: "events.club_expense_created",
+    fields: [
+      { key: "description", labelKey: "dataFields.description", type: "text" },
+      { key: "amount", labelKey: "dataFields.amount", type: "amount" },
+      { key: "reference_code", labelKey: "dataFields.referenceCode", type: "text" },
+      { key: "transaction_date", labelKey: "dataFields.transactionDate", type: "date" },
+    ],
+    getHref: (notification) => {
+      const slug = getClubSlug(notification);
+      const hrefId = getNotificationHrefId(notification);
+
+      if (!slug || !hrefId) return null;
+
+      return `/club/${encodeURIComponent(slug)}/transactions/${encodeURIComponent(hrefId)}`;
+    },
+  },
+
   club_transaction_received:
   {
     category: "income", translationKey: "events.club_transaction_received",

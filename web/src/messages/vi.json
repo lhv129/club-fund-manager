@@ -297,7 +297,8 @@
     "exchangeSessionPlayerPayments": "Giao lưu",
     "transactions": "Thu chi",
     "paymentCodes": "Mã thanh toán",
-    "webhookConfigs": "Cấu hình webhook"
+    "webhookConfigs": "Cấu hình webhook",
+    "notifications": "Thông báo"
   },
   "dashboard": {
     "title": "Bảng điều khiển",
@@ -355,7 +356,8 @@
     "switchClub": "Chuyển CLB",
     "inviteLinkHint": "Chia sẻ link này để mời người khác tham gia CLB.",
     "inviteLinkCopy": "Sao chép link mời",
-    "yourRole": "Vai trò của bạn"
+    "yourRole": "Vai trò của bạn",
+    "joinClub": "Tham gia câu lạc bộ khác"
   },
   "noClub": {
     "breadcrumb": "Tham gia CLB",

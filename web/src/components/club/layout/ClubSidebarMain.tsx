@@ -11,6 +11,7 @@ import { ArrowLeft, ChevronDown, Sparkles } from "lucide-react";
 
 import { Link } from "@/i18n/routing";
 import { cn } from "@/utils";
+import { APP_ROUTES } from "@/constants";
 
 import {
     type NavItem,
@@ -24,6 +25,7 @@ interface ClubSidebarMainProps {
     t: (key: string) => string;
     tWorkspace: (key: string) => string;
     showBackToClubs: boolean;
+    showJoinClub: boolean;
     canCreateInvite: boolean;
     backHref: string;
     slug: string;
@@ -36,13 +38,14 @@ export const ClubSidebarMain = memo(function ClubSidebarMain({
     t,
     tWorkspace,
     showBackToClubs,
+    showJoinClub,
     canCreateInvite,
     backHref,
     slug,
 }: ClubSidebarMainProps) {
     return (
         <main className="flex-1 flex flex-col overflow-y-auto">
-            {(showBackToClubs || canCreateInvite) && (
+            {(showBackToClubs || showJoinClub || canCreateInvite) && (
                 <div className="px-4 lg:px-5 pt-4 space-y-3">
                     {showBackToClubs && (
                         <ClubBackToClubsLink
@@ -52,15 +55,20 @@ export const ClubSidebarMain = memo(function ClubSidebarMain({
                         />
                     )}
 
+                    {showJoinClub && (
+                        <ClubBackToClubsLink
+                            href={APP_ROUTES.joinClub}
+                            onClick={onClose}
+                            label={tWorkspace("joinClub")}
+                        />
+                    )}
+
                     {canCreateInvite && (
                         <div>
                             <SidebarCopyJoinLinkButton slug={slug} />
 
                             <p className="mt-2 flex items-center justify-center gap-1 text-[10px] text-foreground-muted">
-                                <Sparkles
-                                    className="h-3 w-3"
-                                    strokeWidth={2}
-                                />
+                                <Sparkles className="h-3 w-3" strokeWidth={2} />
                                 {tWorkspace("inviteLinkHint")}
                             </p>
                         </div>
